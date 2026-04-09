@@ -10,6 +10,7 @@
 - `docs/guide/harness-philosophy.md`: 원본 문서군에서 추출한 문서 철학
 - `docs/guide/project-cutting-and-execution.md`: 프로젝트 분할과 실행 게이트 규칙
 - `docs/design/ubiquitous-language.md`: 새 프로젝트에서 바로 채울 수 있는 용어 기준 문서
+- `docs/examples/`: placeholder 대신 참고할 수 있는 완성형 예시 문서
 - `docs/_templates/`: `task`, `project`, `design`, `guide`, `report` 템플릿
 - `docs/bin/new-doc.sh`: 번호 발급 및 문서 생성 스크립트
 
@@ -21,7 +22,9 @@
 ./docs/bin/new-doc.sh design core-boundary
 ```
 
-복사 후에는 `docs/design/ubiquitous-language.md`를 먼저 실제 프로젝트 용어로 채우면 됩니다.
+한글 slug도 허용됩니다. 예: `./docs/bin/new-doc.sh task "첫 작업"`.
+
+복사 후에는 `docs/design/ubiquitous-language.md`를 먼저 실제 프로젝트 용어로 채우고, `docs/examples/`의 샘플 문서를 한 번 읽는 것을 권장합니다.
 
 새 프로젝트로 복사한 뒤에는 아래 순서를 권장합니다.
 
@@ -29,3 +32,7 @@
 2. 첫 `project` 문서를 발급합니다.
 3. 설계 기준이 필요하면 `design` 문서를 만들고 `ubiquitous-language`를 같은 변경 셋에서 갱신합니다.
 4. 실제 실행 단위가 생기면 `task` 문서를 발급합니다.
+
+## License
+
+MIT. 자세한 내용은 `LICENSE`를 봅니다.

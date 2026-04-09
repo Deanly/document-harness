@@ -14,6 +14,8 @@
 
 새로운 `design` 문서가 추가되거나 기존 설계에서 핵심 개념, 상태, 경계가 바뀌면 같은 변경 셋에서 이 문서도 함께 갱신합니다.
 
+placeholder 대신 채워진 예시가 필요하면 `docs/examples/README.md`를 먼저 봅니다.
+
 ## Maintenance Rule
 
 - 새로운 design 문서가 추가될 때:

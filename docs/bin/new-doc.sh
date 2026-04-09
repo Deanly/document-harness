@@ -21,8 +21,16 @@ EOF
 
 slugify() {
   printf '%s' "$1" \
-    | tr '[:upper:]' '[:lower:]' \
-    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g'
+    | perl -CS -Mutf8 -pe '
+        $_ = lc $_;
+        s/^\s+|\s+$//g;
+        s{[/\\]+}{-}g;
+        s/\s+/-/g;
+        s/[^\p{Letter}\p{Number}\-]+/-/g;
+        s/-+/-/g;
+        s/^-+//;
+        s/-+$//;
+      '
 }
 
 next_number() {
@@ -67,7 +75,7 @@ RAW_SLUG="$2"
 SLUG="$(slugify "$RAW_SLUG")"
 
 if [[ -z "$SLUG" ]]; then
-  echo "error: slug must contain at least one alphanumeric character" >&2
+  echo "error: slug must contain at least one letter or number" >&2
   exit 1
 fi
 

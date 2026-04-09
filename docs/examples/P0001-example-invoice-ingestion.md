@@ -1,0 +1,61 @@
+# P0001 example-invoice-ingestion
+
+- Type: project
+- Document ID: P0001
+- Status: active
+- Owner: platform-team
+- Created: 2026-04-10
+- Updated: 2026-04-10
+- Related Design: invoice-event-ingestion
+
+## Purpose
+
+이 프로젝트의 목적은 공급업체 인보이스 메일을 수집해 원문을 보존하고, downstream 정산 시스템이 소비할 수 있는 `invoice event`로 정규화하는 최소 ingestion 경계를 고정하는 것입니다.
+
+## Scope
+
+- 수신 메일 후보 수집
+- raw invoice preservation
+- normalized invoice event 추출
+- downstream queue publish baseline 정의
+
+## Out Of Scope
+
+- OCR 정확도 개선 작업 전체
+- 회계 시스템의 최종 분개 확정
+- 지급 승인 워크플로우
+- 벤더 포털 크롤링
+
+## References
+
+- `docs/examples/invoice-event-ingestion.md`
+- `docs/examples/T0001-bootstrap-source-ingest.md`
+- `docs/examples/runtime-and-gates-guide.md`
+
+## WBS
+
+| ID | Work Item | Status | Progress | Notes |
+| --- | --- | --- | --- | --- |
+| T0001 | Bootstrap source ingest | In Progress | 60% | raw preservation and normalized event baseline first |
+
+## Planned Task Candidates
+
+- parser fixture expansion
+- queue delivery retry policy
+- operator checklist hardening
+
+## Overall Progress
+
+- 35%
+
+## Milestones
+
+- boundary and terminology fixed
+- first source ingest path works locally
+- raw and normalized records persist together
+
+## Status
+
+- 2026-04-10: project 문서 생성.
+- 2026-04-10: example design과 guide를 기준 문서로 연결.
+- 2026-04-10: 첫 task를 `raw preservation first` 순서로 시작.

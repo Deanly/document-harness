@@ -16,7 +16,12 @@
 ## Scope
 
 - 이 task가 포함하는 작업
+- 직접 닫을 수 있는 실행 범위
+
+## Out Of Scope
+
 - 이 task가 포함하지 않는 작업
+- 후속 task나 다른 시스템의 책임
 
 ## References
 

@@ -17,6 +17,7 @@
 - `docs/design/`: 도메인, 경계, 계약, 정책 설계 문서
 - `docs/guide/`: 반복적으로 참조하는 운영/구현/판단 가이드
 - `docs/reports/`: 요청성 보고 문서
+- `docs/examples/`: 완성형 샘플 문서
 - `docs/_templates/`: 문서 템플릿
 - `docs/bin/`: 문서 생성 도구
 
@@ -40,7 +41,8 @@
 - 의미: 실제로 수행하고 닫을 수 있는 작업 단위
 - 필수 내용:
   - 목적
-  - 범위와 비범위
+  - 범위
+  - 비범위
   - 관련 문서 참조
   - dependencies
   - 내부 WBS
@@ -101,7 +103,7 @@
 - `task`와 `project`는 독립된 번호 시퀀스를 가집니다.
 - 번호는 중앙 카운터 파일 없이 기존 파일을 스캔해 계산합니다.
 - 번호는 4자리 고정입니다.
-- slug는 소문자 kebab-case를 사용합니다.
+- slug는 공백 대신 hyphen을 사용하는 kebab-case를 기본으로 하며, 한글을 포함한 유니코드 문자도 허용합니다.
 - 기존 문서를 삭제하지 않는 한 번호는 재사용하지 않습니다.
 - `guide`, `design`, `report`는 번호보다 의미 있는 slug를 우선합니다.
 
@@ -128,6 +130,7 @@
 - Status는 "작업했다"가 아니라 "무엇을 고정했고 어떤 증빙이 있는가"를 적습니다.
 - 구현 전 브레인스토밍과 실제 기준 문서를 섞지 않습니다.
 - 아직 경계가 잠기지 않았다면 새 `project`보다 `guide`나 `design`으로 남기는 편이 낫습니다.
+- placeholder를 그대로 남기지 않습니다. 시작이 필요하면 `docs/examples/`를 먼저 참고합니다.
 
 ## WBS Conventions
 
@@ -160,6 +163,7 @@
 ```bash
 ./docs/bin/new-doc.sh project example-runtime-boundary
 ./docs/bin/new-doc.sh task bootstrap-ingestion-worker
+./docs/bin/new-doc.sh task "문서 하네스 정리"
 ./docs/bin/new-doc.sh design event-ingestion
 ./docs/bin/new-doc.sh guide project-cutting-and-execution
 ./docs/bin/new-doc.sh report sprint-01-status
@@ -170,3 +174,7 @@
 - `docs/design/ubiquitous-language.md`
 - `docs/guide/harness-philosophy.md`
 - `docs/guide/project-cutting-and-execution.md`
+
+## Examples
+
+- `docs/examples/README.md`
