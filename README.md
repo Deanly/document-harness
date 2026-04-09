@@ -13,6 +13,16 @@
 - `docs/_templates/`: `task`, `project`, `design`, `guide`, `report` 템플릿
 - `docs/bin/new-doc.sh`: 번호 발급 및 문서 생성 스크립트
 
+## Quick Start
+
+```bash
+./docs/bin/new-doc.sh project example-project
+./docs/bin/new-doc.sh task first-task
+./docs/bin/new-doc.sh design core-boundary
+```
+
+복사 후에는 `docs/design/ubiquitous-language.md`를 먼저 실제 프로젝트 용어로 채우면 됩니다.
+
 새 프로젝트로 복사한 뒤에는 아래 순서를 권장합니다.
 
 1. `docs/design/ubiquitous-language.md`의 placeholder를 실제 프로젝트 용어로 교체합니다.
