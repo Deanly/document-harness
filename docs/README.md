@@ -29,8 +29,9 @@
 - append-only execution history: `task`와 `project`의 `Status`는 실행 이력을 시간순으로 누적합니다.
 - narrow scope: v1 범위를 명시적으로 좁게 고정하고, 후속 경계를 별도 프로젝트로 분리합니다.
 - ubiquitous language: 핵심 용어는 한 곳에서 canonical term을 고정하고 설계 변경과 함께 갱신합니다.
+- human-readable active surface: active 문서는 폴더 입구와 문서 첫 화면에서 바로 식별 가능해야 합니다.
 
-자세한 분석은 `docs/guide/harness-philosophy.md`를 봅니다.
+자세한 철학은 `docs/guide/harness-philosophy.md`를, 수명주기와 human reading 규칙은 `docs/guide/document-lifecycle-and-active-reading.md`를 봅니다.
 
 ## Document Types
 
@@ -84,11 +85,13 @@
 
 ### Report
 
-- 파일명 규칙: `report-topic.md`
+- 파일명 규칙: `2026-04-10-topic.md`
 - 의미: 요청에 의해 생성되는 시점성 보고 문서
 - 특징:
   - 고정 번호 체계는 강제하지 않습니다.
+  - 날짜를 앞에 두어 시간순 정렬과 human scan을 쉽게 합니다.
   - 요청 목적에 맞는 구조를 사용합니다.
+  - 재사용 가치가 생긴 내용은 `guide`, `design`, `project`, `task`로 승격합니다.
 
 ### Ubiquitous Language
 
@@ -106,6 +109,7 @@
 - slug는 공백 대신 hyphen을 사용하는 kebab-case를 기본으로 하며, 한글을 포함한 유니코드 문자도 허용합니다.
 - 기존 문서를 삭제하지 않는 한 번호는 재사용하지 않습니다.
 - `guide`, `design`, `report`는 번호보다 의미 있는 slug를 우선합니다.
+- `report`는 발행일을 파일명 앞에 두는 것을 기본으로 합니다.
 
 ## Update Rules
 
@@ -116,6 +120,11 @@
 - `project` 문서의 WBS는 실제 `task` 문서와 1:1로 대응하는 것을 기본 규칙으로 합니다.
 - `project` 문서의 WBS `ID`는 해당 `task`의 문서 번호를 그대로 사용합니다.
 - `task` 내부 WBS의 `ID`는 `W1`, `W2`, `W3` 형식을 사용합니다.
+- `project`, `task`, `report`는 기본적으로 제자리에서 닫습니다. `archive/`는 기본 규칙이 아닙니다.
+- `docs/projects/README.md`, `docs/tasks/README.md`, `docs/reports/README.md`는 active 문서만 보여주는 얇은 입구로 유지합니다.
+- 문서가 `active`가 되거나 닫히면 해당 폴더 `README.md`도 같은 변경 셋에서 갱신합니다.
+- active `project`, `task`, `report`는 첫 화면에 `Status`, `Owner`, `Updated`, `Current Focus`를 드러냅니다.
+- `report`는 살아 있는 truth를 누적하는 문서가 아닙니다. 재사용 규칙이나 현재 기준이 생기면 해당 타입 문서로 승격하고 링크를 남깁니다.
 - 설계가 변경되면:
   - 먼저 `design` 문서를 수정합니다.
   - 새 핵심 용어, 상태, 경계가 생기면 `docs/design/ubiquitous-language.md`를 같은 변경 셋에서 함께 수정합니다.
@@ -128,6 +137,7 @@
 - 실행 순서가 중요한 경우 Dependencies, Gates, Exit Criteria를 문서에 드러냅니다.
 - 설계는 원칙이 아니라 계약과 규칙까지 고정합니다.
 - Status는 "작업했다"가 아니라 "무엇을 고정했고 어떤 증빙이 있는가"를 적습니다.
+- active 문서를 열었을 때 첫 화면만으로도 현재 초점과 담당자를 파악할 수 있어야 합니다.
 - 구현 전 브레인스토밍과 실제 기준 문서를 섞지 않습니다.
 - 아직 경계가 잠기지 않았다면 새 `project`보다 `guide`나 `design`으로 남기는 편이 낫습니다.
 - placeholder를 그대로 남기지 않습니다. 시작이 필요하면 `docs/examples/`를 먼저 참고합니다.
@@ -153,8 +163,9 @@
 2. 핵심 boundary와 계약을 `design`으로 고정합니다.
 3. `docs/design/ubiquitous-language.md`를 함께 갱신합니다.
 4. 실제 작업 단위가 생기면 `task` 문서를 발급합니다.
-5. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
-6. 요청성 정리나 특정 시점 보고는 `report`로 남깁니다.
+5. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
+6. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
+7. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
 
 프로젝트 분할 규칙은 `docs/guide/project-cutting-and-execution.md`를 우선합니다.
 
@@ -173,7 +184,14 @@
 
 - `docs/design/ubiquitous-language.md`
 - `docs/guide/harness-philosophy.md`
+- `docs/guide/document-lifecycle-and-active-reading.md`
 - `docs/guide/project-cutting-and-execution.md`
+
+## Active Entry Points
+
+- `docs/projects/README.md`
+- `docs/tasks/README.md`
+- `docs/reports/README.md`
 
 ## Examples
 

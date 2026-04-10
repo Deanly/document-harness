@@ -15,7 +15,7 @@ Types:
   project   -> docs/projects/P0001-slug.md
   design    -> docs/design/slug.md
   guide     -> docs/guide/slug.md
-  report    -> docs/reports/report-slug.md
+  report    -> docs/reports/YYYY-MM-DD-slug.md
 EOF
 }
 
@@ -112,7 +112,7 @@ case "$TYPE" in
     TEMPLATE="$ROOT_DIR/_templates/report.md"
     DOC_ID=""
     TITLE="$SLUG"
-    OUTPUT="$ROOT_DIR/reports/report-${SLUG}.md"
+    OUTPUT="$ROOT_DIR/reports/${TODAY}-${SLUG}.md"
     ;;
   *)
     usage
