@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-10
+- Updated: 2026-04-13
 
 ## Purpose
 
@@ -42,11 +42,29 @@
 - 후속 시스템이 아직 설계되지 않았다면 "다음 project 후보"로만 남기고 현재 project에 포함시키지 않습니다.
 - project 문서의 WBS는 실제 `task` 문서와 1:1 대응시키는 것을 기본으로 합니다.
 
+## Goal Lock Rule
+
+`project`와 `task`의 `Purpose`, `Scope`, `Out Of Scope`, `Completion Mode`, `Completion Criteria` 또는 `Exit Criteria`는 발급 시점의 완료 계약입니다.
+
+- WBS를 더 세밀하게 나누는 것은 허용됩니다.
+- 후속 `task`나 `project`를 새로 발급하는 것도 허용됩니다.
+- 하지만 이런 분해는 기존 문서의 `done` 기준을 낮추는 근거가 되지 않습니다.
+
+원래 핵심 목표를 후속 문서로 옮겼다면 현재 문서는 `done`이 아니라 계속 `active` 또는 `blocked`로 남아야 합니다. 목적 자체가 바뀌었다면 `superseded` 또는 `cancelled`로 닫습니다.
+
+## Functional Unit Default
+
+기본 `Completion Mode`는 `functional`입니다.
+
+- `project`는 하나의 delivery boundary가 실제로 닫히는지를 기준으로 발급합니다.
+- `task`는 하나의 기능 단위 또는 실행 경계가 실제로 동작하는지를 기준으로 발급합니다.
+- design, implementation, verification 같은 phase는 기본적으로 내부 WBS이며, 기본 `done` 단위가 아닙니다.
+
 ## Task Slicing Rules
 
 좋은 `task`는 아래를 만족합니다.
 
-- 독립 목적이 있다.
+- 하나의 기능 단위 또는 실행 경계를 닫는 독립 목적이 있다.
 - 완료 기준이 검증 가능하다.
 - 설계 문서와 연결된다.
 - 너무 크지 않아 Status와 WBS가 실제 진행을 설명할 수 있다.
@@ -57,6 +75,24 @@
 2. 실제 데이터를 만나는 reality-check slice
 3. parser, normalization, persistence 같은 정렬 slice
 4. end-to-end cycle 또는 운영 baseline slice
+
+## Split Or Reissue Rule
+
+작업이 커졌다고 느껴질 때는 먼저 "이것이 여전히 하나의 기능 단위를 닫는 문서인가"를 확인합니다.
+
+- 하나의 기능 단위가 여전히 같은 문서에서 닫힌다면 새 `task`를 발급하기보다 내부 WBS를 더 세밀하게 쪼갭니다.
+- 별도의 기능 경계, 별도 gate, 별도 책임자가 생겼다면 새 `task`를 발급하고 project WBS를 함께 갱신합니다.
+- 기존 `task`가 잘못 발급되었다고 판단되면 새 문서를 발급하되, 기존 문서는 `done`이 아니라 `superseded`로 닫습니다.
+
+후속 문서로 남은 핵심 목표를 넘겼다는 사실 자체는 현재 문서를 `done`으로 만들지 않습니다.
+
+## Design-Only Exception
+
+예외적으로 설계 자체를 닫아야 하는 작업이라면 `Completion Mode: design-only`를 발급 시점부터 명시합니다.
+
+- 어떤 설계 산출물이 authoritative truth가 되는지 적습니다.
+- 어떤 후속 구현 task나 project가 이어질지 적습니다.
+- 이미 `functional`로 발급된 항목을 나중에 `design-only`로 해석해 닫지 않습니다.
 
 ## Gate Writing Rules
 
@@ -89,6 +125,13 @@ project나 task를 닫을 때는 종료 기준이 필요합니다.
 - 단순 구현 완료가 아니라 동작/관찰/기록까지 포함한다.
 - 후속 project로 넘길 잔여 범위를 명시한다.
 
+`done` 전에 아래를 확인합니다.
+
+- 발급 시점의 Purpose가 그대로 달성되었는가
+- 필수 Scope가 실제로 닫혔는가
+- 설계-only 예외가 아니라면 실제 동작 evidence가 있는가
+- 남은 핵심 목표를 후속 문서로 넘긴 뒤 `done`으로 위장하지 않았는가
+
 ## Evidence Rule
 
 Status와 완료 판단에는 가능하면 아래를 남깁니다.
@@ -104,3 +147,4 @@ Status와 완료 판단에는 가능하면 아래를 남깁니다.
 ## Change Log
 
 - 2026-04-10: 프로젝트 분할, task slicing, gate-driven execution 규칙 정리.
+- 2026-04-13: goal lock, 기능 단위 기본값, design-only 예외 규칙 추가.

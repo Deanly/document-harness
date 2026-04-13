@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-10
+- Updated: 2026-04-13
 
 ## Purpose
 
@@ -21,6 +21,10 @@
 - `draft`는 발급되었지만 아직 현재 읽을 문서 목록에 올리지 않은 상태입니다.
 - `active`는 지금 사람이 읽고 추적해야 하는 문서입니다.
 - `closed`, `done`, `cancelled`, `superseded` 같은 비활성 상태는 폴더의 active 목록에서 제외합니다.
+- `done`은 발급 시점의 `Purpose`와 `Completion Mode`가 충족되었을 때만 씁니다.
+- 원래 핵심 목표를 후속 문서로 넘겼다면 `done`이 아니라 계속 `active` 또는 `blocked`로 두거나, 범위 재발급 근거와 함께 `superseded` 또는 `cancelled`로 닫습니다.
+- `superseded`는 기존 문서의 책임 경계나 목표가 새 문서로 재발급되어 더 이상 현재 기준이 아닐 때 씁니다.
+- `cancelled`는 목표를 달성하지 않은 상태에서 의도적으로 중단했을 때 씁니다.
 - `project`와 `task`는 닫을 때 본문 `Status`에 종료 근거, 증빙, 남은 범위를 append-only로 남깁니다.
 - `report`도 제자리에서 닫고, 마지막 결론과 후속 승격 문서 링크를 남깁니다.
 
@@ -68,3 +72,4 @@
 ## Change Log
 
 - 2026-04-10: 문서 수명주기와 human-friendly active reading 규칙 고정.
+- 2026-04-13: `done`과 `superseded`의 사용 기준, goal lock 규칙 반영.

@@ -3,15 +3,21 @@
 - Type: task
 - Document ID: T0001
 - Status: active
+- Completion Mode: functional
 - Owner: platform-team
 - Created: 2026-04-10
-- Updated: 2026-04-10
+- Updated: 2026-04-13
 - Related Project: P0001-example-invoice-ingestion
 - Related Design: invoice-event-ingestion
 
 ## Purpose
 
 이 task의 목적은 첫 입력 소스로부터 인보이스 후보를 읽고, 원문과 정규화 결과를 함께 남기는 최소 ingest cycle을 구현하는 것입니다.
+
+## Committed Outcome
+
+- 첫 입력 소스 1건 이상이 raw record와 normalized invoice event로 함께 남는 최소 ingest cycle이 실제로 동작합니다.
+- 이 task는 설계 정리만으로 닫히지 않으며, ingest cycle 기능이 evidence와 함께 확인되어야 합니다.
 
 ## Scope
 
@@ -56,6 +62,12 @@
 3. 실패 샘플도 drop하지 않고 failure record로 남습니다.
 4. task 종료 시 상태 이력에 무엇이 고정되었는지와 어떤 evidence가 있는지가 기록됩니다.
 
+## Completion Guardrails
+
+- raw 저장만 끝났거나 normalized path만 끝난 상태에서, 남은 핵심 목표를 후속 task로 넘겼다고 해서 이 task를 `done` 처리하지 않습니다.
+- 현재 Purpose가 유지되는 동안에는 내부 WBS를 더 잘게 쪼갤 수는 있어도 완료 기준 자체는 줄이지 않습니다.
+- `Completion Mode: design-only`가 아니므로 설계 문서 정리만으로 닫지 않습니다.
+
 ## Risks / Open Questions
 
 - 공급업체별 포맷 편차가 커서 v1 parser 성공 범위를 좁게 시작해야 합니다.
@@ -66,3 +78,4 @@
 - 2026-04-10: task 문서 생성.
 - 2026-04-10: raw preservation first 원칙으로 WBS를 정리.
 - 2026-04-10: 첫 source sample에서 raw 저장과 normalized event 저장의 기본 경로를 확인.
+- 2026-04-13: 기능 단위 완료 기준과 completion guardrails 예시를 추가.

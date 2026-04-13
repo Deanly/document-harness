@@ -25,6 +25,7 @@
 
 - boundary-first: 구현보다 먼저 책임 경계와 비범위를 고정합니다.
 - evidence-backed: 완료, 위험, 운영 판단은 실제 관찰 결과와 연결합니다.
+- goal-locked completion: 발급 시점의 목적과 완료 기준은 나중에 더 작은 조각으로 쪼개도 약해지지 않습니다.
 - current-truth design: 설계 문서는 append-only 이력보다 현재 기준의 정확성을 우선합니다.
 - append-only execution history: `task`와 `project`의 `Status`는 실행 이력을 시간순으로 누적합니다.
 - narrow scope: v1 범위를 명시적으로 좁게 고정하고, 후속 경계를 별도 프로젝트로 분리합니다.
@@ -42,6 +43,8 @@
 - 의미: 실제로 수행하고 닫을 수 있는 작업 단위
 - 필수 내용:
   - 목적
+  - completion mode
+  - committed outcome
   - 범위
   - 비범위
   - 관련 문서 참조
@@ -49,6 +52,7 @@
   - 내부 WBS
   - 전체 진행률
   - completion criteria
+  - completion guardrails
   - append-only `Status`
 
 ### Project
@@ -58,11 +62,15 @@
 - 의미: 하나의 bounded delivery/project 단위
 - 필수 내용:
   - 목적
+  - completion mode
+  - committed outcome
   - 범위와 비범위
   - 관련 문서 참조
   - 프로젝트 WBS
   - 전체 진행률
   - milestones
+  - exit criteria
+  - completion guardrails
   - append-only `Status`
 
 ### Design
@@ -117,6 +125,9 @@
 - 새 이력은 문서 하단에 계속 추가합니다.
 - WBS와 진행률은 현재 상태를 반영하도록 갱신합니다.
 - `task`와 `project`는 관련 `design` 문서를 명시적으로 참조합니다.
+- `task`와 `project`의 `Purpose`, `Scope`, `Out Of Scope`, `Completion Mode`, `Completion Criteria` 또는 `Exit Criteria`는 발급 시점의 완료 계약으로 취급합니다.
+- 후속 `task`나 `project`를 새로 발급해도 기존 항목의 완료 기준을 더 작은 하위 조각으로 축소하지 않습니다.
+- 남은 핵심 목표를 후속 문서로 넘겼다면 현재 문서는 `done`이 아니라 계속 `active` 또는 `blocked`로 두거나, 범위 재발급 근거와 함께 `superseded` 또는 `cancelled`로 닫습니다.
 - `project` 문서의 WBS는 실제 `task` 문서와 1:1로 대응하는 것을 기본 규칙으로 합니다.
 - `project` 문서의 WBS `ID`는 해당 `task`의 문서 번호를 그대로 사용합니다.
 - `task` 내부 WBS의 `ID`는 `W1`, `W2`, `W3` 형식을 사용합니다.
@@ -134,9 +145,11 @@
 
 - Purpose는 "왜 이 문서가 존재하는가"를 첫 단락에서 바로 말해야 합니다.
 - Scope와 Out Of Scope는 모두 씁니다. 좋은 문서는 포함 범위만이 아니라 제외 범위도 분명합니다.
+- `project`와 `task`는 기본적으로 기능 단위를 닫는 문서여야 합니다. 예외적으로 설계만 닫는 문서라면 `Completion Mode: design-only`를 발급 시점부터 명시합니다.
 - 실행 순서가 중요한 경우 Dependencies, Gates, Exit Criteria를 문서에 드러냅니다.
 - 설계는 원칙이 아니라 계약과 규칙까지 고정합니다.
 - Status는 "작업했다"가 아니라 "무엇을 고정했고 어떤 증빙이 있는가"를 적습니다.
+- 발행된 목적을 나중에 더 작은 하위 조각으로 줄여 `done` 처리하지 않습니다.
 - active 문서를 열었을 때 첫 화면만으로도 현재 초점과 담당자를 파악할 수 있어야 합니다.
 - 구현 전 브레인스토밍과 실제 기준 문서를 섞지 않습니다.
 - 아직 경계가 잠기지 않았다면 새 `project`보다 `guide`나 `design`으로 남기는 편이 낫습니다.
@@ -162,7 +175,7 @@
 1. 프로젝트 시작 시 첫 `project` 문서를 발급합니다.
 2. 핵심 boundary와 계약을 `design`으로 고정합니다.
 3. `docs/design/ubiquitous-language.md`를 함께 갱신합니다.
-4. 실제 작업 단위가 생기면 `task` 문서를 발급합니다.
+4. 실제 작업 단위가 생기면 기본 `Completion Mode: functional`로 `task` 문서를 발급합니다.
 5. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
 6. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
 7. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
@@ -186,6 +199,7 @@
 - `docs/guide/harness-philosophy.md`
 - `docs/guide/document-lifecycle-and-active-reading.md`
 - `docs/guide/project-cutting-and-execution.md`
+- `docs/guide/goal-locked-completion.md`
 
 ## Active Entry Points
 

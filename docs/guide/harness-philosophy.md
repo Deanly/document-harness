@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-10
+- Updated: 2026-04-13
 - Source: reference docs lineage
 
 ## Purpose
@@ -44,13 +44,23 @@
 
 이 둘을 섞으면 설계도 읽기 어려워지고 이력도 신뢰하기 어렵습니다.
 
-### 3. Scope Is Stronger When Out Of Scope Is Explicit
+### 3. Issued Goals Must Stay Locked
+
+한 번 발급한 `project`와 `task`의 `Purpose`, `Scope`, `Completion Criteria`는 종료 기준 계약입니다.
+
+- WBS를 더 잘게 나눌 수는 있습니다.
+- 후속 `task`나 `project`를 발급할 수는 있습니다.
+- 그렇다고 기존 항목의 완료 기준이 작아지지는 않습니다.
+
+남은 핵심 목표를 다른 문서로 옮겼다면 현재 문서는 `done`이 아니라 `active`, `blocked`, `superseded`, `cancelled` 중 하나여야 합니다.
+
+### 4. Scope Is Stronger When Out Of Scope Is Explicit
 
 원본 문서들은 범위만 적지 않습니다. 항상 제외 범위를 적어 문서의 의도를 선명하게 만듭니다.
 
 이 습관은 과잉 일반화와 요구사항 확장을 막습니다.
 
-### 4. Terms Must Be Canonical
+### 5. Terms Must Be Canonical
 
 원본 문서군은 `ubiquitous-language`를 별도 design surface로 둡니다.
 
@@ -60,7 +70,7 @@
 - 새로운 경계나 상태가 생기면 design과 같은 변경 셋에서 용어를 갱신한다.
 - guide와 task도 이 용어를 우선 사용한다.
 
-### 5. Evidence Beats Vague Progress
+### 6. Evidence Beats Vague Progress
 
 강한 상태 이력은 "작업 중", "완료 예정" 같은 표현이 아니라 아래를 씁니다.
 
@@ -70,7 +80,7 @@
 
 즉 진행률은 감정이 아니라 증빙과 연결됩니다.
 
-### 6. Delivery Should Be Gate-Driven
+### 7. Delivery Should Be Gate-Driven
 
 원본 문서들은 순서가 중요한 작업에서 gate를 명시합니다.
 
@@ -82,7 +92,7 @@
 
 이 구조는 병렬화 가능한 일과 그렇지 않은 일을 구분하게 만듭니다.
 
-### 7. v1 Scope Should Be Intentionally Narrow
+### 8. v1 Scope Should Be Intentionally Narrow
 
 원본 문서군은 v1에서 하지 않을 일을 적극적으로 적습니다.
 
@@ -92,7 +102,7 @@
 - 후속 경계가 자연스럽게 별도 project로 분리됩니다.
 - 문서가 미래 희망사항을 현재 책임처럼 말하지 않게 됩니다.
 
-### 8. Guide Documents Carry Operational Judgment
+### 9. Guide Documents Carry Operational Judgment
 
 가이드는 설계의 중복본이 아닙니다.
 
@@ -121,6 +131,7 @@
 - project 문서를 브레인스토밍 메모로 쓰지 않습니다.
 - task 없는 project WBS를 오래 방치하지 않습니다.
 - 완료 판단을 증빙 없이 선언하지 않습니다.
+- 발급 시점의 목표를 더 작은 하위 조각으로 줄여 `done` 처리하지 않습니다.
 - 아직 잠기지 않은 후속 시스템을 현재 프로젝트 범위로 끌어오지 않습니다.
 - 같은 대상을 문서마다 다른 이름으로 부르지 않습니다.
 
@@ -131,9 +142,10 @@
 1. `docs/design/ubiquitous-language.md`를 실제 도메인 용어로 채웁니다.
 2. 첫 `project` 문서에서 목적, 범위, 비범위를 고정합니다.
 3. 설계 기준이 생기면 `design` 문서를 만들고 같은 변경 셋에서 용어 문서를 갱신합니다.
-4. 실제 작업은 `task`로 쪼개고, project WBS와 1:1 대응시킵니다.
+4. 실제 작업은 기본 `Completion Mode: functional`의 `task`로 쪼개고, project WBS와 1:1 대응시킵니다.
 5. 자주 흔들리는 판단이 생기면 `guide`로 승격합니다.
 
 ## Change Log
 
 - 2026-04-10: 참조 문서군 분석을 바탕으로 재사용 가능한 문서 철학 정리.
+- 2026-04-13: goal lock과 기능 단위 완료 원칙 반영.
