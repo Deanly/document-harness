@@ -52,19 +52,29 @@
 
 원래 핵심 목표를 후속 문서로 옮겼다면 현재 문서는 `done`이 아니라 계속 `active` 또는 `blocked`로 남아야 합니다. 목적 자체가 바뀌었다면 `superseded` 또는 `cancelled`로 닫습니다.
 
-## Functional Unit Default
+## Completion Mode Selection
 
-기본 `Completion Mode`는 `functional`입니다.
+기본 `Completion Mode`는 `functional`입니다. 대부분의 `project`와 `task`는 여기에 머무는 것이 맞습니다.
 
-- `project`는 하나의 delivery boundary가 실제로 닫히는지를 기준으로 발급합니다.
-- `task`는 하나의 기능 단위 또는 실행 경계가 실제로 동작하는지를 기준으로 발급합니다.
-- design, implementation, verification 같은 phase는 기본적으로 내부 WBS이며, 기본 `done` 단위가 아닙니다.
+지원 mode는 아래와 같습니다.
+
+- `functional`: 하나의 기능 단위, 운영 경계, delivery boundary가 실제로 동작해야 합니다.
+- `design-lock`: 설계, 계약, 정책, 인터페이스가 authoritative truth로 잠겨야 합니다.
+- `decision-lock`: 경쟁안 비교가 끝나고 하나의 의사결정이 공식 기준으로 잠겨야 합니다.
+- `investigation`: 핵심 불확실성이 재현 가능한 사실과 함께 줄어들어 다음 실행 경계가 분명해져야 합니다.
+- `integration`: 기존 경계 두 개 이상이 실제로 연결되고 handshake가 확인되어야 합니다.
+- `migration`: 데이터, 트래픽, 운영 책임이 source에서 target으로 옮겨지고 정합성이 확인되어야 합니다.
+- `operational-baseline`: 운영 runbook, ownership, alert, rollback 또는 대응 기준이 실제로 성립해야 합니다.
+- `remediation`: 결함이나 위험이 제거되고 재발 방지 장치까지 들어가야 합니다.
+- `decommission`: 기존 기능, 시스템, 경로가 안전하게 제거되고 잔존 의존성이 정리되어야 합니다.
+
+`Completion Mode`는 terminal condition이어야 하며, `implementation-only`, `test-only`, `documentation-only`, `analysis-only` 같은 phase 이름은 쓰지 않습니다.
 
 ## Task Slicing Rules
 
 좋은 `task`는 아래를 만족합니다.
 
-- 하나의 기능 단위 또는 실행 경계를 닫는 독립 목적이 있다.
+- 선택한 `Completion Mode` 기준으로 하나의 종료 상태를 닫는 독립 목적이 있다.
 - 완료 기준이 검증 가능하다.
 - 설계 문서와 연결된다.
 - 너무 크지 않아 Status와 WBS가 실제 진행을 설명할 수 있다.
@@ -86,13 +96,16 @@
 
 후속 문서로 남은 핵심 목표를 넘겼다는 사실 자체는 현재 문서를 `done`으로 만들지 않습니다.
 
-## Design-Only Exception
+## Non-Functional Mode Rule
 
-예외적으로 설계 자체를 닫아야 하는 작업이라면 `Completion Mode: design-only`를 발급 시점부터 명시합니다.
+`functional`이 아닌 mode를 쓰려면 아래가 함께 적혀야 합니다.
 
-- 어떤 설계 산출물이 authoritative truth가 되는지 적습니다.
-- 어떤 후속 구현 task나 project가 이어질지 적습니다.
-- 이미 `functional`로 발급된 항목을 나중에 `design-only`로 해석해 닫지 않습니다.
+- 왜 `functional`이 아니라 그 mode가 맞는지
+- 무엇이 authoritative artifact 또는 closed state가 되는지
+- 어떤 evidence가 있어야 닫히는지
+- 후속 구현, 운영, migration 문서가 있다면 무엇인지
+
+이미 발급된 문서를 나중에 더 약한 mode로 재해석해 닫지 않습니다.
 
 ## Gate Writing Rules
 
@@ -129,7 +142,7 @@ project나 task를 닫을 때는 종료 기준이 필요합니다.
 
 - 발급 시점의 Purpose가 그대로 달성되었는가
 - 필수 Scope가 실제로 닫혔는가
-- 설계-only 예외가 아니라면 실제 동작 evidence가 있는가
+- 선택한 `Completion Mode`가 요구하는 evidence가 있는가
 - 남은 핵심 목표를 후속 문서로 넘긴 뒤 `done`으로 위장하지 않았는가
 
 ## Evidence Rule
@@ -147,4 +160,4 @@ Status와 완료 판단에는 가능하면 아래를 남깁니다.
 ## Change Log
 
 - 2026-04-10: 프로젝트 분할, task slicing, gate-driven execution 규칙 정리.
-- 2026-04-13: goal lock, 기능 단위 기본값, design-only 예외 규칙 추가.
+- 2026-04-13: goal lock, completion mode catalog, non-functional mode 규칙 추가.

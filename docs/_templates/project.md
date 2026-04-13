@@ -14,10 +14,16 @@
 
 이 프로젝트의 목적과 기대 결과를 적습니다.
 
+## Completion Mode Notes
+
+- 지원 mode: `functional`, `design-lock`, `decision-lock`, `investigation`, `integration`, `migration`, `operational-baseline`, `remediation`, `decommission`
+- 기본값은 `functional`입니다.
+- `functional`이 아니라면 왜 이 mode가 맞는지와 무엇이 closed state가 되는지 적습니다.
+
 ## Committed Outcome
 
-- 이 project가 `done`일 때 실제로 새로 가능해져야 하는 기능, 운영 기준, delivery boundary를 적습니다.
-- 예외적으로 설계만 닫는 project라면 `Completion Mode: design-only`와 그 이유를 명시합니다.
+- 이 project가 `done`일 때 실제로 새로 가능해져야 하는 기능, 운영 기준, delivery boundary 또는 locked state를 적습니다.
+- 선택한 mode가 `functional`이 아니라면 authoritative artifact 또는 종료 상태를 구체적으로 적습니다.
 
 ## Scope
 
@@ -56,15 +62,20 @@
 
 ## Exit Criteria
 
-1. project 목적에 적은 delivery boundary가 실제로 닫혔음을 검증할 수 있습니다.
+1. project 목적에 적은 기능, 운영 기준, delivery boundary 또는 locked state가 선택한 `Completion Mode` 기준으로 닫혔음을 검증할 수 있습니다.
 2. 필수 `task`가 모두 `done`이거나, 범위 재발급 근거와 함께 `superseded` 또는 `cancelled`로 정리되어 있습니다.
 3. 남은 범위가 있다면 후속 project로 명시되며, 현재 project의 원래 목적을 축소한 `done` 처리로 위장하지 않습니다.
+
+## Completion Evidence
+
+- 선택한 `Completion Mode`를 닫는 데 필요한 로그, 문서, 측정치, 상태 변화, 운영 근거를 적습니다.
+- 어떤 evidence가 있으면 충분하고, 어떤 evidence만으로는 부족한지도 적습니다.
 
 ## Completion Guardrails
 
 - 기존 Purpose를 더 작은 하위 조각으로 축소해 `done` 처리하지 않습니다.
 - 남은 핵심 목표를 후속 project나 task로 넘겼다면 이 project는 `done`이 아니라 `active`, `blocked`, `superseded`, `cancelled` 중 하나여야 합니다.
-- `Completion Mode: design-only`가 아니라면 설계 문서 작성만으로 닫지 않습니다.
+- `Completion Mode`는 terminal condition이어야 하며 `implementation-only`, `test-only`, `documentation-only`, `analysis-only` 같은 phase 이름을 쓰지 않습니다.
 
 ## Status
 

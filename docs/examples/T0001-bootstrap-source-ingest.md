@@ -14,6 +14,11 @@
 
 이 task의 목적은 첫 입력 소스로부터 인보이스 후보를 읽고, 원문과 정규화 결과를 함께 남기는 최소 ingest cycle을 구현하는 것입니다.
 
+## Completion Mode Notes
+
+- 이 task는 `Completion Mode: functional`입니다.
+- 종료 조건은 설계 정리가 아니라 최소 ingest cycle이 실제로 반복 가능하게 동작하는 것입니다.
+
 ## Committed Outcome
 
 - 첫 입력 소스 1건 이상이 raw record와 normalized invoice event로 함께 남는 최소 ingest cycle이 실제로 동작합니다.
@@ -62,11 +67,18 @@
 3. 실패 샘플도 drop하지 않고 failure record로 남습니다.
 4. task 종료 시 상태 이력에 무엇이 고정되었는지와 어떤 evidence가 있는지가 기록됩니다.
 
+## Completion Evidence
+
+- source sample rerun 로그
+- raw record와 normalized invoice event 저장 결과
+- failure sample 기록 예시
+- WBS 일부 완료나 설계 문서 정리만 된 상태는 충분한 evidence가 아님
+
 ## Completion Guardrails
 
 - raw 저장만 끝났거나 normalized path만 끝난 상태에서, 남은 핵심 목표를 후속 task로 넘겼다고 해서 이 task를 `done` 처리하지 않습니다.
 - 현재 Purpose가 유지되는 동안에는 내부 WBS를 더 잘게 쪼갤 수는 있어도 완료 기준 자체는 줄이지 않습니다.
-- `Completion Mode: design-only`가 아니므로 설계 문서 정리만으로 닫지 않습니다.
+- `Completion Mode`는 `functional`이므로 설계 문서 정리만으로 닫지 않습니다.
 
 ## Risks / Open Questions
 
@@ -78,4 +90,4 @@
 - 2026-04-10: task 문서 생성.
 - 2026-04-10: raw preservation first 원칙으로 WBS를 정리.
 - 2026-04-10: 첫 source sample에서 raw 저장과 normalized event 저장의 기본 경로를 확인.
-- 2026-04-13: 기능 단위 완료 기준과 completion guardrails 예시를 추가.
+- 2026-04-13: completion mode notes와 completion evidence 예시를 추가.

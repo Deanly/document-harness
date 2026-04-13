@@ -18,24 +18,103 @@
 
 즉 "큰 목표를 작은 task로 나눴다"는 사실만으로 기존 항목을 완료 처리할 수 없습니다.
 
-## Completion Modes
+## Mode Selection Rule
 
 기본 `Completion Mode`는 `functional`입니다.
 
-- `functional`: 하나의 기능 단위, 운영 경계, delivery boundary가 실제로 닫혀야 합니다.
-- `design-only`: 예외적으로 설계 산출물 자체를 authoritative truth로 고정하는 경우만 허용합니다.
+- `Completion Mode`는 "무엇이 닫히면 끝인가"를 적는 terminal condition입니다.
+- `Completion Mode`는 `docs/guide/goal-locked-completion.md`에 정의된 지원 mode 중 하나여야 합니다.
+- 대부분의 `project`와 `task`는 `functional`이 맞습니다.
+- 기본값이 아닌 mode를 쓰려면 왜 그 mode가 맞는지와 어떤 evidence가 필요한지를 문서에 적습니다.
+- 종료 조건이 바뀌어 mode를 바꿔야 한다면 기존 문서는 `superseded` 또는 `cancelled`로 닫고 새 문서를 발급합니다.
+- 이미 발급된 `functional` 문서를 뒤늦게 더 약한 mode로 바꿔 닫지 않습니다.
 
-기본값을 벗어나야 한다면 문서 발급 시점에 먼저 적습니다. 발급 후에 `functional` 항목을 뒤늦게 `design-only`로 재해석하지 않습니다.
+## Supported Completion Modes
 
-## Functional Unit Test
+### `functional`
 
-`Completion Mode: functional`인 항목은 아래 질문에 답할 수 있어야 합니다.
+- Use when: 하나의 기능 단위, 실행 경계, delivery boundary가 실제로 동작하는지가 종료 조건일 때
+- Done when: 새로운 기능이나 실행 경계가 실제로 닫혀 반복 가능하게 관찰될 때
+- Required evidence: 실행 결과, 샘플 입출력, 상태 변화, 로그, persistence, smoke 또는 acceptance 확인
+- Not enough: 설계 문서, 코드 작성, 테스트 코드 추가만 된 상태
 
-- `done`일 때 무엇이 새로 동작하는가
+### `design-lock`
+
+- Use when: 설계, 계약, 정책, 인터페이스 정의 자체가 이번 항목의 최종 deliverable일 때
+- Done when: authoritative design 문서가 잠기고 후속 구현 경계가 함께 명시될 때
+- Required evidence: 관련 design 링크, 잠긴 규칙 목록, 비범위, 후속 구현 task 또는 project
+- Not enough: 초안 메모, 조사 노트, 미확정 옵션 나열
+
+### `decision-lock`
+
+- Use when: 여러 경쟁안 중 하나를 선택해 공식 기준으로 잠가야 할 때
+- Done when: 선택 이유, 버린 대안, 적용 범위가 기록되고 이해관계자 기준이 정렬될 때
+- Required evidence: decision 기록, 비교 근거, 채택안과 비채택안, 영향 범위
+- Not enough: 의견 수렴 중간 상태, 개인 선호, 비교 없는 결론
+
+### `investigation`
+
+- Use when: 기능 구현보다 먼저 핵심 불확실성, 실패 원인, 현실 제약을 줄이는 것이 목적일 때
+- Done when: 재현 가능한 사실, 배제된 가설, 남은 리스크, 다음 실행 경계가 분명해질 때
+- Required evidence: 재현 절차, 관찰 로그, 샘플, 실패 유형 분류, follow-up 제안
+- Not enough: 추측, 단순 아이디어 목록, 재현 불가능한 관찰
+
+### `integration`
+
+- Use when: 기존 시스템, 서비스, 모듈, boundary 사이의 연결 성립 자체가 목표일 때
+- Done when: 인터페이스 handshake와 데이터 또는 제어 흐름 연결이 실제로 검증될 때
+- Required evidence: 연결 로그, contract match, 샘플 request/response, end-to-end trace
+- Not enough: adapter 코드만 작성, mock 기반 부분 검증만 수행
+
+### `migration`
+
+- Use when: 데이터, 트래픽, 운영 책임을 source에서 target으로 옮기는 것이 목표일 때
+- Done when: cutover 또는 backfill이 끝나고 정합성, 잔여량, rollback 기준이 확인될 때
+- Required evidence: reconciliation 결과, migration 로그, 대상 시스템 상태, 잔여 작업 목록
+- Not enough: 마이그레이션 스크립트 준비, 일부 샘플만 이동, cutover 계획만 작성
+
+### `operational-baseline`
+
+- Use when: 기능 구현보다 운영 가능 상태 확보가 종료 조건일 때
+- Done when: runbook, ownership, alert, 대응 기준, rollback 또는 fallback 경로가 실제로 유효할 때
+- Required evidence: runbook 링크, alert 확인, 권한 또는 ownership 명시, 운영 drill 또는 검증 결과
+- Not enough: 운영 문서 초안, 담당자 미정, alert 미검증 상태
+
+### `remediation`
+
+- Use when: 버그, 사고 원인, 보안/운영 위험을 제거하고 재발 방지까지 넣는 것이 목표일 때
+- Done when: 문제 재현이 막히고, fix와 guardrail이 함께 들어가며, residual risk가 명시될 때
+- Required evidence: before/after 재현 결과, 테스트 또는 검증 로그, 추가 guardrail, 남은 리스크 기록
+- Not enough: 임시 우회, 증상만 가린 patch, 재발 방지 없는 수정
+
+### `decommission`
+
+- Use when: 기존 기능, 시스템, 운영 경로를 안전하게 제거하는 것이 목표일 때
+- Done when: 트래픽과 의존성이 제거되고, 잔존 참조와 rollback 조건이 정리될 때
+- Required evidence: usage 0 확인, dependency 제거, 제거 로그, 운영 영향 확인
+- Not enough: 코드만 삭제, 사용 여부 미확인, 외부 참조 미정리 상태
+
+## Unsupported Pseudo-Modes
+
+아래는 completion mode가 아니라 work phase이므로 지원하지 않습니다.
+
+- `implementation-only`
+- `test-only`
+- `documentation-only`
+- `analysis-only`
+
+이런 이름을 허용하면 다시 "일부 단계만 끝났으니 done"이라는 loophole가 열립니다.
+
+## Mode Sanity Test
+
+선택한 `Completion Mode`가 맞는지 아래 질문으로 점검합니다.
+
+- `done`일 때 정확히 무엇이 닫히는가
 - 누가 그 결과를 관찰하거나 사용할 수 있는가
-- 어떤 evidence로 닫힘을 입증할 수 있는가
+- 어떤 evidence가 있어야 그 닫힘을 입증할 수 있는가
+- 무엇만으로는 아직 `done`이 아닌가
 
-답이 "설계 문서가 생긴다"뿐이라면, 그 항목은 보통 `task`나 `project`가 아니라 `design` 또는 `guide`여야 합니다. 정말로 설계 자체를 닫아야 한다면 처음부터 `design-only` 예외를 명시합니다.
+답이 불분명하면 mode 선택이 잘못되었거나, 아직 `project`나 `task`를 발급할 시점이 아닐 수 있습니다.
 
 ## Splitting Rules
 
@@ -46,15 +125,7 @@
 - 후속 문서를 발급했더라도 현재 문서의 핵심 목표가 남아 있다면 현재 문서는 계속 `active` 또는 `blocked`입니다.
 - 기존 문서가 잘못 발급되어 경계를 다시 잡아야 한다면 기존 문서는 `superseded`로 닫고, 대체 문서를 명시합니다.
 
-## Design-Only Exception
-
-`design-only`는 아래 조건을 모두 만족할 때만 씁니다.
-
-- 설계 문서, 계약, 정책, 인터페이스 정의 자체가 이번 항목의 최종 deliverable입니다.
-- 무엇이 authoritative truth로 잠기는지 명확합니다.
-- 후속 구현 또는 운영 task가 별도로 이어질 것을 문서에 적습니다.
-
-설계 초안만 작성했거나 조사만 했다는 이유로 `functional` 항목을 `done` 처리하지 않습니다.
+분할이나 재발급은 WBS 정리 수단이지 mode downgrade 수단이 아닙니다.
 
 ## Done Checklist
 
@@ -62,9 +133,9 @@
 
 - 발급 시점의 Purpose가 그대로 달성되었는가
 - 필수 Scope가 실제로 닫혔는가
-- `functional` 항목이라면 실제 동작 evidence가 있는가
+- 선택한 `Completion Mode`가 요구하는 evidence가 있는가
 - 남은 핵심 목표를 후속 문서로 넘긴 뒤 현재 문서를 `done`으로 위장하지 않았는가
-- `design-only` 예외라면 authoritative design 문서와 후속 구현 경계가 함께 기록되었는가
+- mode가 `functional`이 아니라면 authoritative artifact 또는 closed state가 명시되어 있는가
 
 하나라도 아니면 `done`이 아닙니다.
 
@@ -77,4 +148,4 @@
 
 ## Change Log
 
-- 2026-04-13: goal lock, 기능 단위 기본값, design-only 예외, `done` 체크리스트 규칙 추가.
+- 2026-04-13: goal lock, completion mode catalog, unsupported pseudo-mode, `done` 체크리스트 규칙 추가.
