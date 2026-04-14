@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-13
+- Updated: 2026-04-14
 
 ## Purpose
 
@@ -75,6 +75,7 @@
 좋은 `task`는 아래를 만족합니다.
 
 - 선택한 `Completion Mode` 기준으로 하나의 종료 상태를 닫는 독립 목적이 있다.
+- whole-system anchor가 있어 현재 task가 전체 시스템에서 무엇을 보존하는지 설명할 수 있다.
 - 완료 기준이 검증 가능하다.
 - 설계 문서와 연결된다.
 - 너무 크지 않아 Status와 WBS가 실제 진행을 설명할 수 있다.
@@ -95,6 +96,17 @@
 - 기존 `task`가 잘못 발급되었다고 판단되면 새 문서를 발급하되, 기존 문서는 `done`이 아니라 `superseded`로 닫습니다.
 
 후속 문서로 남은 핵심 목표를 넘겼다는 사실 자체는 현재 문서를 `done`으로 만들지 않습니다.
+
+## Whole-System Anchor Rule
+
+`project`와 `task`는 부분 작업 문서이므로, 발급 시 아래를 함께 적어야 합니다.
+
+- `Related Control Plane`
+- `Whole-System Anchor`
+- `Outputs / Handoff`
+- `Quality Axes In Scope`
+
+이 네 가지가 없으면 부분 작업은 전체와 분리된 local memo가 되기 쉽습니다.
 
 ## Non-Functional Mode Rule
 
@@ -142,6 +154,7 @@ project나 task를 닫을 때는 종료 기준이 필요합니다.
 
 - 발급 시점의 Purpose가 그대로 달성되었는가
 - 필수 Scope가 실제로 닫혔는가
+- whole-system anchor를 깨지 않고 필요한 outputs / handoff를 남겼는가
 - 선택한 `Completion Mode`가 요구하는 evidence가 있는가
 - 남은 핵심 목표를 후속 문서로 넘긴 뒤 `done`으로 위장하지 않았는가
 
@@ -161,3 +174,4 @@ Status와 완료 판단에는 가능하면 아래를 남깁니다.
 
 - 2026-04-10: 프로젝트 분할, task slicing, gate-driven execution 규칙 정리.
 - 2026-04-13: goal lock, completion mode catalog, non-functional mode 규칙 추가.
+- 2026-04-14: whole-system anchor, handoff, quality axes 요구사항 추가.

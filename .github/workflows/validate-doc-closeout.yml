@@ -1,0 +1,24 @@
+name: validate-doc-closeout
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate live docs
+        run: bash docs/bin/validate-closeout.sh --all
+
+      - name: Validate harness foundation
+        run: bash docs/bin/validate-harness-foundation.sh
+
+      - name: Validate example docs
+        run: |
+          bash docs/bin/validate-closeout.sh docs/examples/T0001-bootstrap-source-ingest.md
+          bash docs/bin/validate-closeout.sh docs/examples/P0001-example-invoice-ingestion.md

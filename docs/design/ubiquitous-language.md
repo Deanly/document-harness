@@ -4,9 +4,10 @@
 - Domain: ubiquitous-language
 - Owner:
 - Created: 2026-04-10
-- Updated: 2026-04-10
+- Updated: 2026-04-14
 - Referenced By:
   - `docs/README.md`
+  - `docs/design/control-plane.md`
 
 ## Purpose
 
@@ -15,6 +16,8 @@
 새로운 `design` 문서가 추가되거나 기존 설계에서 핵심 개념, 상태, 경계가 바뀌면 같은 변경 셋에서 이 문서도 함께 갱신합니다.
 
 placeholder 대신 채워진 예시가 필요하면 `docs/examples/README.md`를 먼저 봅니다.
+
+이 문서는 `docs/design/control-plane.md`와 함께 whole-system control surface를 이룹니다.
 
 ## Maintenance Rule
 
@@ -106,3 +109,4 @@ downstream에 전달하거나 이후 단계가 소비하는 구조화 결과를 
 ## Change Log
 
 - 2026-04-10: 하네스 starter 문서 생성.
+- 2026-04-14: control-plane과의 whole-system control surface 연결 규칙 추가.

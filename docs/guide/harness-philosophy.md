@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-13
+- Updated: 2026-04-14
 - Source: reference docs lineage
 
 ## Purpose
@@ -64,13 +64,23 @@
 
 즉 mode는 진행 단계가 아니라 terminal condition이어야 합니다.
 
-### 5. Scope Is Stronger When Out Of Scope Is Explicit
+### 5. Whole-System Control Needs A Canonical Surface
+
+규모가 커질수록 전체를 붙잡는 문서가 여러 개로 찢어지면 빠르게 흐려집니다.
+
+- `control-plane`은 전체 목표, pipeline, validator, active surface를 한 곳에 묶습니다.
+- 개별 `design`은 각 boundary의 truth를 붙잡습니다.
+- `project`와 `task`는 이 whole-system surface를 anchor로 읽어야 합니다.
+
+즉 설계 문서는 여러 개일 수 있어도, 전체 정렬면은 하나가 필요합니다.
+
+### 6. Scope Is Stronger When Out Of Scope Is Explicit
 
 원본 문서들은 범위만 적지 않습니다. 항상 제외 범위를 적어 문서의 의도를 선명하게 만듭니다.
 
 이 습관은 과잉 일반화와 요구사항 확장을 막습니다.
 
-### 6. Terms Must Be Canonical
+### 7. Terms Must Be Canonical
 
 원본 문서군은 `ubiquitous-language`를 별도 design surface로 둡니다.
 
@@ -80,7 +90,7 @@
 - 새로운 경계나 상태가 생기면 design과 같은 변경 셋에서 용어를 갱신한다.
 - guide와 task도 이 용어를 우선 사용한다.
 
-### 7. Evidence Beats Vague Progress
+### 8. Evidence Beats Vague Progress
 
 강한 상태 이력은 "작업 중", "완료 예정" 같은 표현이 아니라 아래를 씁니다.
 
@@ -90,7 +100,7 @@
 
 즉 진행률은 감정이 아니라 증빙과 연결됩니다.
 
-### 8. Delivery Should Be Gate-Driven
+### 9. Delivery Should Be Gate-Driven
 
 원본 문서들은 순서가 중요한 작업에서 gate를 명시합니다.
 
@@ -102,7 +112,7 @@
 
 이 구조는 병렬화 가능한 일과 그렇지 않은 일을 구분하게 만듭니다.
 
-### 9. v1 Scope Should Be Intentionally Narrow
+### 10. v1 Scope Should Be Intentionally Narrow
 
 원본 문서군은 v1에서 하지 않을 일을 적극적으로 적습니다.
 
@@ -112,7 +122,15 @@
 - 후속 경계가 자연스럽게 별도 project로 분리됩니다.
 - 문서가 미래 희망사항을 현재 책임처럼 말하지 않게 됩니다.
 
-### 10. Guide Documents Carry Operational Judgment
+### 11. Quality Axes Make Review Repeatable
+
+강한 하네스는 review 언어도 고정합니다.
+
+- `quality axes`는 무엇을 좋다고 볼지 반복 가능한 언어로 만듭니다.
+- 부분 작업은 모든 축을 다 책임지지 않더라도, 자신이 책임지는 축은 명시해야 합니다.
+- closeout evidence도 축 기준으로 모을 수 있어야 합니다.
+
+### 12. Guide Documents Carry Operational Judgment
 
 가이드는 설계의 중복본이 아닙니다.
 
@@ -130,6 +148,7 @@
 - 첫 단락에서 목적을 곧바로 말합니다.
 - Scope와 Out Of Scope를 모두 씁니다.
 - References를 통해 문서를 고립시키지 않습니다.
+- whole-system anchor와 handoff를 적어 부분 문서를 control-plane과 연결합니다.
 - WBS는 현재 상태를 반영하지만, Status는 append-only로 남깁니다.
 - Completion Criteria와 Exit Criteria를 써서 "끝"의 정의를 고정합니다.
 - design에는 Invariants, Interfaces, Decisions를 넣어 구현 기준을 명확히 합니다.
@@ -142,6 +161,7 @@
 - task 없는 project WBS를 오래 방치하지 않습니다.
 - 완료 판단을 증빙 없이 선언하지 않습니다.
 - completion mode 자리에 work phase 이름을 넣지 않습니다.
+- whole-system anchor 없는 task/project를 local memo처럼 닫지 않습니다.
 - 발급 시점의 목표를 더 작은 하위 조각으로 줄여 `done` 처리하지 않습니다.
 - 아직 잠기지 않은 후속 시스템을 현재 프로젝트 범위로 끌어오지 않습니다.
 - 같은 대상을 문서마다 다른 이름으로 부르지 않습니다.
@@ -150,9 +170,9 @@
 
 이 하네스를 새 프로젝트에 복사한 뒤에는 아래를 가장 먼저 합니다.
 
-1. `docs/design/ubiquitous-language.md`를 실제 도메인 용어로 채웁니다.
-2. 첫 `project` 문서에서 목적, 범위, 비범위를 고정합니다.
-3. 설계 기준이 생기면 `design` 문서를 만들고 같은 변경 셋에서 용어 문서를 갱신합니다.
+1. `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 실제 기준으로 채웁니다.
+2. 첫 `project` 문서에서 목적, 범위, 비범위, whole-system anchor를 고정합니다.
+3. 설계 기준이 생기면 `design` 문서를 만들고 같은 변경 셋에서 control-plane과 용어 문서를 갱신합니다.
 4. 실제 작업은 지원되는 `Completion Mode`를 선택한 `task`로 쪼개고, project WBS와 1:1 대응시킵니다. 대부분의 경우 기본값은 `functional`입니다.
 5. 자주 흔들리는 판단이 생기면 `guide`로 승격합니다.
 
@@ -160,3 +180,4 @@
 
 - 2026-04-10: 참조 문서군 분석을 바탕으로 재사용 가능한 문서 철학 정리.
 - 2026-04-13: goal lock, completion mode catalog, terminal-condition 원칙 반영.
+- 2026-04-14: control-plane, whole-system anchor, quality axes 원칙 반영.

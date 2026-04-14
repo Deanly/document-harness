@@ -4,14 +4,20 @@
 - Domain: invoice-event-ingestion
 - Owner: platform-team
 - Created: 2026-04-10
-- Updated: 2026-04-10
+- Updated: 2026-04-14
 - Referenced By:
+  - `docs/examples/control-plane.md`
   - `docs/examples/P0001-example-invoice-ingestion.md`
   - `docs/examples/T0001-bootstrap-source-ingest.md`
 
 ## Context
 
 이 설계는 인보이스 후보 입력을 수집하고, 원문을 보존한 뒤, downstream 정산 시스템이 소비할 수 있는 `invoice event`로 정규화하는 최소 ingestion boundary를 정의합니다.
+
+## Whole-System Role
+
+- 이 설계는 `control-plane.md`의 전체 목표 중 raw preservation, normalized event, failure preservation contract를 붙잡습니다.
+- `project`와 `task`가 부분 작업에 집중하더라도 전체 ingestion boundary를 잃지 않게 만드는 기준면입니다.
 
 ## Boundary
 
@@ -45,6 +51,12 @@
 - 동일 원문은 deterministic ID로 중복 저장을 막습니다.
 - 정규화 실패는 drop하지 않고 `FailureRecord`로 보존합니다.
 
+## Failure Boundaries
+
+- fetch 실패는 ingest cycle을 실패로 표시하되 source metadata와 함께 보존합니다.
+- normalization 실패는 `FailureRecord`로 남기고 raw 보존 자체는 유지합니다.
+- downstream publish 실패는 raw와 normalized 결과를 지운 채 조용히 끝내지 않습니다.
+
 ## Interfaces
 
 - 내부 인터페이스
@@ -58,6 +70,18 @@
 - 입력/출력 계약
   - 입력은 raw payload와 source metadata를 포함합니다.
   - 출력은 `invoice_event.v1` schema를 따릅니다.
+
+## Artifact Contracts
+
+- 이 설계는 `RawInvoiceRecord`, `InvoiceEvent`, `FailureRecord`가 authoritative model임을 잠급니다.
+- `P0001-example-invoice-ingestion.md`와 `T0001-bootstrap-source-ingest.md`는 이 설계를 whole-system anchor의 일부로 읽습니다.
+- 이 설계가 바뀌면 `control-plane.md`, project/task 문서, 관련 guide를 함께 갱신합니다.
+
+## Quality Axes
+
+- `WHOLE`: raw preservation, normalized event, failure preservation 세 경계를 함께 유지합니다.
+- `CONTRACT`: `invoice_event.v1` contract와 raw store contract를 설계 truth로 고정합니다.
+- `HANDOFF`: downstream settlement queue로 넘기는 결과 구조를 분명하게 정의합니다.
 
 ## Decisions
 
@@ -74,3 +98,4 @@
 
 - 2026-04-10: example design 문서 생성.
 - 2026-04-10: raw preservation, normalized event, failure preservation 경계를 고정.
+- 2026-04-14: whole-system role, artifact contracts, quality axes 예시를 추가.

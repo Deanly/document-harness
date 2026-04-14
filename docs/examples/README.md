@@ -10,6 +10,7 @@
 
 ## Included Examples
 
+- `control-plane.md`: control-plane 예시
 - `P0001-example-invoice-ingestion.md`: project 예시
 - `T0001-bootstrap-source-ingest.md`: task 예시
 - `invoice-event-ingestion.md`: design 예시
@@ -17,7 +18,8 @@
 
 ## Reading Order
 
-1. `invoice-event-ingestion.md`
-2. `P0001-example-invoice-ingestion.md`
-3. `T0001-bootstrap-source-ingest.md`
-4. `runtime-and-gates-guide.md`
+1. `control-plane.md`
+2. `invoice-event-ingestion.md`
+3. `P0001-example-invoice-ingestion.md`
+4. `T0001-bootstrap-source-ingest.md`
+5. `runtime-and-gates-guide.md`

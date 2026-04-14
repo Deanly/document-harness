@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-13
-- Updated: 2026-04-13
+- Updated: 2026-04-14
 
 ## Purpose
 
@@ -17,6 +17,17 @@
 - 원래 목표가 바뀌었다면 `done`이 아니라 `superseded` 또는 `cancelled`여야 합니다.
 
 즉 "큰 목표를 작은 task로 나눴다"는 사실만으로 기존 항목을 완료 처리할 수 없습니다.
+
+## Why Early Closure Happens
+
+조기 종료는 보통 아래 실패 모드에서 발생합니다.
+
+- 에이전트가 내부 WBS를 완료 계약 자체로 오해합니다.
+- `done`이 검증 명령이 아니라 메타데이터 한 줄로 취급됩니다.
+- `Purpose`, `Committed Outcome`, `Completion Criteria`가 자유 서술이라 문서 안에서 다시 확인되지 않습니다.
+- 후속 `task`나 `project` 발급을 기존 문서 완료의 근거로 잘못 해석합니다.
+
+이 문제를 막으려면 발급 시점 목표를 별도 목록으로 잠그고, 닫을 때 그 목록을 다시 검증하는 기계적 게이트가 필요합니다.
 
 ## Mode Selection Rule
 
@@ -116,6 +127,48 @@
 
 답이 불분명하면 mode 선택이 잘못되었거나, 아직 `project`나 `task`를 발급할 시점이 아닐 수 있습니다.
 
+## Goal Inventory Rule
+
+모든 `task`와 `project`는 발급 시점 목표를 `Goal Inventory` 섹션에 별도 행으로 잠급니다.
+
+- `Goal ID`는 `G1`, `G2`, `G3` 형식으로 씁니다.
+- 각 행은 "이번 문서가 닫히려면 반드시 성립해야 하는 목표 하나"를 적습니다.
+- `Goal ID`는 후속 분해나 WBS 변경이 생겨도 바꾸지 않습니다.
+- WBS는 실행 계획이지만 `Goal Inventory`는 완료 계약입니다.
+
+즉 WBS를 더 쪼개는 것은 허용되지만, `Goal Inventory`를 더 작게 바꿔서 완료 기준을 낮추면 안 됩니다.
+
+## Goal Verification Rule
+
+모든 `task`와 `project`는 `Goal Verification` 섹션에서 `Goal Inventory`의 각 `Goal ID`를 1:1로 다시 검증합니다.
+
+- `Status`는 `Pending`, `In Progress`, `Done`, `Blocked`, `Cancelled`, `Superseded`, `N/A` 중 하나를 씁니다.
+- `Evidence`에는 그 goal이 닫혔음을 입증하는 로그, 문서, 상태 변화, 링크를 적습니다.
+- 문서가 `done`이면 모든 goal의 `Status`는 `Done`이어야 합니다.
+- 문서가 `done`이면 모든 goal의 `Evidence`는 비어 있으면 안 됩니다.
+
+이 표는 사람이 "대충 다 한 것 같다"고 느끼는 상태를 막고, 문서에 적힌 목표를 하나씩 다시 보게 만드는 강제 장치입니다.
+
+## Mechanical Closeout Gate
+
+`done` 전환은 아래 순서를 따라야 합니다.
+
+1. `Goal Inventory`가 발급 시점 목표를 모두 포함하는지 확인합니다.
+2. `Goal Verification`이 같은 `Goal ID`를 1:1로 가지고 있는지 확인합니다.
+3. 각 goal의 `Evidence`를 채웁니다.
+4. `./docs/bin/validate-closeout.sh <doc-path>`를 실행합니다.
+5. 통과하면 `./docs/bin/close-doc.sh <doc-path> "<note>"`로 닫습니다.
+
+이 과정을 우회해 메타데이터만 `done`으로 바꾸지 않습니다.
+
+## CI And Hook Enforcement
+
+문서 원칙만으로는 약합니다. 진짜 강제는 검증 명령을 자동으로 돌릴 때 생깁니다.
+
+- 로컬에서는 `./docs/bin/close-doc.sh`가 닫기 전 검증을 먼저 수행합니다.
+- 저장소에서는 `./docs/bin/validate-closeout.sh --all`을 CI나 pre-push hook에 연결합니다.
+- 이 저장소에는 GitHub Actions workflow 예시를 포함해 PR과 push에서 다시 확인할 수 있게 합니다.
+
 ## Splitting Rules
 
 분할은 실행 통제를 위한 것이지 완료 기준 축소를 위한 것이 아닙니다.
@@ -133,6 +186,8 @@
 
 - 발급 시점의 Purpose가 그대로 달성되었는가
 - 필수 Scope가 실제로 닫혔는가
+- `Related Control Plane`, `Whole-System Anchor`, `Outputs / Handoff`, `Quality Axes In Scope`가 채워져 있는가
+- `Goal Inventory`의 각 goal이 `Goal Verification`에서 다시 확인되었는가
 - 선택한 `Completion Mode`가 요구하는 evidence가 있는가
 - 남은 핵심 목표를 후속 문서로 넘긴 뒤 현재 문서를 `done`으로 위장하지 않았는가
 - mode가 `functional`이 아니라면 authoritative artifact 또는 closed state가 명시되어 있는가
@@ -148,4 +203,4 @@
 
 ## Change Log
 
-- 2026-04-13: goal lock, completion mode catalog, unsupported pseudo-mode, `done` 체크리스트 규칙 추가.
+- 2026-04-14: goal lock, goal inventory / verification gate, unsupported pseudo-mode, `done` 체크리스트 규칙 추가.
