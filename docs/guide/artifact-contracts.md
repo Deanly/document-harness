@@ -43,7 +43,7 @@
 
 - Holds: bounded delivery 목표, 범위, task map, whole-system anchor, handoff 방향
 - Reads: control-plane, design, quality axes
-- Feeds: task, report, 후속 project
+- Feeds: task, report, 예외 branch project
 - Must not hold: 미확정 브레인스토밍, 설계 truth의 원본
 
 ### `task`

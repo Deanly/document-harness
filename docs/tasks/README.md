@@ -5,6 +5,7 @@
 ## Rules
 
 - `Status: active` 인 문서만 적습니다.
+- 가능하면 각 task가 어느 umbrella project에 속하는지 함께 적습니다.
 - 각 항목은 링크, 한 줄 설명, `Updated` 날짜만 남깁니다.
 - 문서를 닫으면 이 목록에서 제거하고 본문 `Status` 이력에 종료 근거를 남깁니다.
 

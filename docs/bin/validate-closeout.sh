@@ -13,6 +13,8 @@ Usage:
 Rules:
   - Only task/project docs are validated.
   - Related Control Plane must be present.
+  - Tasks must declare Related Umbrella Project and Task Placement Check.
+  - Projects must declare Project Role, Umbrella Initiative, Parent Umbrella Project, Umbrella Lineage, and Project Issuance Check.
   - Whole-System Anchor, Outputs / Handoff, Quality Axes In Scope must exist.
   - Goal Inventory and Goal Verification must both exist.
   - Goal IDs must match 1:1 between both sections.
@@ -80,8 +82,28 @@ validate_file() {
       next
     }
 
+    /^- Project Role: / {
+      project_role = trim(substr($0, length("- Project Role: ") + 1))
+      next
+    }
+
+    /^- Umbrella Initiative: / {
+      umbrella_initiative = trim(substr($0, length("- Umbrella Initiative: ") + 1))
+      next
+    }
+
+    /^- Parent Umbrella Project: / {
+      parent_umbrella_project = trim(substr($0, length("- Parent Umbrella Project: ") + 1))
+      next
+    }
+
     /^- Related Control Plane: / {
       related_control_plane = trim(substr($0, length("- Related Control Plane: ") + 1))
+      next
+    }
+
+    /^- Related Umbrella Project: / {
+      related_umbrella_project = trim(substr($0, length("- Related Umbrella Project: ") + 1))
       next
     }
 
@@ -211,10 +233,43 @@ validate_file() {
 
       if (type == "task") {
         required_sections["## Completion Criteria"] = 1
+        required_sections["## Task Placement Check"] = 1
+      }
+
+      if (type == "task" && related_umbrella_project == "") {
+        push_error("missing Related Umbrella Project metadata")
       }
 
       if (type == "project") {
         required_sections["## Exit Criteria"] = 1
+        required_sections["## Umbrella Lineage"] = 1
+        required_sections["## Project Issuance Check"] = 1
+      }
+
+      if (type == "project" && project_role == "") {
+        push_error("missing Project Role metadata")
+      }
+
+      if (type == "project" && umbrella_initiative == "") {
+        push_error("missing Umbrella Initiative metadata")
+      }
+
+      if (type == "project" && parent_umbrella_project == "") {
+        push_error("missing Parent Umbrella Project metadata")
+      }
+
+      if (type == "project" && project_role != "") {
+        if (project_role != "umbrella" && project_role != "exception-branch") {
+          push_error("unsupported Project Role: " project_role)
+        }
+
+        if (project_role == "umbrella" && parent_umbrella_project != "self") {
+          push_error("umbrella project must use Parent Umbrella Project: self")
+        }
+
+        if (project_role == "exception-branch" && (parent_umbrella_project == "" || parent_umbrella_project == "self")) {
+          push_error("exception-branch project must reference a parent umbrella project")
+        }
       }
 
       for (header in required_sections) {

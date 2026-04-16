@@ -100,7 +100,7 @@ downstream에 전달하거나 이후 단계가 소비하는 구조화 결과를 
 
 ### `future subsystem`
 
-후속 프로젝트나 별도 경계로 넘길 시스템을 적습니다.
+후속 `task` 또는 예외 branch `project`, 다른 별도 경계로 넘길 시스템을 적습니다.
 
 ### `final truth`
 

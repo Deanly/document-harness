@@ -6,14 +6,20 @@
 - Completion Mode: functional
 - Owner: platform-team
 - Created: 2026-04-10
-- Updated: 2026-04-14
+- Updated: 2026-04-16
 - Related Control Plane: control-plane
+- Related Umbrella Project: P0001-example-invoice-ingestion
 - Related Project: P0001-example-invoice-ingestion
 - Related Design: invoice-event-ingestion
 
 ## Purpose
 
 이 task의 목적은 첫 입력 소스로부터 인보이스 후보를 읽고, 원문과 정규화 결과를 함께 남기는 최소 ingest cycle을 구현하는 것입니다.
+
+## Task Placement Check
+
+- 이 작업은 example invoice ingestion initiative의 첫 실행 slice이므로 기존 umbrella project 아래의 `task`가 맞습니다.
+- human-facing initiative owner를 새로 만들 필요가 없고, completion mode와 owner도 기존 umbrella와 동일하므로 별도 `project`로 분리하지 않습니다.
 
 ## Whole-System Anchor
 
@@ -137,3 +143,4 @@
 - 2026-04-10: raw preservation first 원칙으로 WBS를 정리.
 - 2026-04-10: 첫 source sample에서 raw 저장과 normalized event 저장의 기본 경로를 확인.
 - 2026-04-14: whole-system anchor, goal inventory, handoff, quality axes 예시를 추가.
+- 2026-04-16: related umbrella project와 task placement check 예시를 추가.

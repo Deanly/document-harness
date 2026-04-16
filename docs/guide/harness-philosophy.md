@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-14
+- Updated: 2026-04-16
 - Source: reference docs lineage
 
 ## Purpose
@@ -74,13 +74,24 @@
 
 즉 설계 문서는 여러 개일 수 있어도, 전체 정렬면은 하나가 필요합니다.
 
-### 6. Scope Is Stronger When Out Of Scope Is Explicit
+### 6. Human-Facing Lineage Needs A Default Owner
+
+bounded를 잘 자르는 것만으로는 충분하지 않습니다. human이 보는 initiative가 여러 `project`로 쉽게 갈라지면, 전체는 다시 읽기 어려워집니다.
+
+- human-facing initiative는 기본적으로 umbrella `project` 1개로 유지합니다.
+- 실제 실행은 그 umbrella 아래 `task`로 분해합니다.
+- task로 담길 수 있는 분화를 새 `project`로 올리면 lineage가 불필요하게 찢어집니다.
+- 새 `project`는 explicit split, 본질적 completion mode 분리, owner/운영 검증 체계 분리 같은 예외일 때만 허용합니다.
+
+즉 좋은 bounded slicing은 "작게 나눈다"가 아니라 "human-facing owner는 유지한 채 실행만 잘게 나눈다"에 가깝습니다.
+
+### 7. Scope Is Stronger When Out Of Scope Is Explicit
 
 원본 문서들은 범위만 적지 않습니다. 항상 제외 범위를 적어 문서의 의도를 선명하게 만듭니다.
 
 이 습관은 과잉 일반화와 요구사항 확장을 막습니다.
 
-### 7. Terms Must Be Canonical
+### 8. Terms Must Be Canonical
 
 원본 문서군은 `ubiquitous-language`를 별도 design surface로 둡니다.
 
@@ -90,7 +101,7 @@
 - 새로운 경계나 상태가 생기면 design과 같은 변경 셋에서 용어를 갱신한다.
 - guide와 task도 이 용어를 우선 사용한다.
 
-### 8. Evidence Beats Vague Progress
+### 9. Evidence Beats Vague Progress
 
 강한 상태 이력은 "작업 중", "완료 예정" 같은 표현이 아니라 아래를 씁니다.
 
@@ -100,7 +111,7 @@
 
 즉 진행률은 감정이 아니라 증빙과 연결됩니다.
 
-### 9. Delivery Should Be Gate-Driven
+### 10. Delivery Should Be Gate-Driven
 
 원본 문서들은 순서가 중요한 작업에서 gate를 명시합니다.
 
@@ -112,17 +123,17 @@
 
 이 구조는 병렬화 가능한 일과 그렇지 않은 일을 구분하게 만듭니다.
 
-### 10. v1 Scope Should Be Intentionally Narrow
+### 11. v1 Scope Should Be Intentionally Narrow
 
 원본 문서군은 v1에서 하지 않을 일을 적극적으로 적습니다.
 
 좋은 이유:
 
 - 지금 당장 필요한 truth만 잠글 수 있습니다.
-- 후속 경계가 자연스럽게 별도 project로 분리됩니다.
+- 후속 경계가 생겨도 먼저 같은 umbrella 아래 `task`로 수용할 수 있고, 정말 필요할 때만 예외 `project`로 분리할 수 있습니다.
 - 문서가 미래 희망사항을 현재 책임처럼 말하지 않게 됩니다.
 
-### 11. Quality Axes Make Review Repeatable
+### 12. Quality Axes Make Review Repeatable
 
 강한 하네스는 review 언어도 고정합니다.
 
@@ -130,7 +141,7 @@
 - 부분 작업은 모든 축을 다 책임지지 않더라도, 자신이 책임지는 축은 명시해야 합니다.
 - closeout evidence도 축 기준으로 모을 수 있어야 합니다.
 
-### 12. Guide Documents Carry Operational Judgment
+### 13. Guide Documents Carry Operational Judgment
 
 가이드는 설계의 중복본이 아닙니다.
 
@@ -164,6 +175,7 @@
 - whole-system anchor 없는 task/project를 local memo처럼 닫지 않습니다.
 - 발급 시점의 목표를 더 작은 하위 조각으로 줄여 `done` 처리하지 않습니다.
 - 아직 잠기지 않은 후속 시스템을 현재 프로젝트 범위로 끌어오지 않습니다.
+- task로 담길 수 있는 작은 분화를 새 `project`로 올려 umbrella lineage를 깨지 않습니다.
 - 같은 대상을 문서마다 다른 이름으로 부르지 않습니다.
 
 ## Adoption Rule
@@ -171,13 +183,15 @@
 이 하네스를 새 프로젝트에 복사한 뒤에는 아래를 가장 먼저 합니다.
 
 1. `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 실제 기준으로 채웁니다.
-2. 첫 `project` 문서에서 목적, 범위, 비범위, whole-system anchor를 고정합니다.
+2. 첫 umbrella `project` 문서에서 목적, 범위, 비범위, whole-system anchor를 고정합니다.
 3. 설계 기준이 생기면 `design` 문서를 만들고 같은 변경 셋에서 control-plane과 용어 문서를 갱신합니다.
-4. 실제 작업은 지원되는 `Completion Mode`를 선택한 `task`로 쪼개고, project WBS와 1:1 대응시킵니다. 대부분의 경우 기본값은 `functional`입니다.
-5. 자주 흔들리는 판단이 생기면 `guide`로 승격합니다.
+4. 실제 작업은 먼저 기존 umbrella 아래의 `task`로 쪼개고, project WBS와 1:1 대응시킵니다. 대부분의 경우 기본값은 `functional`입니다.
+5. 새 `project`가 필요하다면 왜 task가 안 되는지와 왜 human에게 별도 project가 더 명확한지를 먼저 남깁니다.
+6. 자주 흔들리는 판단이 생기면 `guide`로 승격합니다.
 
 ## Change Log
 
 - 2026-04-10: 참조 문서군 분석을 바탕으로 재사용 가능한 문서 철학 정리.
 - 2026-04-13: goal lock, completion mode catalog, terminal-condition 원칙 반영.
 - 2026-04-14: control-plane, whole-system anchor, quality axes 원칙 반영.
+- 2026-04-16: umbrella-first lineage와 task-first issuance 원칙 반영.

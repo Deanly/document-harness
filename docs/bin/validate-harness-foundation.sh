@@ -38,6 +38,8 @@ for header in \
   "## Whole-System Outcome" \
   "## Control Surfaces" \
   "## Active Design Surfaces" \
+  "## Umbrella Initiative Policy" \
+  "## Active Umbrella Projects" \
   "## Active Execution Surfaces" \
   "## Standard Pipeline" \
   "## Quality Axes" \

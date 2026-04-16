@@ -8,12 +8,15 @@
 
 이 하네스에서 `design`은 전체를 놓치지 않게 만드는 control surface이고, `project`와 `task`는 부분에 집중하게 만드는 focus surface이며, closeout gate와 validator는 작업 중 목표 이탈을 막는 drift-control surface입니다.
 
+또한 human이 인식하는 하나의 initiative는 기본적으로 umbrella project 1개로 유지하고, 실제 분해는 그 umbrella 아래 `task`로 처리하는 것을 기본 운영 규칙으로 둡니다.
+
 핵심 진입점은 아래와 같습니다.
 
 - `docs/README.md`: 문서 체계, 발급 규칙, 업데이트 규칙
 - `docs/guide/harness-philosophy.md`: 원본 문서군에서 추출한 문서 철학
 - `docs/guide/project-cutting-and-execution.md`: 프로젝트 분할과 실행 게이트 규칙
 - `docs/guide/goal-locked-completion.md`: goal lock, completion mode catalog, required evidence 규칙
+- `docs/guide/umbrella-project-governance.md`: umbrella project default, task-first issuance, 예외 분기 규칙
 - `docs/design/control-plane.md`: 전체 시스템 목표, pipeline, validator, quality axes를 고정하는 central control surface
 - `docs/guide/artifact-contracts.md`: design / project / task / guide / report 간 책임과 handoff 계약
 - `docs/guide/quality-axes.md`: project/task closeout과 review에 쓰는 품질 축
@@ -42,12 +45,13 @@
 새 프로젝트로 복사한 뒤에는 아래 순서를 권장합니다.
 
 1. `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`의 placeholder를 실제 프로젝트 기준으로 교체합니다.
-2. 첫 `project` 문서를 발급합니다.
+2. 첫 umbrella `project` 문서를 발급합니다.
 3. 설계 기준이 필요하면 `design` 문서를 만들고 `control-plane`, `ubiquitous-language`를 같은 변경 셋에서 갱신합니다.
-4. 실제 실행 단위가 생기면 `task` 문서를 발급합니다.
-5. `project`와 `task`는 지원되는 `Completion Mode` 중 하나를 선택하고, whole-system anchor와 quality axes를 명시합니다. 대부분의 경우 기본값인 `functional`을 유지합니다.
-6. `./docs/bin/validate-harness-foundation.sh`로 기본 control surface가 잠겨 있는지 확인합니다.
-7. `done` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.
+4. 실제 실행 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
+5. 예외 조건이 명확할 때만 새 `project`를 발급하고, 왜 task가 아닌지 먼저 남깁니다.
+6. `project`와 `task`는 지원되는 `Completion Mode` 중 하나를 선택하고, whole-system anchor와 quality axes를 명시합니다. 대부분의 경우 기본값인 `functional`을 유지합니다.
+7. `./docs/bin/validate-harness-foundation.sh`로 기본 control surface가 잠겨 있는지 확인합니다.
+8. `done` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.
 
 ## Closeout Gate
 

@@ -9,12 +9,18 @@
 - Updated: {{DATE}}
 - Current Focus:
 - Related Control Plane: docs/design/control-plane.md
+- Related Umbrella Project: P0001-umbrella-project
 - Related Project:
 - Related Design:
 
 ## Purpose
 
 이 task가 해결하려는 목적을 적습니다.
+
+## Task Placement Check
+
+- 왜 이 작업이 기존 umbrella project 아래의 `task`여야 하는지 적습니다.
+- 왜 별도 `project`를 발급하지 않아도 되는지 적습니다.
 
 ## Whole-System Anchor
 
@@ -111,6 +117,7 @@
 - 남은 핵심 목표를 후속 task나 project로 넘겼다면 이 task는 `done`이 아니라 `active`, `blocked`, `superseded`, `cancelled` 중 하나여야 합니다.
 - `done`으로 닫기 전 `Goal Inventory`와 `Goal Verification`을 맞추고 `./docs/bin/validate-closeout.sh`를 통과해야 합니다.
 - `Related Control Plane`, `Whole-System Anchor`, `Outputs / Handoff`, `Quality Axes In Scope` 없이 부분 작업을 고립된 local task처럼 닫지 않습니다.
+- 새 `project`를 만들 수 있는지 먼저 묻지 말고, 왜 이 작업이 기존 umbrella 아래 `task`인지 먼저 정렬합니다.
 - `Completion Mode`는 terminal condition이어야 하며 `implementation-only`, `test-only`, `documentation-only`, `analysis-only` 같은 phase 이름을 쓰지 않습니다.
 
 ## Risks / Open Questions

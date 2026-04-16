@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-14
+- Updated: 2026-04-16
 
 ## Purpose
 
@@ -21,26 +21,51 @@
 
 ## When To Issue A New Project
 
-새 `project`는 아래 중 대부분이 참일 때 발급합니다.
+새 work가 생기면 기본값은 새 `project`가 아니라 기존 umbrella `project` 아래의 새 `task`입니다.
 
-- 새로운 bounded responsibility가 생겼다.
-- 목적을 한 문단으로 분명하게 설명할 수 있다.
-- Scope와 Out Of Scope를 쓸 수 있다.
-- 이후 `task`로 분해 가능한 work surface가 보인다.
-- 기존 project의 연장선이 아니라 별도 종료 기준이 필요하다.
+먼저 아래를 확인합니다.
 
-대표적인 트리거:
+- 기존 umbrella `project`의 새 `task`로 처리 가능한가
+- 기존 umbrella `project`의 WBS와 `Status` 이력 안에서 설명 가능한가
+- human이 봤을 때 같은 initiative의 일부로 읽히는가
+
+셋 중 대부분이 `yes`면 새 `project`가 아니라 새 `task`입니다.
+
+아래 조건 중 하나가 명확할 때만 새 `project`를 허용합니다.
+
+- 사용자가 명시적으로 별도 `project` 분리를 요청한 경우
+- completion mode가 본질적으로 달라 기존 umbrella 아래 `task`로 담기 어려운 경우
+- owner, 운영 검증 체계, handoff 대상이 실질적으로 분리되는 경우
+
+대표적인 예외 트리거:
 
 - runtime/environment phase가 완전히 달라질 때
 - downstream 또는 upstream boundary가 새로 열릴 때
 - 운영 적용 단계가 기존 bootstrap 단계와 다른 성공 기준을 가질 때
 
+## Umbrella Project Default
+
+- human이 인식하는 하나의 product, initiative, workstream은 기본적으로 umbrella `project` 1개로 유지합니다.
+- umbrella `project`는 lineage와 현재 위치를 설명하는 human-facing owner입니다.
+- 실제 실행 단위는 그 umbrella 아래의 bounded `task`로 분해합니다.
+- single-task 성격의 작은 분화는 새 `project`가 아니라 새 `task`입니다.
+
 ## Project Cutting Rules
 
 - project는 기술 스택이 아니라 책임 경계로 자릅니다.
+- 책임 경계가 달라 보여도 human-facing initiative가 같고 task로 담길 수 있으면 기본값은 새 `task`입니다.
 - 구현 준비 단계와 현장 검증 단계의 성공 조건이 다르면 project 분리를 검토합니다.
 - 후속 시스템이 아직 설계되지 않았다면 "다음 project 후보"로만 남기고 현재 project에 포함시키지 않습니다.
 - project 문서의 WBS는 실제 `task` 문서와 1:1 대응시키는 것을 기본으로 합니다.
+
+## New Project Exception Record
+
+새 `project`를 발급하려면 발급 전에 아래 두 문장을 남깁니다.
+
+- 왜 기존 umbrella `project`의 `task`로 처리하면 안 되는지
+- 왜 human 입장에서 별도 `project`가 더 이해하기 쉬운지
+
+이 기록은 `Project Issuance Check` 섹션에 남깁니다.
 
 ## Goal Lock Rule
 
@@ -102,6 +127,7 @@
 `project`와 `task`는 부분 작업 문서이므로, 발급 시 아래를 함께 적어야 합니다.
 
 - `Related Control Plane`
+- `Related Umbrella Project` 또는 `Umbrella Initiative`
 - `Whole-System Anchor`
 - `Outputs / Handoff`
 - `Quality Axes In Scope`
@@ -139,6 +165,16 @@ gate 문서화 규칙:
 - final lock은 선행 gate가 열린 뒤에만 합니다.
 - 운영 baseline은 end-to-end 검증 이전에 실제 적용 기준으로 확정하지 않습니다.
 
+## Execution Start Rule
+
+구현에 들어가기 전에는 최소한 아래를 한 번 정렬합니다.
+
+- active umbrella `project`가 무엇인지
+- active `task`가 무엇인지
+- 이번 작업이 왜 새 `project`가 아니라 해당 umbrella 아래 `task`인지
+
+이 정렬 없이 바로 분해를 시작하면, 실행 중간에 lineage가 쉽게 흔들립니다.
+
 ## Exit Criteria
 
 project나 task를 닫을 때는 종료 기준이 필요합니다.
@@ -148,7 +184,7 @@ project나 task를 닫을 때는 종료 기준이 필요합니다.
 - 실제 검증 관점이다.
 - 증빙 가능한 결과를 요구한다.
 - 단순 구현 완료가 아니라 동작/관찰/기록까지 포함한다.
-- 후속 project로 넘길 잔여 범위를 명시한다.
+- 후속 `task` 또는 예외 `project`로 넘길 잔여 범위를 명시한다.
 
 `done` 전에 아래를 확인합니다.
 
@@ -175,3 +211,4 @@ Status와 완료 판단에는 가능하면 아래를 남깁니다.
 - 2026-04-10: 프로젝트 분할, task slicing, gate-driven execution 규칙 정리.
 - 2026-04-13: goal lock, completion mode catalog, non-functional mode 규칙 추가.
 - 2026-04-14: whole-system anchor, handoff, quality axes 요구사항 추가.
+- 2026-04-16: umbrella project default, task-first issuance, exception record 규칙 추가.

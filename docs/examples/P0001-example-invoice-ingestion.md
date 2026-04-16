@@ -3,10 +3,13 @@
 - Type: project
 - Document ID: P0001
 - Status: active
+- Project Role: umbrella
+- Umbrella Initiative: example invoice ingestion
+- Parent Umbrella Project: self
 - Completion Mode: functional
 - Owner: platform-team
 - Created: 2026-04-10
-- Updated: 2026-04-14
+- Updated: 2026-04-16
 - Related Control Plane: control-plane
 - Related Design: invoice-event-ingestion
 
@@ -14,10 +17,21 @@
 
 이 프로젝트의 목적은 공급업체 인보이스 메일을 수집해 원문을 보존하고, downstream 정산 시스템이 소비할 수 있는 `invoice event`로 정규화하는 최소 ingestion 경계를 고정하는 것입니다.
 
+## Umbrella Lineage
+
+- 이 문서는 example invoice ingestion initiative의 human-facing umbrella project입니다.
+- 후속 residue cleanup, operational baseline, parser hardening은 먼저 이 umbrella의 WBS와 status history 안에서 설명합니다.
+- 예외 branch project가 생기더라도 parent owner는 이 문서입니다.
+
+## Project Issuance Check
+
+- 이 문서는 initiative의 첫 human-facing owner이므로 새 `task`가 아니라 umbrella `project`로 발급했습니다.
+- 이후 분화는 먼저 이 문서 아래의 새 `task`로 수용하고, 예외 조건이 분명할 때만 새 `project`를 검토합니다.
+
 ## Whole-System Anchor
 
 - 이 project는 `control-plane.md`의 전체 목표 중 최소 ingestion boundary delivery를 직접 소유합니다.
-- raw preservation, normalized event, downstream handoff의 세 경계가 모두 정렬되어야 하며, 하나라도 후속 project로 넘겨 놓고 `done` 처리하면 안 됩니다.
+- raw preservation, normalized event, downstream handoff의 세 경계가 모두 정렬되어야 하며, 하나라도 후속 `task` 또는 예외 branch `project`로 넘겨 놓고 `done` 처리하면 안 됩니다.
 
 ## Completion Mode Notes
 
@@ -37,7 +51,7 @@
 | --- | --- | --- |
 | G1 | 첫 source ingest path에서 raw preservation과 normalized invoice event 저장이 함께 동작합니다. | 실제 sample 실행에서 raw와 normalized 결과가 함께 확인됩니다. |
 | G2 | downstream queue publish baseline이 이 project 범위 안에서 실행 기준으로 고정됩니다. | queue publish baseline이 설계가 아니라 실행 evidence와 함께 확인됩니다. |
-| G3 | project closeout은 핵심 경계를 후속 project로 넘기지 않은 상태에서만 일어납니다. | 관련 task와 closeout evidence가 현재 project 안에서 정렬됩니다. |
+| G3 | project closeout은 핵심 경계를 후속 `task` 또는 예외 branch `project`로 넘기지 않은 상태에서만 일어납니다. | 관련 task와 closeout evidence가 현재 project 안에서 정렬됩니다. |
 
 ## Scope
 
@@ -85,7 +99,7 @@
 
 1. 첫 source ingest path에서 raw preservation과 normalized event 저장이 실제로 확인됩니다.
 2. downstream queue publish baseline이 현재 project 범위 안에서 설계가 아니라 실행 기준으로 고정됩니다.
-3. 남은 범위가 있더라도 현재 project의 원래 목적을 후속 project로 넘긴 뒤 `done`으로 처리하지 않습니다.
+3. 남은 범위가 있더라도 현재 project의 원래 목적을 후속 `task` 또는 예외 branch `project`로 넘긴 뒤 `done`으로 처리하지 않습니다.
 
 ## Completion Evidence
 
@@ -98,7 +112,7 @@
 
 - 최소 ingestion boundary delivery evidence
 - downstream queue publish baseline과 operator note
-- parser fixture expansion, retry policy 같은 후속 project/task 후보
+- parser fixture expansion, retry policy 같은 후속 `task` 또는 예외 branch `project` 후보
 
 ## Quality Axes In Scope
 
@@ -106,9 +120,9 @@
 | --- | --- | --- |
 | WHOLE | project가 전체 ingestion goal을 delivery boundary로 보존해야 합니다. | control-plane 참조, whole-system anchor |
 | SCOPE | 최소 ingestion boundary를 더 작은 하위 조각으로 축소하면 안 됩니다. | scope / out-of-scope, goal verification |
-| GOAL | 발급된 project goal을 후속 project로 넘겨 위장 closeout 하면 안 됩니다. | goal verification 전부 `Done` |
+| GOAL | 발급된 project goal을 후속 `task` 또는 예외 branch `project`로 넘겨 위장 closeout 하면 안 됩니다. | goal verification 전부 `Done` |
 | EVIDENCE | boundary closeout은 실제 실행 evidence가 있어야 합니다. | source ingest logs, persistence, queue evidence |
-| HANDOFF | 후속 project/task와 downstream operator가 읽을 수 있는 handoff가 있어야 합니다. | outputs / handoff, planned task candidates |
+| HANDOFF | 후속 `task` 또는 예외 branch `project`, downstream operator가 읽을 수 있는 handoff가 있어야 합니다. | outputs / handoff, planned task candidates |
 
 ## Goal Verification
 
@@ -122,7 +136,7 @@
 
 ## Completion Guardrails
 
-- `raw preservation -> normalized event -> delivery baseline` 중 핵심 경계를 후속 project로 넘겼다면 현재 project는 `done`이 아닙니다.
+- `raw preservation -> normalized event -> delivery baseline` 중 핵심 경계를 후속 `task` 또는 예외 branch `project`로 넘겼다면 현재 project는 `done`이 아닙니다.
 - parser fixture expansion 같은 후속 고도화는 별도 범위일 수 있지만, 현재 project의 최소 ingestion boundary는 직접 닫아야 합니다.
 - `Goal Inventory`의 goal이 모두 `Done`으로 검증되기 전에는 이 project를 닫지 않습니다.
 - `Whole-System Anchor`와 `Outputs / Handoff`가 비어 있으면 이 project를 닫지 않습니다.
@@ -134,3 +148,4 @@
 - 2026-04-10: example design과 guide를 기준 문서로 연결.
 - 2026-04-10: 첫 task를 `raw preservation first` 순서로 시작.
 - 2026-04-14: whole-system anchor, goal inventory, handoff, quality axes 예시를 추가.
+- 2026-04-16: umbrella lineage와 project issuance check 예시를 추가.

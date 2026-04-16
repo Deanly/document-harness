@@ -4,7 +4,7 @@
 - Domain: control-plane
 - Owner: platform-team
 - Created: 2026-04-14
-- Updated: 2026-04-14
+- Updated: 2026-04-16
 - Referenced By:
   - `docs/examples/P0001-example-invoice-ingestion.md`
   - `docs/examples/T0001-bootstrap-source-ingest.md`
@@ -44,20 +44,33 @@
 | `control-plane.md` | 전체 목표와 validator 정렬 | Active | |
 | `invoice-event-ingestion.md` | raw preservation / normalized event / failure preservation 경계 고정 | Active | |
 
+## Umbrella Initiative Policy
+
+- example invoice ingestion은 human-facing initiative 1개로 유지합니다.
+- 최소 ingestion boundary delivery는 `P0001-example-invoice-ingestion.md`가 umbrella owner로 설명합니다.
+- 후속 실행 단위는 먼저 그 umbrella 아래 `task`로 수용합니다.
+- completion mode, owner, handoff 대상이 실질적으로 분리될 때만 예외 branch `project`를 검토합니다.
+
+## Active Umbrella Projects
+
+| Umbrella Project | Initiative | Status | Notes |
+| --- | --- | --- | --- |
+| `P0001-example-invoice-ingestion.md` | example invoice ingestion | Active | human-facing owner |
+
 ## Active Execution Surfaces
 
 | Surface | Purpose | Status | Notes |
 | --- | --- | --- | --- |
-| `P0001-example-invoice-ingestion.md` | 최소 ingestion boundary delivery 관리 | Active | |
-| `T0001-bootstrap-source-ingest.md` | 첫 source ingest cycle 실행 | Active | |
+| `P0001-example-invoice-ingestion.md` | 최소 ingestion boundary delivery와 lineage 관리 | Active | umbrella project |
+| `T0001-bootstrap-source-ingest.md` | 첫 source ingest cycle 실행 | Active | umbrella 아래 task |
 
 ## Standard Pipeline
 
 | Stage | Enters When | Produces | Exit Gate |
 | --- | --- | --- | --- |
 | Boundary lock | source, raw, normalized event, failure preservation 기준이 필요할 때 | `invoice-event-ingestion.md` | 설계와 용어가 잠김 |
-| Project issue | 최소 ingestion boundary를 delivery로 관리해야 할 때 | `P0001-example-invoice-ingestion.md` | project WBS와 project goal 고정 |
-| Task issue | 첫 source ingest cycle을 실제로 닫을 수 있을 때 | `T0001-bootstrap-source-ingest.md` | task goal inventory와 evidence 기준 고정 |
+| Project issue | example invoice ingestion initiative의 human-facing owner를 세워야 할 때 | `P0001-example-invoice-ingestion.md` | umbrella lineage와 project goal 고정 |
+| Task issue | 기존 umbrella 아래 첫 source ingest cycle을 실제로 닫을 수 있을 때 | `T0001-bootstrap-source-ingest.md` | task goal inventory, placement, evidence 기준 고정 |
 | Execute | raw, normalized, failure preservation을 구현하고 검증할 때 | logs, persistence, task status | closeout gate 통과 |
 
 ## Quality Axes
@@ -83,3 +96,4 @@
 ## Change Log
 
 - 2026-04-14: example control-plane 문서 생성.
+- 2026-04-16: umbrella initiative policy와 active umbrella project 예시 추가.

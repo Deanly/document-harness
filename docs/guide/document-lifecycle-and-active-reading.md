@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-14
+- Updated: 2026-04-16
 
 ## Purpose
 
@@ -26,6 +26,7 @@
 - `Completion Mode`를 바꿔야 할 정도로 종료 조건이 바뀌면 기존 문서는 보통 `superseded`입니다.
 - `done` 전환은 `Goal Inventory`와 `Goal Verification`이 맞물리고 `./docs/bin/validate-closeout.sh`를 통과했을 때만 허용합니다.
 - active `project`와 `task`는 `Related Control Plane`과 `Whole-System Anchor`를 통해 전체 기준면과 연결되어 있어야 합니다.
+- active `task`는 `Related Umbrella Project`로 human-facing owner와 연결되어 있어야 합니다.
 - 가능하면 `Status: done`을 직접 편집하지 말고 `./docs/bin/close-doc.sh`로 닫습니다.
 - 원래 핵심 목표를 후속 문서로 넘겼다면 `done`이 아니라 계속 `active` 또는 `blocked`로 두거나, 범위 재발급 근거와 함께 `superseded` 또는 `cancelled`로 닫습니다.
 - `superseded`는 기존 문서의 책임 경계나 목표가 새 문서로 재발급되어 더 이상 현재 기준이 아닐 때 씁니다.
@@ -43,6 +44,8 @@
 
 - `docs/projects/README.md`, `docs/tasks/README.md`, `docs/reports/README.md`는 active 문서만 보여주는 얇은 입구입니다.
 - 각 항목에는 문서 링크, 한 줄 설명, `Updated` 날짜만 적는 것을 기본으로 합니다.
+- active `projects/README.md`는 umbrella project를 먼저 보여주고, 예외 분기 project는 lineage 안에서 설명합니다.
+- active `tasks/README.md`는 각 task가 어느 umbrella project에 속하는지 드러내는 것을 기본으로 합니다.
 - 문서가 `active`가 되거나 닫히거나, 현재 초점이 크게 바뀌면 폴더 `README.md`를 같은 변경 셋에서 함께 갱신합니다.
 
 ## First-Screen Rule
@@ -78,3 +81,4 @@
 
 - 2026-04-10: 문서 수명주기와 human-friendly active reading 규칙 고정.
 - 2026-04-14: `done`, `superseded`, closeout validation 사용 기준 반영.
+- 2026-04-16: umbrella lineage와 active surface 표시 규칙 추가.
