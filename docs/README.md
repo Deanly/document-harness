@@ -27,6 +27,7 @@
 - whole-system control: `design`은 전체 시스템 목표, pipeline, invariant, handoff를 붙잡는 control surface여야 합니다.
 - focused execution: `project`와 `task`는 전체 목표를 잃지 않은 채 부분 작업에 집중하게 만드는 focus surface여야 합니다.
 - umbrella-first lineage: human-facing initiative는 기본적으로 umbrella project 1개로 유지하고, 하위 실행은 그 아래 `task`로 관리합니다.
+- human-issued project: `project`는 human-facing initiative owner를 잠그는 surface이므로 사람만 발급하고, 에이전트는 발급 필요성과 근거만 제안합니다.
 - evidence-backed: 완료, 위험, 운영 판단은 실제 관찰 결과와 연결합니다.
 - goal-locked completion: 발급 시점의 목적과 완료 기준은 나중에 더 작은 조각으로 쪼개도 약해지지 않습니다.
 - current-truth design: 설계 문서는 append-only 이력보다 현재 기준의 정확성을 우선합니다.
@@ -73,6 +74,7 @@
 - prefix: `P`
 - 의미: 하나의 bounded delivery/project 단위
 - 기본값: human-facing initiative owner인 umbrella project
+- 발급 주체: 사람만
 - 필수 내용:
   - 목적
   - project role

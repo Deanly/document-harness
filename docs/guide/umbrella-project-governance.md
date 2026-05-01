@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-16
-- Updated: 2026-04-16
+- Updated: 2026-05-01
 
 ## Purpose
 
@@ -15,6 +15,12 @@
 - human이 보는 하나의 product, initiative, workstream은 기본적으로 umbrella project 1개로 유지합니다.
 - 실제 실행 단위는 umbrella project 아래의 bounded `task`로 관리합니다.
 - `task`로 수용 가능한 작업을 새 `project`로 분리하지 않습니다.
+
+## Human-Issued Project Rule
+
+- `project`는 human-facing owner를 잠그는 문서이므로 사람만 발급합니다.
+- 에이전트는 새 `project` 필요성을 제안하고 근거를 정리할 수 있지만, 사람 승인 없이 발급하지 않습니다.
+- 사람 승인이 없다면 기본값은 새 `project`가 아니라 기존 umbrella project 아래의 `task`입니다.
 
 ## Task-First Project Issuance Rule
 
@@ -38,7 +44,7 @@
 
 ## Required Issuance Record
 
-에이전트가 새 `project`가 필요하다고 판단하면 발급 전에 아래 두 문장을 남깁니다.
+에이전트가 새 `project`가 필요하다고 판단하더라도 먼저 사람에게 발급을 제안합니다. 사람이 발급하기로 결정했다면 아래 두 문장을 남깁니다.
 
 - 왜 기존 umbrella project의 `task`로 처리하면 안 되는지
 - 왜 human 입장에서 별도 `project`가 더 이해하기 쉬운지
@@ -79,3 +85,4 @@
 ## Change Log
 
 - 2026-04-16: umbrella project default, task-first issuance, exception rule 추가.
+- 2026-05-01: project human issuance 규칙 추가.

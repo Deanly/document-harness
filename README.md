@@ -10,6 +10,8 @@
 
 또한 human이 인식하는 하나의 initiative는 기본적으로 umbrella project 1개로 유지하고, 실제 분해는 그 umbrella 아래 `task`로 처리하는 것을 기본 운영 규칙으로 둡니다.
 
+`project`는 human-facing initiative owner를 잠그는 문서이므로 사람만 발급합니다. 에이전트는 새 `project` 필요성을 제안하고 근거를 정리할 수 있지만, 사람의 명시적 요청이나 승인 없이 임의로 발급하지 않습니다.
+
 핵심 진입점은 아래와 같습니다.
 
 - `docs/README.md`: 문서 체계, 발급 규칙, 업데이트 규칙
@@ -38,6 +40,8 @@
 ./docs/bin/validate-closeout.sh --all
 ```
 
+위 명령은 예시이며, 특히 `project` 생성은 사람의 명시적 요청 또는 승인 하에서만 실행합니다.
+
 한글 slug도 허용됩니다. 예: `./docs/bin/new-doc.sh task "첫 작업"`.
 
 복사 후에는 `docs/design/ubiquitous-language.md`를 먼저 실제 프로젝트 용어로 채우고, `docs/examples/`의 샘플 문서를 한 번 읽는 것을 권장합니다.
@@ -45,10 +49,10 @@
 새 프로젝트로 복사한 뒤에는 아래 순서를 권장합니다.
 
 1. `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`의 placeholder를 실제 프로젝트 기준으로 교체합니다.
-2. 첫 umbrella `project` 문서를 발급합니다.
+2. 사람이 첫 umbrella `project` 문서를 발급합니다.
 3. 설계 기준이 필요하면 `design` 문서를 만들고 `control-plane`, `ubiquitous-language`를 같은 변경 셋에서 갱신합니다.
 4. 실제 실행 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
-5. 예외 조건이 명확할 때만 새 `project`를 발급하고, 왜 task가 아닌지 먼저 남깁니다.
+5. 예외 조건이 명확하고 사람이 승인할 때만 새 `project`를 발급하고, 왜 task가 아닌지 먼저 남깁니다.
 6. `project`와 `task`는 지원되는 `Completion Mode` 중 하나를 선택하고, whole-system anchor와 quality axes를 명시합니다. 대부분의 경우 기본값인 `functional`을 유지합니다.
 7. `./docs/bin/validate-harness-foundation.sh`로 기본 control surface가 잠겨 있는지 확인합니다.
 8. `done` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.

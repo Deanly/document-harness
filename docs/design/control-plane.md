@@ -4,7 +4,7 @@
 - Domain: control-plane
 - Owner:
 - Created: 2026-04-14
-- Updated: 2026-04-16
+- Updated: 2026-05-01
 - Referenced By:
   - `docs/README.md`
 
@@ -55,6 +55,7 @@
 
 - human이 인식하는 하나의 product, initiative, workstream은 기본적으로 umbrella `project` 1개로 유지합니다.
 - 새 work는 먼저 기존 umbrella `project` 아래의 새 `task`로 수용 가능한지 검토합니다.
+- 새 `project` 발급은 사람만 하며, 에이전트는 발급 필요성과 근거만 제안합니다.
 - 새 `project`는 사용자 명시 요청, 본질적인 completion mode 분리, owner/운영 검증 체계 분리 같은 예외가 명확할 때만 허용합니다.
 - 새 `project`가 필요하다면 `Project Issuance Check`에 왜 task가 안 되는지와 왜 human에게 더 읽기 쉬운지 남깁니다.
 
@@ -77,7 +78,7 @@
 | Stage | Enters When | Produces | Exit Gate |
 | --- | --- | --- | --- |
 | Whole alignment | 전체 목표, 용어, 범위가 아직 흐릴 때 | `control-plane`, `ubiquitous-language`, 핵심 `design` | 전체 목표, 용어, 품질 축이 잠김 |
-| Project issue | 첫 initiative owner를 발급하거나 예외 조건이 명확할 때 | umbrella `project` 또는 exception branch `project` | lineage / scope / out-of-scope / WBS / whole-system anchor 고정 |
+| Project issue | 사람이 첫 initiative owner를 발급하거나 사람 승인 하에 예외 조건이 명확할 때 | umbrella `project` 또는 exception branch `project` | lineage / scope / out-of-scope / WBS / whole-system anchor 고정 |
 | Task issue | 기존 umbrella 아래에서 실제로 닫을 수 있는 execution slice가 생길 때 | `task` | goal inventory / task placement / handoff / quality axes 고정 |
 | Execute | 구현, 검증, 운영 정렬이 진행될 때 | evidence, 상태 이력, 필요 시 guide/report | closeout gate 통과 |
 | Closeout | 문서를 닫을 수 있을 때 | `done` 상태와 append-only closeout evidence | goal verification 전부 `Done` |
@@ -105,3 +106,4 @@
 
 - 2026-04-14: starter control-plane 문서 생성.
 - 2026-04-16: umbrella initiative policy와 active umbrella project surface 추가.
+- 2026-05-01: project human issuance 규칙 추가.

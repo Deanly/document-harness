@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-16
+- Updated: 2026-05-01
 
 ## Purpose
 
@@ -42,6 +42,14 @@
 - runtime/environment phase가 완전히 달라질 때
 - downstream 또는 upstream boundary가 새로 열릴 때
 - 운영 적용 단계가 기존 bootstrap 단계와 다른 성공 기준을 가질 때
+
+## Human-Issued Project Rule
+
+`project`는 human-facing initiative owner와 bounded delivery boundary를 함께 잠그는 surface이므로 사람만 발급합니다.
+
+- 에이전트는 새 `project` 필요성을 분석하고 `Project Issuance Check` 초안을 준비할 수 있습니다.
+- 하지만 사람의 명시적 요청 또는 승인 없이 새 `project` 문서를 발급하거나 기존 work를 새 `project`로 승격하지 않습니다.
+- 승인 전 기본값은 기존 umbrella `project` 아래의 새 `task`이며, 아직 경계가 흐리면 `guide` 또는 `design`으로 남깁니다.
 
 ## Umbrella Project Default
 
@@ -212,3 +220,4 @@ Status와 완료 판단에는 가능하면 아래를 남깁니다.
 - 2026-04-13: goal lock, completion mode catalog, non-functional mode 규칙 추가.
 - 2026-04-14: whole-system anchor, handoff, quality axes 요구사항 추가.
 - 2026-04-16: umbrella project default, task-first issuance, exception record 규칙 추가.
+- 2026-05-01: project human issuance 규칙 추가.
