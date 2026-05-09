@@ -14,6 +14,7 @@
 
 ### Whole-System Control
 
+- `AGENTS.md`: Codex가 repo 작업 전에 읽는 짧은 agent instruction surface
 - `docs/design/control-plane.md`: 전체 목표, pipeline, validator, active surface
 - `docs/design/ubiquitous-language.md`: canonical term
 - 핵심 `design`: boundary, invariant, interface, failure boundary
@@ -37,6 +38,13 @@
 - raw source: 원문, clipping, transcript, dataset, image, PDF
 - source summary: raw source를 읽고 만든 시점성 `report` 또는 관련 문서의 `Inputs`
 - source-backed synthesis: source를 근거로 갱신된 `design`, `guide`, `project`, `task`
+
+### Agent Control
+
+- root `AGENTS.md`: Codex가 즉시 읽는 repo-level instruction
+- `docs/_templates/agents.md`: downstream project에 복사할 reusable instruction template
+- `docs/guide/codex-agent-guidance.md`: AGENTS.md 작성과 Codex prompt/verification 규칙
+- `docs/bin/validate-codex-readiness.sh`: agent-facing surface validator
 
 ## Artifact Contracts By Type
 
@@ -82,6 +90,13 @@
 - Feeds: report, design, guide, project, task
 - Must not hold: LLM이 덧붙인 해석, 현재 truth, 실행 상태
 
+### `AGENTS.md`
+
+- Holds: Codex가 작업 전에 알아야 하는 repo layout, workflow, documentation rules, verification commands, done criteria
+- Reads: docs/README, control-plane, Codex guidance, active project/task/design surfaces
+- Feeds: Codex local/cloud/IDE sessions
+- Must not hold: 전체 문서 schema의 복제본, 긴 배경 설명, 시점성 상태 보고
+
 ## Handoff Matrix
 
 | From | To | What Moves |
@@ -92,6 +107,7 @@
 | `task` | `project` | closeout evidence, remaining scope, supersede/cancel reason |
 | `report` | `guide/design/project/task` | reusable rule, truth, execution boundary |
 | `raw source` | `report/design/guide/project/task` | source_refs, extracted facts, contradiction notes |
+| `AGENTS.md` | `Codex session` | repo map, workflow, constraints, verification commands |
 
 ## Authoring Rule
 
@@ -109,3 +125,4 @@
 
 - 2026-04-14: whole-system / focused execution / drift control artifact contract 규칙 추가.
 - 2026-05-09: raw source layer, source_refs, markdown properties contract 추가.
+- 2026-05-09: AGENTS.md artifact contract와 Codex readiness surface 추가.

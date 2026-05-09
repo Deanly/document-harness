@@ -20,6 +20,7 @@
 - `docs/examples/`: 완성형 샘플 문서
 - `docs/_templates/`: 문서 템플릿
 - `docs/bin/`: 문서 생성 도구
+- `AGENTS.md`: Codex가 자동으로 읽는 repository-level instruction surface
 - 프로젝트별 `raw/` 또는 `sources/`: 필요 시 원문 source를 불변으로 두는 입력 계층
 
 ## Harness Philosophy
@@ -36,11 +37,13 @@
 - source-backed synthesis: 원문 source는 불변으로 두고, 생성 문서는 `source_refs`와 본문 참조로 근거를 연결합니다.
 - compounding answers: 재사용 가치가 생긴 답변, 비교, 판단은 대화에만 두지 않고 `report`, `guide`, `design`, `project`, `task` 중 맞는 surface로 파일링합니다.
 - property-first markdown: YAML frontmatter는 에이전트, Obsidian, Dataview가 읽는 machine-readable index surface로 유지합니다.
+- codex-readable entrypoint: 루트 `AGENTS.md`는 Codex가 즉시 읽는 짧은 instruction surface이고, 상세 규칙은 `docs/guide/`로 연결합니다.
+- verifiable agent work: Codex가 완료 여부를 확인할 수 있도록 한 번에 실행 가능한 validator를 제공합니다.
 - narrow scope: v1 범위를 명시적으로 좁게 고정하고, 후속 경계는 먼저 같은 umbrella 아래 `task`로 수용하며 예외일 때만 별도 `project`로 분리합니다.
 - ubiquitous language: 핵심 용어는 한 곳에서 canonical term을 고정하고 설계 변경과 함께 갱신합니다.
 - human-readable active surface: active 문서는 폴더 입구와 문서 첫 화면에서 바로 식별 가능해야 합니다.
 
-자세한 철학은 `docs/guide/harness-philosophy.md`를, 수명주기와 human reading 규칙은 `docs/guide/document-lifecycle-and-active-reading.md`를, source-backed wiki 운영은 `docs/guide/llm-wiki-operations.md`를 봅니다.
+자세한 철학은 `docs/guide/harness-philosophy.md`를, 수명주기와 human reading 규칙은 `docs/guide/document-lifecycle-and-active-reading.md`를, source-backed wiki 운영은 `docs/guide/llm-wiki-operations.md`를, Codex 운영은 `docs/guide/codex-agent-guidance.md`를 봅니다.
 
 ## Document Types
 
@@ -150,6 +153,17 @@
   - active design / project / validator / quality axis를 한 곳에서 연결합니다.
   - 부분 작업 문서는 이 문서를 whole-system anchor로 참조합니다.
 
+### Codex Agent Instructions
+
+- 권장 파일: `AGENTS.md`
+- 템플릿: `docs/_templates/agents.md`
+- 의미: Codex가 repo를 열자마자 읽는 짧은 작업 규칙과 verification entrypoint
+- 특징:
+  - full schema를 복제하지 않고 `docs/README.md`와 관련 guide로 연결합니다.
+  - `Repository Map`, `Codex Workflow`, `Documentation Rules`, `Verification Commands`, `Done Criteria`를 포함합니다.
+  - 상세 규칙은 `docs/guide/codex-agent-guidance.md`로 분리합니다.
+  - Codex instruction budget을 고려해 간결하게 유지합니다.
+
 ## Markdown Properties
 
 새 템플릿은 YAML frontmatter를 기본으로 생성합니다. 이 properties는 Obsidian, Dataview, 검색 도구, 에이전트가 문서를 빠르게 분류하고 연결하기 위한 machine-readable surface입니다.
@@ -180,6 +194,7 @@
 - YAML frontmatter는 검색과 index를 위한 properties이고, 첫 화면 bullet metadata는 human scan을 위한 mirror입니다.
 - 새 문서는 템플릿의 properties를 유지하며, 임의 key가 필요하면 템플릿과 `docs/guide/llm-wiki-operations.md`를 함께 갱신합니다.
 - source 기반 판단을 남길 때는 `source_refs`와 본문 `References` 또는 `Inputs`를 함께 채웁니다.
+- Codex-facing 규칙을 바꾸면 루트 `AGENTS.md`, `docs/_templates/agents.md`, `docs/guide/codex-agent-guidance.md`, `./docs/bin/validate-codex-readiness.sh`를 함께 검토합니다.
 - `task`와 `project`의 `Status` 섹션은 append-only로 운영합니다.
 - 새 이력은 문서 하단에 계속 추가합니다.
 - WBS와 진행률은 현재 상태를 반영하도록 갱신합니다.
@@ -203,6 +218,7 @@
 - 남은 핵심 목표를 후속 문서로 넘겼다면 현재 문서는 `done`이 아니라 계속 `active` 또는 `blocked`로 두거나, 범위 재발급 근거와 함께 `superseded` 또는 `cancelled`로 닫습니다.
 - `done` 또는 `closed` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과해야 합니다.
 - whole-system control surface의 기본 구조는 `./docs/bin/validate-harness-foundation.sh`를 통과해야 합니다.
+- Codex-facing surface의 기본 구조는 `./docs/bin/validate-codex-readiness.sh`를 통과해야 합니다.
 - `done` 전환은 가능하면 메타데이터를 직접 고치기보다 `./docs/bin/close-doc.sh <doc-path> "<note>"`를 사용합니다.
 - `project` 문서의 WBS는 실제 `task` 문서와 1:1로 대응하는 것을 기본 규칙으로 합니다.
 - umbrella project의 WBS와 status history는 후속 분화가 생겨도 human-facing lineage를 먼저 설명해야 합니다.
@@ -259,17 +275,19 @@
 
 1. 프로젝트 시작 시 `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 먼저 채웁니다.
 2. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.
-3. 첫 umbrella `project` 문서를 발급합니다.
-4. 핵심 boundary와 계약을 `design`으로 고정하고, 필요하면 control-plane을 같은 변경 셋에서 갱신합니다.
-5. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
-6. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
-7. 예외 조건이 명확할 때만 새 `project`를 발급하고 issuance check에 그 이유를 남깁니다.
-8. `project`와 `task`에는 whole-system anchor, outputs / handoff, quality axes in scope를 함께 적습니다.
-9. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
-10. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
-11. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
-12. 주기적으로 `docs/guide/llm-wiki-operations.md`의 lint workflow로 stale claim, orphan, property drift를 점검합니다.
-13. `./docs/bin/validate-harness-foundation.sh`로 전체 control surface를, `./docs/bin/validate-closeout.sh`로 closeout gate를 확인합니다.
+3. Codex가 작업할 프로젝트라면 루트 `AGENTS.md`를 실제 repo 기준으로 조정합니다.
+4. 첫 umbrella `project` 문서를 발급합니다.
+5. 핵심 boundary와 계약을 `design`으로 고정하고, 필요하면 control-plane을 같은 변경 셋에서 갱신합니다.
+6. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
+7. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
+8. 예외 조건이 명확할 때만 새 `project`를 발급하고 issuance check에 그 이유를 남깁니다.
+9. `project`와 `task`에는 whole-system anchor, outputs / handoff, quality axes in scope를 함께 적습니다.
+10. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
+11. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
+12. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
+13. 주기적으로 `docs/guide/llm-wiki-operations.md`의 lint workflow로 stale claim, orphan, property drift를 점검합니다.
+14. `./docs/bin/validate-codex-readiness.sh`로 Codex entrypoint를 확인합니다.
+15. `./docs/bin/validate-harness-foundation.sh`로 전체 control surface를, `./docs/bin/validate-closeout.sh`로 closeout gate를 확인합니다.
 
 프로젝트 분할 규칙은 `docs/guide/project-cutting-and-execution.md`를 우선합니다.
 
@@ -282,6 +300,7 @@
 ./docs/bin/new-doc.sh design event-ingestion
 ./docs/bin/new-doc.sh guide project-cutting-and-execution
 ./docs/bin/new-doc.sh report sprint-01-status
+./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/close-doc.sh docs/tasks/T0001-bootstrap-ingest.md "issued goals and evidence verified"
@@ -291,7 +310,9 @@
 
 - `docs/design/ubiquitous-language.md`
 - `docs/design/control-plane.md`
+- `AGENTS.md`
 - `docs/guide/harness-philosophy.md`
+- `docs/guide/codex-agent-guidance.md`
 - `docs/guide/umbrella-project-governance.md`
 - `docs/guide/artifact-contracts.md`
 - `docs/guide/quality-axes.md`

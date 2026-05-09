@@ -14,8 +14,10 @@
 
 핵심 진입점은 아래와 같습니다.
 
+- `AGENTS.md`: Codex가 자동으로 읽는 repository-level agent instructions
 - `docs/README.md`: 문서 체계, 발급 규칙, 업데이트 규칙
 - `docs/guide/harness-philosophy.md`: 원본 문서군에서 추출한 문서 철학
+- `docs/guide/codex-agent-guidance.md`: Codex 친화적 AGENTS.md, prompt shape, validator 운영 규칙
 - `docs/guide/project-cutting-and-execution.md`: 프로젝트 분할과 실행 게이트 규칙
 - `docs/guide/goal-locked-completion.md`: goal lock, completion mode catalog, required evidence 규칙
 - `docs/guide/umbrella-project-governance.md`: umbrella project default, task-first issuance, 예외 분기 규칙
@@ -25,8 +27,9 @@
 - `docs/guide/llm-wiki-operations.md`: source-backed ingest/query/lint와 markdown properties 운영 규칙
 - `docs/design/ubiquitous-language.md`: 새 프로젝트에서 바로 채울 수 있는 용어 기준 문서
 - `docs/examples/`: placeholder 대신 참고할 수 있는 완성형 예시 문서
-- `docs/_templates/`: `task`, `project`, `design`, `guide`, `report` 템플릿
+- `docs/_templates/`: `AGENTS`, `task`, `project`, `design`, `guide`, `report` 템플릿
 - `docs/bin/new-doc.sh`: 번호 발급 및 문서 생성 스크립트
+- `docs/bin/validate-codex-readiness.sh`: Codex instruction surface와 핵심 validator를 함께 확인하는 스크립트
 - `docs/bin/validate-harness-foundation.sh`: control-plane, quality axes, artifact contract 기본 구조를 검증하는 스크립트
 - `docs/bin/validate-closeout.sh`: `done` 전환 전 목표 달성 여부를 검증하는 스크립트
 - `docs/bin/close-doc.sh`: 검증을 통과한 문서만 `done`으로 닫는 스크립트
@@ -37,6 +40,7 @@
 ./docs/bin/new-doc.sh project example-project
 ./docs/bin/new-doc.sh task first-task
 ./docs/bin/new-doc.sh design core-boundary
+./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
 ./docs/bin/validate-closeout.sh --all
 ```
@@ -57,14 +61,16 @@
 6. 예외 조건이 명확하고 사람이 승인할 때만 새 `project`를 발급하고, 왜 task가 아닌지 먼저 남깁니다.
 7. `project`와 `task`는 지원되는 `Completion Mode` 중 하나를 선택하고, whole-system anchor와 quality axes를 명시합니다. 대부분의 경우 기본값인 `functional`을 유지합니다.
 8. 새 문서는 YAML frontmatter properties와 첫 화면 bullet metadata를 함께 유지합니다.
-9. `./docs/bin/validate-harness-foundation.sh`로 기본 control surface가 잠겨 있는지 확인합니다.
-10. `done` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.
+9. Codex가 바로 읽어야 하는 프로젝트라면 루트 `AGENTS.md`를 실제 프로젝트 기준으로 조정하고, 필요하면 `docs/_templates/agents.md`를 복사해 시작합니다.
+10. `./docs/bin/validate-codex-readiness.sh`와 `./docs/bin/validate-harness-foundation.sh`로 agent-facing surface와 기본 control surface가 잠겨 있는지 확인합니다.
+11. `done` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.
 
 ## Closeout Gate
 
 이 하네스는 `done`을 자유 서술 메타데이터가 아니라 문서 내부 목표와 증빙을 통과한 결과로 다루는 것을 권장합니다.
 
 ```bash
+./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/close-doc.sh docs/tasks/T0001-first-task.md "issued goals and evidence verified"

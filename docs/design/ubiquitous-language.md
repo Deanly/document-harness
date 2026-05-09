@@ -30,6 +30,12 @@ placeholder 대신 채워진 예시가 필요하면 `docs/examples/README.md`를
 
 ## Core Boundary Terms
 
+### `agent instruction surface`
+
+Codex 같은 coding agent가 작업 전에 자동으로 읽는 짧은 repository guidance를 뜻합니다.
+
+이 하네스에서는 루트 `AGENTS.md`가 기본 agent instruction surface입니다.
+
 ### `project-system-name`
 
 이 프로젝트의 가장 바깥 시스템 이름을 적습니다.
@@ -112,6 +118,12 @@ LLM이 유지하는 persistent markdown artifact를 뜻합니다.
 
 문서의 stale claim, orphan, missing cross-reference, property drift, source gap을 점검하는 health-check 작업을 뜻합니다.
 
+### `done criteria`
+
+Codex 또는 사람이 작업을 닫기 전에 참이어야 하는 검증 가능한 완료 조건을 뜻합니다.
+
+prompt에서는 `done when`으로 표현할 수 있고, 이 하네스에서는 `Completion Criteria`, `Exit Criteria`, `Goal Verification`, validator 결과로 구체화합니다.
+
 ### `source record`
 
 원문 기준으로 보존되는 가장 초기 데이터 단위를 적습니다.
@@ -143,3 +155,4 @@ downstream에 전달하거나 이후 단계가 소비하는 구조화 결과를 
 - 2026-04-10: 하네스 starter 문서 생성.
 - 2026-04-14: control-plane과의 whole-system control surface 연결 규칙 추가.
 - 2026-05-09: LLM Wiki 운영을 위한 raw source, source_refs, markdown properties, ingest/lint 용어 추가.
+- 2026-05-09: Codex 운영을 위한 agent instruction surface와 done criteria 용어 추가.

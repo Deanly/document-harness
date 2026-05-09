@@ -73,6 +73,13 @@
 - source 기반 문서는 `source_refs` property와 본문 `References` 또는 `Inputs`를 같이 채웁니다.
 - 새 property key가 필요하면 `docs/_templates/`와 `docs/guide/llm-wiki-operations.md`를 같은 변경 셋에서 갱신합니다.
 
+## Codex Reading Rule
+
+- 루트 `AGENTS.md`는 Codex가 자동으로 읽는 첫 번째 repo entrypoint입니다.
+- `AGENTS.md`는 human-facing README보다 짧고, Codex가 바로 행동할 수 있는 map, workflow, rules, verification만 담습니다.
+- 상세한 문서 철학과 schema는 `docs/README.md`와 `docs/guide/`에 두고 `AGENTS.md`에서 링크합니다.
+- Codex-facing 규칙이 바뀌면 `./docs/bin/validate-codex-readiness.sh`를 실행합니다.
+
 ## Filename Rules
 
 - `project`: `P0001-slug.md`
@@ -93,3 +100,4 @@
 - 2026-04-14: `done`, `superseded`, closeout validation 사용 기준 반영.
 - 2026-04-16: umbrella lineage와 active surface 표시 규칙 추가.
 - 2026-05-09: YAML properties와 visible metadata mirror 규칙 추가.
+- 2026-05-09: Codex-facing AGENTS.md reading rule 추가.

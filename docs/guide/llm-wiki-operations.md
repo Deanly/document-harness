@@ -35,6 +35,7 @@ tags:
 - `docs/guide`는 반복되는 판단과 운영 규칙을 축적합니다.
 - `docs/project`와 `docs/task`는 실행 이력과 evidence를 append-only로 남깁니다.
 - `docs/reports`는 특정 질문에 대한 시점성 답변을 담고, 재사용 가치가 생기면 `guide`, `design`, `project`, `task`로 승격합니다.
+- `AGENTS.md`는 Codex가 wiki surface를 안전하게 수정하기 전에 읽는 짧은 instruction surface입니다.
 - 폴더 `README.md`는 작은 규모의 index입니다. 문서 수가 커지면 검색 도구를 추가하되, 먼저 README와 properties가 정확해야 합니다.
 
 ## Source Layer
@@ -70,6 +71,7 @@ tags:
 정기적으로 또는 큰 ingest 후에 wiki health-check를 수행합니다.
 
 - folder README의 active 목록과 각 문서 `status`가 일치하는지 봅니다.
+- root `AGENTS.md`가 현재 validator, template, 핵심 guide를 가리키는지 봅니다.
 - properties와 첫 화면 visible metadata가 일치하는지 봅니다.
 - `source_refs`가 없는 주장성 문서가 있는지 봅니다.
 - 새 핵심 용어가 `docs/design/ubiquitous-language.md`에 반영되었는지 봅니다.
@@ -94,3 +96,4 @@ tags:
 ## Change Log
 
 - 2026-05-09: LLM Wiki 방식의 source-backed ingest/query/lint loop와 properties contract 추가.
+- 2026-05-09: root AGENTS.md를 wiki surface 수정 전 Codex instruction surface로 반영.

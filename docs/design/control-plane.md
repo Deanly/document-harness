@@ -26,6 +26,7 @@
 
 - `docs/design/control-plane.md`
 - `docs/design/ubiquitous-language.md`
+- root `AGENTS.md`
 - 현재 시스템 경계를 정의하는 핵심 `design` 문서
 
 ### Focused Execution
@@ -42,8 +43,16 @@
 - `docs/guide/quality-axes.md`
 - YAML frontmatter properties
 - `source_refs`
+- `./docs/bin/validate-codex-readiness.sh`
 - `./docs/bin/validate-harness-foundation.sh`
 - `./docs/bin/validate-closeout.sh`
+
+### Codex Agent Control
+
+- root `AGENTS.md`
+- `docs/_templates/agents.md`
+- `docs/guide/codex-agent-guidance.md`
+- `docs/bin/validate-codex-readiness.sh`
 
 ### Source-Backed Knowledge
 
@@ -87,6 +96,7 @@
 | Stage | Enters When | Produces | Exit Gate |
 | --- | --- | --- | --- |
 | Whole alignment | 전체 목표, 용어, 범위가 아직 흐릴 때 | `control-plane`, `ubiquitous-language`, 핵심 `design` | 전체 목표, 용어, 품질 축이 잠김 |
+| Codex orientation | Codex가 repo에서 안전하게 작업해야 할 때 | `AGENTS.md`, Codex guide, readiness validator | agent entrypoint와 검증 명령이 일치함 |
 | Source ingest | 새 source, transcript, report, article, dataset을 durable knowledge로 반영할 때 | `source_refs`, source summary, 관련 `design`/`guide`/`report` 갱신 | 원문 위치, 해석 surface, 충돌 여부가 연결됨 |
 | Project issue | 사람이 첫 initiative owner를 발급하거나 사람 승인 하에 예외 조건이 명확할 때 | umbrella `project` 또는 exception branch `project` | lineage / scope / out-of-scope / WBS / whole-system anchor 고정 |
 | Task issue | 기존 umbrella 아래에서 실제로 닫을 수 있는 execution slice가 생길 때 | `task` | goal inventory / task placement / handoff / quality axes 고정 |
@@ -102,12 +112,14 @@
 ## Required Validators
 
 - `./docs/bin/validate-harness-foundation.sh`
+- `./docs/bin/validate-codex-readiness.sh`
 - `./docs/bin/validate-closeout.sh --all`
 - 필요하면 프로젝트별 build / test / smoke validator를 추가합니다.
 
 ## Handoff Rules
 
 - `design`은 전체 truth를 잠그고 `project`와 `task`가 이를 읽습니다.
+- `AGENTS.md`는 Codex가 즉시 읽는 instruction surface이고, 상세 규칙은 `docs/guide`로 넘깁니다.
 - raw source는 불변 입력으로 두고, 생성 문서는 `source_refs`와 본문 참조로 연결합니다.
 - `project`는 delivery boundary를 잠그고, `task`로 분해해 부분 실행을 통제합니다.
 - umbrella `project`는 lineage의 기본 owner를 유지하고, 예외 branch `project`가 생겨도 먼저 설명합니다.
@@ -120,3 +132,4 @@
 - 2026-04-16: umbrella initiative policy와 active umbrella project surface 추가.
 - 2026-05-01: project human issuance 규칙 추가.
 - 2026-05-09: source-backed ingest, markdown properties, wiki lint surface 추가.
+- 2026-05-09: Codex orientation surface와 readiness validator 추가.
