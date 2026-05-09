@@ -1,3 +1,26 @@
+---
+type: task
+doc_id: {{DOC_ID}}
+title: {{TITLE}}
+status: draft
+owner:
+created: {{DATE}}
+updated: {{DATE}}
+current_focus:
+completion_mode: functional
+related_control_plane: docs/design/control-plane.md
+related_umbrella_project: P0001-umbrella-project
+related_project:
+related_design: []
+source_refs: []
+quality_axes:
+  - WHOLE
+  - GOAL
+  - EVIDENCE
+tags:
+  - docs/task
+---
+
 # {{DOC_ID}} {{TITLE}}
 
 - Type: task

@@ -1,3 +1,20 @@
+---
+type: report
+title: {{TITLE}}
+status: draft
+owner:
+created: {{DATE}}
+updated: {{DATE}}
+current_focus:
+report_type:
+related_project:
+related_task:
+related_design: []
+source_refs: []
+tags:
+  - docs/report
+---
+
 # {{TITLE}}
 
 - Type: report

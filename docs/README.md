@@ -20,6 +20,7 @@
 - `docs/examples/`: 완성형 샘플 문서
 - `docs/_templates/`: 문서 템플릿
 - `docs/bin/`: 문서 생성 도구
+- 프로젝트별 `raw/` 또는 `sources/`: 필요 시 원문 source를 불변으로 두는 입력 계층
 
 ## Harness Philosophy
 
@@ -32,11 +33,14 @@
 - goal-locked completion: 발급 시점의 목적과 완료 기준은 나중에 더 작은 조각으로 쪼개도 약해지지 않습니다.
 - current-truth design: 설계 문서는 append-only 이력보다 현재 기준의 정확성을 우선합니다.
 - append-only execution history: `task`와 `project`의 `Status`는 실행 이력을 시간순으로 누적합니다.
+- source-backed synthesis: 원문 source는 불변으로 두고, 생성 문서는 `source_refs`와 본문 참조로 근거를 연결합니다.
+- compounding answers: 재사용 가치가 생긴 답변, 비교, 판단은 대화에만 두지 않고 `report`, `guide`, `design`, `project`, `task` 중 맞는 surface로 파일링합니다.
+- property-first markdown: YAML frontmatter는 에이전트, Obsidian, Dataview가 읽는 machine-readable index surface로 유지합니다.
 - narrow scope: v1 범위를 명시적으로 좁게 고정하고, 후속 경계는 먼저 같은 umbrella 아래 `task`로 수용하며 예외일 때만 별도 `project`로 분리합니다.
 - ubiquitous language: 핵심 용어는 한 곳에서 canonical term을 고정하고 설계 변경과 함께 갱신합니다.
 - human-readable active surface: active 문서는 폴더 입구와 문서 첫 화면에서 바로 식별 가능해야 합니다.
 
-자세한 철학은 `docs/guide/harness-philosophy.md`를, 수명주기와 human reading 규칙은 `docs/guide/document-lifecycle-and-active-reading.md`를 봅니다.
+자세한 철학은 `docs/guide/harness-philosophy.md`를, 수명주기와 human reading 규칙은 `docs/guide/document-lifecycle-and-active-reading.md`를, source-backed wiki 운영은 `docs/guide/llm-wiki-operations.md`를 봅니다.
 
 ## Document Types
 
@@ -146,6 +150,21 @@
   - active design / project / validator / quality axis를 한 곳에서 연결합니다.
   - 부분 작업 문서는 이 문서를 whole-system anchor로 참조합니다.
 
+## Markdown Properties
+
+새 템플릿은 YAML frontmatter를 기본으로 생성합니다. 이 properties는 Obsidian, Dataview, 검색 도구, 에이전트가 문서를 빠르게 분류하고 연결하기 위한 machine-readable surface입니다.
+
+- 공통 property: `type`, `title`, `status`, `owner`, `created`, `updated`, `source_refs`, `tags`
+- `project` / `task`: `doc_id`, `completion_mode`, `related_control_plane`, `quality_axes`
+- `project`: `project_role`, `umbrella_initiative`, `parent_umbrella_project`
+- `task`: `related_umbrella_project`
+- `design`: `domain`, `referenced_by`
+- `guide` / `report`: `related_project`, `related_task`, `related_design`
+
+첫 화면의 bullet metadata는 사람이 바로 읽는 mirror입니다. `status`, `updated`, `current_focus`, 관계 property를 바꾸면 frontmatter와 bullet metadata를 같은 변경 셋에서 맞춥니다.
+
+`source_refs`에는 raw source, clipped article, transcript, dataset, 외부 문서 경로를 적습니다. source 자체는 가능한 한 불변으로 두고, 해석과 synthesis는 `design`, `guide`, `report`, `project`, `task`에 남깁니다.
+
 ## Issuing Rules
 
 - `task`와 `project`는 독립된 번호 시퀀스를 가집니다.
@@ -158,6 +177,9 @@
 
 ## Update Rules
 
+- YAML frontmatter는 검색과 index를 위한 properties이고, 첫 화면 bullet metadata는 human scan을 위한 mirror입니다.
+- 새 문서는 템플릿의 properties를 유지하며, 임의 key가 필요하면 템플릿과 `docs/guide/llm-wiki-operations.md`를 함께 갱신합니다.
+- source 기반 판단을 남길 때는 `source_refs`와 본문 `References` 또는 `Inputs`를 함께 채웁니다.
 - `task`와 `project`의 `Status` 섹션은 append-only로 운영합니다.
 - 새 이력은 문서 하단에 계속 추가합니다.
 - WBS와 진행률은 현재 상태를 반영하도록 갱신합니다.
@@ -236,15 +258,18 @@
 ## Recommended Workflow
 
 1. 프로젝트 시작 시 `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 먼저 채웁니다.
-2. 첫 umbrella `project` 문서를 발급합니다.
-3. 핵심 boundary와 계약을 `design`으로 고정하고, 필요하면 control-plane을 같은 변경 셋에서 갱신합니다.
-4. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
-5. 예외 조건이 명확할 때만 새 `project`를 발급하고 issuance check에 그 이유를 남깁니다.
-6. `project`와 `task`에는 whole-system anchor, outputs / handoff, quality axes in scope를 함께 적습니다.
-7. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
-8. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
-9. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
-10. `./docs/bin/validate-harness-foundation.sh`로 전체 control surface를, `./docs/bin/validate-closeout.sh`로 closeout gate를 확인합니다.
+2. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.
+3. 첫 umbrella `project` 문서를 발급합니다.
+4. 핵심 boundary와 계약을 `design`으로 고정하고, 필요하면 control-plane을 같은 변경 셋에서 갱신합니다.
+5. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
+6. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
+7. 예외 조건이 명확할 때만 새 `project`를 발급하고 issuance check에 그 이유를 남깁니다.
+8. `project`와 `task`에는 whole-system anchor, outputs / handoff, quality axes in scope를 함께 적습니다.
+9. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
+10. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
+11. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
+12. 주기적으로 `docs/guide/llm-wiki-operations.md`의 lint workflow로 stale claim, orphan, property drift를 점검합니다.
+13. `./docs/bin/validate-harness-foundation.sh`로 전체 control surface를, `./docs/bin/validate-closeout.sh`로 closeout gate를 확인합니다.
 
 프로젝트 분할 규칙은 `docs/guide/project-cutting-and-execution.md`를 우선합니다.
 
@@ -270,6 +295,7 @@
 - `docs/guide/umbrella-project-governance.md`
 - `docs/guide/artifact-contracts.md`
 - `docs/guide/quality-axes.md`
+- `docs/guide/llm-wiki-operations.md`
 - `docs/guide/document-lifecycle-and-active-reading.md`
 - `docs/guide/project-cutting-and-execution.md`
 - `docs/guide/goal-locked-completion.md`

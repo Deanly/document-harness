@@ -67,6 +67,46 @@ validate_file() {
       section = ""
     }
 
+    NR == 1 && $0 == "---" {
+      in_frontmatter = 1
+      frontmatter_seen = 1
+      next
+    }
+
+    in_frontmatter && $0 == "---" {
+      in_frontmatter = 0
+      next
+    }
+
+    in_frontmatter {
+      if ($0 ~ /^[A-Za-z_][A-Za-z0-9_]*:[[:space:]]*/) {
+        key = $0
+        sub(/:.*/, "", key)
+        value = $0
+        sub(/^[^:]*:[[:space:]]*/, "", value)
+        value = trim(value)
+
+        if (key == "type") {
+          fm_type = value
+        } else if (key == "status") {
+          fm_doc_status = value
+        } else if (key == "completion_mode") {
+          fm_completion_mode = value
+        } else if (key == "project_role") {
+          fm_project_role = value
+        } else if (key == "umbrella_initiative") {
+          fm_umbrella_initiative = value
+        } else if (key == "parent_umbrella_project") {
+          fm_parent_umbrella_project = value
+        } else if (key == "related_control_plane") {
+          fm_related_control_plane = value
+        } else if (key == "related_umbrella_project") {
+          fm_related_umbrella_project = value
+        }
+      }
+      next
+    }
+
     /^- Type: / {
       type = trim(substr($0, length("- Type: ") + 1))
       next
@@ -203,6 +243,70 @@ validate_file() {
       allowed_verification_status["Cancelled"] = 1
       allowed_verification_status["Superseded"] = 1
       allowed_verification_status["N/A"] = 1
+
+      if (fm_type != "") {
+        if (type == "") {
+          type = fm_type
+        } else if (type != fm_type) {
+          push_error("frontmatter type does not match visible metadata: " fm_type " != " type)
+        }
+      }
+
+      if (fm_doc_status != "") {
+        if (doc_status == "") {
+          doc_status = fm_doc_status
+        } else if (doc_status != fm_doc_status) {
+          push_error("frontmatter status does not match visible metadata: " fm_doc_status " != " doc_status)
+        }
+      }
+
+      if (fm_completion_mode != "") {
+        if (completion_mode == "") {
+          completion_mode = fm_completion_mode
+        } else if (completion_mode != fm_completion_mode) {
+          push_error("frontmatter completion_mode does not match visible metadata: " fm_completion_mode " != " completion_mode)
+        }
+      }
+
+      if (fm_project_role != "") {
+        if (project_role == "") {
+          project_role = fm_project_role
+        } else if (project_role != fm_project_role) {
+          push_error("frontmatter project_role does not match visible metadata: " fm_project_role " != " project_role)
+        }
+      }
+
+      if (fm_umbrella_initiative != "") {
+        if (umbrella_initiative == "") {
+          umbrella_initiative = fm_umbrella_initiative
+        } else if (umbrella_initiative != fm_umbrella_initiative) {
+          push_error("frontmatter umbrella_initiative does not match visible metadata: " fm_umbrella_initiative " != " umbrella_initiative)
+        }
+      }
+
+      if (fm_parent_umbrella_project != "") {
+        if (parent_umbrella_project == "") {
+          parent_umbrella_project = fm_parent_umbrella_project
+        } else if (parent_umbrella_project != fm_parent_umbrella_project) {
+          push_error("frontmatter parent_umbrella_project does not match visible metadata: " fm_parent_umbrella_project " != " parent_umbrella_project)
+        }
+      }
+
+      if (fm_related_control_plane != "") {
+        if (related_control_plane == "") {
+          related_control_plane = fm_related_control_plane
+        } else if (related_control_plane != fm_related_control_plane) {
+          push_error("frontmatter related_control_plane does not match visible metadata: " fm_related_control_plane " != " related_control_plane)
+        }
+      }
+
+      if (fm_related_umbrella_project != "") {
+        if (related_umbrella_project == "") {
+          related_umbrella_project = fm_related_umbrella_project
+        } else if (related_umbrella_project != fm_related_umbrella_project) {
+          push_error("frontmatter related_umbrella_project does not match visible metadata: " fm_related_umbrella_project " != " related_umbrella_project)
+        }
+      }
 
       if (type != "task" && type != "project") {
         push_error("only task/project docs are supported, found Type: " type)

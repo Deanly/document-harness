@@ -1,3 +1,27 @@
+---
+type: project
+doc_id: {{DOC_ID}}
+title: {{TITLE}}
+status: draft
+project_role: umbrella
+umbrella_initiative: {{TITLE}}
+parent_umbrella_project: self
+completion_mode: functional
+owner:
+created: {{DATE}}
+updated: {{DATE}}
+current_focus:
+related_control_plane: docs/design/control-plane.md
+related_design: []
+source_refs: []
+quality_axes:
+  - WHOLE
+  - SCOPE
+  - HANDOFF
+tags:
+  - docs/project
+---
+
 # {{DOC_ID}} {{TITLE}}
 
 - Type: project

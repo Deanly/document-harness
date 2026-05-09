@@ -22,12 +22,44 @@ metadata_value() {
   local file="$1"
   local key="$2"
 
-  awk -v prefix="- ${key}: " '
+  awk -v prefix="- ${key}: " -v raw_key="$key" '
+    function trim(s) {
+      sub(/^[[:space:]]+/, "", s)
+      sub(/[[:space:]]+$/, "", s)
+      return s
+    }
+
+    BEGIN {
+      fm_key = tolower(raw_key)
+      gsub(/[ -]+/, "_", fm_key)
+    }
+
+    NR == 1 && $0 == "---" {
+      in_frontmatter = 1
+      next
+    }
+
+    in_frontmatter && $0 == "---" {
+      in_frontmatter = 0
+      next
+    }
+
+    in_frontmatter && $0 ~ /^[A-Za-z_][A-Za-z0-9_]*:[[:space:]]*/ {
+      key = $0
+      sub(/:.*/, "", key)
+      value = $0
+      sub(/^[^:]*:[[:space:]]*/, "", value)
+      value = trim(value)
+      if (tolower(key) == fm_key && value != "") {
+        print value
+        exit
+      }
+      next
+    }
+
     index($0, prefix) == 1 {
       value = substr($0, length(prefix) + 1)
-      sub(/^[[:space:]]+/, "", value)
-      sub(/[[:space:]]+$/, "", value)
-      print value
+      print trim(value)
       exit
     }
   ' "$file"
@@ -76,9 +108,36 @@ awk -v today="$TODAY" -v status_line="$STATUS_LINE" '
   BEGIN {
     updated_rewritten = 0
     status_rewritten = 0
+    fm_updated_rewritten = 0
+    fm_status_rewritten = 0
     in_status_section = 0
     status_section_seen = 0
     status_line_inserted = 0
+  }
+
+  NR == 1 && $0 == "---" {
+    print
+    in_frontmatter = 1
+    frontmatter_seen = 1
+    next
+  }
+
+  in_frontmatter && $0 == "---" {
+    print
+    in_frontmatter = 0
+    next
+  }
+
+  in_frontmatter && /^status:[[:space:]]*/ && !fm_status_rewritten {
+    print "status: done"
+    fm_status_rewritten = 1
+    next
+  }
+
+  in_frontmatter && /^updated:[[:space:]]*/ && !fm_updated_rewritten {
+    print "updated: " today
+    fm_updated_rewritten = 1
+    next
   }
 
   $0 == "## Status" {
@@ -125,6 +184,12 @@ awk -v today="$TODAY" -v status_line="$STATUS_LINE" '
     }
     if (!status_section_seen) {
       exit 12
+    }
+    if (frontmatter_seen && !fm_status_rewritten) {
+      exit 13
+    }
+    if (frontmatter_seen && !fm_updated_rewritten) {
+      exit 14
     }
     if (in_status_section && !status_line_inserted) {
       print status_line

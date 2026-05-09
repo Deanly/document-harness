@@ -22,6 +22,7 @@
 - `docs/design/control-plane.md`: 전체 시스템 목표, pipeline, validator, quality axes를 고정하는 central control surface
 - `docs/guide/artifact-contracts.md`: design / project / task / guide / report 간 책임과 handoff 계약
 - `docs/guide/quality-axes.md`: project/task closeout과 review에 쓰는 품질 축
+- `docs/guide/llm-wiki-operations.md`: source-backed ingest/query/lint와 markdown properties 운영 규칙
 - `docs/design/ubiquitous-language.md`: 새 프로젝트에서 바로 채울 수 있는 용어 기준 문서
 - `docs/examples/`: placeholder 대신 참고할 수 있는 완성형 예시 문서
 - `docs/_templates/`: `task`, `project`, `design`, `guide`, `report` 템플릿
@@ -51,11 +52,13 @@
 1. `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`의 placeholder를 실제 프로젝트 기준으로 교체합니다.
 2. 사람이 첫 umbrella `project` 문서를 발급합니다.
 3. 설계 기준이 필요하면 `design` 문서를 만들고 `control-plane`, `ubiquitous-language`를 같은 변경 셋에서 갱신합니다.
-4. 실제 실행 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
-5. 예외 조건이 명확하고 사람이 승인할 때만 새 `project`를 발급하고, 왜 task가 아닌지 먼저 남깁니다.
-6. `project`와 `task`는 지원되는 `Completion Mode` 중 하나를 선택하고, whole-system anchor와 quality axes를 명시합니다. 대부분의 경우 기본값인 `functional`을 유지합니다.
-7. `./docs/bin/validate-harness-foundation.sh`로 기본 control surface가 잠겨 있는지 확인합니다.
-8. `done` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.
+4. source를 누적하는 프로젝트라면 원문을 불변으로 둘 `raw/` 또는 `sources/` 위치를 정하고, 생성 문서의 `source_refs` property로 연결합니다.
+5. 실제 실행 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
+6. 예외 조건이 명확하고 사람이 승인할 때만 새 `project`를 발급하고, 왜 task가 아닌지 먼저 남깁니다.
+7. `project`와 `task`는 지원되는 `Completion Mode` 중 하나를 선택하고, whole-system anchor와 quality axes를 명시합니다. 대부분의 경우 기본값인 `functional`을 유지합니다.
+8. 새 문서는 YAML frontmatter properties와 첫 화면 bullet metadata를 함께 유지합니다.
+9. `./docs/bin/validate-harness-foundation.sh`로 기본 control surface가 잠겨 있는지 확인합니다.
+10. `done` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.
 
 ## Closeout Gate
 

@@ -1,3 +1,17 @@
+---
+type: design
+title: {{TITLE}}
+status: current
+domain:
+owner:
+created: {{DATE}}
+updated: {{DATE}}
+referenced_by: []
+source_refs: []
+tags:
+  - docs/design
+---
+
 # {{TITLE}}
 
 - Type: design

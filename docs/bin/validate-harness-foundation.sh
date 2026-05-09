@@ -27,11 +27,13 @@ CONTROL_PLANE="$ROOT_DIR/design/control-plane.md"
 QUALITY_AXES="$ROOT_DIR/guide/quality-axes.md"
 ARTIFACT_CONTRACTS="$ROOT_DIR/guide/artifact-contracts.md"
 UBIQUITOUS_LANGUAGE="$ROOT_DIR/design/ubiquitous-language.md"
+LLM_WIKI_OPERATIONS="$ROOT_DIR/guide/llm-wiki-operations.md"
 
 require_file "$CONTROL_PLANE"
 require_file "$QUALITY_AXES"
 require_file "$ARTIFACT_CONTRACTS"
 require_file "$UBIQUITOUS_LANGUAGE"
+require_file "$LLM_WIKI_OPERATIONS"
 
 for header in \
   "## Purpose" \
@@ -68,6 +70,20 @@ for header in \
   "## Change Log"
 do
   require_section "$ARTIFACT_CONTRACTS" "$header"
+done
+
+for header in \
+  "## Purpose" \
+  "## Fit To This Harness" \
+  "## Source Layer" \
+  "## Ingest Workflow" \
+  "## Query Workflow" \
+  "## Lint Workflow" \
+  "## Index And Log Mapping" \
+  "## Properties Contract" \
+  "## Change Log"
+do
+  require_section "$LLM_WIKI_OPERATIONS" "$header"
 done
 
 echo "Validated harness foundation."

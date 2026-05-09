@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-16
+- Updated: 2026-05-09
 
 ## Purpose
 
@@ -63,6 +63,16 @@
 - 언제 마지막으로 갱신되었는가
 - 지금 왜 이 문서를 읽어야 하는가
 
+## Properties Rule
+
+- 모든 새 템플릿은 YAML frontmatter properties를 가집니다.
+- properties는 검색, Dataview, lint, agent navigation을 위한 machine-readable surface입니다.
+- 첫 화면 bullet metadata는 사람이 읽는 visible mirror입니다.
+- `status`, `owner`, `updated`, `current_focus`, 관계 property를 바꿀 때는 frontmatter와 bullet metadata를 함께 맞춥니다.
+- `./docs/bin/close-doc.sh`는 `project`와 `task`의 `status`/`updated`를 frontmatter와 bullet metadata 모두에서 갱신합니다.
+- source 기반 문서는 `source_refs` property와 본문 `References` 또는 `Inputs`를 같이 채웁니다.
+- 새 property key가 필요하면 `docs/_templates/`와 `docs/guide/llm-wiki-operations.md`를 같은 변경 셋에서 갱신합니다.
+
 ## Filename Rules
 
 - `project`: `P0001-slug.md`
@@ -82,3 +92,4 @@
 - 2026-04-10: 문서 수명주기와 human-friendly active reading 규칙 고정.
 - 2026-04-14: `done`, `superseded`, closeout validation 사용 기준 반영.
 - 2026-04-16: umbrella lineage와 active surface 표시 규칙 추가.
+- 2026-05-09: YAML properties와 visible metadata mirror 규칙 추가.

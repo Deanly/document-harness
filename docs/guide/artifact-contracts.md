@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-14
-- Updated: 2026-04-14
+- Updated: 2026-05-09
 
 ## Purpose
 
@@ -28,14 +28,22 @@
 - `Goal Inventory`
 - `Goal Verification`
 - `Quality Axes In Scope`
+- YAML frontmatter properties
+- `source_refs`
 - closeout validator와 foundation validator
+
+### Source Layer
+
+- raw source: 원문, clipping, transcript, dataset, image, PDF
+- source summary: raw source를 읽고 만든 시점성 `report` 또는 관련 문서의 `Inputs`
+- source-backed synthesis: source를 근거로 갱신된 `design`, `guide`, `project`, `task`
 
 ## Artifact Contracts By Type
 
 ### `design`
 
 - Holds: 현재 truth, 경계, 계약, invariant, failure boundary
-- Reads: control-plane, ubiquitous-language, 관련 상위 요구
+- Reads: control-plane, ubiquitous-language, 관련 상위 요구, source-backed synthesis
 - Feeds: project, task, guide
 - Must not hold: 긴 실행 이력, 임시 작업 메모
 
@@ -63,9 +71,16 @@
 ### `report`
 
 - Holds: 시점성 조사, 요청 응답, 일회성 정리
-- Reads: 현재 active surface 전반
+- Reads: 현재 active surface 전반, raw source, source summary
 - Feeds: 필요 시 guide/design/project/task로 승격
 - Must not hold: 장기 authoritative truth
+
+### `raw source`
+
+- Holds: 원문 파일 또는 외부 source의 보존 사본
+- Reads: 없음
+- Feeds: report, design, guide, project, task
+- Must not hold: LLM이 덧붙인 해석, 현재 truth, 실행 상태
 
 ## Handoff Matrix
 
@@ -76,6 +91,7 @@
 | `task` | `task` | outputs / handoff, residual risk, operator note |
 | `task` | `project` | closeout evidence, remaining scope, supersede/cancel reason |
 | `report` | `guide/design/project/task` | reusable rule, truth, execution boundary |
+| `raw source` | `report/design/guide/project/task` | source_refs, extracted facts, contradiction notes |
 
 ## Authoring Rule
 
@@ -84,9 +100,12 @@
 1. 이 정보의 authoritative truth는 어느 surface에 있어야 하는가
 2. 이 문서는 무엇을 읽고 무엇을 넘기는가
 3. handoff를 다음 문서가 다시 읽을 수 있게 충분히 구조화했는가
+4. source 기반 주장이라면 `source_refs`와 본문 근거가 충분한가
+5. frontmatter properties와 첫 화면 metadata가 같은 상태를 말하는가
 
 답이 모호하면 artifact contract가 약한 상태입니다.
 
 ## Change Log
 
 - 2026-04-14: whole-system / focused execution / drift control artifact contract 규칙 추가.
+- 2026-05-09: raw source layer, source_refs, markdown properties contract 추가.

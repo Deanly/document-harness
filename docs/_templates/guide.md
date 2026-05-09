@@ -1,3 +1,18 @@
+---
+type: guide
+title: {{TITLE}}
+status: current
+owner:
+created: {{DATE}}
+updated: {{DATE}}
+related_project: []
+related_task: []
+related_design: []
+source_refs: []
+tags:
+  - docs/guide
+---
+
 # {{TITLE}}
 
 - Type: guide

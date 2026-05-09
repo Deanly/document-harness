@@ -4,7 +4,7 @@
 - Domain: ubiquitous-language
 - Owner:
 - Created: 2026-04-10
-- Updated: 2026-04-14
+- Updated: 2026-05-09
 - Referenced By:
   - `docs/README.md`
   - `docs/design/control-plane.md`
@@ -80,6 +80,38 @@ placeholder 대신 채워진 예시가 필요하면 `docs/examples/README.md`를
 
 ## Domain Terms
 
+### `raw source`
+
+LLM이 해석하기 전의 원문 파일, clipping, transcript, image, PDF, dataset을 뜻합니다.
+
+raw source는 가능한 한 불변으로 두고, 해석과 synthesis는 생성 문서에 남깁니다.
+
+### `source ref`
+
+생성 문서가 근거로 읽은 raw source나 외부 문서 경로를 뜻합니다.
+
+markdown properties에서는 `source_refs` key를 사용합니다.
+
+### `markdown properties`
+
+문서 상단 YAML frontmatter에 적는 machine-readable metadata를 뜻합니다.
+
+Obsidian, Dataview, 검색 도구, LLM agent가 문서를 분류하고 연결할 때 우선 읽는 index surface입니다.
+
+### `wiki surface`
+
+LLM이 유지하는 persistent markdown artifact를 뜻합니다.
+
+이 하네스에서는 `design`, `guide`, `project`, `task`, `report`가 wiki surface입니다.
+
+### `ingest`
+
+새 source를 읽고, summary와 source_refs를 남기며, 관련 wiki surface의 current truth나 실행 이력을 갱신하는 작업을 뜻합니다.
+
+### `lint pass`
+
+문서의 stale claim, orphan, missing cross-reference, property drift, source gap을 점검하는 health-check 작업을 뜻합니다.
+
 ### `source record`
 
 원문 기준으로 보존되는 가장 초기 데이터 단위를 적습니다.
@@ -110,3 +142,4 @@ downstream에 전달하거나 이후 단계가 소비하는 구조화 결과를 
 
 - 2026-04-10: 하네스 starter 문서 생성.
 - 2026-04-14: control-plane과의 whole-system control surface 연결 규칙 추가.
+- 2026-05-09: LLM Wiki 운영을 위한 raw source, source_refs, markdown properties, ingest/lint 용어 추가.
