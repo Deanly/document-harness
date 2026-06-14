@@ -42,6 +42,7 @@ tags:
 
 ## Task Placement Check
 
+- 이 문서 번호가 clean, up-to-date `main`에서 main-issued draft로 발급되고 즉시 commit되었는지 확인합니다.
 - 왜 이 작업이 기존 umbrella project 아래의 `task`여야 하는지 적습니다.
 - 왜 별도 `project`를 발급하지 않아도 되는지 적습니다.
 

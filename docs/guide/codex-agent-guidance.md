@@ -4,7 +4,7 @@ title: codex-agent-guidance
 status: current
 owner:
 created: 2026-05-09
-updated: 2026-05-09
+updated: 2026-06-14
 related_project: []
 related_task: []
 related_design:
@@ -22,7 +22,7 @@ tags:
 
 - Type: guide
 - Created: 2026-05-09
-- Updated: 2026-05-09
+- Updated: 2026-06-14
 - Related Project:
 - Related Task:
 - Related Design: docs/design/control-plane.md
@@ -75,6 +75,12 @@ Root `AGENTS.md` should stay concise and include these sections:
 
 Do not duplicate the full contents of `docs/README.md` in `AGENTS.md`. Link to durable docs and keep only the high-value operating rules that Codex needs before it can safely choose files.
 
+## Numbered Document Issuance Rule
+
+When Codex needs to issue a numbered `project` or `task` document, it must not run `docs/bin/new-doc.sh` from a feature branch. The document number is allocated from clean, up-to-date `main`; `new-doc.sh` commits the generated `draft` file on `main` immediately, and the work branch then merges `main` before continuing.
+
+If the current work branch is dirty, stash the work with untracked files before switching. After the main-issued draft commit is merged back into the work branch, pop the stash and resolve any conflicts. Incoming changes already deployed through `main` are accepted as the current baseline.
+
 ## Verification Contract
 
 Codex-friendly work needs a single obvious command that checks the agent-facing harness. Use:
@@ -99,3 +105,4 @@ Codex can run multiple threads, but two concurrent tasks should not modify the s
 ## Change Log
 
 - 2026-05-09: Codex-facing AGENTS.md, prompt shape, and readiness validator contract added.
+- 2026-06-14: Numbered `project`/`task` issuance rule added for main-based draft commits.

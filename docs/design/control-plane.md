@@ -1,10 +1,35 @@
+---
+type: design
+title: control-plane
+status: current
+domain: control-plane
+owner:
+created: 2026-04-14
+updated: 2026-06-14
+retrieval_class:
+  - core-start
+context:
+  default_load: true
+  section_load: false
+  evidence_only: false
+  size_tier: small
+referenced_by:
+  - docs/README.md
+related_task:
+  - docs/tasks/T0001-retrieval-plane-baseline.md
+source_refs: []
+tags:
+  - docs/design
+  - control-plane
+---
+
 # control-plane
 
 - Type: design
 - Domain: control-plane
 - Owner:
 - Created: 2026-04-14
-- Updated: 2026-05-09
+- Updated: 2026-06-14
 - Referenced By:
   - `docs/README.md`
 
@@ -40,11 +65,13 @@
 
 - `Goal Inventory`
 - `Goal Verification`
+- `./docs/bin/new-doc.sh`
 - `docs/guide/quality-axes.md`
 - YAML frontmatter properties
 - `source_refs`
 - `./docs/bin/validate-codex-readiness.sh`
 - `./docs/bin/validate-harness-foundation.sh`
+- `./docs/bin/validate-doc-retrieval.sh`
 - `./docs/bin/validate-closeout.sh`
 
 ### Codex Agent Control
@@ -76,6 +103,7 @@
 - 새 `project` 발급은 사람만 하며, 에이전트는 발급 필요성과 근거만 제안합니다.
 - 새 `project`는 사용자 명시 요청, 본질적인 completion mode 분리, owner/운영 검증 체계 분리 같은 예외가 명확할 때만 허용합니다.
 - 새 `project`가 필요하다면 `Project Issuance Check`에 왜 task가 안 되는지와 왜 human에게 더 읽기 쉬운지 남깁니다.
+- 번호가 붙는 `project`와 `task` 문서는 clean, up-to-date `main`에서만 발급하고, 생성된 `draft`를 즉시 `main`에 commit합니다.
 
 ## Active Umbrella Projects
 
@@ -90,6 +118,11 @@
 | `docs/projects/README.md` | active umbrella-first project 입구 | Active | lineage가 먼저 보여야 합니다. |
 | `docs/tasks/README.md` | active task 입구 | Active | 각 task의 umbrella owner가 드러나야 합니다. |
 | `docs/reports/README.md` | active report 입구 | Active | |
+| `docs/design/README.md` | design retrieval 입구 | Active | design corpus selection index |
+| `docs/_indexes/active-docs.md` | active docs retrieval index | Active | README active surface와 함께 유지합니다. |
+| `docs/_indexes/design-map.md` | compact design retrieval map | Active | `docs/design/README.md`에서 파생됩니다. |
+| `docs/_indexes/context-packets.yaml` | context packet manifest | Active | default broad-load guard 대상입니다. |
+| `docs/guide/context-loading-playbooks.md` | work-type context loading rules | Active | Codex/LLM context-window 선택 기준 |
 
 ## Standard Pipeline
 
@@ -98,8 +131,8 @@
 | Whole alignment | 전체 목표, 용어, 범위가 아직 흐릴 때 | `control-plane`, `ubiquitous-language`, 핵심 `design` | 전체 목표, 용어, 품질 축이 잠김 |
 | Codex orientation | Codex가 repo에서 안전하게 작업해야 할 때 | `AGENTS.md`, Codex guide, readiness validator | agent entrypoint와 검증 명령이 일치함 |
 | Source ingest | 새 source, transcript, report, article, dataset을 durable knowledge로 반영할 때 | `source_refs`, source summary, 관련 `design`/`guide`/`report` 갱신 | 원문 위치, 해석 surface, 충돌 여부가 연결됨 |
-| Project issue | 사람이 첫 initiative owner를 발급하거나 사람 승인 하에 예외 조건이 명확할 때 | umbrella `project` 또는 exception branch `project` | lineage / scope / out-of-scope / WBS / whole-system anchor 고정 |
-| Task issue | 기존 umbrella 아래에서 실제로 닫을 수 있는 execution slice가 생길 때 | `task` | goal inventory / task placement / handoff / quality axes 고정 |
+| Project issue | 사람이 첫 initiative owner를 발급하거나 사람 승인 하에 예외 조건이 명확할 때 | main-issued umbrella `project` 또는 exception branch `project` draft commit | lineage / scope / out-of-scope / WBS / whole-system anchor 고정 |
+| Task issue | 기존 umbrella 아래에서 실제로 닫을 수 있는 execution slice가 생길 때 | main-issued `task` draft commit | goal inventory / task placement / handoff / quality axes 고정 |
 | Execute | 구현, 검증, 운영 정렬이 진행될 때 | evidence, 상태 이력, 필요 시 guide/report | closeout gate 통과 |
 | Wiki lint | 큰 ingest 후 또는 주기적으로 stale/drift를 점검할 때 | property 정리, missing cross-reference, stale claim 수정 제안 | active index, properties, current truth가 다시 맞음 |
 | Closeout | 문서를 닫을 수 있을 때 | `done` 상태와 append-only closeout evidence | goal verification 전부 `Done` |
@@ -113,6 +146,7 @@
 
 - `./docs/bin/validate-harness-foundation.sh`
 - `./docs/bin/validate-codex-readiness.sh`
+- `./docs/bin/validate-doc-retrieval.sh`
 - `./docs/bin/validate-closeout.sh --all`
 - 필요하면 프로젝트별 build / test / smoke validator를 추가합니다.
 
@@ -133,3 +167,5 @@
 - 2026-05-01: project human issuance 규칙 추가.
 - 2026-05-09: source-backed ingest, markdown properties, wiki lint surface 추가.
 - 2026-05-09: Codex orientation surface와 readiness validator 추가.
+- 2026-05-16: retrieval-plane design index, context loading playbook, `_indexes`, and `validate-doc-retrieval.sh` 추가.
+- 2026-06-14: `project`/`task` 번호 발급을 main-issued draft commit으로 고정.

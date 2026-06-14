@@ -36,12 +36,15 @@
 
 ## Quick Start
 
+`project`와 `task` 문서 발급은 번호 충돌을 막기 위해 clean, up-to-date `main`에서 실행합니다. `new-doc.sh`는 생성된 `draft` 파일만 즉시 `main`에 commit합니다.
+
 ```bash
 ./docs/bin/new-doc.sh project example-project
 ./docs/bin/new-doc.sh task first-task
 ./docs/bin/new-doc.sh design core-boundary
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
+./docs/bin/validate-doc-retrieval.sh
 ./docs/bin/validate-closeout.sh --all
 ```
 
@@ -54,11 +57,11 @@
 새 프로젝트로 복사한 뒤에는 아래 순서를 권장합니다.
 
 1. `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`의 placeholder를 실제 프로젝트 기준으로 교체합니다.
-2. 사람이 첫 umbrella `project` 문서를 발급합니다.
+2. 사람이 첫 umbrella `project` 문서를 clean, up-to-date `main`에서 발급합니다. `new-doc.sh`가 draft commit을 생성합니다.
 3. 설계 기준이 필요하면 `design` 문서를 만들고 `control-plane`, `ubiquitous-language`를 같은 변경 셋에서 갱신합니다.
 4. source를 누적하는 프로젝트라면 원문을 불변으로 둘 `raw/` 또는 `sources/` 위치를 정하고, 생성 문서의 `source_refs` property로 연결합니다.
-5. 실제 실행 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
-6. 예외 조건이 명확하고 사람이 승인할 때만 새 `project`를 발급하고, 왜 task가 아닌지 먼저 남깁니다.
+5. 실제 실행 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
+6. 예외 조건이 명확하고 사람이 승인할 때만 새 `project`를 `main`에서 발급하고, 왜 task가 아닌지 먼저 남깁니다.
 7. `project`와 `task`는 지원되는 `Completion Mode` 중 하나를 선택하고, whole-system anchor와 quality axes를 명시합니다. 대부분의 경우 기본값인 `functional`을 유지합니다.
 8. 새 문서는 YAML frontmatter properties와 첫 화면 bullet metadata를 함께 유지합니다.
 9. Codex가 바로 읽어야 하는 프로젝트라면 루트 `AGENTS.md`를 실제 프로젝트 기준으로 조정하고, 필요하면 `docs/_templates/agents.md`를 복사해 시작합니다.
@@ -72,6 +75,7 @@
 ```bash
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
+./docs/bin/validate-doc-retrieval.sh
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/close-doc.sh docs/tasks/T0001-first-task.md "issued goals and evidence verified"
 ```

@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-16
-- Updated: 2026-05-01
+- Updated: 2026-06-14
 
 ## Purpose
 
@@ -21,6 +21,7 @@
 - `project`는 human-facing owner를 잠그는 문서이므로 사람만 발급합니다.
 - 에이전트는 새 `project` 필요성을 제안하고 근거를 정리할 수 있지만, 사람 승인 없이 발급하지 않습니다.
 - 사람 승인이 없다면 기본값은 새 `project`가 아니라 기존 umbrella project 아래의 `task`입니다.
+- 승인된 `project` 번호는 clean, up-to-date `main`에서 발급하고 생성된 `draft`를 즉시 `main`에 commit합니다.
 
 ## Task-First Project Issuance Rule
 
@@ -73,6 +74,7 @@
 
 - `project`는 `Project Role`, `Umbrella Initiative`, `Parent Umbrella Project`, `Umbrella Lineage`, `Project Issuance Check`를 가집니다.
 - `task`는 `Related Umbrella Project`, `Task Placement Check`를 가집니다.
+- `Project Issuance Check`와 `Task Placement Check`는 해당 번호가 main-issued draft로 예약되었는지 확인합니다.
 - `Project Role`의 기본값은 `umbrella`입니다.
 - 예외 분기 project라면 `Project Role: exception-branch`를 쓰고 parent umbrella를 반드시 적습니다.
 
@@ -86,3 +88,4 @@
 
 - 2026-04-16: umbrella project default, task-first issuance, exception rule 추가.
 - 2026-05-01: project human issuance 규칙 추가.
+- 2026-06-14: main-issued draft 기반 project/task 번호 reservation 규칙 추가.

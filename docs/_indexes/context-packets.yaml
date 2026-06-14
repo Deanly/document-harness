@@ -1,0 +1,83 @@
+# Semi-generated context packet manifest.
+# Default packets must not include all design docs, all task docs, or the full
+# ubiquitous language registry.
+
+version: 1
+updated: 2026-05-16
+source_guides:
+  - docs/guide/context-loading-playbooks.md
+  - docs/design/README.md
+
+packets:
+  docs_harness:
+    default_load:
+      - docs/README.md
+      - docs/design/control-plane.md
+      - docs/guide/llm-wiki-operations.md
+      - docs/guide/context-loading-playbooks.md
+    dynamic_load:
+      - relevant_templates
+      - relevant_validators
+    avoid_by_default:
+      - docs/design/*.md
+      - docs/tasks/*.md
+      - docs/design/ubiquitous-language.md
+    section_only:
+      - docs/design/ubiquitous-language.md
+
+  design_change:
+    default_load:
+      - docs/design/control-plane.md
+      - docs/design/README.md
+    dynamic_load:
+      - target_design_doc
+      - relevant_ubiquitous_language_sections
+      - related_project_or_task_if_delivery_changes
+    avoid_by_default:
+      - docs/design/*.md
+      - docs/tasks/*.md
+      - docs/design/ubiquitous-language.md
+    section_only:
+      - docs/design/ubiquitous-language.md
+
+  project_task_execution:
+    default_load:
+      - current_task_doc
+      - parent_or_reference_project_doc
+      - docs/design/control-plane.md
+    dynamic_load:
+      - directly_referenced_design_docs
+      - relevant_guide_or_validator_docs
+    avoid_by_default:
+      - docs/tasks/*.md
+      - docs/reports/*.md
+      - docs/design/ubiquitous-language.md
+    section_only:
+      - docs/design/ubiquitous-language.md
+
+  report_synthesis:
+    default_load:
+      - requested_sources
+      - relevant_design_current_truth
+      - docs/_templates/report.md
+    dynamic_load:
+      - relevant_guide_if_reusable
+      - active_project_or_task_if_delivery_changes
+    avoid_by_default:
+      - docs/design/*.md
+      - docs/tasks/*.md
+      - docs/design/ubiquitous-language.md
+    section_only:
+      - docs/design/ubiquitous-language.md
+
+  closeout:
+    default_load:
+      - target_project_or_task_doc
+      - docs/design/control-plane.md
+    dynamic_load:
+      - related_design_docs
+      - validators_referenced_by_doc
+      - cited_evidence
+    avoid_by_default:
+      - unrelated_sibling_tasks
+      - docs/reports/*.md

@@ -19,6 +19,7 @@
 - Use `docs/bin/` scripts instead of ad hoc document mutation when a script exists.
 - Keep changes narrow and aligned with the existing document contracts.
 - Do not issue a new `project` document without explicit human approval.
+- Issue numbered `project`/`task` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
 
 ## Documentation Rules
 
@@ -33,6 +34,7 @@
 ```bash
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
+./docs/bin/validate-doc-retrieval.sh
 ./docs/bin/validate-closeout.sh --all
 git diff --check
 ```

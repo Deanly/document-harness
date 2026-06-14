@@ -1,10 +1,36 @@
+---
+type: design
+title: ubiquitous-language
+status: current
+domain: ubiquitous-language
+owner:
+created: 2026-04-10
+updated: 2026-06-14
+retrieval_class:
+  - term-excerpt
+context:
+  default_load: false
+  section_load: true
+  evidence_only: false
+  size_tier: small
+referenced_by:
+  - docs/README.md
+  - docs/design/control-plane.md
+related_task:
+  - docs/tasks/T0001-retrieval-plane-baseline.md
+source_refs: []
+tags:
+  - docs/design
+  - ubiquitous-language
+---
+
 # ubiquitous-language
 
 - Type: design
 - Domain: ubiquitous-language
 - Owner:
 - Created: 2026-04-10
-- Updated: 2026-05-09
+- Updated: 2026-06-14
 - Referenced By:
   - `docs/README.md`
   - `docs/design/control-plane.md`
@@ -18,6 +44,13 @@
 placeholder 대신 채워진 예시가 필요하면 `docs/examples/README.md`를 먼저 봅니다.
 
 이 문서는 `docs/design/control-plane.md`와 함께 whole-system control surface를 이룹니다.
+
+## Retrieval Rule
+
+- 이 문서는 canonical term registry입니다.
+- 일반 task/project execution에서 full document를 기본 로딩하지 않습니다.
+- 용어 판단이 필요할 때 관련 heading 또는 term section만 section-load 합니다.
+- terminology governance 또는 naming design 작업일 때만 전체 문서를 읽습니다.
 
 ## Maintenance Rule
 
@@ -124,6 +157,12 @@ Codex 또는 사람이 작업을 닫기 전에 참이어야 하는 검증 가능
 
 prompt에서는 `done when`으로 표현할 수 있고, 이 하네스에서는 `Completion Criteria`, `Exit Criteria`, `Goal Verification`, validator 결과로 구체화합니다.
 
+### `main-issued draft`
+
+`project` 또는 `task` 문서 번호를 `main`의 문서 집합 기준으로 예약하기 위해 clean, up-to-date `main`에서 생성하고 즉시 commit한 `draft` 문서를 뜻합니다.
+
+main-issued draft는 active truth가 아니라 번호 reservation이며, work branch가 `main`을 merge한 뒤 내용을 채우고 필요할 때 active 전환합니다.
+
 ### `source record`
 
 원문 기준으로 보존되는 가장 초기 데이터 단위를 적습니다.
@@ -156,3 +195,4 @@ downstream에 전달하거나 이후 단계가 소비하는 구조화 결과를 
 - 2026-04-14: control-plane과의 whole-system control surface 연결 규칙 추가.
 - 2026-05-09: LLM Wiki 운영을 위한 raw source, source_refs, markdown properties, ingest/lint 용어 추가.
 - 2026-05-09: Codex 운영을 위한 agent instruction surface와 done criteria 용어 추가.
+- 2026-06-14: main-issued draft 용어 추가.

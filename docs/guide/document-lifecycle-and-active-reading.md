@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-05-09
+- Updated: 2026-06-14
 
 ## Purpose
 
@@ -19,6 +19,7 @@
 
 - 모든 `project`, `task`, `report` 문서는 `Status`를 가집니다.
 - `draft`는 발급되었지만 아직 현재 읽을 문서 목록에 올리지 않은 상태입니다.
+- `project`와 `task`의 `draft`는 `main`에서 즉시 commit되는 번호 reservation으로 쓰일 수 있으며, active truth가 아니므로 폴더 active 목록에 올리지 않습니다.
 - `active`는 지금 사람이 읽고 추적해야 하는 문서입니다.
 - `closed`, `done`, `cancelled`, `superseded` 같은 비활성 상태는 폴더의 active 목록에서 제외합니다.
 - `done`은 발급 시점의 `Purpose`와 `Completion Mode`가 충족되었을 때만 씁니다.
@@ -101,3 +102,4 @@
 - 2026-04-16: umbrella lineage와 active surface 표시 규칙 추가.
 - 2026-05-09: YAML properties와 visible metadata mirror 규칙 추가.
 - 2026-05-09: Codex-facing AGENTS.md reading rule 추가.
+- 2026-06-14: `project`/`task` draft를 main-issued 번호 reservation으로 commit할 수 있는 규칙 추가.

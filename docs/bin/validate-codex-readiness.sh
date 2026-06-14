@@ -52,10 +52,12 @@ require_frontmatter() {
 AGENTS_FILE="$REPO_ROOT/AGENTS.md"
 AGENTS_TEMPLATE="$DOCS_DIR/_templates/agents.md"
 CODEX_GUIDE="$DOCS_DIR/guide/codex-agent-guidance.md"
+NEW_DOC_SCRIPT="$DOCS_DIR/bin/new-doc.sh"
 
 require_file "$AGENTS_FILE"
 require_file "$AGENTS_TEMPLATE"
 require_file "$CODEX_GUIDE"
+require_file "$NEW_DOC_SCRIPT"
 
 agents_bytes="$(wc -c < "$AGENTS_FILE" | tr -d '[:space:]')"
 if (( agents_bytes > MAX_AGENTS_BYTES )); then
@@ -80,12 +82,18 @@ for header in \
   "## Harness Mapping" \
   "## Prompt Shape" \
   "## AGENTS.md Contract" \
+  "## Numbered Document Issuance Rule" \
   "## Verification Contract" \
   "## Parallel Work Rule" \
   "## Change Log"
 do
   require_section "$CODEX_GUIDE" "$header"
 done
+
+require_contains "$AGENTS_FILE" 'Issue numbered `project`/`task` docs only from clean, up-to-date `main`'
+require_contains "$AGENTS_TEMPLATE" 'Issue numbered `project`/`task` docs only from clean, up-to-date `main`'
+require_contains "$NEW_DOC_SCRIPT" "require_numbered_doc_issue_context"
+require_contains "$NEW_DOC_SCRIPT" "commit_numbered_doc_draft"
 
 for template in \
   "$DOCS_DIR/_templates/design.md" \

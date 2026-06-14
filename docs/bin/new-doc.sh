@@ -16,6 +16,10 @@ Types:
   design    -> docs/design/slug.md
   guide     -> docs/guide/slug.md
   report    -> docs/reports/YYYY-MM-DD-slug.md
+
+Notes:
+  task/project issuance must run from a clean, up-to-date main branch.
+  The generated task/project draft is committed on main automatically.
 EOF
 }
 
@@ -52,6 +56,39 @@ next_number() {
   fi
 }
 
+require_numbered_doc_issue_context() {
+  if ! git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "error: task/project docs require a git worktree so main-based issuance can be verified" >&2
+    exit 1
+  fi
+
+  local branch
+  branch="$(git -C "$ROOT_DIR" symbolic-ref --quiet --short HEAD || true)"
+  if [[ "$branch" != "main" ]]; then
+    echo "error: task/project docs must be issued from main, not '${branch:-detached HEAD}'" >&2
+    echo "hint: stash dirty branch work, switch to main, update it, issue and commit the draft, then merge main back into the work branch" >&2
+    exit 1
+  fi
+
+  if [[ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]]; then
+    echo "error: task/project docs must be issued from a clean main worktree" >&2
+    echo "hint: commit or stash local changes before issuing the numbered draft" >&2
+    exit 1
+  fi
+
+  local upstream
+  upstream="$(git -C "$ROOT_DIR" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+  if [[ -n "$upstream" ]]; then
+    local behind
+    behind="$(git -C "$ROOT_DIR" rev-list --count "HEAD..$upstream" 2>/dev/null || printf '0')"
+    if [[ "${behind:-0}" != "0" ]]; then
+      echo "error: main is behind $upstream; update main before issuing a task/project doc" >&2
+      echo "hint: git pull --ff-only" >&2
+      exit 1
+    fi
+  fi
+}
+
 render_template() {
   local template="$1"
   local output="$2"
@@ -65,6 +102,15 @@ render_template() {
     "$template" > "$output"
 }
 
+commit_numbered_doc_draft() {
+  local output="$1"
+  local doc_id="$2"
+  local slug="$3"
+
+  git -C "$ROOT_DIR" add -- "$output"
+  git -C "$ROOT_DIR" commit -m "docs: issue ${doc_id} ${slug}"
+}
+
 if [[ $# -ne 2 ]]; then
   usage
   exit 1
@@ -73,6 +119,7 @@ fi
 TYPE="$1"
 RAW_SLUG="$2"
 SLUG="$(slugify "$RAW_SLUG")"
+NUMBERED_DOC="false"
 
 if [[ -z "$SLUG" ]]; then
   echo "error: slug must contain at least one letter or number" >&2
@@ -87,6 +134,7 @@ case "$TYPE" in
     DOC_ID="T${NUMBER}"
     TITLE="$SLUG"
     OUTPUT="$DOC_DIR/${DOC_ID}-${SLUG}.md"
+    NUMBERED_DOC="true"
     ;;
   project)
     DOC_DIR="$ROOT_DIR/projects"
@@ -95,6 +143,7 @@ case "$TYPE" in
     DOC_ID="P${NUMBER}"
     TITLE="$SLUG"
     OUTPUT="$DOC_DIR/${DOC_ID}-${SLUG}.md"
+    NUMBERED_DOC="true"
     ;;
   design)
     TEMPLATE="$ROOT_DIR/_templates/design.md"
@@ -120,10 +169,18 @@ case "$TYPE" in
     ;;
 esac
 
+if [[ "$NUMBERED_DOC" == "true" ]]; then
+  require_numbered_doc_issue_context
+fi
+
 if [[ -e "$OUTPUT" ]]; then
   echo "error: target already exists: $OUTPUT" >&2
   exit 1
 fi
 
 render_template "$TEMPLATE" "$OUTPUT" "$DOC_ID" "$TITLE"
+if [[ "$NUMBERED_DOC" == "true" ]]; then
+  commit_numbered_doc_draft "$OUTPUT" "$DOC_ID" "$SLUG"
+  echo "hint: draft committed on main; push/share if needed, then merge main back into the work branch" >&2
+fi
 echo "$OUTPUT"

@@ -36,7 +36,7 @@ tags:
 - `docs/project`와 `docs/task`는 실행 이력과 evidence를 append-only로 남깁니다.
 - `docs/reports`는 특정 질문에 대한 시점성 답변을 담고, 재사용 가치가 생기면 `guide`, `design`, `project`, `task`로 승격합니다.
 - `AGENTS.md`는 Codex가 wiki surface를 안전하게 수정하기 전에 읽는 짧은 instruction surface입니다.
-- 폴더 `README.md`는 작은 규모의 index입니다. 문서 수가 커지면 검색 도구를 추가하되, 먼저 README와 properties가 정확해야 합니다.
+- 폴더 `README.md`는 작은 규모의 human index입니다. 문서 수가 커지면 `docs/design/README.md`와 `docs/_indexes/` retrieval-plane index를 함께 사용하되, 먼저 README와 properties가 정확해야 합니다.
 
 ## Source Layer
 
@@ -71,6 +71,7 @@ tags:
 정기적으로 또는 큰 ingest 후에 wiki health-check를 수행합니다.
 
 - folder README의 active 목록과 각 문서 `status`가 일치하는지 봅니다.
+- `docs/design/README.md`, `docs/_indexes/active-docs.md`, `docs/_indexes/design-map.md`, `docs/_indexes/context-packets.yaml`가 current corpus와 일치하는지 봅니다.
 - root `AGENTS.md`가 현재 validator, template, 핵심 guide를 가리키는지 봅니다.
 - properties와 첫 화면 visible metadata가 일치하는지 봅니다.
 - `source_refs`가 없는 주장성 문서가 있는지 봅니다.
@@ -80,7 +81,8 @@ tags:
 
 ## Index And Log Mapping
 
-- `index.md` 역할은 현재 각 폴더 `README.md`와 `docs/design/control-plane.md`의 active surface 표가 맡습니다.
+- `index.md` 역할은 현재 각 폴더 `README.md`, `docs/design/control-plane.md`의 active surface 표, `docs/design/README.md`, 그리고 `docs/_indexes/` retrieval-plane index가 함께 맡습니다.
+- 작업 성격별 context packet 선택은 `docs/guide/context-loading-playbooks.md`를 우선합니다.
 - `log.md` 역할은 `task`/`project`의 append-only `Status`, `design`/`guide`의 `Change Log`, `report`의 `Status`가 맡습니다.
 - 문서 수가 늘어나면 별도 `docs/index.md`나 검색 도구를 추가할 수 있지만, 먼저 각 문서의 properties와 README가 정확해야 합니다.
 
@@ -90,6 +92,7 @@ tags:
 - 첫 화면 bullet metadata는 사람이 빠르게 읽는 mirror입니다.
 - `type`, `status`, `owner`, `created`, `updated`, 관계 property는 가능한 한 모든 새 문서에 둡니다.
 - `project`와 `task`는 `doc_id`, `completion_mode`, control-plane 관계 property를 둡니다.
+- retrieval-sensitive docs may use `retrieval_class` and `context.default_load` / `context.section_load` / `context.size_tier`.
 - source 기반 문서는 `source_refs`를 둡니다.
 - 새 property key가 필요하면 템플릿과 이 가이드를 함께 갱신합니다.
 
@@ -97,3 +100,4 @@ tags:
 
 - 2026-05-09: LLM Wiki 방식의 source-backed ingest/query/lint loop와 properties contract 추가.
 - 2026-05-09: root AGENTS.md를 wiki surface 수정 전 Codex instruction surface로 반영.
+- 2026-05-16: retrieval-plane index와 context loading playbook 운영 규칙 추가.

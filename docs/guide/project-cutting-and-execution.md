@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-05-01
+- Updated: 2026-06-14
 
 ## Purpose
 
@@ -50,6 +50,23 @@
 - 에이전트는 새 `project` 필요성을 분석하고 `Project Issuance Check` 초안을 준비할 수 있습니다.
 - 하지만 사람의 명시적 요청 또는 승인 없이 새 `project` 문서를 발급하거나 기존 work를 새 `project`로 승격하지 않습니다.
 - 승인 전 기본값은 기존 umbrella `project` 아래의 새 `task`이며, 아직 경계가 흐리면 `guide` 또는 `design`으로 남깁니다.
+
+## Main-Issued Numbered Document Rule
+
+번호가 붙는 `project`와 `task` 문서는 항상 `main`의 문서 집합을 기준으로 발급합니다. feature branch에서 직접 번호를 계산하면 branch별 문서 집합이 달라져 같은 번호가 서로 다른 문서를 가리킬 수 있습니다.
+
+기본 흐름:
+
+1. 현재 work branch가 dirty하면 `git stash push -u`로 untracked 파일까지 보관합니다.
+2. `main`으로 전환하고 remote tracking branch가 있으면 `git pull --ff-only`로 최신화합니다.
+3. clean `main`에서 `./docs/bin/new-doc.sh project <slug>` 또는 `./docs/bin/new-doc.sh task <slug>`를 실행합니다.
+4. `new-doc.sh`가 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다. 공유 remote가 있으면 push 또는 공유까지 끝냅니다.
+5. 원래 work branch로 돌아가 `main`을 merge해서 새 문서와 그 사이 `main`에 들어온 배포본을 함께 가져옵니다.
+6. stash를 썼다면 merge 후 `git stash pop`하고 충돌을 해결합니다.
+
+이 흐름에서 `draft` commit은 문서 번호 reservation입니다. 아직 active truth가 아니므로 폴더 README의 active 목록에는 올리지 않습니다. 이후 work branch에서 해당 초안을 채우고, 필요한 경우 같은 branch에서 active 전환과 README 갱신을 수행합니다.
+
+개발 도중 `main`에 이미 배포된 버전을 work branch로 가져오는 것은 허용됩니다. 이는 문서 번호 정합성을 유지하면서 배포된 baseline 위에서 계속 개발하게 만드는 정상적인 refresh입니다.
 
 ## Umbrella Project Default
 
@@ -221,3 +238,4 @@ Status와 완료 판단에는 가능하면 아래를 남깁니다.
 - 2026-04-14: whole-system anchor, handoff, quality axes 요구사항 추가.
 - 2026-04-16: umbrella project default, task-first issuance, exception record 규칙 추가.
 - 2026-05-01: project human issuance 규칙 추가.
+- 2026-06-14: `project`/`task` 번호 발급을 clean, up-to-date `main`에서만 수행하고 draft를 즉시 commit하는 규칙 추가.

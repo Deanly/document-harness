@@ -51,6 +51,7 @@ tags:
 ## Project Issuance Check
 
 - 이 문서는 human-facing owner를 잠그는 surface이므로 사람만 발급합니다.
+- 이 문서 번호가 clean, up-to-date `main`에서 main-issued draft로 발급되고 즉시 commit되었는지 확인합니다.
 - 에이전트가 초안을 준비했다면 어떤 human 요청 또는 승인으로 발급했는지 적습니다.
 - 이 문서가 새 `project`여야 하는 이유를 적습니다.
 - 예외 분기 project라면 왜 기존 umbrella project의 `task`로는 안 되는지 적습니다.

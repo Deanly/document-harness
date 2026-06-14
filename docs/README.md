@@ -19,7 +19,8 @@
 - `docs/reports/`: 요청성 보고 문서
 - `docs/examples/`: 완성형 샘플 문서
 - `docs/_templates/`: 문서 템플릿
-- `docs/bin/`: 문서 생성 도구
+- `docs/_indexes/`: active docs, design map, context packet 같은 LLM retrieval-plane index
+- `docs/bin/`: 문서 생성 및 검증 도구
 - `AGENTS.md`: Codex가 자동으로 읽는 repository-level instruction surface
 - 프로젝트별 `raw/` 또는 `sources/`: 필요 시 원문 source를 불변으로 두는 입력 계층
 
@@ -173,6 +174,7 @@
 - `project`: `project_role`, `umbrella_initiative`, `parent_umbrella_project`
 - `task`: `related_umbrella_project`
 - `design`: `domain`, `referenced_by`
+- `design` retrieval hints: `retrieval_class`, `context.default_load`, `context.section_load`, `context.size_tier`
 - `guide` / `report`: `related_project`, `related_task`, `related_design`
 
 첫 화면의 bullet metadata는 사람이 바로 읽는 mirror입니다. `status`, `updated`, `current_focus`, 관계 property를 바꾸면 frontmatter와 bullet metadata를 같은 변경 셋에서 맞춥니다.
@@ -183,6 +185,13 @@
 
 - `task`와 `project`는 독립된 번호 시퀀스를 가집니다.
 - 번호는 중앙 카운터 파일 없이 기존 파일을 스캔해 계산합니다.
+- `task`와 `project` 번호 발급 기준 브랜치는 항상 `main`입니다.
+- `task` 또는 `project` 발급 전에는 local `main`을 remote tracking branch 기준으로 최신화합니다.
+- `./docs/bin/new-doc.sh task|project ...`는 clean, up-to-date `main`에서만 실행하며, 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다.
+- 발급된 `draft` commit은 번호 reservation입니다. 공유 remote가 있으면 work branch로 돌아가기 전에 push 또는 공유까지 끝냅니다.
+- 발급 후 기존 work branch는 `main`을 merge해서 새 문서와 그 사이 `main`에 들어온 배포본을 함께 가져온 뒤 작업을 이어갑니다.
+- work branch가 dirty해서 바로 `main`으로 전환할 수 없으면 untracked 파일을 포함해 stash하고, `main` 병합 후 stash를 되돌리며 충돌을 해결합니다.
+- 개발 도중 `main`에 이미 배포된 버전을 가져오는 것은 정상적인 baseline refresh로 허용합니다.
 - 번호는 4자리 고정입니다.
 - slug는 공백 대신 hyphen을 사용하는 kebab-case를 기본으로 하며, 한글을 포함한 유니코드 문자도 허용합니다.
 - 기존 문서를 삭제하지 않는 한 번호는 재사용하지 않습니다.
@@ -219,6 +228,7 @@
 - `done` 또는 `closed` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과해야 합니다.
 - whole-system control surface의 기본 구조는 `./docs/bin/validate-harness-foundation.sh`를 통과해야 합니다.
 - Codex-facing surface의 기본 구조는 `./docs/bin/validate-codex-readiness.sh`를 통과해야 합니다.
+- retrieval-plane surface의 기본 구조는 `./docs/bin/validate-doc-retrieval.sh`를 통과해야 합니다.
 - `done` 전환은 가능하면 메타데이터를 직접 고치기보다 `./docs/bin/close-doc.sh <doc-path> "<note>"`를 사용합니다.
 - `project` 문서의 WBS는 실제 `task` 문서와 1:1로 대응하는 것을 기본 규칙으로 합니다.
 - umbrella project의 WBS와 status history는 후속 분화가 생겨도 human-facing lineage를 먼저 설명해야 합니다.
@@ -276,11 +286,11 @@
 1. 프로젝트 시작 시 `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 먼저 채웁니다.
 2. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.
 3. Codex가 작업할 프로젝트라면 루트 `AGENTS.md`를 실제 repo 기준으로 조정합니다.
-4. 첫 umbrella `project` 문서를 발급합니다.
+4. 첫 umbrella `project` 문서는 clean, up-to-date `main`에서 발급합니다. `new-doc.sh`가 생성된 draft를 즉시 `main`에 commit합니다.
 5. 핵심 boundary와 계약을 `design`으로 고정하고, 필요하면 control-plane을 같은 변경 셋에서 갱신합니다.
 6. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
-7. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용합니다.
-8. 예외 조건이 명확할 때만 새 `project`를 발급하고 issuance check에 그 이유를 남깁니다.
+7. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
+8. 예외 조건이 명확할 때만 새 `project`를 `main`에서 발급하고 issuance check에 그 이유를 남깁니다.
 9. `project`와 `task`에는 whole-system anchor, outputs / handoff, quality axes in scope를 함께 적습니다.
 10. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
 11. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
@@ -293,6 +303,8 @@
 
 ## Commands
 
+`project`와 `task` 발급 명령은 clean, up-to-date `main`에서만 실행합니다.
+
 ```bash
 ./docs/bin/new-doc.sh project example-runtime-boundary
 ./docs/bin/new-doc.sh task bootstrap-ingestion-worker
@@ -302,6 +314,7 @@
 ./docs/bin/new-doc.sh report sprint-01-status
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
+./docs/bin/validate-doc-retrieval.sh
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/close-doc.sh docs/tasks/T0001-bootstrap-ingest.md "issued goals and evidence verified"
 ```
