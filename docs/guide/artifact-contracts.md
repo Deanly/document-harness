@@ -106,6 +106,9 @@
 | `task` | `task` | outputs / handoff, residual risk, operator note |
 | `task` | `project` | closeout evidence, remaining scope, supersede/cancel reason |
 | `report` | `guide/design/project/task` | reusable rule, truth, execution boundary |
+| `design` | `qa` | 불변식, 위험, 시나리오 — qa 케이스의 유일한 파생 근거 |
+| `task` | `qa` | closeout 시 케이스 증거 갱신, 결함에서 파생된 신규 케이스 |
+| `qa` | `task` | 방어 갭 백로그 항목 — 신규 방어 테스트 작업의 유일한 출처 |
 | `raw source` | `report/design/guide/project/task` | source_refs, extracted facts, contradiction notes |
 | `AGENTS.md` | `Codex session` | repo map, workflow, constraints, verification commands |
 

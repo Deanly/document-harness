@@ -19,7 +19,7 @@
 - Prefer `rg` and the scripts in `docs/bin/` for navigation and verification.
 - When changing document rules, update the template, the guide that explains the rule, and the validator in the same change when applicable.
 - Do not issue a new `project` document unless the user explicitly asks for it or approves it. Suggest the need and rationale instead.
-- Issue numbered `project`/`task` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
+- Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
 
 ## Documentation Rules
 

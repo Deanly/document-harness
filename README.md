@@ -25,9 +25,10 @@
 - `docs/guide/artifact-contracts.md`: design / project / task / guide / report 간 책임과 handoff 계약
 - `docs/guide/quality-axes.md`: project/task closeout과 review에 쓰는 품질 축
 - `docs/guide/llm-wiki-operations.md`: source-backed ingest/query/lint와 markdown properties 운영 규칙
+- `docs/guide/qa-document-system.md`: QA 문서(전략/계획/케이스 카탈로그/런북) 운영 규칙 — 테스트는 기획·설계 문서에서 파생
 - `docs/design/ubiquitous-language.md`: 새 프로젝트에서 바로 채울 수 있는 용어 기준 문서
 - `docs/examples/`: placeholder 대신 참고할 수 있는 완성형 예시 문서
-- `docs/_templates/`: `AGENTS`, `task`, `project`, `design`, `guide`, `report` 템플릿
+- `docs/_templates/`: `AGENTS`, `task`, `project`, `design`, `guide`, `report`, `qa` 템플릿
 - `docs/bin/new-doc.sh`: 번호 발급 및 문서 생성 스크립트
 - `docs/bin/validate-codex-readiness.sh`: Codex instruction surface와 핵심 validator를 함께 확인하는 스크립트
 - `docs/bin/validate-harness-foundation.sh`: control-plane, quality axes, artifact contract 기본 구조를 검증하는 스크립트
@@ -42,6 +43,7 @@
 ./docs/bin/new-doc.sh project example-project
 ./docs/bin/new-doc.sh task first-task
 ./docs/bin/new-doc.sh design core-boundary
+./docs/bin/new-doc.sh qa first-test-strategy
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
 ./docs/bin/validate-doc-retrieval.sh
