@@ -11,7 +11,7 @@ Usage:
   ./docs/bin/validate-closeout.sh <doc-path> [<doc-path> ...]
 
 Rules:
-  - Only task/project docs are validated.
+  - Task/project docs get closeout rules; docs/qa/QA*.md get QA-document rules (type/doc_id/qa_type/status vocabulary, status match, required sections).
   - Related Control Plane must be present.
   - Tasks must declare Related Umbrella Project and Task Placement Check.
   - Projects must declare Project Role, Umbrella Initiative, Parent Umbrella Project, Umbrella Lineage, and Project Issuance Check.
@@ -27,10 +27,67 @@ collect_default_targets() {
   local path
 
   shopt -s nullglob
-  for path in "$ROOT_DIR"/tasks/T*.md "$ROOT_DIR"/projects/P*.md; do
+  for path in "$ROOT_DIR"/tasks/T*.md "$ROOT_DIR"/projects/P*.md "$ROOT_DIR"/qa/QA*.md; do
     TARGETS+=("$path")
   done
   shopt -u nullglob
+}
+
+validate_qa_file() {
+  local file="$1"
+
+  awk -v path="$file" '
+    function trim(s) {
+      sub(/^[[:space:]]+/, "", s)
+      sub(/[[:space:]]+$/, "", s)
+      return s
+    }
+    function push_error(msg) {
+      errors[++error_count] = msg
+    }
+    NR == 1 && $0 == "---" { in_frontmatter = 1; frontmatter_seen = 1; next }
+    in_frontmatter && $0 == "---" { in_frontmatter = 0; next }
+    in_frontmatter {
+      idx = index($0, ":")
+      if (idx > 0) {
+        key = trim(substr($0, 1, idx - 1))
+        value = trim(substr($0, idx + 1))
+        if (key == "type") fm_type = value
+        if (key == "doc_id") fm_doc_id = value
+        if (key == "qa_type") fm_qa_type = value
+        if (key == "status") fm_status = value
+        if (key == "owner") fm_owner = value
+      }
+      next
+    }
+    /^## / { sections[$0] = 1 }
+    /^- Status:/ { visible_status = trim(substr($0, 10)) }
+    END {
+      if (!frontmatter_seen) push_error("missing frontmatter")
+      if (fm_type != "qa") push_error("qa doc must declare type: qa, found: " fm_type)
+      if (fm_doc_id !~ /^QA[0-9]{4}$/) push_error("qa doc_id must match QA####, found: " fm_doc_id)
+      if (fm_qa_type != "strategy" && fm_qa_type != "plan" && fm_qa_type != "cases" && fm_qa_type != "runbook") {
+        push_error("qa_type must be strategy|plan|cases|runbook, found: " fm_qa_type)
+      }
+      if (fm_status != "draft" && fm_status != "current" && fm_status != "retired") {
+        push_error("qa status must be draft|current|retired, found: " fm_status)
+      }
+      if (visible_status != "" && fm_status != visible_status) {
+        push_error("frontmatter status does not match visible metadata: " fm_status " != " visible_status)
+      }
+      if (fm_owner == "") push_error("missing owner")
+      split("## Purpose|## Scope|## Source Documents|## Traceability|## Maintenance Rules|## Change Log", req, "|")
+      for (i in req) {
+        if (!(req[i] in sections)) push_error("missing section: " req[i])
+      }
+      if (error_count > 0) {
+        for (i = 1; i <= error_count; i++) {
+          printf "error: %s: %s\n", path, errors[i] > "/dev/stderr"
+        }
+        exit 1
+      }
+    }
+  ' "$file"
 }
 
 validate_file() {
@@ -40,6 +97,13 @@ validate_file() {
     echo "error: file not found: $file" >&2
     return 1
   fi
+
+  case "$file" in
+    *"/qa/QA"*.md)
+      validate_qa_file "$file"
+      return $?
+      ;;
+  esac
 
   awk -v path="$file" '
     function trim(s) {
@@ -462,7 +526,7 @@ else
 fi
 
 if [[ ${#TARGETS[@]} -eq 0 ]]; then
-  echo "No task/project docs to validate."
+  echo "No task/project/qa docs to validate."
   exit 0
 fi
 

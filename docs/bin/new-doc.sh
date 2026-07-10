@@ -16,10 +16,11 @@ Types:
   design    -> docs/design/slug.md
   guide     -> docs/guide/slug.md
   report    -> docs/reports/YYYY-MM-DD-slug.md
+  qa        -> docs/qa/QA0001-slug.md
 
 Notes:
-  task/project issuance must run from a clean, up-to-date main branch.
-  The generated task/project draft is committed on main automatically.
+  task/project/qa issuance must run from a clean, up-to-date main branch.
+  The generated task/project/qa draft is committed on main automatically.
 EOF
 }
 
@@ -162,6 +163,16 @@ case "$TYPE" in
     DOC_ID=""
     TITLE="$SLUG"
     OUTPUT="$ROOT_DIR/reports/${TODAY}-${SLUG}.md"
+    ;;
+  qa)
+    DOC_DIR="$ROOT_DIR/qa"
+    mkdir -p "$DOC_DIR"
+    TEMPLATE="$ROOT_DIR/_templates/qa.md"
+    NUMBER="$(next_number "$DOC_DIR" "QA")"
+    DOC_ID="QA${NUMBER}"
+    TITLE="$SLUG"
+    OUTPUT="$DOC_DIR/${DOC_ID}-${SLUG}.md"
+    NUMBERED_DOC="true"
     ;;
   *)
     usage
