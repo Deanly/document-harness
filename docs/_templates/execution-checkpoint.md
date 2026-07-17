@@ -54,7 +54,7 @@ tags:
 - Source Revision: `working-tree`
 - Source Hash: `{{SOURCE_HASH}}`
 
-task goal, scope, completion mode가 바뀌면 이 checkpoint를 조용히 고치지 않고 task contract revision 또는 supersede/reissue 결정을 먼저 기록합니다.
+`source_hash`는 이 checkpoint가 mirror하는 linked task 문서의 현재 bytes SHA-256입니다. `source_revision`은 `working-tree`이거나 같은 task bytes를 resolve하는 full Git commit입니다. task goal, scope, completion mode가 바뀌면 이 checkpoint를 조용히 고치지 않고 task contract revision 또는 supersede/reissue 결정을 먼저 기록합니다.
 
 ## Policy And Directive Refs
 

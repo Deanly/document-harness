@@ -13,5 +13,6 @@
     "sourceHashes": ["{{SOURCE_SHA256}}"]
   },
   "effectiveRef": null,
+  "effectiveSha256": null,
   "reason": "{{HUMAN_REASON}}"
 }

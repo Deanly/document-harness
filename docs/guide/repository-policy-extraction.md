@@ -231,7 +231,7 @@ approve exception
 request more evidence
 ```
 
-Human response becomes durable `human-policy-decision-receipt` fenced to candidate ID, repository revision and source hashes. Only then may an effective governance design be created or updated. 승인 상태는 receipt와 `effectiveRef` 둘 다 존재하기 전에는 `approved`로 바꾸지 않습니다.
+Human response becomes durable `human-policy-decision-receipt` fenced to candidate ID, repository revision, source hashes, exact `effectiveRef`, and the effective artifact's `effectiveSha256`. Only then may an effective governance design be created or updated. 승인 상태는 receipt와 현재 effective artifact bytes가 receipt의 digest와 일치하기 전에는 `approved`로 바꾸지 않습니다.
 
 catalog review를 닫으려면 `migration.status: reviewed`와 `migration.receiptRef`를 설정하고, 해당 receipt는 `candidateId: CATALOG-REVIEW`, decision `approved|exception_accepted`, installation lock의 target revision, exact current catalog bytes SHA-256을 포함해야 합니다. code/config observation은 계속 `unreviewed`로 남고, 다른 policy/guideline candidate는 각각 `approved|rejected` 상태와 ID/source-hash가 일치하는 decision receipt를 가져야 합니다.
 

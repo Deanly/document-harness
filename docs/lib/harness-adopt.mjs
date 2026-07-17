@@ -9,7 +9,6 @@ import {
   realpathSync,
   readlinkSync,
   renameSync,
-  rmdirSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -525,17 +524,30 @@ function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
   });
 }
 
-function safeAbsolute(root, relativePath, { allowLeafSymlink = false } = {}) {
+function lstatIfPresent(file) {
+  try {
+    return lstatSync(file);
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function recordedFileModeValid(value) {
+  return Number.isInteger(value) && value >= 0 && value <= 0o777;
+}
+
+function safeAbsolute(root, relativePath) {
   const normalized = normalizeRelativePath(relativePath);
   const parts = normalized.split("/");
   let cursor = root;
   for (let index = 0; index < parts.length; index += 1) {
-    if (existsSync(cursor)) {
-      const parentInfo = lstatSync(cursor);
+    const parentInfo = lstatIfPresent(cursor);
+    if (parentInfo) {
       if (!parentInfo.isDirectory() || parentInfo.isSymbolicLink()) {
         throw new HarnessAdoptError(`non-directory parent blocks adoption path: ${normalized}`, {
           status: "NEEDS_DECISION",
-          code: "PATH_CONFLICT",
+          code: parentInfo.isSymbolicLink() ? "SYMLINK_CONFLICT" : "PATH_CONFLICT",
         });
       }
       const requested = parts[index];
@@ -551,9 +563,9 @@ function safeAbsolute(root, relativePath, { allowLeafSymlink = false } = {}) {
       }
     }
     cursor = path.join(cursor, parts[index]);
-    if (!existsSync(cursor)) continue;
-    const info = lstatSync(cursor);
-    if (info.isSymbolicLink() && (index < parts.length - 1 || !allowLeafSymlink)) {
+    const info = lstatIfPresent(cursor);
+    if (!info) continue;
+    if (info.isSymbolicLink()) {
       throw new HarnessAdoptError(`symlink is not an adoption write surface: ${normalized}`, {
         status: "NEEDS_DECISION",
         code: "SYMLINK_CONFLICT",
@@ -576,15 +588,68 @@ function safeAbsolute(root, relativePath, { allowLeafSymlink = false } = {}) {
   return absolute;
 }
 
+function mutationAnchorDescriptor(mutation) {
+  const descriptor = {
+    path: mutation.path,
+    existed: mutation.existed,
+    beforeSha256: mutation.beforeSha256,
+    beforeMode: mutation.beforeMode,
+    afterMode: mutation.afterMode,
+    preimageBase64: mutation.preimageBase64,
+  };
+  if (mutation.path !== INSTALLATION_LOCK_PATH) descriptor.afterSha256 = mutation.afterSha256;
+  return descriptor;
+}
+
+function buildApplyMutationSet(mutations) {
+  const descriptors = mutations
+    .map(mutationAnchorDescriptor)
+    .sort((left, right) => left.path.localeCompare(right.path, "en"));
+  return {
+    algorithm: "sha256",
+    count: descriptors.length,
+    paths: descriptors.map(({ path: mutationPath }) => mutationPath),
+    sha256: sha256(canonicalJson(descriptors)),
+  };
+}
+
+function applyMutationSetShapeValid(value) {
+  if (
+    value?.algorithm !== "sha256" ||
+    !Number.isInteger(value.count) ||
+    value.count < 1 ||
+    !Array.isArray(value.paths) ||
+    value.paths.length !== value.count ||
+    new Set(value.paths).size !== value.paths.length ||
+    typeof value.sha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(value.sha256)
+  ) return false;
+  try {
+    if (value.paths.some((mutationPath) => normalizeRelativePath(mutationPath, "anchored mutation path") !== mutationPath)) return false;
+  } catch {
+    return false;
+  }
+  return (
+    canonicalJson(value.paths) === canonicalJson([...value.paths].sort((a, b) => a.localeCompare(b, "en"))) &&
+    value.paths.includes(INSTALLATION_LOCK_PATH)
+  );
+}
+
+function applyMutationSetMatches(anchor, mutations) {
+  return applyMutationSetShapeValid(anchor) && canonicalJson(anchor) === canonicalJson(buildApplyMutationSet(mutations));
+}
+
 function readLock(root) {
   let lockFile;
   try {
     lockFile = safeAbsolute(root, INSTALLATION_LOCK_PATH);
   } catch (error) {
-    if (error.code === "CASE_COLLISION") return { state: "missing", lock: null };
+    if (["CASE_COLLISION", "SYMLINK_CONFLICT", "PATH_CONFLICT"].includes(error.code)) {
+      return { state: "invalid", lock: null, reason: error.message };
+    }
     throw error;
   }
-  if (!existsSync(lockFile)) return { state: "missing", lock: null };
+  if (!lstatIfPresent(lockFile)) return { state: "missing", lock: null };
   try {
     const lock = JSON.parse(readFileSync(lockFile, "utf8"));
     const hash = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
@@ -621,6 +686,9 @@ function readLock(root) {
       [420, 493, null].includes(entry.installedMode)
     ));
     const pathsUnique = filesValid && new Set(lock.files.map(({ path: filePath }) => filePath)).size === lock.files.length;
+    // schemaVersion 1 locks emitted before mutation anchoring remain readable so an
+    // explicit upgrade can replace them. Rollback fails closed until that upgrade.
+    const mutationSetValid = lock?.applyMutationSet === undefined || applyMutationSetShapeValid(lock.applyMutationSet);
     if (
       lock?.schemaVersion !== SCHEMA_VERSION ||
       !releaseValid ||
@@ -631,7 +699,8 @@ function readLock(root) {
       Number.isNaN(Date.parse(lock?.installedAt ?? "")) ||
       !relative(lock?.receiptRef, "installation receipt ref") ||
       !filesValid ||
-      !pathsUnique
+      !pathsUnique ||
+      !mutationSetValid
     ) {
       return { state: "invalid", lock: null, reason: "installation lock shape is invalid" };
     }
@@ -660,8 +729,8 @@ function classifyTarget(snapshot, lockState) {
 function pathState(root, targetPath) {
   try {
     const absolute = safeAbsolute(root, targetPath);
-    if (!existsSync(absolute)) return { exists: false, sha256: null, mode: null, type: "missing" };
-    const info = lstatSync(absolute);
+    const info = lstatIfPresent(absolute);
+    if (!info) return { exists: false, sha256: null, mode: null, type: "missing" };
     if (!info.isFile() || info.isSymbolicLink()) {
       return { exists: true, sha256: null, mode: info.mode & 0o777, type: info.isSymbolicLink() ? "symlink" : "non-file" };
     }
@@ -677,6 +746,8 @@ function buildAction(root, releaseFile, installedEntry, generationContext) {
     : null;
   const materialized = materializeReleaseEntry(root, releaseFile, actionGenerationContext);
   const before = pathState(root, releaseFile.targetPath);
+  const desiredMode = Number.parseInt(releaseFile.mode, 8);
+  const contentAndModeCurrent = before.sha256 === materialized.sha256 && before.mode === desiredMode;
   const base = {
     path: releaseFile.targetPath,
     sourcePath: releaseFile.sourcePath,
@@ -760,10 +831,12 @@ function buildAction(root, releaseFile, installedEntry, generationContext) {
     return {
       ...base,
       action: "UPDATE_UNMODIFIED",
-      reason: before.sha256 === materialized.sha256
+      reason: contentAndModeCurrent
         ? "generated bytes are already current"
+        : before.sha256 === materialized.sha256
+          ? "generated bytes are current but the installed mode requires repair"
         : "generated baseline is unmodified and may be rebuilt",
-      rollbackAction: before.sha256 === materialized.sha256 ? "NONE" : "RESTORE_PREIMAGE",
+      rollbackAction: contentAndModeCurrent ? "NONE" : "RESTORE_PREIMAGE",
     };
   }
   if (installedEntry.ownership === "generated" || installedEntry.ownership === "runtime-local") {
@@ -787,10 +860,12 @@ function buildAction(root, releaseFile, installedEntry, generationContext) {
   return {
     ...base,
     action: "UPDATE_UNMODIFIED",
-    reason: before.sha256 === materialized.sha256
+    reason: contentAndModeCurrent
       ? "release bytes are already present"
+      : before.sha256 === materialized.sha256
+        ? "release bytes are present but the installed mode requires repair"
       : "installed baseline is unmodified and may be upgraded",
-    rollbackAction: before.sha256 === materialized.sha256 ? "NONE" : "RESTORE_PREIMAGE",
+    rollbackAction: contentAndModeCurrent ? "NONE" : "RESTORE_PREIMAGE",
   };
 }
 
@@ -868,6 +943,35 @@ export function writeJsonAtomic(file, value) {
   atomicWrite(file, Buffer.from(prettyJson(value)), 0o644);
 }
 
+function evaluatePlanState({ snapshot, profiles, lockState, actions }) {
+  const classification = classifyTarget(snapshot, lockState);
+  const attention = [];
+  if (profiles.includes("governance") && snapshot.revision === "UNBORN") {
+    attention.push({
+      code: "UNBORN_REPOSITORY",
+      message: "governance initialization requires a resolvable base commit; create an initial commit and re-plan",
+    });
+  }
+  if (lockState.state === "invalid") {
+    attention.push({ code: "INVALID_INSTALLATION_LOCK", message: lockState.reason });
+  }
+  const removedProfiles = (lockState.lock?.profiles ?? []).filter((profile) => !profiles.includes(profile));
+  if (removedProfiles.length > 0) {
+    attention.push({
+      code: "PROFILE_REMOVAL_UNSUPPORTED",
+      message: `profile removal requires an explicit future release migration: ${removedProfiles.join(", ")}`,
+    });
+  }
+  for (const action of actions.filter(({ action }) => action === "CONFLICT")) {
+    attention.push({ code: "FILE_CONFLICT", path: action.path, message: action.reason });
+  }
+  return {
+    ...classification,
+    status: attention.length > 0 ? "NEEDS_DECISION" : "PLAN_READY",
+    attention,
+  };
+}
+
 export function createPlan({ target, profiles, output }) {
   if (!output) {
     throw new HarnessAdoptError("plan requires --output", {
@@ -895,35 +999,19 @@ export function createPlan({ target, profiles, output }) {
   const resolvedProfiles = resolveProfileSelection(manifest, requestedProfiles);
   const release = selectedRelease(manifest, resolvedProfiles);
   const lockState = readLock(snapshot.root);
-  const classification = classifyTarget(snapshot, lockState);
   const actions = buildReleaseActions(snapshot.root, snapshot.inventory, release, lockState.lock);
-  const attention = [];
-  if (resolvedProfiles.includes("governance") && snapshot.revision === "UNBORN") {
-    attention.push({
-      code: "UNBORN_REPOSITORY",
-      message: "governance initialization requires a resolvable base commit; create an initial commit and re-plan",
-    });
-  }
-  if (lockState.state === "invalid") {
-    attention.push({ code: "INVALID_INSTALLATION_LOCK", message: lockState.reason });
-  }
-  const removedProfiles = (lockState.lock?.profiles ?? []).filter((profile) => !resolvedProfiles.includes(profile));
-  if (removedProfiles.length > 0) {
-    attention.push({
-      code: "PROFILE_REMOVAL_UNSUPPORTED",
-      message: `profile removal requires an explicit future release migration: ${removedProfiles.join(", ")}`,
-    });
-  }
-  for (const action of actions.filter(({ action }) => action === "CONFLICT")) {
-    attention.push({ code: "FILE_CONFLICT", path: action.path, message: action.reason });
-  }
-  const status = attention.length > 0 ? "NEEDS_DECISION" : "PLAN_READY";
+  const evaluation = evaluatePlanState({
+    snapshot,
+    profiles: resolvedProfiles,
+    lockState,
+    actions,
+  });
   const plan = {
     schemaVersion: SCHEMA_VERSION,
     command: "plan",
-    status,
-    mode: classification.mode,
-    repositoryState: classification.repositoryState,
+    status: evaluation.status,
+    mode: evaluation.mode,
+    repositoryState: evaluation.repositoryState,
     requestedProfiles,
     profiles: resolvedProfiles,
     target: {
@@ -941,7 +1029,7 @@ export function createPlan({ target, profiles, output }) {
     },
     installationLockPath: INSTALLATION_LOCK_PATH,
     actions,
-    attention,
+    attention: evaluation.attention,
   };
   plan.planHash = hashPlan(plan);
   writeJsonAtomic(outputFile, plan);
@@ -950,7 +1038,15 @@ export function createPlan({ target, profiles, output }) {
 
 function readAndValidatePlan(planFile) {
   const plan = loadJson(planFile, "adoption plan");
-  if (plan?.schemaVersion !== SCHEMA_VERSION || !Array.isArray(plan.actions)) {
+  if (
+    plan?.schemaVersion !== SCHEMA_VERSION ||
+    plan.command !== "plan" ||
+    !Array.isArray(plan.actions) ||
+    !Array.isArray(plan.attention) ||
+    !Array.isArray(plan.requestedProfiles) ||
+    !Array.isArray(plan.profiles) ||
+    plan.installationLockPath !== INSTALLATION_LOCK_PATH
+  ) {
     throw new HarnessAdoptError("adoption plan shape is invalid", {
       status: "NEEDS_DECISION",
       code: "INVALID_PLAN",
@@ -961,6 +1057,22 @@ function readAndValidatePlan(planFile) {
       status: "NEEDS_DECISION",
       code: "PLAN_HASH_MISMATCH",
     });
+  }
+  for (const [label, profiles] of [
+    ["requestedProfiles", plan.requestedProfiles],
+    ["profiles", plan.profiles],
+  ]) {
+    if (
+      profiles.length === 0 ||
+      profiles.some((profile) => typeof profile !== "string" || profile.length === 0) ||
+      new Set(profiles).size !== profiles.length ||
+      canonicalJson(profiles) !== canonicalJson([...profiles].sort())
+    ) {
+      throw new HarnessAdoptError(`plan ${label} must be a non-empty, unique, sorted profile list`, {
+        status: "NEEDS_DECISION",
+        code: "INVALID_PLAN",
+      });
+    }
   }
   if (
     typeof plan.target?.locator !== "string" ||
@@ -1001,9 +1113,16 @@ function receiptRelativePath(planHash) {
 
 function captureMutation(root, relativePath, afterBytes, mode) {
   const absolute = safeAbsolute(root, relativePath);
-  const existed = existsSync(absolute);
+  const info = lstatIfPresent(absolute);
+  const existed = info !== null;
+  if (info && (!info.isFile() || info.isSymbolicLink())) {
+    throw new HarnessAdoptError(`mutation path is not a regular file: ${relativePath}`, {
+      status: "NEEDS_DECISION",
+      code: info.isSymbolicLink() ? "SYMLINK_CONFLICT" : "PATH_CONFLICT",
+    });
+  }
   const beforeBytes = existed ? readFileSync(absolute) : null;
-  const beforeMode = existed ? (statSync(absolute).mode & 0o777) : null;
+  const beforeMode = existed ? (info.mode & 0o777) : null;
   return {
     path: relativePath,
     existed,
@@ -1023,17 +1142,8 @@ function restoreMutation(root, mutation) {
   const absolute = safeAbsolute(root, mutation.path);
   if (mutation.existed) {
     atomicWrite(absolute, Buffer.from(mutation.preimageBase64, "base64"), mutation.beforeMode ?? 0o644);
-  } else if (existsSync(absolute)) {
+  } else if (lstatIfPresent(absolute)) {
     rmSync(absolute, { force: true });
-    let cursor = path.dirname(absolute);
-    while (cursor !== root && cursor.startsWith(`${root}${path.sep}`)) {
-      try {
-        rmdirSync(cursor);
-      } catch {
-        break;
-      }
-      cursor = path.dirname(cursor);
-    }
   }
 }
 
@@ -1047,12 +1157,12 @@ function sameFence(plan, snapshot) {
 }
 
 function sameReleaseFence(plan, release) {
-  return (
-    plan.release.id === release.id &&
-    plan.release.version === release.version &&
-    plan.release.manifestSha256 === release.manifestSha256 &&
-    plan.release.sourceRevision === release.sourceRevision
-  );
+  return canonicalJson(plan.release) === canonicalJson({
+    id: release.id,
+    version: release.version,
+    manifestSha256: release.manifestSha256,
+    sourceRevision: release.sourceRevision,
+  });
 }
 
 function mutationsMatch(root, receipt) {
@@ -1106,7 +1216,8 @@ function successfulApplyReceiptMatches({ root, plan, release, snapshot, receipt 
       !sameReleaseFence(plan, release) ||
       auditInstallationInventory(lock, release).length > 0 ||
       !postApplyFenceMatches(snapshot, receipt) ||
-      !mutationsMatch(root, receipt)
+      !mutationsMatch(root, receipt) ||
+      !applyMutationSetMatches(lock.applyMutationSet, receipt.mutations)
     ) return false;
 
     const actionByPath = new Map(plan.actions.map((action) => [action.path, action]));
@@ -1130,7 +1241,7 @@ function successfulApplyReceiptMatches({ root, plan, release, snapshot, receipt 
       if (mutation.existed) {
         if (
           !hash(mutation.beforeSha256) ||
-          ![0o644, 0o755].includes(mutation.beforeMode) ||
+          !recordedFileModeValid(mutation.beforeMode) ||
           typeof mutation.preimageBase64 !== "string"
         ) return false;
         const preimage = Buffer.from(mutation.preimageBase64, "base64");
@@ -1164,7 +1275,7 @@ function successfulApplyReceiptMatches({ root, plan, release, snapshot, receipt 
   }
 }
 
-function buildInstallationLock({ plan, previousLock, receiptRef, installedAt, actions }) {
+function buildInstallationLock({ plan, previousLock, receiptRef, installedAt, actions, applyMutationSet }) {
   const entries = new Map((previousLock?.files ?? []).map((entry) => [entry.path, entry]));
   for (const action of actions) {
     if (["ADD", "UPDATE_UNMODIFIED"].includes(action.action)) {
@@ -1200,6 +1311,7 @@ function buildInstallationLock({ plan, previousLock, receiptRef, installedAt, ac
     profiles: plan.profiles,
     installedAt,
     receiptRef,
+    applyMutationSet,
     files: [...entries.values()].sort((a, b) => a.path.localeCompare(b.path, "en")),
   };
 }
@@ -1224,39 +1336,35 @@ export function applyPlan({ planFile, expectedPlanHash, failureAfter = null }) {
     });
   }
   const root = resolvePlanTarget(planFile, plan);
-  if (plan.status !== "PLAN_READY" || plan.actions.some(({ action }) => action === "CONFLICT")) {
-    return {
-      schemaVersion: SCHEMA_VERSION,
-      command: "apply",
-      status: "NEEDS_DECISION",
-      planHash: plan.planHash,
-      writes: 0,
-      attention: plan.attention,
-    };
-  }
-  const receiptRef = receiptRelativePath(plan.planHash);
-  const receiptFile = safeAbsolute(root, receiptRef);
-  if (existsSync(receiptFile)) {
-    const existing = loadJson(receiptFile, "apply receipt");
-    const idempotencySnapshot = inspectTarget(root);
-    const idempotencyRelease = selectedRelease(loadReleaseManifest(), plan.profiles);
-    if (successfulApplyReceiptMatches({
-      root,
-      plan,
-      release: idempotencyRelease,
-      snapshot: idempotencySnapshot,
-      receipt: existing,
-    })) return { ...existing, command: "apply", alreadyApplied: true, writes: 0 };
-  }
   const snapshot = inspectTarget(root);
   if (!sameFence(plan, snapshot)) {
+    const receiptRef = receiptRelativePath(plan.planHash);
+    const receiptFile = safeAbsolute(root, receiptRef);
+    if (lstatIfPresent(receiptFile)) {
+      const existing = loadJson(receiptFile, "apply receipt");
+      const idempotencyRelease = selectedRelease(loadReleaseManifest(), plan.profiles);
+      if (successfulApplyReceiptMatches({
+        root,
+        plan,
+        release: idempotencyRelease,
+        snapshot,
+        receipt: existing,
+      })) return { ...existing, command: "apply", alreadyApplied: true, writes: 0 };
+    }
     throw new HarnessAdoptError("target revision, index, or byte fence changed after planning", {
       status: "NEEDS_DECISION",
       code: "TARGET_FENCE_MISMATCH",
     });
   }
   const manifest = loadReleaseManifest();
-  const release = selectedRelease(manifest, plan.profiles);
+  const resolvedProfiles = resolveProfileSelection(manifest, plan.requestedProfiles);
+  if (canonicalJson(plan.profiles) !== canonicalJson(resolvedProfiles)) {
+    throw new HarnessAdoptError("plan profiles do not match the requested profile dependency closure", {
+      status: "NEEDS_DECISION",
+      code: "PLAN_PROFILE_MISMATCH",
+    });
+  }
+  const release = selectedRelease(manifest, resolvedProfiles);
   if (!sameReleaseFence(plan, release)) {
     throw new HarnessAdoptError("public release manifest or source bytes changed after planning", {
       status: "NEEDS_DECISION",
@@ -1264,12 +1372,6 @@ export function applyPlan({ planFile, expectedPlanHash, failureAfter = null }) {
     });
   }
   const previousLockState = readLock(root);
-  if (previousLockState.state === "invalid") {
-    throw new HarnessAdoptError("installation lock changed to an invalid shape after planning", {
-      status: "NEEDS_DECISION",
-      code: "INVALID_INSTALLATION_LOCK",
-    });
-  }
   const expectedActions = buildReleaseActions(root, snapshot.inventory, release, previousLockState.lock);
   if (canonicalJson(plan.actions) !== canonicalJson(expectedActions)) {
     throw new HarnessAdoptError("plan actions do not match the current release and ownership calculation", {
@@ -1277,6 +1379,36 @@ export function applyPlan({ planFile, expectedPlanHash, failureAfter = null }) {
       code: "PLAN_ACTION_MISMATCH",
     });
   }
+  const evaluation = evaluatePlanState({
+    snapshot,
+    profiles: resolvedProfiles,
+    lockState: previousLockState,
+    actions: expectedActions,
+  });
+  if (
+    plan.status !== evaluation.status ||
+    plan.mode !== evaluation.mode ||
+    plan.repositoryState !== evaluation.repositoryState ||
+    canonicalJson(plan.attention) !== canonicalJson(evaluation.attention)
+  ) {
+    throw new HarnessAdoptError("plan decision state does not match the current repository and requested profile intent", {
+      status: "NEEDS_DECISION",
+      code: "PLAN_DECISION_MISMATCH",
+      details: evaluation.attention,
+    });
+  }
+  if (evaluation.status !== "PLAN_READY") {
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      command: "apply",
+      status: "NEEDS_DECISION",
+      planHash: plan.planHash,
+      writes: 0,
+      attention: evaluation.attention,
+    };
+  }
+  const receiptRef = receiptRelativePath(plan.planHash);
+  const receiptFile = safeAbsolute(root, receiptRef);
   const releaseByTarget = new Map(release.files.map((entry) => [entry.targetPath, entry]));
   for (const action of plan.actions) {
     const current = pathState(root, action.path);
@@ -1326,7 +1458,11 @@ export function applyPlan({ planFile, expectedPlanHash, failureAfter = null }) {
           code: "ACTION_FENCE_MISMATCH",
         });
       }
-      if (mutation.beforeSha256 !== mutation.afterSha256 || !mutation.existed) {
+      if (
+        mutation.beforeSha256 !== mutation.afterSha256 ||
+        mutation.beforeMode !== mutation.afterMode ||
+        !mutation.existed
+      ) {
         applyMutation(root, mutation, bytes);
         mutations.push(mutation);
       }
@@ -1335,15 +1471,21 @@ export function applyPlan({ planFile, expectedPlanHash, failureAfter = null }) {
         throw new Error(`injected failure after ${appliedCount} release action(s)`);
       }
     }
+    const lockPreimage = captureMutation(root, INSTALLATION_LOCK_PATH, Buffer.alloc(0), 0o644);
+    const applyMutationSet = buildApplyMutationSet([...mutations, lockPreimage]);
     const lock = buildInstallationLock({
       plan,
       previousLock: previousLockState.lock,
       receiptRef,
       installedAt,
       actions: plan.actions,
+      applyMutationSet,
     });
     const lockBytes = Buffer.from(prettyJson(lock));
     const lockMutation = captureMutation(root, INSTALLATION_LOCK_PATH, lockBytes, 0o644);
+    if (!applyMutationSetMatches(applyMutationSet, [...mutations, lockMutation])) {
+      throw new Error("internal apply mutation-set anchor mismatch");
+    }
     applyMutation(root, lockMutation, lockBytes);
     mutations.push(lockMutation);
     const postApplySnapshot = inspectTarget(root);
@@ -1639,6 +1781,7 @@ function readHumanDecision(root, reference, lock) {
     const decisionFile = safeAbsolute(root, normalizeRelativePath(reference, "human decision receipt ref"));
     if (!existsSync(decisionFile) || !lstatSync(decisionFile).isFile() || lstatSync(decisionFile).isSymbolicLink()) return null;
     const decision = JSON.parse(readFileSync(decisionFile, "utf8"));
+    const promotesEffectiveArtifact = ["approved", "exception_accepted"].includes(decision?.decision);
     if (
       decision?.schemaVersion !== SCHEMA_VERSION ||
       typeof decision?.decisionId !== "string" || decision.decisionId.length === 0 ||
@@ -1647,7 +1790,9 @@ function readHumanDecision(root, reference, lock) {
       typeof decision?.decidedBy?.identifier !== "string" || decision.decidedBy.identifier.length === 0 ||
       !["approved", "rejected", "exception_accepted"].includes(decision?.decision) ||
       typeof decision?.decidedAt !== "string" || Number.isNaN(Date.parse(decision.decidedAt)) ||
-      !(decision?.effectiveRef === null || (typeof decision?.effectiveRef === "string" && decision.effectiveRef.length > 0)) ||
+      !(promotesEffectiveArtifact
+        ? typeof decision?.effectiveRef === "string" && decision.effectiveRef.length > 0 && /^[a-f0-9]{64}$/.test(decision?.effectiveSha256 ?? "")
+        : decision?.effectiveRef === null && decision?.effectiveSha256 === null) ||
       decision?.sourceFence?.repositoryRevision !== lock.targetSourceRevision ||
       !Array.isArray(decision?.sourceFence?.sourceHashes) || decision.sourceFence.sourceHashes.length === 0 ||
       !decision.sourceFence.sourceHashes.every((digest) => /^[a-f0-9]{64}$/.test(digest))
@@ -1655,6 +1800,25 @@ function readHumanDecision(root, reference, lock) {
     return decision;
   } catch {
     return null;
+  }
+}
+
+function decisionEffectiveArtifactMatches(root, decision, expectedRef) {
+  try {
+    if (
+      typeof expectedRef !== "string" || expectedRef.length === 0 ||
+      decision?.effectiveRef !== expectedRef ||
+      SECRET_SOURCE_PATH.test(expectedRef) ||
+      !/^[a-f0-9]{64}$/.test(decision?.effectiveSha256 ?? "")
+    ) return false;
+    const effectiveFile = safeAbsolute(root, normalizeRelativePath(expectedRef, "effective governance ref"));
+    const effectiveStat = lstatIfPresent(effectiveFile);
+    return Boolean(
+      effectiveStat && effectiveStat.isFile() && !effectiveStat.isSymbolicLink() &&
+      sha256(readFileSync(effectiveFile)) === decision.effectiveSha256
+    );
+  } catch {
+    return false;
   }
 }
 
@@ -1672,14 +1836,18 @@ function evidenceAllowsVerified(root, lock, governanceAudit) {
       if (
         !migrationDecision || migrationDecision.candidateId !== "CATALOG-REVIEW" ||
         !["approved", "exception_accepted"].includes(migrationDecision.decision) ||
-        !migrationDecision.sourceFence.sourceHashes.includes(sha256(governanceAudit.bytes))
+        !migrationDecision.sourceFence.sourceHashes.includes(sha256(governanceAudit.bytes)) ||
+        !decisionEffectiveArtifactMatches(root, migrationDecision, GOVERNANCE_CATALOG_PATH)
       ) return false;
       return [...catalog.policies, ...catalog.guidelines].every((candidate) => {
         if (["code_observation", "config_observation"].includes(candidate.authorityClass)) return candidate.approvalState === "unreviewed";
         if (!["approved", "rejected"].includes(candidate.approvalState)) return false;
         const decision = decisions.get(candidate.decisionReceiptRef);
         if (!decision || decision.candidateId !== candidate.id) return false;
-        if (candidate.approvalState === "approved" && !["approved", "exception_accepted"].includes(decision.decision)) return false;
+        if (candidate.approvalState === "approved" && (
+          !["approved", "exception_accepted"].includes(decision.decision) ||
+          !decisionEffectiveArtifactMatches(root, decision, candidate.effectiveRef)
+        )) return false;
         if (candidate.approvalState === "rejected" && decision.decision !== "rejected") return false;
         const sourceHashes = candidate.sourceRefs.map(({ capturedSha256 }) => capturedSha256);
         return sourceHashes.every((digest) => decision.sourceFence.sourceHashes.includes(digest));
@@ -1704,6 +1872,7 @@ function evidenceAllowsVerified(root, lock, governanceAudit) {
           receipt.installationLockPath === INSTALLATION_LOCK_PATH &&
           Array.isArray(receipt.mutations) &&
           receipt.writes === receipt.mutations.length + 1 &&
+          applyMutationSetMatches(lock.applyMutationSet, receipt.mutations) &&
           /^[a-f0-9]{64}$/.test(receipt.postApplyFence?.dirtyFingerprint ?? "") &&
           /^[a-f0-9]{64}$/.test(receipt.postApplyFence?.inventorySha256 ?? "")
         );
@@ -1831,7 +2000,7 @@ export function rollbackReceipt({ receiptFile }) {
         ![420, 493].includes(mutation.afterMode)
       ) return false;
       if (mutation.existed) {
-        if (!hashesValid(mutation.beforeSha256) || ![420, 493].includes(mutation.beforeMode) || typeof mutation.preimageBase64 !== "string") return false;
+        if (!hashesValid(mutation.beforeSha256) || !recordedFileModeValid(mutation.beforeMode) || typeof mutation.preimageBase64 !== "string") return false;
         const preimage = Buffer.from(mutation.preimageBase64, "base64");
         return preimage.toString("base64") === mutation.preimageBase64 && sha256(preimage) === mutation.beforeSha256;
       }
@@ -1885,6 +2054,18 @@ export function rollbackReceipt({ receiptFile }) {
     throw new HarnessAdoptError("apply receipt does not match the active installation lock", {
       status: "NEEDS_DECISION",
       code: "RECEIPT_LOCK_MISMATCH",
+    });
+  }
+  if (lockState.lock.applyMutationSet === undefined) {
+    throw new HarnessAdoptError("legacy installation lock does not cryptographically anchor an exact rollback mutation set; upgrade before rollback", {
+      status: "NEEDS_DECISION",
+      code: "RECEIPT_MUTATION_SET_UNANCHORED",
+    });
+  }
+  if (!applyMutationSetMatches(lockState.lock.applyMutationSet, receipt.mutations)) {
+    throw new HarnessAdoptError("apply receipt is not the exact mutation set anchored by the active installation lock", {
+      status: "NEEDS_DECISION",
+      code: "RECEIPT_MUTATION_SET_MISMATCH",
     });
   }
   const release = selectedRelease(loadReleaseManifest(), receipt.profiles);

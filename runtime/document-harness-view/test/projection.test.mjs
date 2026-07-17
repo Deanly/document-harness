@@ -63,8 +63,8 @@ test("changed and escaped evidence are stale or degraded independently of migrat
   assert.equal(stale.snapshot.snapshot.sourceFence.sourceEvidenceState, "stale");
   assert.equal(stale.snapshot.snapshot.freshness, "stale");
 
-  fixture.catalog.policies[0].sourceRefs[0] = { path: "../outside.md" };
-  fixture.catalog.guidelines[0].sourceRefs[0] = { path: "../outside.md" };
+  fixture.catalog.policies[0].sourceRefs[0] = { ...fixture.catalog.policies[0].sourceRefs[0], path: "../outside.md" };
+  fixture.catalog.guidelines[0].sourceRefs[0] = { ...fixture.catalog.guidelines[0].sourceRefs[0], path: "../outside.md" };
   await writeFile(path.join(fixture.root, "docs", "governance", "catalog.json"), JSON.stringify(fixture.catalog), "utf8");
   const degraded = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
   assert.equal(degraded.snapshot.snapshot.sourceFence.sourceEvidenceState, "degraded");
@@ -80,8 +80,8 @@ test("a source symlink cannot escape the repository", async (t) => {
   ]));
   await writeFile(path.join(outside, "private.md"), "private\n", "utf8");
   await symlink(path.join(outside, "private.md"), path.join(fixture.root, "escaped.md"));
-  fixture.catalog.policies[0].sourceRefs[0] = { path: "escaped.md" };
-  fixture.catalog.guidelines[0].sourceRefs[0] = { path: "escaped.md" };
+  fixture.catalog.policies[0].sourceRefs[0] = { ...fixture.catalog.policies[0].sourceRefs[0], path: "escaped.md" };
+  fixture.catalog.guidelines[0].sourceRefs[0] = { ...fixture.catalog.guidelines[0].sourceRefs[0], path: "escaped.md" };
   await writeFile(path.join(fixture.root, "docs", "governance", "catalog.json"), JSON.stringify(fixture.catalog), "utf8");
 
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
@@ -103,7 +103,7 @@ test("the governance catalog cannot escape through a symlink to a private outsid
 
   await assert.rejects(
     buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
-    /governance catalog symlink가 저장소 경계를 벗어납니다/
+    /governance catalog symlink일 수 없습니다/
   );
 });
 
@@ -143,6 +143,66 @@ test("canonical governance invariants reject promoted observations and unfenced 
   );
 });
 
+test("approved policy projection requires complete source fences and real matching decision evidence", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  const catalogPath = path.join(fixture.root, "docs", "governance", "catalog.json");
+  const policy = fixture.catalog.policies[0];
+  policy.authorityState = "effective";
+  policy.approvalState = "approved";
+  policy.effectiveRef = "docs/design/effective-policy.md";
+  policy.decisionReceiptRef = "docs/receipts/POL-1.json";
+  policy.sourceRefs = [{
+    path: "source.md",
+    heading: "Current policy",
+    lineStart: 1,
+    lineEnd: 1,
+    capturedRepositoryRevision: fixture.seedCommit
+  }];
+  await writeFile(catalogPath, JSON.stringify(fixture.catalog), "utf8");
+
+  await assert.rejects(
+    buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
+    /capturedSha256/
+  );
+
+  policy.sourceRefs = fixture.catalog.guidelines[0].sourceRefs.map((sourceRef) => ({ ...sourceRef }));
+  await writeFile(catalogPath, JSON.stringify(fixture.catalog), "utf8");
+  await assert.rejects(
+    buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
+    /effectiveRef가 안전한 repository regular file/
+  );
+
+  await mkdir(path.join(fixture.root, "docs", "design"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "receipts"), { recursive: true });
+  await writeFile(path.join(fixture.root, policy.effectiveRef), "# Effective policy\n", "utf8");
+  await writeFile(path.join(fixture.root, policy.decisionReceiptRef), JSON.stringify({
+    schemaVersion: 1,
+    decisionId: "DEC-POL-1",
+    candidateId: policy.id,
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-07-16T00:00:00.000Z",
+    sourceFence: {
+      repositoryRevision: fixture.seedCommit,
+      sourceHashes: policy.sourceRefs.map(({ capturedSha256 }) => capturedSha256)
+    },
+    effectiveRef: policy.effectiveRef,
+    effectiveSha256: sha256("# Effective policy\n"),
+    reason: "fixture approval"
+  }), "utf8");
+  const approved = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(approved.snapshot.snapshot.freshness, "fresh");
+  assert.equal(approved.snapshot.policies[0].approvalState, "approved");
+  assert.equal(approved.snapshot.summary.approvedCount, 1);
+
+  await writeFile(path.join(fixture.root, policy.effectiveRef), "# Effective policy changed after approval\n", "utf8");
+  await assert.rejects(
+    buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
+    /effective ref bytes를 승인하지 않습니다/
+  );
+});
+
 test("projection retries torn catalog/source reads and never publishes mixed input hashes", async (t) => {
   const fixture = await createFixture();
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
@@ -173,30 +233,215 @@ test("projection retries torn catalog/source reads and never publishes mixed inp
   );
 });
 
-test("migration receipt revision mismatch degrades without changing source hashes", async (t) => {
+test("migration review requires a catalog-bound human decision and is torn-read safe", async (t) => {
   const fixture = await createFixture({ receiptRef: "docs/receipts/migration.json" });
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
   await mkdir(path.join(fixture.root, "docs", "receipts"), { recursive: true });
+  fixture.catalog.migration.status = "reviewed";
+  const catalogPath = path.join(fixture.root, "docs", "governance", "catalog.json");
+  const catalogBytes = JSON.stringify(fixture.catalog);
+  await writeFile(catalogPath, catalogBytes, "utf8");
   await writeFile(path.join(fixture.root, "docs", "receipts", "migration.json"), JSON.stringify({ targetSourceRevision: "0".repeat(40) }), "utf8");
-  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  const invalid = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
 
-  assert.equal(result.snapshot.migrationFence.reason, "receipt_revision_mismatch");
-  assert.equal(result.snapshot.migrationFence.receiptState, "mismatch");
-  assert.equal(result.snapshot.snapshot.sourceFence.sourceEvidenceState, "fresh");
-  assert.equal(result.snapshot.snapshot.freshness, "degraded");
+  assert.equal(invalid.snapshot.migrationFence.reason, "receipt_missing_or_invalid");
+  assert.equal(invalid.snapshot.migrationFence.receiptState, "missing_or_invalid");
+  assert.equal(invalid.snapshot.snapshot.sourceFence.sourceEvidenceState, "fresh");
+  assert.equal(invalid.snapshot.snapshot.freshness, "degraded");
+
+  const receiptPath = path.join(fixture.root, "docs", "receipts", "migration.json");
+  await writeFile(receiptPath, JSON.stringify({
+    schemaVersion: 1,
+    decisionId: "DEC-CATALOG-REVIEW",
+    candidateId: "CATALOG-REVIEW",
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-07-17T00:00:00.000Z",
+    sourceFence: { repositoryRevision: fixture.seedCommit, sourceHashes: [sha256(catalogBytes)] },
+    effectiveRef: "docs/governance/catalog.json",
+    effectiveSha256: sha256(catalogBytes),
+    reason: "fixture catalog review"
+  }), "utf8");
+  const valid = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(valid.snapshot.migrationFence.receiptState, "matched");
+  assert.equal(valid.snapshot.snapshot.freshness, "fresh");
+
+  let hookCalls = 0;
+  const torn = await buildProjection({
+    repoRoot: fixture.root,
+    configPath: fixture.configPath,
+    beforeInputRecheck: async () => {
+      hookCalls += 1;
+      await writeFile(receiptPath, "{}", "utf8");
+    }
+  });
+  assert.equal(hookCalls, 2);
+  assert.equal(torn.snapshot.migrationFence.receiptState, "missing_or_invalid");
+  assert.equal(torn.snapshot.snapshot.freshness, "degraded");
 });
 
-test("execution checkpoint is explicit when configured and never inferred when absent", async (t) => {
+function taskMarkdown({ taskId, loopState, checkpointRef, status = "active", revision = 1 }) {
+  return `---
+type: task
+doc_id: ${taskId}
+status: ${status}
+execution_contract: v1
+task_contract_revision: ${revision}
+loop_state: ${loopState}
+checkpoint_ref: ${checkpointRef ?? ""}
+---
+
+# ${taskId}
+`;
+}
+
+function yamlList(name, values) {
+  if (values.length === 0) return `${name}: []`;
+  return `${name}:\n${values.map((value) => `  - ${value}`).join("\n")}`;
+}
+
+function checkpointMarkdown({
+  id,
+  taskId,
+  recordedAt,
+  attemptSeq,
+  checkpointSeq,
+  nextAction,
+  loopState = "running",
+  nextActor = "agent",
+  stopReason = null,
+  evidence = [],
+  attention = [],
+  receipts = [],
+  iterationsUsed = 2,
+  iterationsMax = 8,
+  elapsedMinutes = 4,
+  timeLimitMinutes = 60,
+  taskStatus = "active",
+  taskCheckpointRef = `docs/checkpoints/${taskId}-execution.md`,
+  sourceRevision = "working-tree",
+  sourceHash = sha256(taskMarkdown({
+    taskId,
+    status: taskStatus,
+    loopState,
+    checkpointRef: taskCheckpointRef
+  }))
+}) {
+  return `---
+type: execution-checkpoint
+execution_contract: v1
+checkpoint_id: "${id}"
+checkpoint_seq: ${checkpointSeq}
+task_id: ${taskId}
+task_contract_revision: 1
+attempt_seq: ${attemptSeq}
+loop_state: ${loopState}
+stop_reason: ${stopReason ?? ""}
+next_actor: ${nextActor}
+current_hypothesis: Observe the canonical checkpoint.
+last_action: Updated the canonical Markdown checkpoint.
+next_action: ${nextAction}
+resume_when: The next bounded action is available.
+policy_refs:
+  - docs/_indexes/execution-loop-policy.yaml
+directive_refs: []
+${yamlList("evidence", evidence)}
+risks: []
+${yamlList("attention", attention)}
+${yamlList("receipts", receipts)}
+budget:
+  iterations_used: ${iterationsUsed}
+  iterations_max: ${iterationsMax}
+  elapsed_minutes: ${elapsedMinutes}
+  time_limit_minutes: ${timeLimitMinutes}
+source_refs: []
+source_revision: ${sourceRevision}
+source_hash: ${sourceHash}
+recorded_at: "${recordedAt}"
+tags:
+  - docs/execution-checkpoint
+---
+
+# ${taskId} Execution Checkpoint
+`;
+}
+
+test("execution projection selects the latest canonical Markdown checkpoint deterministically", async (t) => {
   const fixture = await createFixture();
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
-  await mkdir(path.join(fixture.root, "docs", "_indexes"), { recursive: true });
-  await writeFile(path.join(fixture.root, "docs", "_indexes", "execution-checkpoint.json"), JSON.stringify({
-    checkpoint_id: "CP-7",
-    lifecycle_status: "active",
-    loop_state: "verifying",
-    next_actor: "Codex",
-    next_action: "run full validation",
-    budget: { iterationsUsed: 2, iterationsMax: 8 }
+  const checkpointRoot = path.join(fixture.root, "docs", "checkpoints");
+  const taskRoot = path.join(fixture.root, "docs", "tasks");
+  await mkdir(checkpointRoot, { recursive: true });
+  await mkdir(taskRoot, { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "receipts"), { recursive: true });
+  await writeFile(path.join(fixture.root, "docs", "receipts", "T0004-evidence.json"), "{\"result\":\"passed\"}\n", "utf8");
+  const completedTask = taskMarkdown({
+    taskId: "T0004",
+    status: "done",
+    loopState: "succeeded",
+    checkpointRef: "docs/checkpoints/T0004-execution.md"
+  });
+  await writeFile(path.join(fixture.root, "docs", "receipts", "T0004-receipt.json"), JSON.stringify({
+    receipt_id: "RCPT-T0004-C2",
+    receipt_kind: "test",
+    task_id: "T0004",
+    checkpoint_seq: 2,
+    actor: "validator",
+    issued_at: "2026-07-19T00:00:00.000Z",
+    scope: {},
+    statement: "T0004 completion evidence passed.",
+    evidence_refs: ["docs/receipts/T0004-evidence.json"],
+    approval_fence: null,
+    source_revision: "working-tree",
+    source_hash: sha256(completedTask)
+  }), "utf8");
+  await writeFile(path.join(taskRoot, "T0001-first.md"), taskMarkdown({
+    taskId: "T0001",
+    loopState: "running",
+    checkpointRef: "docs/checkpoints/T0001-execution.md"
+  }), "utf8");
+  await writeFile(path.join(taskRoot, "T0002-second.md"), taskMarkdown({
+    taskId: "T0002",
+    loopState: "running",
+    checkpointRef: "docs/checkpoints/T0002-execution.md"
+  }), "utf8");
+  await writeFile(path.join(taskRoot, "T0004-completed.md"), completedTask, "utf8");
+  await writeFile(path.join(checkpointRoot, "T0001-execution.md"), checkpointMarkdown({
+    id: "T0001:A1:C9",
+    taskId: "T0001",
+    recordedAt: "2026-07-16T00:00:00.000Z",
+    attemptSeq: 1,
+    checkpointSeq: 9,
+    nextAction: "older action"
+  }), "utf8");
+  await writeFile(path.join(checkpointRoot, "T0002-execution.md"), checkpointMarkdown({
+    id: "T0002:A2:C1",
+    taskId: "T0002",
+    recordedAt: "2026-07-17T00:00:00.000Z",
+    attemptSeq: 2,
+    checkpointSeq: 1,
+    nextAction: "run full validation"
+  }), "utf8");
+  await writeFile(path.join(checkpointRoot, "T9999-orphan-execution.md"), checkpointMarkdown({
+    id: "T9999:A9:C9",
+    taskId: "T9999",
+    recordedAt: "2026-07-18T00:00:00.000Z",
+    attemptSeq: 9,
+    checkpointSeq: 9,
+    nextAction: "orphan must not hijack the View"
+  }), "utf8");
+  await writeFile(path.join(checkpointRoot, "T0004-execution.md"), checkpointMarkdown({
+    id: "T0004:A3:C2",
+    taskId: "T0004",
+    recordedAt: "2026-07-19T00:00:00.000Z",
+    attemptSeq: 3,
+    checkpointSeq: 2,
+    nextAction: "historical completion must not hide active work",
+    loopState: "succeeded",
+    nextActor: "none",
+    taskStatus: "done",
+    evidence: ["docs/receipts/T0004-evidence.json"],
+    receipts: ["docs/receipts/T0004-receipt.json"]
   }), "utf8");
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
 
@@ -208,9 +453,175 @@ test("execution checkpoint is explicit when configured and never inferred when a
   }, {
     configured: true,
     status: "observed",
-    checkpointId: "CP-7",
+    checkpointId: "T0002:A2:C1",
     nextAction: "run full validation"
   });
+  assert.equal(result.snapshot.execution.source, "docs/checkpoints/T0002-execution.md");
+  assert.equal(result.snapshot.execution.selection.candidateCount, 3);
+  assert.match(result.snapshot.execution.selection.strategy, /^active_non_succeeded/);
+});
+
+test("execution checkpoint symlinks fail closed without reading outside the repository", async (t) => {
+  const fixture = await createFixture();
+  const outside = await mkdtemp(path.join(os.tmpdir(), "document-harness-view-checkpoint-outside-"));
+  t.after(() => Promise.all([
+    rm(fixture.root, { recursive: true, force: true }),
+    rm(outside, { recursive: true, force: true })
+  ]));
+  const checkpointRoot = path.join(fixture.root, "docs", "checkpoints");
+  const taskRoot = path.join(fixture.root, "docs", "tasks");
+  await mkdir(checkpointRoot, { recursive: true });
+  await mkdir(taskRoot, { recursive: true });
+  await writeFile(path.join(taskRoot, "T0001-linked.md"), taskMarkdown({
+    taskId: "T0001",
+    loopState: "running",
+    checkpointRef: "docs/checkpoints/T0001-execution.md"
+  }), "utf8");
+  const outsideCheckpoint = path.join(outside, "T0001-execution.md");
+  await writeFile(outsideCheckpoint, checkpointMarkdown({
+    id: "T0001:A1:C1",
+    taskId: "T0001",
+    recordedAt: "2026-07-17T00:00:00.000Z",
+    attemptSeq: 1,
+    checkpointSeq: 1,
+    nextAction: "must not be read"
+  }), "utf8");
+  await symlink(outsideCheckpoint, path.join(checkpointRoot, "T0001-execution.md"));
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.execution.configured, true);
+  assert.equal(result.snapshot.execution.status, "degraded");
+  assert.match(result.snapshot.execution.error, /안전한 repository regular file/);
+  assert.equal(result.snapshot.snapshot.freshness, "degraded");
+});
+
+test("execution projection enforces task linkage, checkpoint identity, and succeeded barriers", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  const checkpointRoot = path.join(fixture.root, "docs", "checkpoints");
+  const taskRoot = path.join(fixture.root, "docs", "tasks");
+  await mkdir(checkpointRoot, { recursive: true });
+  await mkdir(taskRoot, { recursive: true });
+  const taskPath = path.join(taskRoot, "T0003-close.md");
+  const checkpointPath = path.join(checkpointRoot, "T0003-execution.md");
+  await writeFile(taskPath, taskMarkdown({
+    taskId: "T0003",
+    status: "done",
+    loopState: "running",
+    checkpointRef: "docs/checkpoints/T0003-execution.md"
+  }), "utf8");
+  await writeFile(checkpointPath, checkpointMarkdown({
+    id: "T0003:A1:C1",
+    taskId: "T0003",
+    recordedAt: "2026-07-16T00:00:00.000Z",
+    attemptSeq: 1,
+    checkpointSeq: 1,
+    nextAction: "must not project an incompatible lifecycle"
+  }), "utf8");
+  const incompatibleLifecycle = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(incompatibleLifecycle.snapshot.execution.status, "degraded");
+  assert.match(incompatibleLifecycle.snapshot.execution.error, /status.*loop_state.*호환되지/);
+
+  await writeFile(taskPath, taskMarkdown({
+    taskId: "T0003",
+    loopState: "succeeded",
+    checkpointRef: "docs/checkpoints/T0003-execution.md"
+  }), "utf8");
+  const checkpointOptions = {
+    taskId: "T0003",
+    recordedAt: "2026-07-17T00:00:00.000Z",
+    attemptSeq: 2,
+    checkpointSeq: 4,
+    nextAction: "handoff verified result",
+    loopState: "succeeded",
+    nextActor: "none"
+  };
+  await writeFile(checkpointPath, checkpointMarkdown({ ...checkpointOptions, id: "FORGED-ID" }), "utf8");
+  const forgedIdentity = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(forgedIdentity.snapshot.execution.status, "degraded");
+  assert.match(forgedIdentity.snapshot.execution.error, /checkpoint_id.*identity/);
+
+  await writeFile(checkpointPath, checkpointMarkdown({ ...checkpointOptions, id: "T0003:A2:C4" }), "utf8");
+  const missingBarrier = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(missingBarrier.snapshot.execution.status, "degraded");
+  assert.match(missingBarrier.snapshot.execution.error, /evidence\/receipt\/attention barrier/);
+
+  await writeFile(checkpointPath, checkpointMarkdown({
+    ...checkpointOptions,
+    id: "T0003:A2:C4",
+    evidence: ["docs/receipts/test-evidence.json"],
+    receipts: ["docs/receipts/test-receipt.json"]
+  }), "utf8");
+  const missingSupport = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(missingSupport.snapshot.execution.status, "degraded");
+  assert.match(missingSupport.snapshot.execution.error, /non-empty repository regular file/);
+
+  await mkdir(path.join(fixture.root, "docs", "receipts"), { recursive: true });
+  await writeFile(path.join(fixture.root, "docs", "receipts", "test-evidence.json"), "{\"result\":\"passed\"}\n", "utf8");
+  await writeFile(path.join(fixture.root, "docs", "receipts", "test-receipt.json"), "{\"receipt\":\"not-source-fenced\"}\n", "utf8");
+  const unboundReceipt = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(unboundReceipt.snapshot.execution.status, "degraded");
+  assert.match(unboundReceipt.snapshot.execution.error, /canonical fields/);
+  await writeFile(path.join(fixture.root, "docs", "receipts", "test-receipt.json"), JSON.stringify({
+    receipt_id: "RCPT-T0003-C4",
+    receipt_kind: "review",
+    task_id: "T0003",
+    checkpoint_seq: 4,
+    actor: "human",
+    issued_at: "2026-07-17T00:00:00.000Z",
+    scope: {},
+    statement: "T0003 completion evidence reviewed.",
+    evidence_refs: ["docs/receipts/test-evidence.json"],
+    approval_fence: null,
+    source_revision: "working-tree",
+    source_hash: sha256(taskMarkdown({
+      taskId: "T0003",
+      loopState: "succeeded",
+      checkpointRef: "docs/checkpoints/T0003-execution.md"
+    }))
+  }), "utf8");
+  const valid = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(valid.snapshot.execution.status, "observed");
+  assert.equal(valid.snapshot.execution.loopState, "succeeded");
+  assert.equal(valid.snapshot.execution.lifecycleStatus, "active");
+});
+
+test("execution projection rejects exhausted active work and a task source fence mismatch", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await mkdir(path.join(fixture.root, "docs", "tasks"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "checkpoints"), { recursive: true });
+  const task = taskMarkdown({
+    taskId: "T0005",
+    loopState: "running",
+    checkpointRef: "docs/checkpoints/T0005-execution.md"
+  });
+  await writeFile(path.join(fixture.root, "docs", "tasks", "T0005-budget.md"), task, "utf8");
+  const checkpointPath = path.join(fixture.root, "docs", "checkpoints", "T0005-execution.md");
+  const options = {
+    id: "T0005:A1:C1",
+    taskId: "T0005",
+    recordedAt: "2026-07-17T00:00:00.000Z",
+    attemptSeq: 1,
+    checkpointSeq: 1,
+    nextAction: "must stop before another action"
+  };
+  await writeFile(checkpointPath, checkpointMarkdown({
+    ...options,
+    iterationsUsed: 8,
+    iterationsMax: 8
+  }), "utf8");
+  const exhausted = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(exhausted.snapshot.execution.status, "degraded");
+  assert.match(exhausted.snapshot.execution.error, /budget.*BUDGET_EXCEEDED/);
+
+  await writeFile(checkpointPath, checkpointMarkdown({
+    ...options,
+    sourceHash: "f".repeat(64)
+  }), "utf8");
+  const forgedSource = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(forgedSource.snapshot.execution.status, "degraded");
+  assert.match(forgedSource.snapshot.execution.error, /source_hash.*linked task bytes/);
 });
 
 test("runtime-local View files do not make the projected repository dirtier", async (t) => {
@@ -246,11 +657,11 @@ test("config rejects remote probes and project overrides of distribution runtime
   );
 
   delete fixture.config.stateDir;
-  fixture.config.executionCheckpoint = "docs/checkpoints/custom.json";
+  fixture.config.executionCheckpointRoot = "docs/checkpoints/custom";
   await writeFile(path.join(fixture.root, "config", "view.json"), JSON.stringify(fixture.config), "utf8");
   await assert.rejects(
     buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
-    /executionCheckpoint.*reference distribution 고정값/
+    /지원하지 않는 View config key.*executionCheckpointRoot/
   );
 });
 

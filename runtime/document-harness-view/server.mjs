@@ -19,6 +19,76 @@ const STATIC_FILES = new Map([
   ["/view-model.mjs", ["view-model.mjs", "text/javascript; charset=utf-8"]],
   ["/styles.css", ["styles.css", "text/css; charset=utf-8"]]
 ]);
+const LAST_KNOWN_UNVERIFIED = "last_known_unverified";
+
+function markGovernanceItemUnverified(item) {
+  const lastKnown = item.lastKnown ?? {
+    authorityState: item.authorityState ?? null,
+    approvalState: item.approvalState ?? null,
+    enforcement: item.enforcement ?? null,
+    evidenceState: item.evidenceState ?? null
+  };
+  return {
+    ...item,
+    projectionState: LAST_KNOWN_UNVERIFIED,
+    lastKnown,
+    authorityState: "unverified",
+    approvalState: "unverified",
+    enforcement: "unverified",
+    evidenceState: "unverified",
+    sourceRefs: (item.sourceRefs ?? []).map((sourceRef) => ({
+      ...sourceRef,
+      lastKnownState: sourceRef.lastKnownState ?? sourceRef.state ?? null,
+      state: "unverified"
+    }))
+  };
+}
+
+function markSnapshotUnverified(degradedSnapshot) {
+  const sourceFence = degradedSnapshot.snapshot.sourceFence ?? {};
+  degradedSnapshot.snapshot.verificationState = LAST_KNOWN_UNVERIFIED;
+  degradedSnapshot.snapshot.sourceFence = {
+    ...sourceFence,
+    lastKnownSourceEvidenceState: sourceFence.lastKnownSourceEvidenceState ?? sourceFence.sourceEvidenceState ?? null,
+    lastKnownEvidenceCurrent: sourceFence.lastKnownEvidenceCurrent ?? sourceFence.evidenceCurrent ?? 0,
+    lastKnownEvidenceChanged: sourceFence.lastKnownEvidenceChanged ?? sourceFence.evidenceChanged ?? 0,
+    lastKnownEvidenceMissing: sourceFence.lastKnownEvidenceMissing ?? sourceFence.evidenceMissing ?? 0,
+    sourceEvidenceState: "unverified",
+    evidenceCurrent: 0,
+    evidenceChanged: 0,
+    evidenceMissing: 0,
+    evidenceUnverified: [...(degradedSnapshot.policies ?? []), ...(degradedSnapshot.guidelines ?? [])]
+      .flatMap((item) => item.sourceRefs ?? []).length
+  };
+
+  degradedSnapshot.policies = (degradedSnapshot.policies ?? []).map(markGovernanceItemUnverified);
+  degradedSnapshot.guidelines = (degradedSnapshot.guidelines ?? []).map(markGovernanceItemUnverified);
+  const governanceItemCount = degradedSnapshot.policies.length + degradedSnapshot.guidelines.length;
+  const previousSummary = degradedSnapshot.summary ?? {};
+  const lastKnownSummary = previousSummary.lastKnown ?? {
+    approvedCount: previousSummary.approvedCount ?? 0,
+    reviewCount: previousSummary.reviewCount ?? 0,
+    enforcement: previousSummary.enforcement ?? {}
+  };
+  degradedSnapshot.summary = {
+    ...previousSummary,
+    state: LAST_KNOWN_UNVERIFIED,
+    approvedCount: 0,
+    reviewCount: 0,
+    unverifiedCount: governanceItemCount,
+    enforcement: governanceItemCount > 0 ? { unverified: governanceItemCount } : {},
+    lastKnown: lastKnownSummary
+  };
+
+  if (degradedSnapshot.execution) {
+    degradedSnapshot.execution = {
+      ...degradedSnapshot.execution,
+      projectionState: LAST_KNOWN_UNVERIFIED,
+      lastKnownStatus: degradedSnapshot.execution.lastKnownStatus ?? degradedSnapshot.execution.status ?? null,
+      status: "unverified"
+    };
+  }
+}
 
 function parseArgs(argv) {
   const options = {
@@ -349,7 +419,8 @@ async function main() {
         degradedSnapshot.projectionError = {
           state: "degraded",
           message: safeMessage,
-          baseSemanticHash
+          baseSemanticHash,
+          presentationState: LAST_KNOWN_UNVERIFIED
         };
         degradedSnapshot.attention = [
           {
@@ -361,6 +432,8 @@ async function main() {
           },
           ...(degradedSnapshot.attention ?? []).filter((item) => item.id !== "ATTN-PROJECTION-DEGRADED")
         ];
+        markSnapshotUnverified(degradedSnapshot);
+        degradedSnapshot.summary.attentionCount = degradedSnapshot.attention.length;
         projection = { ...projection, snapshot: degradedSnapshot, semanticHash: degradedSemanticHash };
         await atomicWrite(snapshotPath, `${JSON.stringify(projection.snapshot, null, 2)}\n`);
         lease.snapshotId = projection.snapshot.snapshot.id;

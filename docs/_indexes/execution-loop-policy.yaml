@@ -2,7 +2,7 @@
 # Human-owned policy and normative standards remain design artifacts; this file
 # defines runtime state, stop, checkpoint, and evidence mechanics only.
 version: 1
-updated: 2026-07-15
+updated: 2026-07-17
 contract: v1
 
 opt_in:
@@ -131,6 +131,8 @@ budget:
   iterations_default: 10
   elapsed_minutes_default: 60
   budget_exhaustion_reason: BUDGET_EXCEEDED
+  active_state_requires_remaining_budget: true
+  succeeded_may_finish_at_limit: true
   extension_requires_human_directive: true
 
 risk:
@@ -151,6 +153,10 @@ checkpoint:
   projection: latest_task_execution_state
   identity: task_id_attempt_seq_checkpoint_seq
   task_contract_revision_required: true
+  source_hash_target: linked_task_bytes
+  source_revision_vocabulary:
+    - working-tree
+    - full_git_commit_with_matching_task_blob
   monotonic_attempt_seq: true
   monotonic_checkpoint_seq: true
   required_fields:
@@ -206,6 +212,8 @@ receipts:
     - statement
     - evidence_refs
     - approval_fence
+    - source_revision
+    - source_hash
   kinds:
     - command
     - test
@@ -219,5 +227,6 @@ closeout:
   unresolved_attention_allowed: false
   evidence_required: true
   receipts_required: true
+  evidence_and_receipt_refs_must_be_safe_non_empty_regular_files: true
   goal_verification_must_reference_evidence: true
   trusted_runtime_verification_separate_from_static_validation: true

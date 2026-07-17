@@ -240,13 +240,20 @@ assert.equal(approvalGuard.then.properties.decisionReceiptRef.type, "string");
 const evidencePack = schema("migration-evidence-pack");
 assert.ok(evidencePack.properties.gates.items.required.includes("evidenceSha256"));
 assert.equal(evidencePack.properties.gates.items.properties.evidenceSha256.pattern, "^[a-f0-9]{64}$");
+const humanDecision = schema("human-policy-decision-receipt");
+assert.ok(humanDecision.required.includes("effectiveSha256"));
+assert.equal(humanDecision.properties.effectiveSha256.pattern, "^[a-f0-9]{64}$");
+const effectiveDecisionGuard = humanDecision.allOf.find((rule) =>
+  rule.if?.properties?.decision?.enum?.includes("approved"));
+assert.ok(effectiveDecisionGuard);
+assert.equal(effectiveDecisionGuard.then.properties.effectiveSha256.type, "string");
 
 const { ALLOWED_ACTIONS, ALLOWED_STATUSES } = await import(pathToFileURL(adoptLib));
 const adoptSource = readFileSync(adoptLib, "utf8");
 for (const contractMarker of [
   "GOVERNANCE_CATALOG_PATH", "OBSERVATION_PROMOTED_WITHOUT_POLICY_AUTHORITY",
   "PRIVATE_SOURCE_EXCLUDED", "STALE_OR_INVALID_SOURCE_REF",
-  "CONFLICTING_CANDIDATE_AUTO_RESOLVED", "CATALOG-REVIEW", "evidenceSha256",
+  "CONFLICTING_CANDIDATE_AUTO_RESOLVED", "CATALOG-REVIEW", "evidenceSha256", "effectiveSha256",
 ]) assert.ok(adoptSource.includes(contractMarker), `adoption engine enforces ${contractMarker}`);
 assert.deepEqual(ALLOWED_ACTIONS, [
   "ADD", "UPDATE_UNMODIFIED", "KEEP_PROJECT_OWNED", "CONFLICT",

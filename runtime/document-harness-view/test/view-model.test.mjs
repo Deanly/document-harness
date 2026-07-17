@@ -4,6 +4,8 @@ import {
   buildEvidenceGroups,
   filterEvidence,
   filterPolicies,
+  freshnessPresentation,
+  governanceStatusPresentation,
   paginate,
   reviewStats,
   runtimeSummary,
@@ -130,4 +132,44 @@ test("runtime summary uses observed probes without inferring execution state", (
     dirtyCount: 2
   });
   assert.equal(Object.hasOwn(summary, "taskStatus"), false);
+});
+
+test("degraded governance presentation never renders last-known approval as currently verified", () => {
+  const degradedPolicy = {
+    ...policy,
+    projectionState: "last_known_unverified",
+    authorityState: "unverified",
+    approvalState: "unverified",
+    enforcement: "unverified",
+    evidenceState: "unverified",
+    lastKnown: {
+      authorityState: "effective",
+      approvalState: "approved",
+      enforcement: "enforced",
+      evidenceState: "current"
+    }
+  };
+
+  assert.deepEqual(governanceStatusPresentation(degradedPolicy, "approvalState"), {
+    state: "last_known_unverified",
+    value: "unverified",
+    lastKnownValue: "approved",
+    tone: "warning"
+  });
+  assert.deepEqual(filterPolicies({ policies: [degradedPolicy], filter: "unverified" }), [degradedPolicy]);
+  assert.deepEqual(filterPolicies({ policies: [degradedPolicy], filter: "unreviewed" }), []);
+});
+
+test("degraded freshness copy explicitly identifies last-known records as unverified", () => {
+  const presentation = freshnessPresentation({
+    snapshot: { freshness: "degraded", verificationState: "last_known_unverified" },
+    summary: { unverifiedCount: 2 },
+    projectionError: { presentationState: "last_known_unverified" }
+  });
+  assert.deepEqual(presentation, {
+    state: "last_known_unverified",
+    tone: "degraded",
+    message: "Latest source could not be verified · showing 2 last-known governance records as unverified."
+  });
+  assert.doesNotMatch(presentation.message, /approved|effective/i);
 });

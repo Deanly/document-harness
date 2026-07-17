@@ -27,8 +27,26 @@
       "artifactType": "template"
     },
     {
+      "sourcePath": "docs/_templates/adoption/adopt.md",
+      "targetPath": "docs/_templates/adoption/adopt.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/execute.md",
+      "targetPath": "docs/_templates/adoption/execute.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
       "sourcePath": "docs/_templates/adoption/control-plane.md",
       "targetPath": "docs/_templates/adoption/control-plane.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/ubiquitous-language.md",
+      "targetPath": "docs/_templates/adoption/ubiquitous-language.md",
       "profiles": ["core"],
       "artifactType": "template"
     },
@@ -63,6 +81,12 @@
       "ownership": "project-owned"
     },
     {
+      "sourcePath": "docs/_templates/adoption/ubiquitous-language.md",
+      "targetPath": "docs/design/ubiquitous-language.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
       "sourcePath": "docs/_indexes/execution-loop-policy.yaml",
       "targetPath": "docs/_indexes/execution-loop-policy.yaml",
       "profiles": ["core"]
@@ -70,6 +94,42 @@
     {
       "sourcePath": "docs/_templates/execution-checkpoint.md",
       "targetPath": "docs/_templates/execution-checkpoint.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/project.md",
+      "targetPath": "docs/_templates/project.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/task.md",
+      "targetPath": "docs/_templates/task.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/design.md",
+      "targetPath": "docs/_templates/design.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/guide.md",
+      "targetPath": "docs/_templates/guide.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/report.md",
+      "targetPath": "docs/_templates/report.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/qa.md",
+      "targetPath": "docs/_templates/qa.md",
       "profiles": ["core"],
       "artifactType": "template"
     },
@@ -100,6 +160,12 @@
       "artifactType": "generated"
     },
     {
+      "sourcePath": "docs/_templates/adoption/human-policy-decision-receipt.json",
+      "targetPath": "docs/_templates/adoption/human-policy-decision-receipt.json",
+      "profiles": ["governance"],
+      "artifactType": "template"
+    },
+    {
       "sourcePath": "docs/_templates/view-runtime.json",
       "targetPath": "docs/_templates/view-runtime.json",
       "profiles": ["view"],
@@ -121,18 +187,36 @@
       "profiles": ["core"]
     },
     {
-      "sourcePath": "docs/ADOPT.md",
+      "sourcePath": "docs/_templates/adoption/adopt.md",
       "targetPath": "docs/ADOPT.md",
       "profiles": ["core"]
     },
     {
-      "sourcePath": "docs/EXECUTE.md",
+      "sourcePath": "docs/_templates/adoption/execute.md",
       "targetPath": "docs/EXECUTE.md",
       "profiles": ["core"]
     },
     {
       "sourcePath": "docs/bin/harness-adopt",
       "targetPath": "docs/bin/harness-adopt",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/new-doc.sh",
+      "targetPath": "docs/bin/new-doc.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/validate-closeout.sh",
+      "targetPath": "docs/bin/validate-closeout.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/close-doc.sh",
+      "targetPath": "docs/bin/close-doc.sh",
       "profiles": ["core"],
       "mode": "0755"
     },
@@ -165,6 +249,31 @@
     {
       "sourcePath": "docs/guide/execution-loop-operations.md",
       "targetPath": "docs/guide/execution-loop-operations.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/goal-locked-completion.md",
+      "targetPath": "docs/guide/goal-locked-completion.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/project-cutting-and-execution.md",
+      "targetPath": "docs/guide/project-cutting-and-execution.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/umbrella-project-governance.md",
+      "targetPath": "docs/guide/umbrella-project-governance.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/quality-axes.md",
+      "targetPath": "docs/guide/quality-axes.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/qa-document-system.md",
+      "targetPath": "docs/guide/qa-document-system.md",
       "profiles": ["core"]
     },
     {
@@ -349,14 +458,30 @@
       "docs/ADOPT.md",
       "docs/EXECUTE.md",
       "docs/_indexes/execution-loop-policy.yaml",
+      "docs/_templates/project.md",
+      "docs/_templates/task.md",
+      "docs/_templates/design.md",
+      "docs/_templates/guide.md",
+      "docs/_templates/report.md",
+      "docs/_templates/qa.md",
       "docs/_templates/execution-checkpoint.md",
+      "docs/_templates/adoption/human-policy-decision-receipt.json",
       "docs/bin/harness-adopt",
+      "docs/bin/new-doc.sh",
+      "docs/bin/validate-closeout.sh",
+      "docs/bin/close-doc.sh",
       "docs/bin/validate-execution-loop.sh",
+      "docs/design/ubiquitous-language.md",
       "docs/design/execution-loop-plane.md",
       "docs/design/harness-adoption-plane.md",
       "docs/design/human-control-view-plane.md",
       "docs/design/policy-to-evidence-governance.md",
       "docs/guide/execution-loop-operations.md",
+      "docs/guide/goal-locked-completion.md",
+      "docs/guide/project-cutting-and-execution.md",
+      "docs/guide/umbrella-project-governance.md",
+      "docs/guide/quality-axes.md",
+      "docs/guide/qa-document-system.md",
       "docs/guide/human-control-view.md",
       "docs/guide/repository-policy-extraction.md",
       "runtime/document-harness-view/bin/human-view",
