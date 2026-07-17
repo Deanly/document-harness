@@ -70,13 +70,13 @@ Top Bar
   local-only | READ ONLY | health
 
 Horizontal Tabs
-  Overview | Policies & Guidelines | Review Queue | Execution Status | Evidence
+  개요 | 정책·지침 | 검토 대기 | 실행 상태 | 근거
 
 Selected Tab Panel
   one large reading and operation surface
 ```
 
-이 View는 repository마다 독립적으로 실행되므로 repository selector, workspace switcher와 left sidebar를 두지 않습니다. repository identity는 top bar의 고정 context이고, 5개 tab은 정확히 위 순서와 label을 사용합니다. 좁은 화면은 horizontal tab overflow로 대응하며 left navigation으로 변환하지 않습니다.
+이 View는 repository마다 독립적으로 실행되므로 repository selector, workspace switcher와 left sidebar를 두지 않습니다. repository identity는 top bar의 고정 context이고, 5개 tab은 정확히 위 한국어 순서와 label을 사용합니다. 내부 route/hash key는 기존 bookmark와 stable interaction을 위해 영문 기술 식별자를 유지할 수 있습니다. 좁은 화면은 horizontal tab overflow로 대응하며 left navigation으로 변환하지 않습니다.
 
 상단 bar의 `connected` 표시는 freshness를 의미하지 않습니다. `fresh`, `updating`, `direct`, `degraded`, `unknown`을 별도 badge로 표시합니다.
 
@@ -102,9 +102,19 @@ Selected Tab Panel
 
 runtime-local state는 `.document-harness/runtime/view/` 아래에만 둡니다. runtime은 lease/snapshot/log/probe를 쓰기 전에 해당 디렉터리에 exact self-ignoring `.gitignore` marker를 만들고 검증하므로 root ignore rule이 없는 repository도 dirty하게 만들지 않습니다. marker가 foreign bytes 또는 symlink이면 덮어쓰지 않고 fail-closed합니다. View가 실패해도 project application runtime을 restart, deploy, scan 또는 mutate하지 않습니다.
 
+## 한국어 우선 표시 규칙
+
+reference View의 기본 locale은 `ko-KR`입니다.
+
+- navigation, section title, helper/empty/error text와 AI가 작성하는 project description, `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap 문구, `approvalRule`, source-reference `note`, 자유 서술 `evidenceKind` label은 자연스럽고 짧은 한국어를 사용합니다.
+- policy/guideline/attention ID, enum 저장 값, repository path, revision/hash, command, exact source heading과 quote는 원형을 유지합니다. 화면에서는 한국어 label 또는 summary와 분리해 기술 metadata로 표시합니다.
+- ID는 정책 제목보다 낮은 위계의 보조 정보입니다. 긴 ID와 source ref는 자기 cell/card 안에서 줄바꿈하고 인접 제목, badge 또는 column 위로 겹치지 않아야 합니다. 작은 화면에서는 ID를 detail 영역으로 이동할 수 있지만 복사 가능한 원문을 잃지 않습니다.
+- 기존 영어 catalog의 human-facing field를 한국어로 바꾸는 migration은 presentation-only입니다. stable ID, source ref/hash, authority, approval, enforcement, effective ref, receipt와 evidence freshness를 그대로 유지하고, 번역만으로 의미나 승인 상태를 바꾸지 않습니다.
+- source heading이나 exact quote가 영어이면 provenance는 그대로 보여주되 별도의 한국어 summary를 제공합니다. 출처 문구를 번역한 값을 exact source라고 표시하지 않습니다.
+
 ## Five-Tab Product Plan
 
-### Overview
+### 개요
 
 첫 화면은 사용자가 10초 안에 방향, 위험과 다음 확인 지점을 파악하는 summary입니다.
 
@@ -115,9 +125,9 @@ runtime-local state는 `.document-harness/runtime/view/` 아래에만 둡니다.
 3. 왼쪽의 governance/execution summary와 오른쪽의 `지금 확인할 항목` panel
 4. recent source/verification 변화와 snapshot freshness를 보여주는 runtime strip
 
-metric은 숫자만 표시하지 않고 의미와 기준 snapshot을 함께 표시합니다. 실행 checkpoint가 없으면 진행률을 추정하지 않고 `execution checkpoint not configured`처럼 source gap을 명시합니다.
+metric은 숫자만 표시하지 않고 의미와 기준 snapshot을 함께 표시합니다. 실행 checkpoint가 없으면 진행률을 추정하지 않고 `실행 체크포인트가 구성되지 않았습니다`처럼 source gap을 한국어로 명시합니다.
 
-### Policies & Guidelines
+### 정책·지침
 
 정책과 지침을 사람이 비교·검토하는 primary work surface입니다.
 
@@ -129,7 +139,7 @@ metric은 숫자만 표시하지 않고 의미와 기준 snapshot을 함께 표�
 - candidate와 effective policy, AI confidence와 human approval은 같은 badge로 합치지 않습니다.
 - 한 page에 읽기 어려운 전체 Markdown을 노출하지 않고 paginated rows와 structured detail을 사용합니다.
 
-### Review Queue
+### 검토 대기
 
 사람이 지금 판단해야 할 항목만 severity와 이유가 보이는 순서로 제공합니다.
 
@@ -139,7 +149,7 @@ metric은 숫자만 표시하지 않고 의미와 기준 snapshot을 함께 표�
 - v1 read-only View에는 approve/reject mutation button을 제공하지 않습니다. Codex/Claude task 또는 durable source 위치로 handoff합니다.
 - 빈 queue는 단순히 `0`만 표시하지 않고 현재 snapshot에서 actionable review가 없음을 설명합니다.
 
-### Execution Status
+### 실행 상태
 
 AI execute loop의 내부 상태를 관찰 가능한 contract로 풀어냅니다.
 
@@ -148,12 +158,12 @@ AI execute loop의 내부 상태를 관찰 가능한 contract로 풀어냅니다
 - iteration/time/cost budget은 source가 있을 때만 표시하고 missing field를 0으로 꾸미지 않습니다.
 - fast/full/continuous validator receipt와 마지막 결과, environment/revision을 연결합니다.
 - attention과 stop reason, residual risk, rollback/safe stop을 같은 snapshot에서 확인할 수 있게 합니다.
-- checkpoint 또는 budget source가 없으면 `not configured` 상태와 필요한 source contract를 명확히 표시합니다.
+- checkpoint 또는 budget source가 없으면 `구성되지 않음` 상태와 필요한 source contract를 명확히 표시합니다. source enum이 별도로 존재하면 저장 값은 바꾸지 않고 label만 번역합니다.
 - reference View는 loop-enabled `docs/tasks/T*.md`의 `checkpoint_ref`가 가리키는 canonical `docs/checkpoints/*.md` frontmatter만 execution source로 사용합니다. orphan file은 무시하고 task/checkpoint ID·revision·state 및 execution barrier를 검증합니다.
 - 여러 linked checkpoint는 active/blocked non-succeeded work, active succeeded closeout, draft, historical terminal task 순으로 우선하고 같은 group에서 `recorded_at`, `attempt_seq`, `checkpoint_seq`, path 순으로 결정론적으로 선택합니다. 별도 JSON mirror나 mtime에서 progress를 만들지 않으며 더 최신인 completed history로 진행 중인 work를 숨기지 않습니다.
 - checkpoint root/entry symlink, malformed frontmatter 또는 저장소 경계 위반은 `degraded`로 표시하고 다른 항목을 근거 없이 대신 선택하지 않습니다.
 
-### Evidence
+### 근거
 
 완료 주장보다 그 판단을 뒷받침하는 source와 receipt를 중심으로 구성합니다.
 
@@ -172,7 +182,7 @@ AI execute loop의 내부 상태를 관찰 가능한 contract로 풀어냅니다
 - tab별 filter, search query, pagination과 expanded row/card를 stable item ID 기준으로 유지합니다.
 - item이 새 snapshot에 남아 있으면 keyboard focus와 expansion을 보존합니다.
 - item이 없어졌을 때만 selection을 정리하고 non-blocking message로 이유를 표시합니다.
-- refresh가 search input을 비우거나 현재 tab을 `Overview`로 되돌려서는 안 됩니다.
+- refresh가 search input을 비우거나 현재 tab을 `개요`로 되돌려서는 안 됩니다.
 - 모든 panel은 같은 snapshot ID/sequence/read fence에서 계산하며 다른 generation의 detail을 화면에 섞지 않습니다.
 - hash deep-link는 active tab 복원에 쓸 수 있지만 approval, freshness 또는 unread truth가 아닙니다.
 
@@ -187,9 +197,9 @@ UI는 PatternFly의 enterprise density, semantic status와 accessible tabs 원�
 - layout은 hierarchy, whitespace와 divider로 구분하며 decorative card 남용을 피합니다.
 - script, stylesheet, icon과 font는 same-origin local asset만 사용합니다. external CDN, remote font와 runtime third-party fetch는 허용하지 않습니다.
 
-## Overview
+## 개요
 
-Overview는 상세 status report보다 다음 행동을 우선합니다.
+개요는 상세 status report보다 다음 행동을 우선합니다.
 
 - actionable attention 수와 oldest age
 - active umbrella project와 current focus
@@ -200,7 +210,7 @@ Overview는 상세 status report보다 다음 행동을 우선합니다.
 
 `Since last visit`는 browser-local snapshot sequence를 기준으로 계산할 수 있지만 source 상태나 unread truth로 사용하지 않습니다.
 
-Overview card는 최소한 source link, status, loop state, current focus, updated time, freshness를 보여줍니다.
+개요 card는 최소한 source link, status, loop state, current focus, updated time, freshness를 보여줍니다.
 
 ## Attention Queue
 
@@ -433,7 +443,7 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] parse 실패가 silent delete나 false fresh로 이어지지 않는다.
 - [ ] 한 snapshot에 서로 다른 source/checkpoint generation이 섞이지 않는다.
 - [ ] approved/effective badge는 complete current source fence와 실제 matching human decision/effective refs 없이는 표시되지 않는다.
-- [ ] Execution Status는 canonical `docs/checkpoints/*.md`를 deterministic하게 선택하고 symlink/malformed input을 degraded 처리한다.
+- [ ] `실행 상태`는 canonical `docs/checkpoints/*.md`를 deterministic하게 선택하고 symlink/malformed input을 degraded 처리한다.
 - [ ] alternate SSE profile이면 reconnect와 event gap full resync가 동작한다.
 - [ ] reference ETag polling과 304가 동작한다.
 - [ ] read-only API mutation method가 모두 거부된다.
@@ -443,11 +453,13 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] path traversal, symlink escape, excluded sensitivity, browser-origin 공격을 차단한다.
 - [ ] cache 삭제 뒤 hidden decision/approval truth가 손실되지 않는다.
 - [ ] top bar가 현재 repository identity를 정적으로 표시하고 selector/workspace switcher가 없다.
-- [ ] left sidebar 없이 exact five horizontal tabs를 canonical order로 제공한다.
+- [ ] left sidebar 없이 `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거`를 canonical order의 five horizontal tabs로 제공한다.
 - [ ] 모든 tab이 같은 snapshot/read fence를 사용한다.
 - [ ] polling/manual refresh 뒤 active tab, filter, search, expansion과 focus가 유지된다.
 - [ ] external CDN/font/script request가 없고 same-origin local asset만 사용한다.
 - [ ] keyboard와 screen reader로 tab, filter, table expansion과 live freshness를 조작·이해할 수 있다.
+- [ ] 사용자용 chrome과 synthesized governance/project wording이 `ko-KR`이고 기술 ID·enum·path·hash·command·source heading은 원형을 유지한다.
+- [ ] 긴 ID와 source ref가 자기 cell/card 안에서 줄바꿈되며 인접 content와 겹치지 않는다.
 - [ ] migration fence, current repository와 source evidence freshness가 독립 상태다.
 - [ ] View runtime/controller byte set이 release manifest와 installation lock에 pin되어 있다.
 
@@ -469,4 +481,5 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - 2026-07-15: read-only local view, information architecture, attention, policy trace, freshness, SSE/polling, approval workflow, security 운영 기준을 생성했다.
 - 2026-07-16: repository 정적 identity, five top tabs, tab별 product plan, refresh-stable interaction과 PatternFly-inspired local semantic design 기준을 추가했다.
 - 2026-07-16: shipped reference View의 doctor/refresh/start/status/url/stop/test, Node no-DB/ETag/lease-safe runtime과 migration/current/source fence 운영 절차를 추가했다.
-- 2026-07-17: approval badge를 complete source/decision/effective evidence에 묶고 Execution Status를 canonical Markdown checkpoint의 deterministic fail-closed projection으로 정렬했다.
+- 2026-07-17: approval badge를 complete source/decision/effective evidence에 묶고 `실행 상태`를 canonical Markdown checkpoint의 deterministic fail-closed projection으로 정렬했다.
+- 2026-07-17: 한국어 우선 표시, 기술 식별자 원형 보존, presentation-only localization과 긴 ID containment 계약을 추가했다.

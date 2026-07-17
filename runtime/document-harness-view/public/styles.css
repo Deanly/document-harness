@@ -659,12 +659,20 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   min-height: 42px;
   padding: 8px 12px;
   color: var(--pf-t--global--text--color--subtle);
   border-bottom: 1px solid var(--pf-t--global--border--color--subtle);
   font-size: 12px;
+}
+
+.table-scroll-hint {
+  display: none;
+  color: var(--pf-t--global--text--color--disabled);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .page-size-label {
@@ -710,6 +718,8 @@ h3 {
 }
 
 .data-table td {
+  min-width: 0;
+  overflow: hidden;
   font-size: 12px;
 }
 
@@ -717,22 +727,26 @@ h3 {
   background: #f8fbff;
 }
 
+.policy-table {
+  min-width: 1180px;
+}
+
 .policy-table th:nth-child(1),
-.policy-table td:nth-child(1) { width: 44px; }
+.policy-table td:nth-child(1) { width: 52px; }
 .policy-table th:nth-child(2),
-.policy-table td:nth-child(2) { width: 110px; }
+.policy-table td:nth-child(2) { width: 180px; }
 .policy-table th:nth-child(3),
-.policy-table td:nth-child(3) { width: 31%; }
+.policy-table td:nth-child(3) { width: 32%; }
 .policy-table th:nth-child(4),
-.policy-table td:nth-child(4) { width: 130px; }
+.policy-table td:nth-child(4) { width: 180px; }
 .policy-table th:nth-child(5),
-.policy-table td:nth-child(5) { width: 100px; }
+.policy-table td:nth-child(5) { width: 92px; }
 .policy-table th:nth-child(6),
-.policy-table td:nth-child(6) { width: 105px; }
+.policy-table td:nth-child(6) { width: 102px; }
 .policy-table th:nth-child(7),
-.policy-table td:nth-child(7) { width: 95px; }
+.policy-table td:nth-child(7) { width: 100px; }
 .policy-table th:nth-child(8),
-.policy-table td:nth-child(8) { width: 90px; }
+.policy-table td:nth-child(8) { width: 100px; }
 
 .row-toggle {
   width: 30px;
@@ -751,11 +765,17 @@ h3 {
 }
 
 .item-id {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
   color: #3c3f42;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
   font-weight: 700;
-  white-space: nowrap;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .policy-title {
@@ -775,8 +795,28 @@ h3 {
 
 .linked-refs {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.linked-refs code,
+.linked-refs .ref-link {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.data-table .status-label {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .ref-link {
@@ -910,13 +950,25 @@ h3 {
 
 .review-item {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) minmax(160px, .35fr);
+  grid-template-columns: minmax(160px, .25fr) minmax(0, 1fr) minmax(180px, .35fr);
   gap: 14px;
   padding: 15px 16px;
   background: #fff;
   border: 1px solid var(--pf-t--global--border--color--default);
   border-left-width: 4px;
   border-radius: var(--pf-t--global--radius--medium);
+}
+
+.review-item > *,
+.review-preview-head > *,
+.review-rail-head > * {
+  min-width: 0;
+}
+
+.review-preview-head .item-id,
+.review-rail-head .item-id {
+  flex: 0 1 58%;
+  text-align: right;
 }
 
 .review-item.critical { border-left-color: var(--pf-t--global--color--status--danger--default); }
@@ -1139,13 +1191,37 @@ footer p {
     grid-template-columns: 1fr;
   }
 
+  .policy-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .compact-metrics {
+    grid-auto-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+  }
+
+  .table-toolbar .search-field {
+    flex-basis: 100%;
+  }
+
+  .table-toolbar .filter-group {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .table-scroll-hint {
+    display: inline;
+  }
+
   .review-rail,
   .source-fence-card {
     position: static;
   }
 
   .review-rail-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   }
 
   .policy-detail {
@@ -1215,7 +1291,7 @@ footer p {
   }
 
   .review-item {
-    grid-template-columns: 100px minmax(0, 1fr);
+    grid-template-columns: minmax(150px, .3fr) minmax(0, 1fr);
   }
 
   .review-related {

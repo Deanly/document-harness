@@ -62,6 +62,8 @@ protect live system and capture rollback fence
 
 `plan`과 `apply`는 정책 문구를 발명하지 않습니다. `governance` profile은 nested migration fence와 `ATTN-POLICY-EXTRACTION`/`GAP-POLICY-EXTRACTION`을 가진 빈 catalog를 설치합니다. 이후 repository-local skill이 exact source를 직접 읽어 schema-valid candidate를 채우고, 인간 결정 receipt와 gate evidence가 완성된 뒤에만 verify가 migration을 완료로 판정합니다.
 
+초기 View와 policy extraction의 기본 표시 언어는 `ko-KR`입니다. AI가 생성하는 project description, direction, title, human summary, why, scope, risk, attention/gap 문구, approval rule, source note와 자유 서술 evidence kind label은 한국어로 작성하고, 기술 ID·enum·path·hash·command·exact source heading/quote는 원형을 보존합니다.
+
 ## Executable V1
 
 plan output은 target 밖의 이미 존재하는 directory에 둡니다. 그래야 plan이 target byte, Git index, runtime과 `$HOME`에 0 write라는 계약을 유지할 수 있습니다.
@@ -85,7 +87,7 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다. 그래�
 
 지원 profile은 `core`, `governance`, `view`입니다. `core`는 adoption/Execute entrypoint뿐 아니라 reusable project/task/design/guide/report/QA template, terminology surface, `new-doc.sh`, execution/closeout validator와 `close-doc.sh`를 함께 설치합니다. `governance`는 `core`를, `view`는 `core`와 `governance`를 자동으로 포함합니다. plan은 사용자가 고른 `requestedProfiles`와 dependency를 해석한 실제 설치 집합 `profiles`를 별도로 기록합니다. 따라서 `--profile view`는 읽을 수 있는 단독 View에 필요한 세 profile 전체를 설치합니다.
 
-부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.0.0`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
+부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.1.0`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
 
 ### Status Contract
 
@@ -110,6 +112,9 @@ post-apply file byte 또는 mode가 바뀌면 rollback은 강행하지 않고 `N
 - code/config behavior는 observation 또는 enforcement evidence이며 policy authority가 아닙니다.
 - candidate는 인간 결정 전 `approvalState: unreviewed`, `effectiveRef: null`, `decisionReceiptRef: null`을 유지합니다. 승인 receipt는 exact `effectiveRef`와 현재 artifact bytes의 `effectiveSha256`을 함께 고정합니다.
 - initializer가 만든 empty governance catalog는 첫 extraction/review 변경 뒤 project-owned state로 보존합니다. 이후 upgrade는 그 bytes를 덮어쓰지 않고 `KEEP_PROJECT_OWNED`로 이관하며 schema/source/evidence 검증은 계속 적용합니다.
+- initialize/migrate actor는 사용자용 View chrome과 synthesized governance/project wording을 `ko-KR`로 준비합니다. 기술 식별자와 provenance는 번역하지 않고 한국어 설명 옆의 보조 metadata로 표시합니다.
+- 기존 영어 catalog를 한국어로 바꾸는 작업은 presentation-only migration입니다. stable ID, source ref/hash, authority, approval, enforcement, effective ref, receipt와 evidence freshness를 유지하며, 번역만으로 의미·범위·승인 상태를 바꾸지 않습니다. 의미 보존이 불확실하면 review attention을 남깁니다.
+- 긴 ID, path와 hash는 자기 cell/card 안에서 줄바꿈되어야 하며 인접 제목·badge·column과 겹치지 않아야 합니다.
 - `.env`, credential, token, private raw source와 secret value는 governance catalog/source body에 수집하지 않습니다. 안전한 authority source가 없으면 policy를 만들지 않고 gap/attention을 남깁니다.
 - 모든 candidate source ref는 repository-relative path, heading/line, captured file SHA-256과 captured repository commit을 갖습니다.
 - migration captured base는 실제 Git commit object로 resolve되어야 하며, source hash 변화는 candidate review/approval을 stale로 만듭니다. 현재 HEAD 이동만으로 unchanged source evidence를 stale 처리하지 않습니다.
@@ -146,6 +151,17 @@ docs/receipts/migration-evidence-pack.json      # gate/human-review completion e
 
 위 경로는 public v1 executable contract입니다. 다른 경로/runtime을 쓰는 downstream extension은 v1 installation lock과 release verification을 그대로 통과한다고 가정할 수 없으며 별도 profile과 acceptance가 필요합니다.
 
+## Korean-First Initialization And Migration
+
+새 repository와 mature repository에 동일한 human projection 품질을 적용합니다.
+
+1. target의 exact source를 읽고 stable technical ID와 provenance fence를 먼저 고정합니다.
+2. source-backed policy/guideline 후보를 작성하되 사람이 읽는 field만 한국어로 합성합니다.
+3. View project description과 empty/gap/attention 문구를 한국어로 준비하고 canonical tab을 `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거` 순서로 표시합니다.
+4. 기존 영어 human-facing field는 stable ID와 모든 governance/evidence fence를 유지한 채 번역합니다. authority나 approval이 달라지는 변경은 localization과 분리합니다.
+5. 긴 technical ID/source ref가 자기 container 안에서 줄바꿈되고 adjacent content와 겹치지 않는지 desktop와 narrow viewport에서 확인합니다.
+6. 새 snapshot을 생성한 뒤 source freshness, project-owned catalog 보존과 human review barrier를 다시 검증합니다.
+
 ## Project Skill Bootstrap
 
 - new repository initialize와 mature repository migrate/upgrade plan은 canonical `.agents/skills/operate-document-harness/SKILL.md`와 thin `.claude/skills/operate-document-harness/SKILL.md` adapter를 target-owned installation set에 포함합니다.
@@ -166,6 +182,8 @@ Before writing, answer:
 - What plan hash and source revision fence will apply authorize?
 - Which policy candidates need human review before they can become effective?
 - Are both repository-local skill paths included without a user-global install action?
+- Are synthesized human-facing fields Korean while IDs, enums, paths, hashes, commands, and exact source headings remain unchanged?
+- Do long IDs and source refs stay inside their own View cell/card without overlapping adjacent content?
 - What commands prove the target application is unchanged or recoverable?
 
 Missing answers produce a no-write plan or human attention, not guessed defaults.
@@ -207,3 +225,4 @@ git diff --check
 - 2026-07-16: canonical project skill과 thin Claude adapter를 repository별 initialize/migrate output으로 추가하고 global install을 금지했다.
 - 2026-07-16: executable `plan|apply|verify|rollback`, exact status model, versioned reference View, nested governance migration fence와 fail-closed verification 절차를 v1 entrypoint에 정렬했다.
 - 2026-07-17: fresh full-profile target가 public 개발 tree에 의존하지 않고 문서를 발급·검증·종료할 수 있도록 reusable authoring core와 실제 실행 E2E를 release closure에 추가했다.
+- 2026-07-17: 한국어 우선 initialization/migration, technical provenance 원형 보존과 긴 ID containment gate를 추가했다.

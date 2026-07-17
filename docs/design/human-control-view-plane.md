@@ -106,11 +106,11 @@ canonical presentation profile은 `single-repository-top-tabs-v1`입니다.
 ```text
 Static repository identity | freshness | snapshot | READ ONLY | local-only
 
-Overview | Policies & Guidelines | Review Queue | Execution Status | Evidence
+개요 | 정책·지침 | 검토 대기 | 실행 상태 | 근거
 ```
 
 - 한 개의 큰 page shell과 상단 horizontal tab list를 사용합니다.
-- canonical tab label과 순서는 정확히 `Overview`, `Policies & Guidelines`, `Review Queue`, `Execution Status`, `Evidence`입니다.
+- canonical tab label과 순서는 정확히 `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거`입니다. URL hash나 내부 tab key는 안정성을 위해 `overview|policies|review|execution|evidence` 같은 기술 식별자를 유지할 수 있지만 사용자에게 보이는 label은 한국어입니다.
 - left sidebar, collapsible navigation rail, repository selector와 workspace switcher는 제공하지 않습니다.
 - 좁은 화면에서도 tab list를 horizontal scroll 또는 overflow control로 유지하며 sidebar로 변환하지 않습니다.
 - 한 시점에는 선택된 tab panel 하나만 primary content로 표시하되 top bar, repository identity와 freshness는 모든 tab에서 유지합니다.
@@ -120,11 +120,21 @@ tab별 최소 책임은 다음과 같습니다.
 
 | Tab | Human Question | Minimum Surface |
 | --- | --- | --- |
-| `Overview` | 이 repository는 어디로 가며 지금 무엇이 중요한가? | plain-language direction, governance/execution summary, attention count, recent verification, freshness |
-| `Policies & Guidelines` | AI가 어떤 원칙과 구현 지침을 따르는가? | policy/guideline counts, authority/approval/enforcement, linked guidelines, source provenance, search/filter/expand |
-| `Review Queue` | 사람이 지금 무엇을 판단해야 하는가? | severity/order reason, exact request, risk, alternatives, source/checkpoint fence, handoff target |
-| `Execution Status` | 실행 loop는 어디까지 왔고 다음 행동은 무엇인가? | lifecycle and loop state, checkpoint, hypothesis, next actor/action, budget, verification, explicit missing-data state |
-| `Evidence` | 어떤 근거로 상태·완료·위험을 판단하는가? | source/receipt/validator groups, exact path/revision/hash, result, freshness, residual risk |
+| `개요` | 이 repository는 어디로 가며 지금 무엇이 중요한가? | plain-language direction, governance/execution summary, attention count, recent verification, freshness |
+| `정책·지침` | AI가 어떤 원칙과 구현 지침을 따르는가? | policy/guideline counts, authority/approval/enforcement, linked guidelines, source provenance, search/filter/expand |
+| `검토 대기` | 사람이 지금 무엇을 판단해야 하는가? | severity/order reason, exact request, risk, alternatives, source/checkpoint fence, handoff target |
+| `실행 상태` | 실행 loop는 어디까지 왔고 다음 행동은 무엇인가? | lifecycle and loop state, checkpoint, hypothesis, next actor/action, budget, verification, explicit missing-data state |
+| `근거` | 어떤 근거로 상태·완료·위험을 판단하는가? | source/receipt/validator groups, exact path/revision/hash, result, freshness, residual risk |
+
+## Korean-First Human Projection Contract
+
+reference profile의 기본 표시 언어는 `ko-KR`입니다. 새 repository의 initialize와 기존 repository의 migration/upgrade는 다음 규칙을 동일하게 적용합니다.
+
+- AI가 합성하는 `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap 문구, `approvalRule`, project description, source-reference `note`, 자유 서술 `evidenceKind` label과 화면 chrome은 사람이 바로 이해할 수 있는 한국어로 작성합니다.
+- policy/guideline/attention ID, schema enum, lifecycle/loop state의 저장 값, repository-relative path, Git revision, SHA-256, command, source heading과 exact quote는 provenance와 machine contract이므로 원형을 보존합니다. 필요하면 한국어 label/summary를 옆에 제공합니다.
+- 영어 source를 한국어로 설명하는 것은 derived presentation 변경입니다. 번역만으로 source 의미, authority class/state, approval state, enforcement, evidence freshness, source ref/hash, effective ref 또는 decision receipt를 바꾸거나 새 정책을 만들지 않습니다.
+- 이미 영어로 생성된 project-owned catalog를 옮길 때는 stable ID와 모든 fence를 유지한 채 human-facing field만 한국어로 고치고, 사람이 의미 보존을 검토할 수 있도록 migration attention 또는 diff evidence를 남깁니다.
+- 기술 ID는 제목보다 낮은 시각적 위계의 보조 metadata로 표시합니다. ID, source path와 hash처럼 긴 끊김 없는 값은 자신의 cell/container 안에서 `overflow-wrap: anywhere` 또는 동등한 방식으로 줄바꿈하고, 인접 제목·상태 cell 위로 겹치거나 page 폭을 강제로 늘리지 않습니다. 좁은 화면에서는 의미 있는 column을 우선하고 기술 metadata는 detail로 이동할 수 있습니다.
 
 ## Interaction Stability Contract
 
@@ -133,7 +143,7 @@ polling, SSE notification, manual refresh와 snapshot resync는 source state를 
 - `activeTab`, tab별 filter, `searchQuery`, expanded row/card identity와 pagination position은 browser-local interaction state로 보존합니다.
 - 새 snapshot에 같은 stable item ID가 있으면 expansion과 focus를 유지합니다.
 - item이 삭제되거나 scope 밖으로 이동했을 때만 해당 local selection을 정리하고 이유를 non-blocking status로 알립니다.
-- refresh 중 입력 focus를 빼앗거나 tab을 `Overview`로 되돌리지 않습니다.
+- refresh 중 입력 focus를 빼앗거나 tab을 `개요`로 되돌리지 않습니다.
 - URL hash를 active tab deep-link로 사용할 수 있지만 authority 또는 unread truth로 취급하지 않습니다.
 - initial load 또는 unrecoverable schema change만 safe default로 reset할 수 있으며 reset 사실을 표시합니다.
 
@@ -188,7 +198,7 @@ GET /healthz
 GET /readyz
 ```
 
-root HTML/CSS/JavaScript도 same-origin GET/HEAD로 제공합니다. arbitrary filesystem path 또는 resource ID를 받는 endpoint는 제공하지 않습니다. governance policies/guidelines/attention, optional execution checkpoint, runtime probe와 fence data는 `/api/v1/snapshot`의 같은 immutable generation 안에서 반환하며 Evidence tab은 그 source refs에서 계산합니다.
+root HTML/CSS/JavaScript도 same-origin GET/HEAD로 제공합니다. arbitrary filesystem path 또는 resource ID를 받는 endpoint는 제공하지 않습니다. governance policies/guidelines/attention, optional execution checkpoint, runtime probe와 fence data는 `/api/v1/snapshot`의 같은 immutable generation 안에서 반환하며 `근거` tab은 그 source refs에서 계산합니다.
 
 모든 snapshot response는 최소한 다음을 포함합니다.
 
@@ -323,12 +333,14 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 | HV-11 | read-only | mutation 405, source write capability 없음 |
 | HV-12 | source scope security | traversal, symlink escape, secret, permissive CORS 차단 |
 | HV-13 | repository presentation | static identity가 보이고 repository selector와 left sidebar가 없음 |
-| HV-14 | canonical tabs | exact five top tabs가 순서대로 있고 keyboard navigation 가능 |
+| HV-14 | canonical tabs | `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거`가 순서대로 있고 keyboard navigation 가능 |
 | HV-15 | cross-tab consistency | 모든 tab이 같은 snapshot/read fence를 사용하고 mixed generation이 없음 |
 | HV-16 | refresh continuity | polling/manual refresh 후 tab, filter, search, expansion과 focus가 유지됨 |
 | HV-17 | local asset boundary | external CDN/font/script request가 0이고 local-only/read-only가 유지됨 |
 | HV-18 | migration fence invalid | unresolvable base/receipt mismatch가 degraded attention이며 source evidence state와 분리됨 |
 | HV-19 | current HEAD advanced | HEAD movement가 표시되지만 unchanged source evidence는 fresh 유지 |
+| HV-20 | Korean-first projection | chrome과 synthesized human field는 `ko-KR`, technical/source value는 원형 유지 |
+| HV-21 | long metadata | 긴 ID/path/hash가 자기 container 안에서 줄바꿈되고 adjacent content와 겹치지 않음 |
 
 ## Decisions
 
@@ -340,6 +352,8 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - UI summary는 설명 계층이며 state, authority, receipt, freshness는 machine-readable source에서 계산합니다.
 - v1 presentation은 repository별 독립 server, 정적 identity와 five-tab single-page profile을 사용합니다.
 - repository selector와 left sidebar는 이 profile에 포함하지 않습니다.
+- 기본 human projection은 `ko-KR`이며 localization은 authority/approval/evidence를 바꾸지 않습니다.
+- technical ID와 provenance는 보조 metadata로 원형 보존하고 container 밖으로 넘치지 않게 합니다.
 - PatternFly-inspired semantics는 local semantic tokens와 accessible interaction으로 구현하며 external asset dependency를 만들지 않습니다.
 - `runtime/document-harness-view/`는 release manifest가 byte set을 pin하는 public versioned reference distribution이고 adopter가 design을 재생성하지 않습니다.
 - reference v1은 Node built-ins, no persistent DB, OS auto-port, lease-safe controller와 exact read-only endpoints를 사용합니다.
@@ -369,3 +383,4 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - 2026-07-16: repository별 정적 identity, five top tabs, cross-tab snapshot fence, refresh-stable interaction과 local semantic asset profile을 고정했다.
 - 2026-07-16: shipped Node/ETag reference View distribution, exact read endpoints, migration/current/source fence separation과 lease-safe no-DB runtime profile을 current contract로 정렬했다.
 - 2026-07-17: approved/effective projection을 complete source fence와 real decision/effective evidence에 묶고, Execution Status 입력을 canonical `docs/checkpoints/*.md`의 deterministic fail-closed selection으로 정렬했다.
+- 2026-07-17: `ko-KR` human projection, localization authority fence와 긴 technical metadata containment를 고정했다.

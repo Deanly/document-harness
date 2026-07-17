@@ -23,11 +23,13 @@ Read only the exact policy, design, guide, and validator refs selected by those 
 1. Locate the repository root and read its `AGENTS.md` plus applicable nested instructions.
 2. Identify the goal, repository revision, dirty tracked/untracked state, constraints, risk, and done criteria before writing.
 3. For adoption, classify the target as initialize, migrate, or upgrade and produce the required no-write plan before apply. Preserve project-owned files and existing changes.
-4. For execution, keep lifecycle `status` separate from `loop_state`; update the current checkpoint after meaningful actions, evidence, attention, and stop/resume transitions.
-5. Never self-approve policy, standards, exceptions, migration conflicts, risk acceptance, or weakened quality gates.
-6. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
-7. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
-8. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
+4. For initialization, migration, and policy extraction, write human-facing `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap wording, `approvalRule`, project description, source-reference `note`, and free-text `evidenceKind` labels in clear Korean (`ko-KR`) by default. Preserve technical IDs, enum values, repository-relative paths, hashes, commands, exact source headings, and quoted source wording in their original form.
+5. Treat translation as presentation-only migration: do not change meaning, authority class/state, approval state, enforcement, evidence, source refs, source hashes, or decision receipts while localizing wording.
+6. For execution, keep lifecycle `status` separate from `loop_state`; update the current checkpoint after meaningful actions, evidence, attention, and stop/resume transitions.
+7. Never self-approve policy, standards, exceptions, migration conflicts, risk acceptance, or weakened quality gates.
+8. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
+9. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
+10. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
 
 ## Run Adoption V1
 
@@ -43,6 +45,7 @@ Use the installed executable contract; do not simulate these transitions in pros
 - Continue from `PLAN_READY`; stop on `NEEDS_DECISION` or `APPLY_FAILED` and report `writes` plus exact attention/rollback evidence.
 - Treat `INSTALLED_NOT_VERIFIED` and `INSTALLED_AWAITING_REVIEW` as incomplete. Only `verify` may return `MIGRATION_VERIFIED`; successful rollback returns `ROLLED_BACK`.
 - A governance install starts with an explicit extraction gap. Direct-read repository authority and write schema-valid source-linked candidates; never invent policy to make the View look populated.
+- Use Korean for synthesized human wording even when the source or technical identifiers are English. Keep exact source headings and quotations unchanged, and provide a Korean summary beside them instead of translating provenance.
 - Keep code/config evidence as `kind: observation`, `approvalState: unreviewed`, with no effective or decision receipt. Human review is required before promotion.
 - Never put `.env`, credentials, tokens, private raw source, secret values, personal absolute paths, or user-global skill paths into installed governance/View artifacts.
 - Preserve the nested `migration.capturedRepository` fence, per-source `capturedSha256` and `capturedRepositoryRevision`. A source hash change is stale; later HEAD movement alone is not.

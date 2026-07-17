@@ -171,6 +171,8 @@ code/config observation과 retrieval authority metadata는 human policy approval
 
 `.env`, credential, token, private raw source와 secret value는 candidate catalog에 수집하지 않습니다. 안전한 source-backed statement가 없으면 `gaps`와 attention을 생성하며 policy를 추측하지 않습니다.
 
+사람이 읽는 projection의 기본 언어는 `ko-KR`입니다. extraction actor는 `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap 문구, `approvalRule`, source-reference `note`와 자유 서술 `evidenceKind` label을 한국어로 합성합니다. policy/guideline/attention ID, enum, path, hash, command, exact source heading과 quote는 원형을 보존합니다. 기존 영어 catalog의 localization은 stable ID, source/effective/decision ref와 hash, authority, approval, enforcement를 그대로 둔 presentation-only migration이며, 번역만으로 후보의 의미나 상태를 승격하지 않습니다.
+
 세부 절차는 `docs/guide/repository-policy-extraction.md`가 소유합니다.
 
 ## Repo-Local View Instance Contract
@@ -186,6 +188,7 @@ view:
   port_mode: auto
   presentation:
     profile: single-repository-top-tabs-v1
+    locale: ko-KR
     repository_identity: static
     repository_selector: false
     sidebar: false
@@ -204,7 +207,7 @@ view:
 - stop은 repo fingerprint, instance, PID/start identity와 live health가 일치할 때만 허용합니다.
 - remote bind, privileged port, browser external exposure는 separate human decision입니다.
 - static repository identity는 runtime이 시작된 target repository에서만 계산하며 selector나 workspace switcher를 제공하지 않습니다.
-- page shell은 left sidebar 없이 `Overview`, `Policies & Guidelines`, `Review Queue`, `Execution Status`, `Evidence`의 exact five horizontal tabs를 사용합니다.
+- page shell은 left sidebar 없이 `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거`의 exact five horizontal tabs를 사용합니다. 내부 route key는 안정된 영문 기술 식별자를 유지할 수 있습니다.
 - 모든 tab은 같은 snapshot/read fence를 공유하고 polling/manual refresh 뒤 active tab, filter, search와 expanded item을 유지합니다.
 - UI asset은 same-origin local file로 제공하며 external CDN, remote font와 third-party runtime fetch를 사용하지 않습니다.
 
@@ -214,7 +217,7 @@ View runtime은 `docs/design/human-control-view-plane.md`의 source/snapshot/fre
 
 ## Initializing Human-Readable Data
 
-mature repository의 첫 View는 silent empty dashboard가 아니어야 합니다. apply 직후 아직 source extraction이 없다면 generated catalog의 `ATTN-POLICY-EXTRACTION`과 `GAP-POLICY-EXTRACTION`, migration fence, repository identity와 execution not-configured state를 명시합니다. repository-local AI extraction이 끝난 뒤에는 다음 source-backed projection을 준비하며, 이 단계 전에는 `MIGRATION_VERIFIED`를 선언하지 않습니다.
+mature repository의 첫 View는 silent empty dashboard가 아니어야 합니다. apply 직후 아직 source extraction이 없다면 generated catalog의 `ATTN-POLICY-EXTRACTION`과 `GAP-POLICY-EXTRACTION`, migration fence, repository identity와 execution not-configured state를 한국어 human summary와 함께 명시합니다. repository-local AI extraction이 끝난 뒤에는 다음 source-backed projection을 준비하며, 이 단계 전에는 `MIGRATION_VERIFIED`를 선언하지 않습니다.
 
 첫 source-linked 변경 뒤 governance catalog는 project-owned state입니다. upgrade planner는 이를 release template으로 덮어쓰지 않고 `KEEP_PROJECT_OWNED`로 보존하며, installation lock의 ownership/baseline을 갱신합니다. 보존은 검증 면제가 아니므로 catalog schema, source freshness, secret exclusion과 human decision/evidence barrier는 계속 fail closed로 검사합니다.
 
@@ -227,13 +230,13 @@ mature repository의 첫 View는 silent empty dashboard가 아니어야 합니�
 7. conflict, missing decision, known risk attention
 8. project fast/full/continuous quality status
 
-이 data는 첫 snapshot의 exact read fence에서 함께 publish하고 다음 tab으로 배치합니다.
+이 data는 첫 snapshot의 exact read fence에서 함께 publish하고 다음 tab으로 배치합니다. 사람이 읽는 project description과 derived wording은 `ko-KR`이 기본이며, 긴 stable ID는 각 cell/card 안에서 줄바꿈되는 보조 metadata로 표시해 제목과 겹치지 않게 합니다.
 
-- `Overview`: repository direction, summary count, current attention과 freshness
-- `Policies & Guidelines`: policy/guideline candidate, authority, approval, enforcement와 provenance
-- `Review Queue`: conflict, missing decision, stale approval와 사람이 판단할 action
-- `Execution Status`: task/checkpoint/loop/quality 상태 또는 명시적인 not-configured gap
-- `Evidence`: source, validator, decision/approval와 handoff receipt
+- `개요`: repository direction, summary count, current attention과 freshness
+- `정책·지침`: policy/guideline candidate, authority, approval, enforcement와 provenance
+- `검토 대기`: conflict, missing decision, stale approval와 사람이 판단할 action
+- `실행 상태`: task/checkpoint/loop/quality 상태 또는 명시적인 not-configured gap
+- `근거`: source, validator, decision/approval와 handoff receipt
 
 Markdown 전체를 rendering하지 않습니다. source content는 allowlisted structured field로 요약하고 exact path/line/hash를 drill-down provenance로 제공합니다.
 
@@ -297,6 +300,8 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 | VIEW-04 | single-repository shell | static repo identity, selector/sidebar 0, exact five top tabs |
 | VIEW-05 | refresh while reading | same snapshot fence and tab/filter/search/expansion continuity |
 | VIEW-06 | asset isolation | external CDN/font/script request 0 |
+| VIEW-07 | Korean-first initialization | chrome, project description와 synthesized governance wording은 `ko-KR`; technical/source value는 원형 |
+| VIEW-08 | long technical metadata | 긴 ID/path/hash가 자기 container 안에서 줄바꿈되고 adjacent content와 겹치지 않음 |
 | QUAL-01 | runtime unavailable | blocked/not_run, never pass |
 | SKILL-01 | initialize or migrate | canonical project skill과 thin Claude adapter 설치 |
 | SKILL-02 | plan/apply inventory | user-global document-harness skill/config write 0 |
@@ -319,6 +324,7 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 - public v1 initializer는 Node-based repository-local executable이며 release manifest가 CLI/library/schema, reusable authoring core와 reference View byte set을 pin합니다.
 - reference View distribution은 public repo에 versioned `harness-managed` surface로 vendor하며 project identity/config만 generator가 만듭니다.
 - governance initialization은 nested migration fence와 explicit extraction gap을 만들고 policy wording은 source-backed extraction에서만 추가합니다.
+- human-facing initialization/migration은 `ko-KR`이 기본이며 localization은 stable ID, authority, approval와 evidence fence를 바꾸지 않습니다.
 
 ## Open Questions
 
@@ -342,3 +348,4 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 - 2026-07-16: adopted repository별 static identity, exact five top tabs, single snapshot fence와 refresh-stable local asset profile을 추가했다.
 - 2026-07-16: Node executable initializer v1, seven lifecycle statuses, lifecycle schemas/release manifest, nested governance migration fence, fail-closed verification/rollback과 versioned reference View distribution을 current contract로 고정했다.
 - 2026-07-17: fresh full-profile target가 public 개발 tree 없이 문서를 실제 발급·검증·종료할 수 있도록 reusable authoring core와 end-to-end acceptance를 release closure에 포함했다.
+- 2026-07-17: `ko-KR` initialization/migration, technical provenance 원형 보존과 long-ID containment acceptance를 추가했다.

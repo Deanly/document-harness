@@ -17,6 +17,13 @@ const evidenceOrder = new Map([
 
 export const LAST_KNOWN_UNVERIFIED = "last_known_unverified";
 
+const migrationFenceLabels = new Map([
+  ["valid", "유효"],
+  ["invalid", "무효"],
+  ["degraded", "저하됨"],
+  ["awaiting_human_review", "사용자 검토 대기"]
+]);
+
 function normalized(value) {
   return String(value ?? "").trim().toLocaleLowerCase("ko");
 }
@@ -127,14 +134,14 @@ export function freshnessPresentation(snapshot = {}) {
     return {
       state: LAST_KNOWN_UNVERIFIED,
       tone: "degraded",
-      message: `Latest source could not be verified · showing ${count ?? "unknown"} last-known governance records as unverified.`
+      message: `최신 원본을 검증하지 못했습니다 · 마지막으로 확인된 거버넌스 기록 ${count ?? "확인 불가"}건을 미검증 상태로 표시합니다.`
     };
   }
   if (freshness === "fresh") {
     return {
       state: "fresh",
       tone: "fresh",
-      message: `Source evidence is current · ${snapshot.snapshot?.sourceFence?.evidenceCurrent ?? "unknown"} references match their captured hashes.`
+      message: `소스 근거가 최신입니다 · 참조 ${snapshot.snapshot?.sourceFence?.evidenceCurrent ?? "확인 불가"}건이 캡처된 해시와 일치합니다.`
     };
   }
   const migration = snapshot.migrationFence ?? {};
@@ -142,7 +149,7 @@ export function freshnessPresentation(snapshot = {}) {
   return {
     state: freshness,
     tone: freshness,
-    message: `Review required · migration fence ${migration.state ?? "unknown"} · changed ${fence.evidenceChanged ?? "unknown"} · missing ${fence.evidenceMissing ?? "unknown"}`
+    message: `검토가 필요합니다 · 초기 이관 경계 ${migrationFenceLabels.get(migration.state) ?? migration.state ?? "확인 불가"} · 변경 ${fence.evidenceChanged ?? "확인 불가"}건 · 누락 ${fence.evidenceMissing ?? "확인 불가"}건`
   };
 }
 

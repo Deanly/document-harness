@@ -46,7 +46,7 @@ test("view fixture: execution checkpoint is explicitly not configured", async (t
     configured: false,
     status: "not_configured",
     sourceRoot: "docs/checkpoints",
-    message: "No canonical docs/checkpoints/*.md execution checkpoint is available."
+    message: "정규 docs/checkpoints/*.md 실행 체크포인트가 없습니다."
   });
 });
 

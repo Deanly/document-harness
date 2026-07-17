@@ -7,7 +7,7 @@
       "workingTreeState": "{{WORKING_TREE_STATE}}"
     },
     "capturedAt": "{{CAPTURED_AT}}",
-    "approvalRule": "AI-extracted candidates remain unapproved until a source-fenced human decision receipt exists."
+    "approvalRule": "AI가 추출한 후보는 소스 해시로 고정된 사람의 결정 영수증이 존재하기 전까지 승인되지 않은 상태로 유지합니다."
   },
   "direction": [],
   "policies": [],
@@ -16,8 +16,8 @@
   "gaps": [
     {
       "id": "GAP-POLICY-EXTRACTION",
-      "summary": "No source-linked policy candidate has been reviewed.",
-      "reason": "The initializer does not invent or self-approve repository policy."
+      "summary": "소스와 연결된 정책 후보를 아직 사람이 검토하지 않았습니다.",
+      "reason": "초기화 도구는 저장소 정책을 임의로 만들거나 스스로 승인하지 않습니다."
     }
   ]
 }

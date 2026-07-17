@@ -426,7 +426,7 @@ async function main() {
           {
             id: "ATTN-PROJECTION-DEGRADED",
             severity: "warning",
-            title: "View projection could not read the latest source",
+            title: "화면 투영이 최신 소스를 읽지 못했습니다",
             humanSummary: safeMessage,
             relatedRefs: []
           },

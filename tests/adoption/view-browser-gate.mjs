@@ -15,6 +15,9 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..", "..");
 const SERVER = path.join(REPO_ROOT, "runtime", "document-harness-view", "server.mjs");
 const BASELINE = path.join(SCRIPT_DIR, "baselines", "reference-view-policy-1440.png");
+const LONG_POLICY_ID = "POL-VEHICLE-CONTROL-BOUNDARY";
+const LONG_GUIDELINE_ID = "GUIDE-REPRODUCIBLE-HARDWARE-EVIDENCE";
+const LONG_ATTENTION_ID = "ATTN-EXECUTION-LOOP-OPT-IN";
 const ARTIFACT_DIR = process.env.DOCUMENT_HARNESS_BROWSER_ARTIFACT_DIR
   ? path.resolve(process.env.DOCUMENT_HARNESS_BROWSER_ARTIFACT_DIR)
   : path.join(os.tmpdir(), "document-harness-browser-gate");
@@ -88,24 +91,35 @@ async function stopChild(child) {
 }
 
 async function buildBrowserFixture() {
-  const fixture = await createFixture({ projectId: "browser-fixture", projectName: "Browser Fixture" });
+  const fixture = await createFixture({ projectId: "browser-fixture", projectName: "브라우저 검증 저장소" });
+  fixture.config.project.description = "한글 화면과 긴 기술 식별자 배치를 검증하는 저장소입니다.";
+  await writeFile(
+    path.join(fixture.root, "config", "view.json"),
+    `${JSON.stringify(fixture.config, null, 2)}\n`,
+    "utf8"
+  );
   const sourceRef = fixture.catalog.policies[0].sourceRefs[0];
   fixture.catalog.policies = Array.from({ length: 12 }, (_, index) => ({
     ...fixture.catalog.policies[0],
-    id: `POL-${String(index + 1).padStart(2, "0")}`,
-    title: `Source authority policy ${index + 1}`,
-    humanSummary: `Policy ${index + 1} keeps repository evidence explicit and reviewable.`,
+    id: index === 0 ? LONG_POLICY_ID : `POL-${String(index + 1).padStart(2, "0")}`,
+    title: `차량 정책 후보 ${index + 1}`,
+    humanSummary: `정책 후보 ${index + 1}은 저장소 근거와 사람의 검토 경계를 명확하게 유지합니다.`,
     sourceRefs: [{ ...sourceRef }]
   }));
   fixture.catalog.guidelines = [{
     ...fixture.catalog.guidelines[0],
+    id: LONG_GUIDELINE_ID,
+    title: "재현 가능한 하드웨어 근거를 남깁니다",
+    humanSummary: "차량 제어 경계를 바꾸기 전에 재현 가능한 점검 결과와 근거를 기록합니다.",
     policyRefs: fixture.catalog.policies.map((item) => item.id),
     sourceRefs: [{ ...sourceRef }]
   }];
+  fixture.catalog.direction = ["차량 제어 경계를 지키고, 모든 변경을 사람이 검토할 수 있는 근거와 연결합니다."];
+  fixture.catalog.migration.approvalRule = "AI가 추출한 정책 후보는 사람의 결정 영수증이 있기 전까지 승인되지 않습니다.";
   fixture.catalog.attention = [
-    { id: "ATTN-CRITICAL", severity: "critical", title: "Critical source review", humanSummary: "Review the highest-risk candidate.", relatedRefs: ["POL-01"] },
-    { id: "ATTN-DECISION", severity: "decision", title: "Human decision required", humanSummary: "Choose whether to promote the candidate.", relatedRefs: ["POL-02"] },
-    { id: "ATTN-WARNING", severity: "warning", title: "Evidence warning", humanSummary: "Confirm the captured evidence scope.", relatedRefs: ["POL-03"] }
+    { id: LONG_ATTENTION_ID, severity: "critical", title: "실행 루프 적용 여부를 결정해 주세요", humanSummary: "위험도가 높은 차량 제어 작업에 실행 루프를 적용할 범위를 사람이 결정해야 합니다.", relatedRefs: [LONG_POLICY_ID] },
+    { id: "ATTN-HUMAN-DECISION-REQUIRED", severity: "decision", title: "정책 승인이 필요합니다", humanSummary: "후보를 유효 정책으로 승격할지 사람이 결정해야 합니다.", relatedRefs: ["POL-02"] },
+    { id: "ATTN-SOURCE-EVIDENCE-REVIEW", severity: "warning", title: "근거 범위를 확인해 주세요", humanSummary: "캡처된 근거가 변경 범위를 충분히 설명하는지 확인합니다.", relatedRefs: ["POL-03"] }
   ];
   await writeFile(
     path.join(fixture.root, "docs", "governance", "catalog.json"),
@@ -116,13 +130,17 @@ async function buildBrowserFixture() {
 }
 
 async function assertTabs(page) {
-  const expected = ["Overview", "Policies & Guidelines", "Review Queue", "Execution Status", "Evidence"];
+  const expected = ["개요", "정책·지침", "검토 대기", "실행 상태", "근거"];
   const tabs = page.getByRole("tab");
   assert.equal(await tabs.count(), expected.length);
   const labels = await tabs.allTextContents();
   assert.deepEqual(labels.map((value) => value.replace(/\s+\d+$/, "").trim()), expected);
   assert.equal(await page.locator("[class*='sidebar'], [id*='repository-selector'], [class*='repository-selector'], [id*='workspace-switcher']").count(), 0);
-  assert.match(await page.getByLabel("Current repository").innerText(), /browser-fixture/i);
+  assert.match(await page.getByLabel("현재 저장소").innerText(), /browser-fixture/i);
+  const visibleCopy = await page.locator("body").innerText();
+  assert.doesNotMatch(visibleCopy, /Overview|Policies & Guidelines|Review Queue|Execution Status|Refresh now|Source evidence is current|not observed/);
+  assert.match(visibleCopy, /읽기 전용/);
+  assert.match(visibleCopy, /소스 근거가 최신입니다/);
 
   const relations = await page.evaluate(() => [...document.querySelectorAll('[role="tab"]')].map((tab) => ({
     id: tab.id,
@@ -135,31 +153,31 @@ async function assertTabs(page) {
   assert.ok(relations.every((item) => item.panelExists));
   assert.ok(relations.every((item) => item.selected === "true" ? item.panelHidden === false : item.panelHidden === true));
 
-  await page.getByRole("tab", { name: /^Policies & Guidelines$/ }).press("Home");
+  await page.getByRole("tab", { name: /^정책·지침$/ }).press("Home");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-overview");
-  await page.getByRole("tab", { name: /^Overview$/ }).press("End");
+  await page.getByRole("tab", { name: /^개요$/ }).press("End");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-evidence");
-  await page.getByRole("tab", { name: /^Evidence$/ }).press("ArrowLeft");
+  await page.getByRole("tab", { name: /^근거$/ }).press("ArrowLeft");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-execution");
-  await page.getByRole("tab", { name: /^Execution Status$/ }).press("ArrowRight");
+  await page.getByRole("tab", { name: /^실행 상태$/ }).press("ArrowRight");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-evidence");
-  await page.getByRole("tab", { name: /^Overview$/ }).focus();
-  await page.getByRole("tab", { name: /^Overview$/ }).press("Enter");
-  assert.equal(await page.getByRole("tab", { name: /^Overview$/ }).getAttribute("aria-selected"), "true");
-  await page.getByRole("tab", { name: /^Policies & Guidelines$/ }).focus();
-  await page.getByRole("tab", { name: /^Policies & Guidelines$/ }).press("Space");
-  assert.equal(await page.getByRole("tab", { name: /^Policies & Guidelines$/ }).getAttribute("aria-selected"), "true");
+  await page.getByRole("tab", { name: /^개요$/ }).focus();
+  await page.getByRole("tab", { name: /^개요$/ }).press("Enter");
+  assert.equal(await page.getByRole("tab", { name: /^개요$/ }).getAttribute("aria-selected"), "true");
+  await page.getByRole("tab", { name: /^정책·지침$/ }).focus();
+  await page.getByRole("tab", { name: /^정책·지침$/ }).press("Space");
+  assert.equal(await page.getByRole("tab", { name: /^정책·지침$/ }).getAttribute("aria-selected"), "true");
 }
 
 async function assertStateContinuity(page, fixture) {
   await page.getByRole("button", { name: "다음 정책 페이지" }).click();
   assert.match(await page.locator("#policy-pagination").innerText(), /6–10/);
-  await page.locator("#policy-search").fill("policy 1");
+  await page.locator("#policy-search").fill("정책 후보 1");
   await page.locator("#policy-search").focus();
   const before = await page.locator("#policy-result-count").innerText();
   assert.match(before, /4개 결과/);
 
-  fixture.catalog.direction.push("Polling must not interrupt the current reader state.");
+  fixture.catalog.direction.push("자동 갱신은 사용자가 읽고 있는 화면 상태를 방해하지 않습니다.");
   await writeFile(
     path.join(fixture.root, "docs", "governance", "catalog.json"),
     `${JSON.stringify(fixture.catalog, null, 2)}\n`,
@@ -167,21 +185,23 @@ async function assertStateContinuity(page, fixture) {
   );
   await page.waitForFunction(() => document.querySelector("#live-state")?.textContent?.includes("자동"), null, { timeout: 5000 });
   await sleep(2400);
-  assert.equal(await page.locator("#policy-search").inputValue(), "policy 1");
+  assert.equal(await page.locator("#policy-search").inputValue(), "정책 후보 1");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "policy-search");
 
   await page.locator("#policy-search").fill("");
-  await page.getByRole("button", { name: "POL-01 상세 열기" }).click();
+  await page.getByRole("button", { name: `${LONG_POLICY_ID} 상세 열기` }).click();
   await page.locator("#refresh-button").click();
   await page.waitForTimeout(150);
-  assert.equal(await page.getByRole("tab", { name: /^Policies & Guidelines$/ }).getAttribute("aria-selected"), "true");
-  assert.equal(await page.getByRole("button", { name: "POL-01 상세 닫기" }).getAttribute("aria-expanded"), "true");
+  assert.equal(await page.getByRole("tab", { name: /^정책·지침$/ }).getAttribute("aria-selected"), "true");
+  assert.equal(await page.getByRole("button", { name: `${LONG_POLICY_ID} 상세 닫기` }).getAttribute("aria-expanded"), "true");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "refresh-button");
 }
 
 async function assertResponsive(page) {
-  for (const size of [{ width: 1440, height: 1024 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
+  for (const size of [{ width: 1440, height: 1024 }, { width: 949, height: 1021 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(size);
+    await page.getByRole("tab", { name: /^정책·지침$/ }).click();
+    await page.locator("#clear-policy-filters").click();
     const layout = await page.evaluate(() => ({
       innerWidth,
       documentWidth: document.documentElement.scrollWidth,
@@ -189,20 +209,103 @@ async function assertResponsive(page) {
       tabCount: document.querySelectorAll('[role="tab"]').length,
       visiblePanels: [...document.querySelectorAll('[role="tabpanel"]')].filter((panel) => !panel.hidden).length,
       tableClientWidth: document.querySelector(".table-scroll")?.clientWidth ?? 0,
-      tableScrollWidth: document.querySelector(".table-scroll")?.scrollWidth ?? 0
+      tableScrollWidth: document.querySelector(".table-scroll")?.scrollWidth ?? 0,
+      scrollHintVisible: getComputedStyle(document.querySelector(".table-scroll-hint")).display !== "none",
+      rawMigrationReasonVisible: /captured_head_current|missing_captured_base|invalid_captured_working_tree_state/.test(
+        document.querySelector("#panel-policies")?.innerText ?? ""
+      ),
+      chromeContained: [document.querySelector(".compact-metrics"), document.querySelector("#clear-policy-filters")]
+        .every((node) => {
+          const value = node?.getBoundingClientRect();
+          return value && value.left >= -1 && value.right <= innerWidth + 1;
+        })
     }));
     assert.equal(layout.bodyOverflow, false, `body overflow at ${size.width}px`);
     assert.equal(layout.tabCount, 5);
     assert.equal(layout.visiblePanels, 1);
+    assert.equal(layout.chromeContained, true, `policy summary or filter control clipped at ${size.width}px`);
+    assert.equal(layout.scrollHintVisible, size.width <= 1199, `table scroll hint visibility mismatch at ${size.width}px`);
+    assert.equal(layout.rawMigrationReasonVisible, false, `raw migration reason leaked at ${size.width}px`);
     if (size.width === 390) assert.ok(layout.tableScrollWidth > layout.tableClientWidth, "wide table must scroll inside its panel");
+
+    const policyGeometry = await page.evaluate(({ policyId, guidelineId }) => {
+      const rect = (node) => {
+        const value = node.getBoundingClientRect();
+        return { left: value.left, right: value.right, top: value.top, bottom: value.bottom };
+      };
+      const contained = (child, parent, tolerance = 1) => (
+        child.left >= parent.left - tolerance
+        && child.right <= parent.right + tolerance
+        && child.top >= parent.top - tolerance
+        && child.bottom <= parent.bottom + tolerance
+      );
+      const policyNode = [...document.querySelectorAll("#policy-table-body .item-id")]
+        .find((node) => node.textContent.trim() === policyId);
+      if (!policyNode) throw new Error(`missing policy fixture ${policyId}`);
+      const row = policyNode.closest("tr.data-row");
+      const policyCell = policyNode.closest("td");
+      const titleCell = row.children[2];
+      const guidelineNode = [...row.querySelectorAll(".linked-refs code")]
+        .find((node) => node.textContent.trim() === guidelineId);
+      if (!guidelineNode) throw new Error(`missing guideline fixture ${guidelineId}`);
+      const guidelineContainer = guidelineNode.closest(".linked-refs");
+      const guidelineCell = guidelineNode.closest("td");
+      const riskCell = row.children[4];
+      const policy = rect(policyNode);
+      const policyOwner = rect(policyCell);
+      const titleOwner = rect(titleCell);
+      const guideline = rect(guidelineNode);
+      const guidelineOwner = rect(guidelineContainer);
+      const guidelineCellRect = rect(guidelineCell);
+      const riskOwner = rect(riskCell);
+      return {
+        policyContained: contained(policy, policyOwner),
+        policyBeforeTitle: policy.right <= titleOwner.left + 1,
+        guidelineContained: contained(guideline, guidelineOwner) && contained(guideline, guidelineCellRect),
+        guidelineBeforeRisk: guideline.right <= riskOwner.left + 1
+      };
+    }, { policyId: LONG_POLICY_ID, guidelineId: LONG_GUIDELINE_ID });
+    assert.equal(policyGeometry.policyContained, true, `policy ID escaped its cell at ${size.width}px`);
+    assert.equal(policyGeometry.policyBeforeTitle, true, `policy ID overlapped the title cell at ${size.width}px`);
+    assert.equal(policyGeometry.guidelineContained, true, `guideline ID escaped its container at ${size.width}px`);
+    assert.equal(policyGeometry.guidelineBeforeRisk, true, `guideline ID overlapped the risk cell at ${size.width}px`);
+
+    await page.getByRole("tab", { name: /^검토 대기/ }).click();
+    const reviewGeometry = await page.evaluate(({ attentionId, relatedRef }) => {
+      const rect = (node) => {
+        const value = node.getBoundingClientRect();
+        return { left: value.left, right: value.right, top: value.top, bottom: value.bottom };
+      };
+      const contained = (child, parent, tolerance = 1) => (
+        child.left >= parent.left - tolerance
+        && child.right <= parent.right + tolerance
+        && child.top >= parent.top - tolerance
+        && child.bottom <= parent.bottom + tolerance
+      );
+      const idNode = [...document.querySelectorAll("#review-list .item-id")]
+        .find((node) => node.textContent.trim() === attentionId);
+      if (!idNode) throw new Error(`missing attention fixture ${attentionId}`);
+      const card = idNode.closest(".review-item");
+      const idOwner = idNode.parentElement;
+      const relatedNode = [...card.querySelectorAll(".linked-refs code")]
+        .find((node) => node.textContent.trim() === relatedRef);
+      if (!relatedNode) throw new Error(`missing related-ref fixture ${relatedRef}`);
+      const relatedOwner = relatedNode.closest(".linked-refs");
+      return {
+        reviewIdContained: contained(rect(idNode), rect(idOwner)) && contained(rect(idNode), rect(card)),
+        relatedRefContained: contained(rect(relatedNode), rect(relatedOwner)) && contained(rect(relatedNode), rect(card))
+      };
+    }, { attentionId: LONG_ATTENTION_ID, relatedRef: LONG_POLICY_ID });
+    assert.equal(reviewGeometry.reviewIdContained, true, `review ID escaped its container at ${size.width}px`);
+    assert.equal(reviewGeometry.relatedRefContained, true, `review related ref escaped its container at ${size.width}px`);
   }
 }
 
 async function compareScreenshot(page, PNG, pixelmatch) {
   await page.setViewportSize({ width: 1440, height: 1024 });
-  await page.getByRole("tab", { name: /^Policies & Guidelines$/ }).click();
+  await page.getByRole("tab", { name: /^정책·지침$/ }).click();
   await page.locator("#clear-policy-filters").click();
-  const opener = page.getByRole("button", { name: "POL-01 상세 열기" });
+  const opener = page.getByRole("button", { name: `${LONG_POLICY_ID} 상세 열기` });
   if (await opener.count()) await opener.click();
   const actualPath = path.join(ARTIFACT_DIR, "reference-view-policy-1440.actual.png");
   await mkdir(ARTIFACT_DIR, { recursive: true });
@@ -288,7 +391,7 @@ async function main() {
       gateResult: "passed",
       gate: "reference-view-browser",
       tabs: 5,
-      viewports: [1440, 768, 390],
+      viewports: [1440, 949, 768, 390],
       consoleProblems: 0,
       externalRequests: 0,
       visual

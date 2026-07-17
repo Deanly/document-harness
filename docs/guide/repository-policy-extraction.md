@@ -4,7 +4,7 @@ title: repository-policy-extraction
 status: current
 owner:
 created: 2026-07-15
-updated: 2026-07-16
+updated: 2026-07-17
 related_design:
   - docs/design/harness-adoption-plane.md
   - docs/design/policy-to-evidence-governance.md
@@ -128,7 +128,9 @@ For each candidate write:
 - current enforcement: enforced, partially enforced, advisory, not implemented, unknown
 - risk/conflict: mismatch or missing decision
 
-Do not hide technical gaps behind softened wording.
+기본 표시 언어는 `ko-KR`입니다. `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap 문구, `approvalRule`, source-reference `note`와 자유 서술 `evidenceKind` label은 비전문가가 바로 판단할 수 있는 한국어로 합성합니다. 영어 source를 요약해도 technical ID, enum, repository-relative path, revision/hash, command, exact source heading과 quote는 원형을 보존합니다. exact source와 한국어 설명을 같은 값인 것처럼 섞지 않습니다.
+
+Do not hide technical gaps behind softened wording. 번역은 표현만 바꾸는 derived projection이며 source 의미, authority, approval, enforcement 또는 evidence를 바꾸는 수단이 아닙니다.
 
 ### 5. Corroborate Enforcement
 
@@ -165,7 +167,7 @@ Use `docs/schemas/governance-catalog.schema.json`. The top-level migration fence
       "workingTreeState": "dirty"
     },
     "capturedAt": "2026-07-16T00:00:00Z",
-    "approvalRule": "AI-extracted candidates remain unapproved until a source-fenced human decision receipt exists."
+    "approvalRule": "AI가 추출한 후보는 출처에 연결된 사람의 결정 영수증이 존재하기 전까지 승인되지 않은 상태로 유지됩니다."
   },
   "direction": [],
   "policies": [],
@@ -181,11 +183,11 @@ Minimum candidate shape:
 {
   "id": "POL-001",
   "kind": "policy",
-  "title": "Short decision phrase",
-  "humanSummary": "What a non-specialist should understand.",
-  "why": "Protected outcome",
-  "scope": "Where it applies",
-  "risk": "Known gap or conflict",
+  "title": "짧은 결정 문구",
+  "humanSummary": "비전문가가 이해해야 할 핵심 설명입니다.",
+  "why": "보호하려는 결과",
+  "scope": "적용되는 범위",
+  "risk": "알려진 공백 또는 충돌",
   "authorityClass": "current_design",
   "authorityState": "proposed",
   "approvalState": "unreviewed",
@@ -217,6 +219,8 @@ Minimum candidate shape:
 - current HEAD가 나중에 이동했다는 사실은 별도 current-repository observation입니다. unchanged source hash를 stale로 만들지 않습니다.
 - current source SHA-256이 captured value와 다르면 관련 candidate review/approval은 stale입니다.
 - missing/escaped source나 invalid/contradictory migration fence는 degraded attention이며 fresh로 표시하지 않습니다.
+
+기존 catalog의 영어 human-facing field를 한국어로 바꿀 때는 stable candidate/attention/gap ID, kind/enum, source ref와 hash, authority/approval/enforcement, effective ref와 decision receipt를 그대로 유지합니다. 번역 전후 의미가 다르거나 정책 범위를 넓히는 경우에는 단순 localization으로 처리하지 않고 새 candidate 또는 human review attention으로 분리합니다.
 
 ### 9. Human Review And Promotion
 
@@ -273,19 +277,23 @@ The first human screen should show:
 이 항목은 repository별 독립 View의 `single-repository-top-tabs-v1` profile에 다음처럼 배치합니다.
 
 - top bar: static repository identity, revision/dirty, snapshot/freshness, local-only/read-only
-- `Overview`: product direction, count summary, critical gap와 latest verification
-- `Policies & Guidelines`: candidate/effective/approved count, policy row, related guideline, authority/approval/enforcement와 exact provenance
-- `Review Queue`: conflict, missing decision, stale review/approval와 exact requested action
-- `Execution Status`: current task/checkpoint/quality receipt 또는 source가 없다는 explicit gap
-- `Evidence`: source hash, config/code observation, test/validator와 decision/approval receipt
+- `개요`: product direction, count summary, critical gap와 latest verification
+- `정책·지침`: candidate/effective/approved count, policy row, related guideline, authority/approval/enforcement와 exact provenance
+- `검토 대기`: conflict, missing decision, stale review/approval와 exact requested action
+- `실행 상태`: current task/checkpoint/quality receipt 또는 source가 없다는 explicit gap
+- `근거`: source hash, config/code observation, test/validator와 decision/approval receipt
 
 repository selector와 left sidebar는 제공하지 않습니다. 모든 tab은 같은 snapshot/read fence를 사용하며 polling/manual refresh가 active tab, filter, search와 expanded policy를 초기화하지 않습니다.
+
+policy/guideline/attention ID는 제목보다 낮은 위계의 보조 metadata로 표시합니다. 긴 ID, path와 hash는 자신의 cell 또는 detail 안에서 줄바꿈해 인접 field와 겹치지 않아야 하며 원문 복사 가능성은 유지합니다.
 
 The View must not render arbitrary Markdown HTML, load external CDN/font/script assets or offer mutation endpoints in v1.
 
 ## Quality Checks
 
 - every candidate has exact provenance
+- synthesized human-facing field와 project description은 기본 `ko-KR`이고 exact technical/source value는 원형이다
+- localization은 stable ID, authority, approval, enforcement와 evidence/source fence를 변경하지 않는다
 - every migration has nested `capturedRepository` and a resolvable base commit
 - dirty source is not presented as committed clean evidence
 - confidence, authority, approval and enforcement are independent
@@ -299,6 +307,7 @@ The View must not render arbitrary Markdown HTML, load external CDN/font/script 
 - first projection identifies the repository statically and never invites cross-repository selection
 - policy count, review queue, execution gap and evidence use one snapshot/read fence
 - periodic update preserves the human's active tab, filters, search and expanded policy
+- long ID/path/hash stays contained inside its own cell or detail and never overlaps adjacent content
 
 ## Skill Packaging
 
@@ -318,3 +327,4 @@ Do not install this workflow as a user-global skill. When it is first added duri
 - 2026-07-16: policy extraction을 repository-local canonical skill과 thin Claude adapter로 route하고 user-global install을 금지했다.
 - 2026-07-16: extracted governance를 static repository identity와 exact five top tabs에 배치하고 cross-tab fence와 reading-state continuity를 고정했다.
 - 2026-07-16: flat candidate example을 executable governance-catalog schema로 교체하고 nested migration fence, observation-only code/config, secret exclusion과 source-hash stale rule을 명시했다.
+- 2026-07-17: `ko-KR` human wording, technical provenance 원형 보존, presentation-only localization과 긴 ID containment 규칙을 추가했다.

@@ -27,6 +27,7 @@ require_contains() {
 }
 
 ADOPT="${DOCS_DIR}/ADOPT.md"
+ADOPT_TEMPLATE="${DOCS_DIR}/_templates/adoption/adopt.md"
 DESIGN="${DOCS_DIR}/design/harness-adoption-plane.md"
 GUIDE="${DOCS_DIR}/guide/repository-policy-extraction.md"
 HUMAN_VIEW_DESIGN="${DOCS_DIR}/design/human-control-view-plane.md"
@@ -50,7 +51,7 @@ CODEX_SKILL_METADATA="${REPO_ROOT}/.agents/skills/operate-document-harness/agent
 CLAUDE_SKILL="${REPO_ROOT}/.claude/skills/operate-document-harness/SKILL.md"
 
 for file in \
-  "$ADOPT" "$DESIGN" "$GUIDE" "$HUMAN_VIEW_DESIGN" "$HUMAN_VIEW_GUIDE" \
+  "$ADOPT" "$ADOPT_TEMPLATE" "$DESIGN" "$GUIDE" "$HUMAN_VIEW_DESIGN" "$HUMAN_VIEW_GUIDE" \
   "$PROFILE" "$PLAN_TEMPLATE" "$CONTROL_PLANE_TEMPLATE" "$EXECUTION_CHECKPOINT_TEMPLATE" \
   "$EXECUTION_POLICY" "$CATALOG_TEMPLATE" "$VIEW_TEMPLATE" "$RELEASE" \
   "$ADOPT_LIB" "$ADOPT_CLI_LIB" "$ADOPT_CLI" "$EXECUTION_VALIDATOR" \
@@ -80,6 +81,10 @@ for value in \
   "Non-Negotiable Rules" "Project Skill Bootstrap" "Start Gate" \
   "requestedProfiles" "requiredProfiles" "requiredInstalledPaths"; do
   require_contains "$ADOPT" "$value"
+done
+
+for value in "Korean-First Human Projection" "ko-KR" "presentation-only migration" "긴 ID"; do
+  require_contains "$ADOPT_TEMPLATE" "$value"
 done
 
 for command in \
@@ -134,7 +139,7 @@ for value in \
   require_contains "$HUMAN_VIEW_GUIDE" "$value"
 done
 
-for value in "Overview" "Policies & Guidelines" "Review Queue" "Execution Status" "Evidence"; do
+for value in "개요" "정책·지침" "검토 대기" "실행 상태" "근거"; do
   require_contains "$HUMAN_VIEW_DESIGN" "$value"
   require_contains "$HUMAN_VIEW_GUIDE" "$value"
 done
@@ -287,7 +292,7 @@ for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint
 
 const release = readJson(releaseFile);
 assert.equal(release.releaseId, "document-harness-public-v1");
-assert.equal(release.version, "1.0.0");
+assert.equal(release.version, "1.1.0");
 assert.deepEqual(release.profileDependencies, {
   core: [],
   governance: ["core"],

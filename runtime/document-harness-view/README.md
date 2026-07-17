@@ -2,7 +2,7 @@
 
 This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. It is copied as a unit; an adopter does not regenerate its design.
 
-Reference View distribution version: `1.0.0`. The public release manifest pins the byte hashes for this complete tree.
+Reference View distribution version: `1.1.0`. The public release manifest pins the byte hashes for this complete tree.
 
 ## Installed surfaces
 
@@ -38,12 +38,12 @@ Runtime-local state is written only below `.document-harness/runtime/view/` by d
 
 Only these values vary by repository:
 
-- static project identity and description
+- static project identity and Korean (`ko-KR`) human-facing description
 - repository-relative governance catalog and its source refs
 - allowlisted credential-free loopback HTTP probes
 - declared fast/full/continuous quality commands
 
-The execution checkpoint root (`docs/checkpoints/`), runtime state/probe paths, polling/reconciliation intervals, loopback bind, and OS-assigned port policy are versioned distribution constants. The projector derives candidates only from loop-enabled `docs/tasks/T*.md` `checkpoint_ref` values, requires task ID/revision/lifecycle/loop mirrors, linked-task source hash/revision, budget semantics, and checkpoint execution barriers to agree, and ignores orphan checkpoint files. A `succeeded` checkpoint additionally requires each evidence and receipt ref to resolve to a safe non-empty repository regular file. Each receipt must carry canonical identity/task/checkpoint/actor/time/scope/statement fields, bind the linked-task source revision/hash, and link the checkpoint evidence; all task/checkpoint/support bytes are rechecked before publication. It rejects symlinks or malformed frontmatter. Selection prioritizes active/blocked non-succeeded work, then active closeout, draft work, and historical terminal tasks; each group is ordered by `recorded_at`, `attempt_seq`, `checkpoint_seq` descending and path ascending. A missing checkpoint is shown as `not configured`; a project cannot redirect these internal paths through config.
+The execution checkpoint root (`docs/checkpoints/`), runtime state/probe paths, polling/reconciliation intervals, loopback bind, and OS-assigned port policy are versioned distribution constants. The projector derives candidates only from loop-enabled `docs/tasks/T*.md` `checkpoint_ref` values, requires task ID/revision/lifecycle/loop mirrors, linked-task source hash/revision, budget semantics, and checkpoint execution barriers to agree, and ignores orphan checkpoint files. A `succeeded` checkpoint additionally requires each evidence and receipt ref to resolve to a safe non-empty repository regular file. Each receipt must carry canonical identity/task/checkpoint/actor/time/scope/statement fields, bind the linked-task source revision/hash, and link the checkpoint evidence; all task/checkpoint/support bytes are rechecked before publication. It rejects symlinks or malformed frontmatter. Selection prioritizes active/blocked non-succeeded work, then active closeout, draft work, and historical terminal tasks; each group is ordered by `recorded_at`, `attempt_seq`, `checkpoint_seq` descending and path ascending. A missing checkpoint is shown to the user as `구성되지 않음`; a project cannot redirect these internal paths through config.
 
 An item is projected as `approved` or `effective` only when every source ref has a complete repository revision/hash/line fence, all current bytes still match, and safe in-repository regular files provide both the effective ref and a matching human decision receipt. The receipt must bind the candidate ID, human actor, decision time, repository revision, every source hash, the exact effective ref, and its `effectiveSha256`; the current effective artifact bytes must still match that digest. Missing, private, symlinked, stale, or mismatched evidence fails closed.
 
@@ -71,12 +71,15 @@ The governance catalog records the historical capture independently from current
 ## Presentation and capability contract
 
 - one independent server and static repository identity
-- exact horizontal tabs: `Overview`, `Policies & Guidelines`, `Review Queue`, `Execution Status`, `Evidence`
+- exact horizontal tabs: `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거` (internal route/hash keys may remain stable English identifiers)
+- Korean (`ko-KR`) UI chrome and synthesized project/governance wording by default; technical IDs, enum values, paths, hashes, commands, exact source headings, and exact quotes remain unchanged
+- translation is presentation-only and never changes meaning, authority, approval, enforcement, evidence freshness, source refs/hashes, effective refs, or decision receipts
+- IDs and source refs are secondary metadata; long unbroken values wrap inside their own cell/card and never overlap adjacent titles or status content
 - no repository selector, workspace switcher, or persistent left sidebar
 - same immutable snapshot and read fence across all tabs
 - governance catalog and source hashes are rechecked before snapshot publication; torn reads retry and then fail degraded
 - degraded fallback keeps prior records only as `lastKnown`, marks governance/evidence/execution unverified, and never carries green approval counts forward as current truth
 - tab/search/filter/pagination/expanded-row state survives polling and manual refresh
-- missing checkpoint/action/budget inputs display `not configured`; progress is never inferred
+- missing checkpoint/action/budget inputs display `구성되지 않음`; progress is never inferred
 - local same-origin assets only; no CDN, remote font, external script, or image
 - `GET`, `HEAD`, and `OPTIONS` only; mutation, execution, and approval are false

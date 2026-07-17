@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.0.0");
+  assert.equal(result.snapshot.runtimeVersion, "1.1.0");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -36,6 +36,14 @@ test("an unresolvable captured base degrades the migration fence and generates a
   assert.equal(result.snapshot.snapshot.freshness, "degraded");
   assert.equal(result.snapshot.snapshot.sourceFence.sourceEvidenceState, "fresh");
   assert.ok(result.snapshot.attention.some((item) => item.id === "ATTN-MIGRATION-FENCE"));
+  assert.match(
+    result.snapshot.attention.find((item) => item.id === "ATTN-MIGRATION-FENCE").humanSummary,
+    /캡처한 초기 이관 기준을 확인할 수 없음/
+  );
+  assert.doesNotMatch(
+    result.snapshot.attention.find((item) => item.id === "ATTN-MIGRATION-FENCE").humanSummary,
+    /unresolvable_captured_base/
+  );
 });
 
 test("later HEAD movement does not stale unchanged source evidence", async (t) => {

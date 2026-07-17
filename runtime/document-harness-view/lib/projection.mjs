@@ -987,7 +987,7 @@ async function readExecutionCheckpoint(repoRoot, checkpointRoot) {
           configured: false,
           status: "not_configured",
           sourceRoot: checkpointRoot,
-          message: "No canonical docs/checkpoints/*.md execution checkpoint is available."
+          message: "정규 docs/checkpoints/*.md 실행 체크포인트가 없습니다."
         },
         inputs: []
       };
@@ -1077,18 +1077,24 @@ function createGeneratedAttention(register, policies, guidelines, migrationFence
     attention.unshift({
       id: "ATTN-GOVERNANCE-EMPTY",
       severity: "warning",
-      title: "No source-backed governance candidates are available",
-      humanSummary: "The View keeps this as an explicit extraction gap instead of inventing policy or guidance.",
+      title: "소스 근거가 있는 거버넌스 후보가 없습니다",
+      humanSummary: "이 화면은 정책이나 지침을 임의로 만들지 않고 명시적인 추출 공백으로 표시합니다.",
       relatedRefs: []
     });
   }
 
   if (migrationFence.state !== "valid") {
+    const migrationFenceReason = ({
+      unresolvable_captured_base: "캡처한 초기 이관 기준을 확인할 수 없음",
+      receipt_missing_or_invalid: "설치 영수증이 없거나 유효하지 않음",
+      current_head_advanced: "초기 이관 이후 현재 HEAD가 변경됨",
+      captured_head_current: "캡처한 HEAD가 현재와 일치함"
+    })[migrationFence.reason] ?? "초기 이관 경계를 확인할 수 없음";
     attention.unshift({
       id: "ATTN-MIGRATION-FENCE",
       severity: "warning",
-      title: "Captured migration revision cannot be verified",
-      humanSummary: `The migration fence is ${migrationFence.reason}. Review the installation receipt before relying on migration freshness.`,
+      title: "캡처된 초기 이관 리비전을 검증할 수 없습니다",
+      humanSummary: `초기 이관 경계 상태는 '${migrationFenceReason}'입니다. 초기 이관 최신성을 신뢰하기 전에 설치 영수증을 검토해야 합니다.`,
       relatedRefs: migrationFence.receiptRef ? [migrationFence.receiptRef] : []
     });
   }
@@ -1097,7 +1103,7 @@ function createGeneratedAttention(register, policies, guidelines, migrationFence
     attention.unshift({
       id: "ATTN-EXECUTION-SOURCE",
       severity: "warning",
-      title: "Execution checkpoint source is unavailable",
+      title: "실행 체크포인트 소스를 사용할 수 없습니다",
       humanSummary: execution.error,
       relatedRefs: execution.source ? [execution.source] : []
     });

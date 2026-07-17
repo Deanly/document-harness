@@ -3,7 +3,7 @@
   "project": {
     "id": "document-harness",
     "name": "Document Harness",
-    "description": "A repository-local, read-only projection of governance, execution, and evidence sources."
+    "description": "저장소의 정책, 실행 상태와 근거를 한곳에서 확인하는 읽기 전용 화면입니다."
   },
   "governanceCatalog": "docs/_indexes/governance-catalog.json",
   "bindHost": "127.0.0.1",

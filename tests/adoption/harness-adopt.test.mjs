@@ -787,7 +787,7 @@ test("view profile renders static repository identity and preserves modified con
   assert.deepEqual(config.project, {
     id: "target",
     name: "target",
-    description: "Repository-local, read-only document-harness control view for target.",
+    description: "target 저장소 전용 읽기 전용 document-harness 제어 화면입니다.",
   });
   const lock = JSON.parse(readFileSync(path.join(target, INSTALLATION_LOCK_PATH), "utf8"));
   assert.equal(lock.files.find(({ path: filePath }) => filePath === "runtime/document-harness-view/config.json").ownership, "generated");

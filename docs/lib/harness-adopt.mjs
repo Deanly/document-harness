@@ -465,7 +465,7 @@ function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
     config.project = {
       id: repositoryName,
       name: repositoryName,
-      description: `Repository-local, read-only document-harness control view for ${repositoryName}.`,
+      description: `${repositoryName} 저장소 전용 읽기 전용 document-harness 제어 화면입니다.`,
     };
     const bytes = Buffer.from(prettyJson(config));
     return { bytes, sha256: sha256(bytes) };
@@ -498,7 +498,7 @@ function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
         workingTreeState: context.workingTreeState,
       },
       capturedAt: context.capturedAt,
-      approvalRule: "AI-extracted candidates remain unapproved until a source-fenced human decision receipt exists.",
+      approvalRule: "AI가 추출한 후보는 소스 해시로 고정된 사람의 결정 영수증이 존재하기 전까지 승인되지 않은 상태로 유지합니다.",
     };
     catalog.direction = [];
     catalog.policies = [];
@@ -506,14 +506,14 @@ function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
     catalog.attention = [{
       id: "ATTN-POLICY-EXTRACTION",
       severity: "decision",
-      title: "Repository policy extraction requires human review",
-      humanSummary: "No policy is effective yet. Extract source-linked candidates and review them before promotion.",
+      title: "저장소 정책 추출 결과를 사람이 검토해야 합니다",
+      humanSummary: "아직 적용 중인 정책은 없습니다. 소스와 연결된 후보를 추출하고 승격 전에 사람이 검토해야 합니다.",
       relatedRefs: [],
     }];
     catalog.gaps = [{
       id: "GAP-POLICY-EXTRACTION",
-      summary: "No source-linked policy candidate has been reviewed.",
-      reason: "The initializer does not invent or self-approve repository policy.",
+      summary: "소스와 연결된 정책 후보를 아직 사람이 검토하지 않았습니다.",
+      reason: "초기화 도구는 저장소 정책을 임의로 만들거나 스스로 승인하지 않습니다.",
     }];
     const bytes = Buffer.from(prettyJson(catalog));
     return { bytes, sha256: sha256(bytes) };

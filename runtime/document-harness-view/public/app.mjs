@@ -11,7 +11,7 @@ import {
   reviewStats,
   runtimeSummary,
   sortAttention
-} from "/view-model.mjs?v=1";
+} from "/view-model.mjs?v=2";
 
 const tabNames = ["overview", "policies", "review", "execution", "evidence"];
 
@@ -46,6 +46,7 @@ const labels = {
   advisory: "지침 수준",
   not_implemented: "미구현",
   unknown: "확인 필요",
+  "not observed": "관찰되지 않음",
   unverified: "현재 미검증",
   last_known_unverified: "마지막 확인값 · 현재 미검증",
   repository_instruction: "저장소 지침",
@@ -60,11 +61,44 @@ const labels = {
   invalid: "경계 위반",
   fresh: "최신",
   degraded: "저하",
+  valid: "유효",
   clean: "변경 없음",
   dirty: "미커밋 변경",
-  critical: "Critical",
+  awaiting_human_review: "사용자 검토 대기",
+  read_only: "읽기 전용",
+  not_configured: "미설정",
+  UP: "정상",
+  DOWN: "실패",
+  DEGRADED: "저하",
+  NOT_CONFIGURED: "미설정",
+  observed: "관찰됨",
+  ready: "준비",
+  running: "실행 중",
+  awaiting_user: "사용자 대기",
+  awaiting_external: "외부 작업 대기",
+  needs_review: "검토 필요",
+  stopped: "중단됨",
+  succeeded: "성공",
+  draft: "초안",
+  active: "진행 중",
+  blocked: "막힘",
+  done: "완료",
+  closed: "종료",
+  cancelled: "취소",
+  agent: "AI 도구",
+  user: "사용자",
+  reviewer: "검토자",
+  external: "외부 담당",
+  current_head_advanced: "초기 이관 후 HEAD 변경",
+  captured_base_matches_head: "초기 이관 기준과 HEAD 일치",
+  captured_head_current: "초기 이관 기준과 현재 HEAD 일치",
+  missing_captured_base: "초기 이관 기준 누락",
+  invalid_captured_working_tree_state: "캡처한 작업 트리 상태가 유효하지 않음",
+  receipt_missing_or_invalid: "영수증 누락 또는 무효",
+  unresolvable_captured_base: "초기 이관 기준 확인 불가",
+  critical: "긴급",
   decision: "결정 필요",
-  warning: "Attention",
+  warning: "주의",
   info: "정보",
   none: "일반"
 };
@@ -123,6 +157,11 @@ function toneFor(value) {
 
 function statusLabel(value, tone = toneFor(value), text = labels[value] ?? value) {
   return element("span", { className: `status-label ${tone}`, text });
+}
+
+function localized(value, fallback = "확인 필요") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return labels[value] ?? String(value);
 }
 
 function severityLabel(severity) {
@@ -202,11 +241,11 @@ function governanceStatusLabel(item, field, suffix = "") {
 function runtimeMetricSet(snapshot) {
   const summary = runtimeSummary(snapshot.runtime);
   return [
-    ["Repository", labels[summary.repositoryStatus] ?? summary.repositoryStatus, summary.dirtyCount === null ? "change count unavailable" : `${number(summary.dirtyCount)} changes`],
-    ["Runtime probes", `${number(summary.healthyProbes)} / ${number(summary.probeCount)}`, summary.probeCount === 0 ? "not configured" : "healthy / configured"],
-    ["Probe failures", number(summary.failedProbes), summary.failedProbes === 0 ? "none observed" : "review required"],
-    ["Migration fence", snapshot.migrationFence?.state ?? "unknown", snapshot.migrationFence?.reason ?? "not observed"],
-    ["Source evidence", snapshot.snapshot.sourceFence?.sourceEvidenceState ?? "unknown", `${number(snapshot.snapshot.sourceFence?.evidenceCurrent)} current`]
+    ["저장소", localized(summary.repositoryStatus), summary.dirtyCount === null ? "변경 수 확인 불가" : `${number(summary.dirtyCount)}개 변경`],
+    ["실행 점검", `${number(summary.healthyProbes)} / ${number(summary.probeCount)}`, summary.probeCount === 0 ? "설정되지 않음" : "정상 / 전체"],
+    ["점검 실패", number(summary.failedProbes), summary.failedProbes === 0 ? "관찰된 실패 없음" : "검토 필요"],
+    ["초기 이관 경계", localized(snapshot.migrationFence?.state), localized(snapshot.migrationFence?.reason, "관찰되지 않음")],
+    ["소스 근거", localized(snapshot.snapshot.sourceFence?.sourceEvidenceState), `${number(snapshot.snapshot.sourceFence?.evidenceCurrent)}건 일치`]
   ];
 }
 
@@ -222,9 +261,9 @@ function renderRuntimeStrip(container, snapshot) {
 
 function renderChrome(snapshot) {
   $("#repository-name").textContent = snapshot.project.id;
-  $("#last-updated").textContent = `Updated ${formatTime(snapshot.snapshot.generatedAt, true)}`;
+  $("#last-updated").textContent = `업데이트 ${formatTime(snapshot.snapshot.generatedAt, true)}`;
   $("#review-tab-count").textContent = snapshot.summary.attentionCount;
-  $("#footer-fence").textContent = `Snapshot ${snapshot.snapshot.id} · migration ${snapshot.migrationFence?.state ?? "unknown"} · source ${snapshot.snapshot.sourceFence?.sourceEvidenceState ?? "unknown"}`;
+  $("#footer-fence").textContent = `스냅샷 ${snapshot.snapshot.id} · 초기 이관 ${localized(snapshot.migrationFence?.state)} · 소스 ${localized(snapshot.snapshot.sourceFence?.sourceEvidenceState)}`;
   renderFreshness(snapshot);
 }
 
@@ -244,16 +283,16 @@ function renderOverview(snapshot) {
   $("#overview-title").textContent = `${snapshot.project.name} 개요`;
   $("#project-description").textContent = snapshot.project.description;
   const migration = $("#migration-badge");
-  migration.textContent = snapshot.migration.status === "awaiting_human_review" ? "초기 이관 · 사용자 검토 대기" : snapshot.migration.status;
+  migration.textContent = snapshot.migration.status === "awaiting_human_review" ? "초기 이관 · 사용자 검토 대기" : localized(snapshot.migration.status);
   migration.className = "status-label warning";
 
   const unverified = snapshot.summary.state === "last_known_unverified";
   renderMetricSet($("#overview-summary"), [
     ["정책 후보", number(snapshot.summary.policyCount), "기존 소스에서 추출"],
     ["실행 지침", number(snapshot.summary.guidelineCount), "정책 구현 방법"],
-    [unverified ? "현재 확인된 승인" : "승인 완료", number(snapshot.summary.approvedCount), unverified ? `마지막 확인 ${number(snapshot.summary.lastKnown?.approvedCount)}` : "receipt 기준"],
+    [unverified ? "현재 확인된 승인" : "승인 완료", number(snapshot.summary.approvedCount), unverified ? `마지막 확인 ${number(snapshot.summary.lastKnown?.approvedCount)}` : "결정 영수증 기준"],
     [unverified ? "현재 확인된 검토 대기" : "검토 대기", number(snapshot.summary.reviewCount), unverified ? `마지막 확인 ${number(snapshot.summary.lastKnown?.reviewCount)}` : "정책·지침 후보"],
-    ...(unverified ? [["현재 미검증", number(snapshot.summary.unverifiedCount), "마지막 정상 snapshot에서 보존"]] : []),
+    ...(unverified ? [["현재 미검증", number(snapshot.summary.unverifiedCount), "마지막 정상 스냅샷에서 보존"]] : []),
     ["주의 항목", number(snapshot.summary.attentionCount), "위험·결정·공백"]
   ]);
 
@@ -284,7 +323,7 @@ function renderPolicyFilters(snapshot) {
   clear(filters);
   const definitions = [
     ["all", "전체"],
-    ["critical", "Critical"],
+    ["critical", "긴급"],
     ["attention", "검토 연결"],
     ["unreviewed", "승인 필요"],
     ["unverified", "현재 미검증"],
@@ -373,7 +412,7 @@ function policyDetail(policy, linkedGuides) {
       element("li", { text: "정책 문장과 적용 범위를 확인합니다." }),
       element("li", { text: "관련 지침 연결이 적절한지 검토합니다." }),
       element("li", { text: "근거 최신성과 구현 수준을 확인합니다." }),
-      element("li", { text: "승인·수정·보류 결정은 별도 receipt로 남깁니다." })
+      element("li", { text: "승인·수정·보류 결정은 별도 결정 영수증으로 남깁니다." })
     ])
   ]);
   return element("div", { className: "policy-detail" }, [statement, guides, evidence, review]);
@@ -515,9 +554,9 @@ function renderReviewFilters(snapshot) {
   const stats = reviewStats(snapshot.attention);
   const definitions = [
     ["all", "전체", stats.total],
-    ["critical", "Critical", stats.critical],
+    ["critical", "긴급", stats.critical],
     ["decision", "결정 필요", stats.decision],
-    ["warning", "Attention", stats.warning]
+    ["warning", "주의", stats.warning]
   ];
   for (const [value, label, count] of definitions) {
     const button = element("button", {
@@ -540,9 +579,9 @@ function renderReview(snapshot) {
   const stats = reviewStats(snapshot.attention);
   renderMetricSet($("#review-summary"), [
     ["전체", number(stats.total)],
-    ["Critical", number(stats.critical)],
+    ["긴급", number(stats.critical)],
     ["결정 필요", number(stats.decision)],
-    ["Attention", number(stats.warning)],
+    ["주의", number(stats.warning)],
     ["미검토 후보", number(snapshot.summary.reviewCount)]
   ], "compact-metric");
   renderReviewFilters(snapshot);
@@ -564,11 +603,11 @@ function renderReview(snapshot) {
         element("span", { className: "detail-label", text: "관련 항목" }),
         element("div", { className: "linked-refs" }, (item.relatedRefs?.length
           ? item.relatedRefs.map((ref) => element("code", { text: ref }))
-          : [element("span", { text: "전체 migration" })]))
+          : [element("span", { text: "전체 초기 이관" })]))
       ])
     ]));
   }
-  $("#approval-rule").textContent = snapshot.migration.approvalRule ?? "This view cannot approve or modify policy.";
+  $("#approval-rule").textContent = snapshot.migration.approvalRule ?? "이 화면에서는 정책을 승인하거나 수정할 수 없습니다.";
 }
 
 function runtimeRows(rows) {
@@ -593,19 +632,19 @@ function runtimeCard(title, status, rows, tone = toneFor(status)) {
 }
 
 function displayProbeValue(value) {
-  if (value === null || value === undefined) return "not reported";
+  if (value === null || value === undefined) return "보고되지 않음";
   if (["string", "number", "boolean"].includes(typeof value)) return String(value);
-  if (Array.isArray(value)) return `${value.length} items`;
-  return `${Object.keys(value).length} fields`;
+  if (Array.isArray(value)) return `${value.length}개 항목`;
+  return `${Object.keys(value).length}개 필드`;
 }
 
 function probeRows(probe) {
   const rows = Object.entries(probe.data ?? {})
     .slice(0, 3)
     .map(([name, value]) => [name, displayProbeValue(value)]);
-  if (rows.length === 0) rows.push(["Result", probe.ok ? "request succeeded" : probe.error ?? "request failed"]);
-  rows.push(["Observed", formatTime(probe.observedAt, true)]);
-  rows.push(["Method", "allowlisted read-only probe"]);
+  if (rows.length === 0) rows.push(["결과", probe.ok ? "요청 성공" : probe.error ?? "요청 실패"]);
+  rows.push(["관찰 시각", formatTime(probe.observedAt, true)]);
+  rows.push(["방법", "허용 목록 기반 읽기 전용 점검"]);
   return rows;
 }
 
@@ -616,15 +655,15 @@ function renderExecution(snapshot) {
   const repository = snapshot.runtime?.repository ?? {};
   const currentRepository = snapshot.currentRepository ?? {};
   const changedPaths = repository.changedPaths ?? [];
-  const repositoryCard = runtimeCard("Working repository", currentRepository.workingTreeState ?? "unknown", [
-    ["Current HEAD", currentRepository.head ? shortHash(currentRepository.head) : "not observed"],
-    ["Working tree", currentRepository.workingTreeState ?? "unknown"],
-    ["Uncommitted paths", currentRepository.dirtyCount === null || currentRepository.dirtyCount === undefined ? "not observed" : `${number(currentRepository.dirtyCount)}`],
-    ["Runtime probe", formatTime(snapshot.runtime?.observedAt, true)]
+  const repositoryCard = runtimeCard("작업 저장소", currentRepository.workingTreeState ?? "unknown", [
+    ["현재 HEAD", currentRepository.head ? shortHash(currentRepository.head) : "관찰되지 않음"],
+    ["작업 트리", localized(currentRepository.workingTreeState)],
+    ["미커밋 경로", currentRepository.dirtyCount === null || currentRepository.dirtyCount === undefined ? "관찰되지 않음" : `${number(currentRepository.dirtyCount)}`],
+    ["실행 상태 관찰", formatTime(snapshot.runtime?.observedAt, true)]
   ], currentRepository.workingTreeState === "clean" ? "success" : currentRepository.workingTreeState === "dirty" ? "warning" : "neutral");
   if (changedPaths.length > 0) {
     const details = element("details", { className: "changed-paths" }, [
-      element("summary", { text: `Show ${changedPaths.length} changed paths` }),
+      element("summary", { text: `변경된 경로 ${changedPaths.length}개 보기` }),
       element("ul", { className: "subtle-list" }, changedPaths.map((item) => element("li", {}, [
         element("code", { text: item.state }),
         document.createTextNode(` ${item.path}`)
@@ -640,16 +679,16 @@ function renderExecution(snapshot) {
 
   const qualityCommands = Object.entries(snapshot.qualityCommands ?? {});
   if (qualityCommands.length > 0) {
-    grid.append(runtimeCard("Declared quality commands", "read_only", qualityCommands.map(([name, command]) => [name, command]), "neutral"));
+    grid.append(runtimeCard("선언된 품질 명령", "read_only", qualityCommands.map(([name, command]) => [name, command]), "neutral"));
   }
 
   const capabilities = snapshot.snapshot.capabilities ?? {};
-  grid.append(runtimeCard("View data contract", snapshot.snapshot.freshness, [
-    ["Snapshot", `${snapshot.snapshot.id} / seq ${snapshot.snapshot.seq}`],
-    ["Refresh", `${number(snapshot.client?.refreshIntervalMs ?? 2000)}ms ETag polling`],
-    ["Write", capabilities.write ? "allowed" : "blocked"],
-    ["Execution", capabilities.execution ? "allowed" : "blocked"],
-    ["Approval", capabilities.approvalIntents ? "allowed" : "blocked"]
+  grid.append(runtimeCard("화면 데이터 계약", snapshot.snapshot.freshness, [
+    ["스냅샷", `${snapshot.snapshot.id} / 순번 ${snapshot.snapshot.seq}`],
+    ["새로고침", `${number(snapshot.client?.refreshIntervalMs ?? 2000)}ms ETag 폴링`],
+    ["쓰기", capabilities.write ? "허용" : "차단"],
+    ["실행", capabilities.execution ? "허용" : "차단"],
+    ["승인", capabilities.approvalIntents ? "허용" : "차단"]
   ]));
 
   const execution = snapshot.execution ?? { configured: false, status: "not_configured" };
@@ -658,22 +697,22 @@ function renderExecution(snapshot) {
   const gapCopy = $("#execution-gap-copy");
   gap.className = `empty-state execution-gap ${execution.status}`;
   if (execution.status === "unverified") {
-    gapTitle.textContent = "Execution checkpoint is last-known and currently unverified";
-    gapCopy.textContent = `The latest projection failed. Last-known status was ${execution.lastKnownStatus ?? "unknown"}; progress and completion are not currently verified.`;
+    gapTitle.textContent = "실행 체크포인트는 마지막 확인값이며 현재 미검증 상태입니다";
+    gapCopy.textContent = `최신 투영에 실패했습니다. 마지막 상태는 ${localized(execution.lastKnownStatus)}이며 진행과 완료 여부는 현재 검증되지 않았습니다.`;
   } else if (!execution.configured) {
-    gapTitle.textContent = "Execution checkpoint is not configured";
-    gapCopy.textContent = execution.message ?? "No checkpoint, next action, verification receipt, or budget source is configured. The View does not infer progress.";
+    gapTitle.textContent = "실행 체크포인트가 설정되지 않았습니다";
+    gapCopy.textContent = execution.message ?? "체크포인트, 다음 행동, 검증 영수증 또는 예산 소스가 설정되지 않았습니다. 이 화면은 진행률을 추정하지 않습니다.";
   } else if (execution.status === "degraded") {
-    gapTitle.textContent = "Execution checkpoint source is degraded";
-    gapCopy.textContent = execution.error ?? "The configured source could not be read. Progress is not inferred.";
+    gapTitle.textContent = "실행 체크포인트 소스가 저하 상태입니다";
+    gapCopy.textContent = execution.error ?? "설정된 소스를 읽을 수 없습니다. 진행률을 추정하지 않습니다.";
   } else {
-    gapTitle.textContent = `Execution checkpoint observed${execution.checkpointId ? ` · ${execution.checkpointId}` : ""}`;
+    gapTitle.textContent = `실행 체크포인트 관찰됨${execution.checkpointId ? ` · ${execution.checkpointId}` : ""}`;
     gapCopy.textContent = [
-      execution.lifecycleStatus ? `lifecycle ${execution.lifecycleStatus}` : null,
-      execution.loopState ? `loop ${execution.loopState}` : null,
-      execution.nextActor ? `next actor ${execution.nextActor}` : null,
-      execution.nextAction ? `next action ${execution.nextAction}` : null
-    ].filter(Boolean).join(" · ") || "The source is readable but does not declare lifecycle, loop, or next-action fields.";
+      execution.lifecycleStatus ? `수명 주기 ${localized(execution.lifecycleStatus)}` : null,
+      execution.loopState ? `루프 ${localized(execution.loopState)}` : null,
+      execution.nextActor ? `다음 담당 ${localized(execution.nextActor)}` : null,
+      execution.nextAction ? `다음 행동 ${execution.nextAction}` : null
+    ].filter(Boolean).join(" · ") || "소스는 읽을 수 있지만 수명 주기, 루프 또는 다음 행동 필드가 선언되지 않았습니다.";
   }
 }
 
@@ -738,9 +777,9 @@ function renderEvidence(snapshot) {
       ]),
       element("td", {}, [element("div", { className: "linked-refs" }, group.relatedItems.map((ref) => element("code", { text: ref })))]),
       element("td", {}, [
-        element("span", { className: "hash", text: `base ${shortHash(group.capturedRevisions[0])}` }),
-        element("span", { className: "hash", text: `captured ${shortHash(group.capturedHashes[0])}` }),
-        element("span", { className: "hash", text: `current ${shortHash(group.currentHashes[0])}` })
+        element("span", { className: "hash", text: `기준 리비전 ${shortHash(group.capturedRevisions[0])}` }),
+        element("span", { className: "hash", text: `캡처 해시 ${shortHash(group.capturedHashes[0])}` }),
+        element("span", { className: "hash", text: `현재 해시 ${shortHash(group.currentHashes[0])}` })
       ]),
       element("td", {}, [statusLabel(group.state)])
     ]));
@@ -750,14 +789,14 @@ function renderEvidence(snapshot) {
   const migrationFence = snapshot.migrationFence ?? {};
   const currentRepository = snapshot.currentRepository ?? {};
   const values = [
-    ["Governance catalog", fence.governanceCatalog ?? "-"],
-    ["Captured base", shortHash(migrationFence.capturedRepository?.baseCommit)],
-    ["Migration fence", `${migrationFence.state ?? "unknown"} · ${migrationFence.reason ?? "not observed"}`],
-    ["Current HEAD", shortHash(currentRepository.head)],
-    ["HEAD advanced", migrationFence.currentHeadAdvanced ? "yes · evidence hashes remain independent" : "no"],
-    ["Source evidence", fence.sourceEvidenceState ?? "unknown"],
-    ["Semantic hash", shortHash(snapshot.snapshot.semanticHash)],
-    ["Snapshot", `${snapshot.snapshot.id} / seq ${snapshot.snapshot.seq}`],
+    ["거버넌스 카탈로그", fence.governanceCatalog ?? "-"],
+    ["초기 이관 기준", shortHash(migrationFence.capturedRepository?.baseCommit)],
+    ["초기 이관 경계", `${localized(migrationFence.state)} · ${localized(migrationFence.reason, "관찰되지 않음")}`],
+    ["현재 HEAD", shortHash(currentRepository.head)],
+    ["HEAD 변경", migrationFence.currentHeadAdvanced ? "예 · 근거 해시는 독립적으로 유지" : "아니요"],
+    ["소스 근거", localized(fence.sourceEvidenceState)],
+    ["의미 해시", shortHash(snapshot.snapshot.semanticHash)],
+    ["스냅샷", `${snapshot.snapshot.id} / 순번 ${snapshot.snapshot.seq}`],
     ["생성 시각", formatTime(snapshot.snapshot.generatedAt, true)],
     ["현재 근거", number(fence.evidenceCurrent)],
     ["변경 근거", number(fence.evidenceChanged)],

@@ -169,7 +169,32 @@ test("degraded freshness copy explicitly identifies last-known records as unveri
   assert.deepEqual(presentation, {
     state: "last_known_unverified",
     tone: "degraded",
-    message: "Latest source could not be verified · showing 2 last-known governance records as unverified."
+    message: "최신 원본을 검증하지 못했습니다 · 마지막으로 확인된 거버넌스 기록 2건을 미검증 상태로 표시합니다."
   });
   assert.doesNotMatch(presentation.message, /approved|effective/i);
+});
+
+test("fresh and review-required freshness copy is Korean-first while preserving machine tokens", () => {
+  assert.deepEqual(freshnessPresentation({
+    snapshot: {
+      freshness: "fresh",
+      sourceFence: { evidenceCurrent: 2 }
+    }
+  }), {
+    state: "fresh",
+    tone: "fresh",
+    message: "소스 근거가 최신입니다 · 참조 2건이 캡처된 해시와 일치합니다."
+  });
+
+  assert.deepEqual(freshnessPresentation({
+    snapshot: {
+      freshness: "stale",
+      sourceFence: { evidenceChanged: 1, evidenceMissing: 2 }
+    },
+    migrationFence: { state: "awaiting_human_review" }
+  }), {
+    state: "stale",
+    tone: "stale",
+    message: "검토가 필요합니다 · 초기 이관 경계 사용자 검토 대기 · 변경 1건 · 누락 2건"
+  });
 });

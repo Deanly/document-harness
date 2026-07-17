@@ -21,15 +21,16 @@ view:
   port_mode: auto
   presentation:
     profile: single-repository-top-tabs-v1
+    locale: ko-KR
     repository_identity: static
     repository_selector: false
     sidebar: false
     tabs:
-      - Overview
-      - Policies & Guidelines
-      - Review Queue
-      - Execution Status
-      - Evidence
+      - 개요
+      - 정책·지침
+      - 검토 대기
+      - 실행 상태
+      - 근거
     external_assets: false
   consistency:
     cross_tab_snapshot_fence: single

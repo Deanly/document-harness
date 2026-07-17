@@ -57,6 +57,13 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다.
 - `.env`, credential, private source와 개인 절대경로를 governance/View artifact에 넣지 않습니다.
 - View는 exact loopback과 OS-assigned port만 사용하고 foreign process를 종료하지 않습니다.
 
+## Korean-First Human Projection
+
+- 사용자용 View chrome과 AI가 합성하는 project description, direction, policy/guideline title·summary·why·scope·risk, attention/gap, approval rule, source note와 자유 서술 evidence kind label은 `ko-KR`를 기본으로 합니다.
+- stable technical ID, enum, repository-relative path, hash, command와 exact source heading/quote는 원형을 보존하고 한국어 설명 옆의 보조 metadata로 표시합니다.
+- 기존 영어 사용자 문구의 번역은 presentation-only migration입니다. 의미·범위·authority·approval·enforcement·effective ref·receipt·evidence freshness를 바꾸지 않으며, 의미 보존이 불확실하면 review attention을 남깁니다.
+- 긴 ID, path와 hash는 자기 cell/card 안에서 줄바꿈하고 인접 제목·badge·column과 겹치지 않게 desktop과 narrow viewport에서 검증합니다.
+
 ## Installed Authoring Workflow
 
 `core`와 이를 포함하는 full profile은 reusable template, `new-doc.sh`, execution/closeout validators와 `close-doc.sh`를 함께 설치합니다. numbered project/task/QA draft는 clean `main`에서 먼저 발급합니다.
