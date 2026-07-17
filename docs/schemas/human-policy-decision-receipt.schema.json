@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/human-policy-decision-receipt.schema.json",
+  "title": "Human Policy Decision Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decisionId", "candidateId", "decision", "decidedBy", "decidedAt", "sourceFence", "effectiveRef", "effectiveSha256"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "decisionId": { "type": "string", "minLength": 1 },
+    "candidateId": { "type": "string", "minLength": 1 },
+    "decision": { "enum": ["approved", "rejected", "deferred", "exception_accepted"] },
+    "decidedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorKind", "identifier"],
+      "properties": {
+        "actorKind": { "enum": ["human", "human_delegated_system"] },
+        "identifier": { "type": "string", "minLength": 1 }
+      }
+    },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "sourceFence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repositoryRevision", "sourceHashes"],
+      "properties": {
+        "repositoryRevision": { "type": "string", "minLength": 1 },
+        "sourceHashes": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+      }
+    },
+    "effectiveRef": { "type": ["string", "null"] },
+    "effectiveSha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "reason": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "decision": { "enum": ["approved", "exception_accepted"] } }, "required": ["decision"] },
+      "then": {
+        "properties": {
+          "effectiveRef": { "type": "string", "minLength": 1 },
+          "effectiveSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "decision": { "enum": ["rejected", "deferred"] } }, "required": ["decision"] },
+      "then": {
+        "properties": {
+          "effectiveRef": { "type": "null" },
+          "effectiveSha256": { "type": "null" }
+        }
+      }
+    }
+  ]
+}

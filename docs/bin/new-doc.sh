@@ -59,20 +59,20 @@ next_number() {
 
 require_numbered_doc_issue_context() {
   if ! git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "error: task/project docs require a git worktree so main-based issuance can be verified" >&2
+    echo "error: task/project/qa docs require a git worktree so main-based issuance can be verified" >&2
     exit 1
   fi
 
   local branch
   branch="$(git -C "$ROOT_DIR" symbolic-ref --quiet --short HEAD || true)"
   if [[ "$branch" != "main" ]]; then
-    echo "error: task/project docs must be issued from main, not '${branch:-detached HEAD}'" >&2
+    echo "error: task/project/qa docs must be issued from main, not '${branch:-detached HEAD}'" >&2
     echo "hint: stash dirty branch work, switch to main, update it, issue and commit the draft, then merge main back into the work branch" >&2
     exit 1
   fi
 
   if [[ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]]; then
-    echo "error: task/project docs must be issued from a clean main worktree" >&2
+    echo "error: task/project/qa docs must be issued from a clean main worktree" >&2
     echo "hint: commit or stash local changes before issuing the numbered draft" >&2
     exit 1
   fi
@@ -83,7 +83,7 @@ require_numbered_doc_issue_context() {
     local behind
     behind="$(git -C "$ROOT_DIR" rev-list --count "HEAD..$upstream" 2>/dev/null || printf '0')"
     if [[ "${behind:-0}" != "0" ]]; then
-      echo "error: main is behind $upstream; update main before issuing a task/project doc" >&2
+      echo "error: main is behind $upstream; update main before issuing a task/project/qa doc" >&2
       echo "hint: git pull --ff-only" >&2
       exit 1
     fi
@@ -95,11 +95,14 @@ render_template() {
   local output="$2"
   local doc_id="$3"
   local title="$4"
+  local marker_open='{'
+
+  marker_open="${marker_open}{"
 
   sed \
-    -e "s/{{DOC_ID}}/${doc_id}/g" \
-    -e "s/{{TITLE}}/${title}/g" \
-    -e "s/{{DATE}}/${TODAY}/g" \
+    -e "s/${marker_open}DOC_ID}}/${doc_id}/g" \
+    -e "s/${marker_open}TITLE}}/${title}/g" \
+    -e "s/${marker_open}DATE}}/${TODAY}/g" \
     "$template" > "$output"
 }
 
@@ -130,6 +133,7 @@ fi
 case "$TYPE" in
   task)
     DOC_DIR="$ROOT_DIR/tasks"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/task.md"
     NUMBER="$(next_number "$DOC_DIR" "T")"
     DOC_ID="T${NUMBER}"
@@ -139,6 +143,7 @@ case "$TYPE" in
     ;;
   project)
     DOC_DIR="$ROOT_DIR/projects"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/project.md"
     NUMBER="$(next_number "$DOC_DIR" "P")"
     DOC_ID="P${NUMBER}"
@@ -147,18 +152,24 @@ case "$TYPE" in
     NUMBERED_DOC="true"
     ;;
   design)
+    DOC_DIR="$ROOT_DIR/design"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/design.md"
     DOC_ID=""
     TITLE="$SLUG"
     OUTPUT="$ROOT_DIR/design/${SLUG}.md"
     ;;
   guide)
+    DOC_DIR="$ROOT_DIR/guide"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/guide.md"
     DOC_ID=""
     TITLE="$SLUG"
     OUTPUT="$ROOT_DIR/guide/${SLUG}.md"
     ;;
   report)
+    DOC_DIR="$ROOT_DIR/reports"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/report.md"
     DOC_ID=""
     TITLE="$SLUG"

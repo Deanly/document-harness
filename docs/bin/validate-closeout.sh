@@ -3,6 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+EXECUTION_VALIDATOR="$ROOT_DIR/bin/validate-execution-loop.sh"
 
 usage() {
   cat <<'EOF'
@@ -20,6 +21,7 @@ Rules:
   - Goal IDs must match 1:1 between both sections.
   - If Status is done/closed, every goal must be Done with non-empty evidence.
   - If Status is done/closed, WBS cannot contain Todo/In Progress/Pending/Blocked items.
+  - execution_contract v1 tasks must also satisfy checkpoint, loop_state, attention, and receipt barriers.
 EOF
 }
 
@@ -307,6 +309,13 @@ validate_file() {
       allowed_verification_status["Cancelled"] = 1
       allowed_verification_status["Superseded"] = 1
       allowed_verification_status["N/A"] = 1
+      allowed_doc_status["draft"] = 1
+      allowed_doc_status["active"] = 1
+      allowed_doc_status["blocked"] = 1
+      allowed_doc_status["done"] = 1
+      allowed_doc_status["closed"] = 1
+      allowed_doc_status["superseded"] = 1
+      allowed_doc_status["cancelled"] = 1
 
       if (fm_type != "") {
         if (type == "") {
@@ -378,6 +387,8 @@ validate_file() {
 
       if (doc_status == "") {
         push_error("missing Status metadata")
+      } else if (!(doc_status in allowed_doc_status)) {
+        push_error("unsupported Status: " doc_status)
       }
 
       if (completion_mode == "") {
@@ -513,6 +524,15 @@ validate_file() {
   ' "$file"
 }
 
+is_task_doc() {
+  awk '
+    NR == 1 && $0 == "---" { in_frontmatter = 1; next }
+    in_frontmatter && $0 == "---" { exit found ? 0 : 1 }
+    in_frontmatter && /^type:[[:space:]]*task[[:space:]]*$/ { found = 1 }
+    END { exit found ? 0 : 1 }
+  ' "$1"
+}
+
 TARGETS=()
 
 if [[ $# -eq 0 ]]; then
@@ -530,8 +550,17 @@ if [[ ${#TARGETS[@]} -eq 0 ]]; then
   exit 0
 fi
 
+EXECUTION_TARGETS=()
 for file in "${TARGETS[@]}"; do
   validate_file "$file"
+  if is_task_doc "$file"; then
+    EXECUTION_TARGETS+=("$file")
+  fi
 done
+
+"$EXECUTION_VALIDATOR" --all
+if [[ ${#EXECUTION_TARGETS[@]} -gt 0 ]]; then
+  "$EXECUTION_VALIDATOR" "${EXECUTION_TARGETS[@]}"
+fi
 
 echo "Validated ${#TARGETS[@]} doc(s)."

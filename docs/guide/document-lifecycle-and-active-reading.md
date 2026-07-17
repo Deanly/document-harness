@@ -2,15 +2,15 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-06-14
+- Updated: 2026-07-15
 
 ## Purpose
 
-이 문서는 `docs/projects`, `docs/reports`, `docs/tasks` 구조를 유지한 채, 소모성 문서의 수명주기와 사람이 `active` 문서를 읽고 찾기 쉬운 운영 규칙을 고정합니다.
+이 문서는 `docs/projects`, `docs/reports`, `docs/tasks`, `docs/qa` 구조를 유지한 채, 소모성 문서의 수명주기와 사람이 현재 문서를 읽고 찾기 쉬운 운영 규칙을 고정합니다.
 
 ## Core Decisions
 
-- `docs/projects`, `docs/reports`, `docs/tasks`는 문서 타입 경계이므로 유지합니다.
+- `docs/projects`, `docs/reports`, `docs/tasks`, `docs/qa`는 문서 타입 경계이므로 유지합니다.
 - 기본값으로 `archive/`를 도입하지 않습니다.
 - 문서는 이동보다 `Status`와 상태 이력으로 제자리에서 닫습니다.
 - 운영 규칙은 AI 검색성뿐 아니라 human scan에도 맞춰야 합니다.
@@ -20,6 +20,7 @@
 - 모든 `project`, `task`, `report` 문서는 `Status`를 가집니다.
 - `draft`는 발급되었지만 아직 현재 읽을 문서 목록에 올리지 않은 상태입니다.
 - `project`와 `task`의 `draft`는 `main`에서 즉시 commit되는 번호 reservation으로 쓰일 수 있으며, active truth가 아니므로 폴더 active 목록에 올리지 않습니다.
+- `qa`도 `draft`는 번호 reservation, `current`는 현재 QA truth, `retired`는 비활성 상태로 사용합니다.
 - `active`는 지금 사람이 읽고 추적해야 하는 문서입니다.
 - `closed`, `done`, `cancelled`, `superseded` 같은 비활성 상태는 폴더의 active 목록에서 제외합니다.
 - `done`은 발급 시점의 `Purpose`와 `Completion Mode`가 충족되었을 때만 씁니다.
@@ -43,7 +44,7 @@
 
 ## Human Entry Rules
 
-- `docs/projects/README.md`, `docs/tasks/README.md`, `docs/reports/README.md`는 active 문서만 보여주는 얇은 입구입니다.
+- `docs/projects/README.md`, `docs/tasks/README.md`, `docs/reports/README.md`는 active 문서만, `docs/qa/README.md`는 current QA 문서만 보여주는 얇은 입구입니다.
 - 각 항목에는 문서 링크, 한 줄 설명, `Updated` 날짜만 적는 것을 기본으로 합니다.
 - active `projects/README.md`는 umbrella project를 먼저 보여주고, 예외 분기 project는 lineage 안에서 설명합니다.
 - active `tasks/README.md`는 각 task가 어느 umbrella project에 속하는지 드러내는 것을 기본으로 합니다.
@@ -86,6 +87,7 @@
 - `project`: `P0001-slug.md`
 - `task`: `T0001-slug.md`
 - `report`: `YYYY-MM-DD-slug.md`
+- `qa`: `QA0001-slug.md`
 
 상태값인 `active`, `closed`는 파일명에 넣지 않습니다. 상태는 메타데이터와 폴더 입구 문서로 드러냅니다.
 
@@ -103,3 +105,4 @@
 - 2026-05-09: YAML properties와 visible metadata mirror 규칙 추가.
 - 2026-05-09: Codex-facing AGENTS.md reading rule 추가.
 - 2026-06-14: `project`/`task` draft를 main-issued 번호 reservation으로 commit할 수 있는 규칙 추가.
+- 2026-07-15: QA draft/current/retired lifecycle과 current entry surface 추가.

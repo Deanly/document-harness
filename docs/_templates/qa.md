@@ -4,10 +4,13 @@ doc_id: {{DOC_ID}}
 title: {{TITLE}}
 qa_type:
 status: draft
+governance_role: verification
 owner:
 created: {{DATE}}
 updated: {{DATE}}
 source_refs: []
+policy_refs: []
+standard_refs: []
 tags:
   - docs/qa
 ---
@@ -15,6 +18,7 @@ tags:
 # {{DOC_ID}} {{TITLE}}
 
 - Type: qa
+- Governance Role: verification
 - Document ID: {{DOC_ID}}
 - QA Type:
 - Status: draft
@@ -43,9 +47,11 @@ qa_type에 따라 작성합니다: `strategy`는 테스트 레벨 정의, `plan`
 
 ## Traceability
 
-| Source (문서§/불변식) | Case ID | 검증 수단 | 상태 | 최근 증거 |
-| --- | --- | --- | --- | --- |
-| | | | | |
+| Policy Clause | Standard Rule | Task / Goal | Check ID | 검증 수단 / Pass Condition | Evidence | Exception | Verdict |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | | |
+
+proposal report는 normative source가 아닙니다. policy/standard는 exact version과 stable clause/rule ID를 pin하고, exception은 base failure를 pass로 바꾸지 않고 ID/expiry를 남깁니다.
 
 ## Automation Coverage
 

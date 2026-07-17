@@ -161,13 +161,26 @@
 
 이 과정을 우회해 메타데이터만 `done`으로 바꾸지 않습니다.
 
+## Execution And Governance Barrier
+
+`execution_contract: v1` task는 goal/evidence gate에 더해 아래를 만족해야 합니다.
+
+- task lifecycle `status`와 별도인 `loop_state`가 `succeeded`입니다.
+- current checkpoint의 task contract revision이 닫으려는 task revision과 일치합니다.
+- pending attention, unresolved policy conflict, stale approval, expired exception이 없습니다.
+- 각 required check가 immutable verification receipt 또는 source-backed evidence를 참조합니다.
+- AI proposal report는 effective normative design과 human approval reference 없이 completion evidence가 될 수 없습니다.
+- checkpoint의 `next_actor`, `next_action`, `resume_when`은 terminal 상태에 맞게 닫혔거나 residual handoff로 명시됩니다.
+
+checkpoint 자체는 mutable current snapshot이므로 `Goal Verification`에는 긴 로그를 복사하지 않고 terminal verification receipt를 참조합니다. `Status`에는 closeout milestone과 결정의 append-only history를 남깁니다.
+
 ## CI And Hook Enforcement
 
 문서 원칙만으로는 약합니다. 진짜 강제는 검증 명령을 자동으로 돌릴 때 생깁니다.
 
 - 로컬에서는 `./docs/bin/close-doc.sh`가 닫기 전 검증을 먼저 수행합니다.
 - 저장소에서는 `./docs/bin/validate-closeout.sh --all`을 CI나 pre-push hook에 연결합니다.
-- 이 저장소에는 GitHub Actions workflow 예시를 포함해 PR과 push에서 다시 확인할 수 있게 합니다.
+- 특정 CI provider의 workflow가 기본 포함되어 있다고 가정하지 않습니다. repository owner가 사용하는 CI 또는 pre-push gate에 검증 명령을 명시적으로 연결합니다.
 
 ## Splitting Rules
 
@@ -191,6 +204,8 @@
 - 선택한 `Completion Mode`가 요구하는 evidence가 있는가
 - 남은 핵심 목표를 후속 문서로 넘긴 뒤 현재 문서를 `done`으로 위장하지 않았는가
 - mode가 `functional`이 아니라면 authoritative artifact 또는 closed state가 명시되어 있는가
+- loop-enabled task라면 `loop_state: succeeded`, terminal receipt, unresolved attention 없음이 확인되는가
+- 적용 policy/standard/exception이 exact version으로 연결되고 approval/effective 상태가 유효한가
 
 하나라도 아니면 `done`이 아닙니다.
 
@@ -204,3 +219,4 @@
 ## Change Log
 
 - 2026-04-14: goal lock, goal inventory / verification gate, unsupported pseudo-mode, `done` 체크리스트 규칙 추가.
+- 2026-07-15: loop-enabled task의 checkpoint, attention, receipt, governance closeout barrier 추가.

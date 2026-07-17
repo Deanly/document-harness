@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/harness-installation-lock.schema.json",
+  "title": "Document Harness Installation Lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "release", "migrationGeneration", "planHash", "targetSourceRevision", "profiles", "installedAt", "receiptRef", "applyMutationSet", "files"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "release": { "$ref": "#/$defs/releaseFence" },
+    "migrationGeneration": { "type": "integer", "minimum": 1 },
+    "planHash": { "$ref": "#/$defs/sha256" },
+    "targetSourceRevision": { "type": "string", "minLength": 1 },
+    "profiles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+    "installedAt": { "type": "string", "format": "date-time" },
+    "receiptRef": { "$ref": "#/$defs/relativePath" },
+    "applyMutationSet": { "$ref": "#/$defs/applyMutationSet" },
+    "files": { "type": "array", "items": { "$ref": "#/$defs/file" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "relativePath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+    "releaseFence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "manifestSha256", "sourceRevision"],
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "sourceRevision": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "applyMutationSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "count", "paths", "sha256"],
+      "properties": {
+        "algorithm": { "const": "sha256" },
+        "count": { "type": "integer", "minimum": 1 },
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "contains": { "const": "docs/_indexes/harness-installation.yaml" },
+          "items": { "$ref": "#/$defs/relativePath" }
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "ownership", "upstreamBaselineSha256", "installedSha256", "generator", "artifactType", "profiles", "installedMode"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "ownership": { "enum": ["harness-managed", "project-owned", "generated", "runtime-local"] },
+        "upstreamBaselineSha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "installedSha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "generator": { "type": ["string", "null"] },
+        "artifactType": { "type": "string", "enum": ["runtime", "template", "generated"] },
+        "profiles": { "type": "array", "items": { "type": "string" } },
+        "installedMode": { "type": ["integer", "null"], "enum": [420, 493, null] }
+      }
+    }
+  }
+}

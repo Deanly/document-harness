@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "repositorySeed": "governance/repository",
+  "sources": [
+    {
+      "id": "explicit-instruction",
+      "path": "AGENTS.md",
+      "authorityClass": "repository_instruction",
+      "kind": "policy",
+      "include": true,
+      "expectedApprovalState": "unreviewed"
+    },
+    {
+      "id": "current-design",
+      "path": "docs/design/service-availability.md",
+      "authorityClass": "current_design",
+      "kind": "policy",
+      "include": true,
+      "expectedApprovalState": "unreviewed"
+    },
+    {
+      "id": "approved-guide",
+      "path": "docs/guide/failover-operations.md",
+      "authorityClass": "approved_guide",
+      "kind": "guideline",
+      "include": true,
+      "expectedApprovalState": "unreviewed"
+    },
+    {
+      "id": "config-observation",
+      "path": "config/service.yaml",
+      "authorityClass": "config_observation",
+      "kind": "observation",
+      "include": true,
+      "expectedApprovalState": "unreviewed",
+      "effectiveRef": null
+    },
+    {
+      "id": "code-observation",
+      "path": "src/availability.js",
+      "authorityClass": "code_observation",
+      "kind": "observation",
+      "include": true,
+      "expectedApprovalState": "unreviewed",
+      "effectiveRef": null
+    },
+    {
+      "id": "conflict-high-availability",
+      "path": "docs/design/service-availability.md",
+      "conflictsWith": "conflict-single-instance"
+    },
+    {
+      "id": "conflict-single-instance",
+      "path": "docs/legacy/single-instance-operations.md",
+      "conflictsWith": "conflict-high-availability",
+      "expectedCandidateState": "conflicted"
+    },
+    {
+      "id": "source-changed",
+      "path": "docs/policy/source-fence.md",
+      "include": true,
+      "onSourceChange": "stale"
+    },
+    {
+      "id": "private-secret",
+      "path": "private/secret-classification-marker.txt",
+      "authorityClass": "private_excluded",
+      "include": false
+    }
+  ],
+  "emptyCase": {
+    "expectedPolicies": 0,
+    "expectedGuidelines": 0,
+    "expectedMinimumGaps": 1,
+    "expectedMigrationStatus": "awaiting_human_review"
+  }
+}

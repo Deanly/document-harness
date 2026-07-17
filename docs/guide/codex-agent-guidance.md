@@ -4,15 +4,19 @@ title: codex-agent-guidance
 status: current
 owner:
 created: 2026-05-09
-updated: 2026-06-14
+updated: 2026-07-16
 related_project: []
 related_task: []
 related_design:
   - docs/design/control-plane.md
+  - docs/design/retrieval-plane.md
+  - docs/design/harness-adoption-plane.md
 source_refs:
   - https://developers.openai.com/codex/guides/agents-md
   - https://developers.openai.com/codex/learn/best-practices
   - https://developers.openai.com/codex/prompting
+  - https://developers.openai.com/codex/skills/
+  - https://code.claude.com/docs/en/skills
 tags:
   - docs/guide
   - codex
@@ -22,10 +26,10 @@ tags:
 
 - Type: guide
 - Created: 2026-05-09
-- Updated: 2026-06-14
+- Updated: 2026-07-16
 - Related Project:
 - Related Task:
-- Related Design: docs/design/control-plane.md
+- Related Design: docs/design/control-plane.md; docs/design/retrieval-plane.md
 
 ## Purpose
 
@@ -39,16 +43,24 @@ Codex 공식 문서는 `AGENTS.md`를 자동으로 읽는 project guidance로 �
 - 더 세부적인 하위 디렉터리 규칙이 필요하면 해당 디렉터리에 `AGENTS.md` 또는 `AGENTS.override.md`를 둡니다.
 - 하위 instruction은 루트 instruction 뒤에 읽히므로, specialized directory rule은 가능한 한 해당 작업 디렉터리에 가깝게 둡니다.
 - instruction은 기본 로딩 한도를 고려해 짧게 유지합니다. 상세 설명은 `docs/guide/`로 빼고 `AGENTS.md`에서는 링크와 핵심 규칙만 둡니다.
+- Codex는 repository의 `.agents/skills/`에서 project skill을 발견합니다. document-harness operation은 user-global skill이 아니라 target repository의 `.agents/skills/operate-document-harness/`에 둡니다.
 
 ## Harness Mapping
 
 | Codex Need | Harness Surface |
 | --- | --- |
 | durable repo guidance | root `AGENTS.md` |
-| reusable agent template | `docs/_templates/agents.md` |
+| reusable agent templates | `docs/_templates/agents.md`, `docs/_templates/claude.md` |
+| repository-local harness workflow | `.agents/skills/operate-document-harness/SKILL.md` and thin `.claude/skills/operate-document-harness/SKILL.md` adapter |
+| mature repository adoption | `docs/ADOPT.md`, `docs/design/harness-adoption-plane.md` |
 | detailed operating rules | `docs/guide/codex-agent-guidance.md` |
 | goal and system context | `docs/design/control-plane.md` |
 | domain vocabulary | `docs/design/ubiquitous-language.md` |
+| scalable retrieval and freshness | `docs/design/retrieval-plane.md`, `docs/_indexes/retrieval-policy.yaml` |
+| policy authority and approval | `docs/design/policy-to-evidence-governance.md`, `docs/guide/policy-proposal-and-approval.md` |
+| resumable execution state | current task, current checkpoint, `docs/design/execution-loop-plane.md` |
+| human-readable status | `docs/guide/human-control-view.md` derived projection |
+| repository policy extraction | `docs/guide/repository-policy-extraction.md` candidate workflow |
 | work decomposition | `docs/projects/` and `docs/tasks/` |
 | verification | `docs/bin/validate-codex-readiness.sh` and related validators |
 
@@ -60,6 +72,13 @@ When a human asks Codex to do harness work, prefer this shape:
 2. Context: relevant docs, templates, examples, failures, or official references.
 3. Constraints: scope, project issuance rules, source handling, compatibility, or safety rules.
 4. Done when: validators, generated docs, closeout evidence, or human-visible result.
+
+When policy or risk authority is involved, also separate:
+
+5. Effective authority: exact human policy, normative rule, approval, and exception refs.
+6. Proposal: AI inference, options, assumptions, and exact human decision still needed.
+
+For loop-enabled work, externalize current hypothesis, last evidence, next actor/action, attention, and stop/resume conditions in the checkpoint rather than relying on chat history.
 
 If the request is broad or ambiguous, Codex should first identify the likely surfaces and propose a short plan before editing. If the task is narrow and clear, Codex should implement and verify directly.
 
@@ -75,9 +94,34 @@ Root `AGENTS.md` should stay concise and include these sections:
 
 Do not duplicate the full contents of `docs/README.md` in `AGENTS.md`. Link to durable docs and keep only the high-value operating rules that Codex needs before it can safely choose files.
 
+When a source file changed during the current task, or an index cannot prove it contains the required source revision, Codex reads the source file directly and treats the index only as a candidate-selection surface. This rule belongs in both root `AGENTS.md` and the reusable template.
+
+Root guidance also states that AI-authored policy/standard/exception proposals cannot self-approve, lifecycle `status` remains separate from `loop_state`, and meaningful execution transitions update the current checkpoint. Detailed schema stays in the governance and execution guides rather than expanding `AGENTS.md` into a manual.
+
+For Claude Code, keep a short root `CLAUDE.md` that imports `AGENTS.md` with `@AGENTS.md` and adds only Claude-specific routing. It must point adoption work to `docs/ADOPT.md` and execution work to `docs/EXECUTE.md`; it must not copy the policy, ownership, stop, or verification rules into a competing instruction set.
+
+During mature repository adoption, the agent reads project-owned instructions and current designs first, generates a no-write ownership/conflict plan, and keeps extraction confidence, authority, approval, and enforcement independent. Repo-local View operation remains exact-loopback/read-only and must not obtain a port by terminating another process.
+
+## Repository-Local Harness Skill
+
+`operate-document-harness` is installed in each adopted repository. Its canonical file is `.agents/skills/operate-document-harness/SKILL.md`; Claude uses the project adapter at `.claude/skills/operate-document-harness/SKILL.md`, which reads the canonical file instead of maintaining a second workflow.
+
+The skill is an intent router:
+
+- initialize, migrate, upgrade -> `docs/ADOPT.md`
+- start, resume, stop, close -> `docs/EXECUTE.md` plus the current task/checkpoint
+- policy/guideline extraction -> `docs/guide/repository-policy-extraction.md`
+- Human Control View operation -> `docs/guide/human-control-view.md`
+
+It does not own policy, approval, migration decisions, quality verdicts, execution truth, or View truth. `AGENTS.md`, human-owned governance sources, effective designs, source files, checkpoints, receipts and deterministic validators keep those responsibilities.
+
+Do not install or update a user-global document-harness skill during repository adoption or operation. Repository-specific instructions, ports, gates and policy scope must travel with that repository.
+
+When an adoption apply first installs the skill during an active agent session, read the canonical `SKILL.md` directly for that session. Start a new session or reload the repository before depending on automatic discovery.
+
 ## Numbered Document Issuance Rule
 
-When Codex needs to issue a numbered `project` or `task` document, it must not run `docs/bin/new-doc.sh` from a feature branch. The document number is allocated from clean, up-to-date `main`; `new-doc.sh` commits the generated `draft` file on `main` immediately, and the work branch then merges `main` before continuing.
+When Codex needs to issue a numbered `project`, `task`, or `qa` document, it must not run `docs/bin/new-doc.sh` from a feature branch. The document number is allocated from clean, up-to-date `main`; `new-doc.sh` commits the generated `draft` file on `main` immediately, and the work branch then merges `main` before continuing.
 
 If the current work branch is dirty, stash the work with untracked files before switching. After the main-issued draft commit is merged back into the work branch, pop the stash and resolve any conflicts. Incoming changes already deployed through `main` are accepted as the current baseline.
 
@@ -94,15 +138,32 @@ That command should check:
 - root `AGENTS.md` exists and has the required sections.
 - `AGENTS.md` remains below the default project instruction budget.
 - the reusable AGENTS template exists.
+- the root and reusable Claude adapters import `AGENTS.md` and route to ADOPT/EXECUTE without duplicating authority.
 - Codex guidance is part of the foundation.
 - markdown templates still include frontmatter properties.
+- design templates include retrieval metadata and the agent surfaces require direct source reads for uncertain freshness.
 - foundation and closeout validators still pass.
+- governance/execution design, guide, policy index, checkpoint template, and execution validator stay aligned.
+- adoption entry, ownership/policy extraction contract, templates, and validator stay aligned.
+- loop-enabled task closeout cannot bypass unresolved attention or missing terminal receipts.
 
 ## Parallel Work Rule
 
 Codex can run multiple threads, but two concurrent tasks should not modify the same document, template, or validator. For parallel documentation work, split ownership by directory or explicit file list.
 
+## References
+
+- [Codex AGENTS.md guidance](https://developers.openai.com/codex/guides/agents-md)
+- [Codex best practices](https://developers.openai.com/codex/learn/best-practices)
+- [Codex prompting](https://developers.openai.com/codex/prompting)
+- [Codex Skills](https://developers.openai.com/codex/skills/)
+- [Claude Code Skills](https://code.claude.com/docs/en/skills)
+
 ## Change Log
 
 - 2026-05-09: Codex-facing AGENTS.md, prompt shape, and readiness validator contract added.
 - 2026-06-14: Numbered `project`/`task` issuance rule added for main-based draft commits.
+- 2026-07-15: numbered `qa` alignment and source-authoritative freshness rule added.
+- 2026-07-15: human policy authority, resumable execution checkpoint, and human-view projection mapping added.
+- 2026-07-15: mature adoption routing and a thin Claude Code `@AGENTS.md` adapter were added so both tools share one authority surface.
+- 2026-07-16: repository-local `operate-document-harness` canonical skill, thin Claude project adapter, no-global-install and bootstrap reload contract added.

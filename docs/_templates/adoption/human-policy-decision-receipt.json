@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "{{HUMAN_DECISION_ID}}",
+  "candidateId": "{{CANDIDATE_ID}}",
+  "decision": "deferred",
+  "decidedBy": {
+    "actorKind": "human",
+    "identifier": "{{HUMAN_IDENTIFIER}}"
+  },
+  "decidedAt": "{{RFC3339_TIMESTAMP}}",
+  "sourceFence": {
+    "repositoryRevision": "{{REPOSITORY_REVISION}}",
+    "sourceHashes": ["{{SOURCE_SHA256}}"]
+  },
+  "effectiveRef": null,
+  "effectiveSha256": null,
+  "reason": "{{HUMAN_REASON}}"
+}

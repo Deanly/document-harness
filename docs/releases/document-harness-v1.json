@@ -1,0 +1,501 @@
+{
+  "$schema": "../schemas/release-manifest.schema.json",
+  "schemaVersion": 1,
+  "releaseId": "document-harness-public-v1",
+  "version": "1.0.0",
+  "profiles": [
+    "core",
+    "governance",
+    "view"
+  ],
+  "profileDependencies": {
+    "core": [],
+    "governance": ["core"],
+    "view": ["core", "governance"]
+  },
+  "files": [
+    {
+      "sourcePath": "docs/_templates/adoption/agents.md",
+      "targetPath": "docs/_templates/adoption/agents.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/docs-readme.md",
+      "targetPath": "docs/_templates/adoption/docs-readme.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/adopt.md",
+      "targetPath": "docs/_templates/adoption/adopt.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/execute.md",
+      "targetPath": "docs/_templates/adoption/execute.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/control-plane.md",
+      "targetPath": "docs/_templates/adoption/control-plane.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/ubiquitous-language.md",
+      "targetPath": "docs/_templates/adoption/ubiquitous-language.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/claude.md",
+      "targetPath": "docs/_templates/claude.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/agents.md",
+      "targetPath": "AGENTS.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
+      "sourcePath": "docs/_templates/claude.md",
+      "targetPath": "CLAUDE.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/docs-readme.md",
+      "targetPath": "docs/README.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/control-plane.md",
+      "targetPath": "docs/design/control-plane.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/ubiquitous-language.md",
+      "targetPath": "docs/design/ubiquitous-language.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
+      "sourcePath": "docs/_indexes/execution-loop-policy.yaml",
+      "targetPath": "docs/_indexes/execution-loop-policy.yaml",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/_templates/execution-checkpoint.md",
+      "targetPath": "docs/_templates/execution-checkpoint.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/project.md",
+      "targetPath": "docs/_templates/project.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/task.md",
+      "targetPath": "docs/_templates/task.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/design.md",
+      "targetPath": "docs/_templates/design.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/guide.md",
+      "targetPath": "docs/_templates/guide.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/report.md",
+      "targetPath": "docs/_templates/report.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/qa.md",
+      "targetPath": "docs/_templates/qa.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/document-harness.yaml",
+      "targetPath": "docs/_templates/document-harness.yaml",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/document-harness.yaml",
+      "targetPath": "document-harness.yaml",
+      "profiles": ["core"],
+      "generator": "repository-adoption-profile-v1",
+      "artifactType": "generated"
+    },
+    {
+      "sourcePath": "docs/_templates/governance-catalog.json",
+      "targetPath": "docs/_templates/governance-catalog.json",
+      "profiles": ["governance", "view"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/governance-catalog.json",
+      "targetPath": "docs/_indexes/governance-catalog.json",
+      "profiles": ["governance", "view"],
+      "generator": "repository-governance-catalog-v1",
+      "artifactType": "generated"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/human-policy-decision-receipt.json",
+      "targetPath": "docs/_templates/adoption/human-policy-decision-receipt.json",
+      "profiles": ["governance"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/view-runtime.json",
+      "targetPath": "docs/_templates/view-runtime.json",
+      "profiles": ["view"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": ".agents/skills/operate-document-harness/SKILL.md",
+      "targetPath": ".agents/skills/operate-document-harness/SKILL.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": ".agents/skills/operate-document-harness/agents/openai.yaml",
+      "targetPath": ".agents/skills/operate-document-harness/agents/openai.yaml",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": ".claude/skills/operate-document-harness/SKILL.md",
+      "targetPath": ".claude/skills/operate-document-harness/SKILL.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/adopt.md",
+      "targetPath": "docs/ADOPT.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/execute.md",
+      "targetPath": "docs/EXECUTE.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/bin/harness-adopt",
+      "targetPath": "docs/bin/harness-adopt",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/new-doc.sh",
+      "targetPath": "docs/bin/new-doc.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/validate-closeout.sh",
+      "targetPath": "docs/bin/validate-closeout.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/close-doc.sh",
+      "targetPath": "docs/bin/close-doc.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/validate-execution-loop.sh",
+      "targetPath": "docs/bin/validate-execution-loop.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/design/execution-loop-plane.md",
+      "targetPath": "docs/design/execution-loop-plane.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/design/harness-adoption-plane.md",
+      "targetPath": "docs/design/harness-adoption-plane.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/design/human-control-view-plane.md",
+      "targetPath": "docs/design/human-control-view-plane.md",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "docs/design/policy-to-evidence-governance.md",
+      "targetPath": "docs/design/policy-to-evidence-governance.md",
+      "profiles": ["governance"]
+    },
+    {
+      "sourcePath": "docs/guide/execution-loop-operations.md",
+      "targetPath": "docs/guide/execution-loop-operations.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/goal-locked-completion.md",
+      "targetPath": "docs/guide/goal-locked-completion.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/project-cutting-and-execution.md",
+      "targetPath": "docs/guide/project-cutting-and-execution.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/umbrella-project-governance.md",
+      "targetPath": "docs/guide/umbrella-project-governance.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/quality-axes.md",
+      "targetPath": "docs/guide/quality-axes.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/qa-document-system.md",
+      "targetPath": "docs/guide/qa-document-system.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/human-control-view.md",
+      "targetPath": "docs/guide/human-control-view.md",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "docs/guide/repository-policy-extraction.md",
+      "targetPath": "docs/guide/repository-policy-extraction.md",
+      "profiles": ["governance"]
+    },
+    {
+      "sourcePath": "docs/lib/harness-adopt.mjs",
+      "targetPath": "docs/lib/harness-adopt.mjs",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/lib/harness-adopt-cli.mjs",
+      "targetPath": "docs/lib/harness-adopt-cli.mjs",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/releases/document-harness-v1.json",
+      "targetPath": "docs/releases/document-harness-v1.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/adoption-plan.schema.json",
+      "targetPath": "docs/schemas/adoption-plan.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/apply-receipt.schema.json",
+      "targetPath": "docs/schemas/apply-receipt.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/governance-catalog.schema.json",
+      "targetPath": "docs/schemas/governance-catalog.schema.json",
+      "profiles": ["governance"]
+    },
+    {
+      "sourcePath": "docs/schemas/harness-installation-lock.schema.json",
+      "targetPath": "docs/schemas/harness-installation-lock.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/human-policy-decision-receipt.schema.json",
+      "targetPath": "docs/schemas/human-policy-decision-receipt.schema.json",
+      "profiles": ["governance"]
+    },
+    {
+      "sourcePath": "docs/schemas/migration-evidence-pack.schema.json",
+      "targetPath": "docs/schemas/migration-evidence-pack.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/release-manifest.schema.json",
+      "targetPath": "docs/schemas/release-manifest.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/rollback-receipt.schema.json",
+      "targetPath": "docs/schemas/rollback-receipt.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/verification-receipt.schema.json",
+      "targetPath": "docs/schemas/verification-receipt.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/README.md",
+      "targetPath": "runtime/document-harness-view/README.md",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/bin/human-view",
+      "targetPath": "runtime/document-harness-view/bin/human-view",
+      "profiles": ["view"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/config.example.json",
+      "targetPath": "runtime/document-harness-view/config.example.json",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/config.example.json",
+      "targetPath": "runtime/document-harness-view/config.json",
+      "profiles": ["view"],
+      "generator": "repository-view-config-v1"
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/control.mjs",
+      "targetPath": "runtime/document-harness-view/control.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/lib/projection.mjs",
+      "targetPath": "runtime/document-harness-view/lib/projection.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/lib/process-identity.mjs",
+      "targetPath": "runtime/document-harness-view/lib/process-identity.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/lib/runtime-state.mjs",
+      "targetPath": "runtime/document-harness-view/lib/runtime-state.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/public/app.mjs",
+      "targetPath": "runtime/document-harness-view/public/app.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/public/index.html",
+      "targetPath": "runtime/document-harness-view/public/index.html",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/public/styles.css",
+      "targetPath": "runtime/document-harness-view/public/styles.css",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/public/view-model.mjs",
+      "targetPath": "runtime/document-harness-view/public/view-model.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/server.mjs",
+      "targetPath": "runtime/document-harness-view/server.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/test/control.test.mjs",
+      "targetPath": "runtime/document-harness-view/test/control.test.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/test/helpers.mjs",
+      "targetPath": "runtime/document-harness-view/test/helpers.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/test/projection.test.mjs",
+      "targetPath": "runtime/document-harness-view/test/projection.test.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/test/runtime-state.test.mjs",
+      "targetPath": "runtime/document-harness-view/test/runtime-state.test.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/test/server.test.mjs",
+      "targetPath": "runtime/document-harness-view/test/server.test.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/test/view-model.test.mjs",
+      "targetPath": "runtime/document-harness-view/test/view-model.test.mjs",
+      "profiles": ["view"]
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/version.mjs",
+      "targetPath": "runtime/document-harness-view/version.mjs",
+      "profiles": ["view"]
+    }
+  ],
+  "verification": {
+    "evidencePackPath": "docs/receipts/migration-evidence-pack.json",
+    "requiredProfiles": ["core", "governance", "view"],
+    "requiredInstalledPaths": [
+      ".agents/skills/operate-document-harness/SKILL.md",
+      ".claude/skills/operate-document-harness/SKILL.md",
+      "docs/ADOPT.md",
+      "docs/EXECUTE.md",
+      "docs/_indexes/execution-loop-policy.yaml",
+      "docs/_templates/project.md",
+      "docs/_templates/task.md",
+      "docs/_templates/design.md",
+      "docs/_templates/guide.md",
+      "docs/_templates/report.md",
+      "docs/_templates/qa.md",
+      "docs/_templates/execution-checkpoint.md",
+      "docs/_templates/adoption/human-policy-decision-receipt.json",
+      "docs/bin/harness-adopt",
+      "docs/bin/new-doc.sh",
+      "docs/bin/validate-closeout.sh",
+      "docs/bin/close-doc.sh",
+      "docs/bin/validate-execution-loop.sh",
+      "docs/design/ubiquitous-language.md",
+      "docs/design/execution-loop-plane.md",
+      "docs/design/harness-adoption-plane.md",
+      "docs/design/human-control-view-plane.md",
+      "docs/design/policy-to-evidence-governance.md",
+      "docs/guide/execution-loop-operations.md",
+      "docs/guide/goal-locked-completion.md",
+      "docs/guide/project-cutting-and-execution.md",
+      "docs/guide/umbrella-project-governance.md",
+      "docs/guide/quality-axes.md",
+      "docs/guide/qa-document-system.md",
+      "docs/guide/human-control-view.md",
+      "docs/guide/repository-policy-extraction.md",
+      "runtime/document-harness-view/bin/human-view",
+      "runtime/document-harness-view/lib/runtime-state.mjs",
+      "runtime/document-harness-view/server.mjs"
+    ],
+    "requiredGateIds": [
+      "view-doctor",
+      "view-test",
+      "quality-fast",
+      "quality-full",
+      "quality-continuous"
+    ],
+    "verifiedStatusRequiresAllGates": true,
+    "verifiedStatusRequiresHumanReview": true
+  }
+}

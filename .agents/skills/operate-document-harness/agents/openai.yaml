@@ -1,0 +1,4 @@
+interface:
+  display_name: "Operate Document Harness"
+  short_description: "Run this repository's harness workflow safely"
+  default_prompt: "Use $operate-document-harness to initialize or continue this repository's document harness workflow."

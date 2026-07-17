@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-14
-- Updated: 2026-05-09
+- Updated: 2026-07-15
 
 ## Purpose
 
@@ -23,6 +23,15 @@
 
 - `project`: 큰 delivery boundary, 분해 전략, handoff map
 - `task`: 실제로 닫는 execution slice, goal inventory, evidence
+- execution checkpoint: current hypothesis, last evidence, next actor/action, attention, stop/resume state
+
+### Human Governance
+
+- `human-policy` design: 사람이 소유하는 outcome, clause, non-waivable rule, approver role
+- `proposal` report: AI가 작성한 option/standard/exception 제안; 승인 전 비효력
+- `normative-standard` design: 승인되어 effective인 MUST, invariant, rule ID
+- `operational-guidance` guide: effective standard를 실행하는 HOW
+- approval/exception receipt: exact revision과 scope에 결합된 human decision evidence
 
 ### Drift Control
 
@@ -32,6 +41,7 @@
 - YAML frontmatter properties
 - `source_refs`
 - closeout validator와 foundation validator
+- execution loop validator, decision/verification receipt, policy-to-evidence refs
 
 ### Source Layer
 
@@ -54,6 +64,7 @@
 - Reads: control-plane, ubiquitous-language, 관련 상위 요구, source-backed synthesis
 - Feeds: project, task, guide
 - Must not hold: 긴 실행 이력, 임시 작업 메모
+- Governance role: `human-policy`는 human authority를, `normative-standard`는 승인된 effective rule을 소유할 수 있음
 
 ### `project`
 
@@ -64,8 +75,8 @@
 
 ### `task`
 
-- Holds: execution slice, goal inventory, goal verification, evidence, outputs / handoff
-- Reads: project, design, control-plane, quality axes
+- Holds: execution slice, goal inventory, goal verification, current checkpoint ref, evidence/decision receipts, outputs / handoff
+- Reads: project, effective policy/standard design, control-plane, quality axes, current checkpoint
 - Feeds: 다음 task, downstream system, project closeout
 - Must not hold: 전체 시스템 전략의 원본 정의
 
@@ -75,6 +86,7 @@
 - Reads: design, project, task, report
 - Feeds: future task/project/operator
 - Must not hold: current truth의 유일한 원본
+- Governance rule: design에 없는 새 mandatory rule을 단독 생성하거나 effective standard를 완화할 수 없음
 
 ### `report`
 
@@ -82,6 +94,21 @@
 - Reads: 현재 active surface 전반, raw source, source summary
 - Feeds: 필요 시 guide/design/project/task로 승격
 - Must not hold: 장기 authoritative truth
+- Governance role: `proposal`은 options, impact, approval request를 담지만 effective design으로 승격되기 전까지 normative source가 아님
+
+### `execution checkpoint`
+
+- Holds: task contract revision, attempt/checkpoint sequence, loop state, current hypothesis, last action/evidence delta, next actor/action, resume condition, attention, open risk, receipt refs
+- Reads: exact task revision, effective rule refs, latest immutable receipts
+- Feeds: next execution turn, human control view, review/closeout
+- Must not hold: task milestone history의 유일한 사본, raw long logs, self-issued human approval
+
+### `human control view`
+
+- Holds: source에서 재생성 가능한 immutable snapshot과 presentation-only preference
+- Reads: Markdown/Git source, checkpoint, policy/standard, task/QA/evidence, freshness metadata
+- Feeds: human understanding와 attention routing
+- Must not hold: task status, decision, approval, evidence의 유일한 truth 또는 direct shell/Git write capability
 
 ### `raw source`
 
@@ -102,13 +129,19 @@
 | From | To | What Moves |
 | --- | --- | --- |
 | `design` | `project` | boundary, invariant, interface, out-of-scope 기준 |
+| human policy `design` | proposal `report` | clause, outcome, missing decision, proposal scope |
+| proposal `report` | normative `design` | human-approved rule, rejected alternatives, impact, approval ref |
+| normative `design` | `guide/task/qa` | exact rule version, invariant, check/evidence requirement |
 | `project` | `task` | focused slice, local goal, execution order, quality axes |
 | `task` | `task` | outputs / handoff, residual risk, operator note |
+| `task` | execution checkpoint | current contract revision, next action, risk, attention, receipt refs |
+| execution checkpoint | next agent/human/view | resumable current state, exact requested response, source fence |
 | `task` | `project` | closeout evidence, remaining scope, supersede/cancel reason |
 | `report` | `guide/design/project/task` | reusable rule, truth, execution boundary |
 | `design` | `qa` | 불변식, 위험, 시나리오 — qa 케이스의 유일한 파생 근거 |
 | `task` | `qa` | closeout 시 케이스 증거 갱신, 결함에서 파생된 신규 케이스 |
 | `qa` | `task` | 방어 갭 백로그 항목 — 신규 방어 테스트 작업의 유일한 출처 |
+| `task/qa` | human control view | policy-to-evidence lineage, state/evidence summary, freshness metadata |
 | `raw source` | `report/design/guide/project/task` | source_refs, extracted facts, contradiction notes |
 | `AGENTS.md` | `Codex session` | repo map, workflow, constraints, verification commands |
 
@@ -121,6 +154,8 @@
 3. handoff를 다음 문서가 다시 읽을 수 있게 충분히 구조화했는가
 4. source 기반 주장이라면 `source_refs`와 본문 근거가 충분한가
 5. frontmatter properties와 첫 화면 metadata가 같은 상태를 말하는가
+6. 이 내용이 proposal인지 effective authority인지, human approval ref가 필요한지 분명한가
+7. loop state라면 task lifecycle status와 섞지 않았고 다음 actor가 재개할 수 있는가
 
 답이 모호하면 artifact contract가 약한 상태입니다.
 
@@ -129,3 +164,4 @@
 - 2026-04-14: whole-system / focused execution / drift control artifact contract 규칙 추가.
 - 2026-05-09: raw source layer, source_refs, markdown properties contract 추가.
 - 2026-05-09: AGENTS.md artifact contract와 Codex readiness surface 추가.
+- 2026-07-15: governance role, execution checkpoint, policy-to-evidence, read-only human view artifact contract 추가.

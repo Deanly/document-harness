@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "release": {
+    "id": "{{RELEASE_ID}}",
+    "version": "{{RELEASE_VERSION}}",
+    "manifestSha256": "{{MANIFEST_SHA256}}",
+    "sourceRevision": "{{SOURCE_REVISION_SHA256}}"
+  },
+  "migrationGeneration": 1,
+  "planHash": "{{PLAN_SHA256}}",
+  "targetSourceRevision": "{{TARGET_SOURCE_REVISION}}",
+  "profiles": ["core"],
+  "installedAt": "{{RFC3339_TIMESTAMP}}",
+  "receiptRef": "docs/receipts/{{APPLY_RECEIPT_FILE}}",
+  "applyMutationSet": {
+    "algorithm": "sha256",
+    "count": 1,
+    "paths": ["docs/_indexes/harness-installation.yaml"],
+    "sha256": "{{APPLY_MUTATION_SET_SHA256}}"
+  },
+  "files": []
+}

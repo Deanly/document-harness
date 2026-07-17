@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "command": "apply",
+  "status": "INSTALLED_NOT_VERIFIED",
+  "applyResult": "applied",
+  "applyId": "{{APPLY_ID}}",
+  "planHash": "{{PLAN_SHA256}}",
+  "targetIdentity": "{{TARGET_IDENTITY_SHA256}}",
+  "targetLocator": "../..",
+  "release": {},
+  "profiles": ["core"],
+  "installedAt": "{{RFC3339_TIMESTAMP}}",
+  "writes": 0,
+  "mutations": [],
+  "rollback": { "attempted": false, "result": "not_requested" },
+  "installationLockPath": "docs/_indexes/harness-installation.yaml"
+}
