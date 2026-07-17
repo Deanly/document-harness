@@ -4,7 +4,7 @@ title: human-control-view
 status: current
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-16
+updated: 2026-07-17
 related_project: []
 related_task: []
 related_design:
@@ -33,7 +33,7 @@ tags:
 - Status: current
 - Owner: Codex
 - Created: 2026-07-15
-- Updated: 2026-07-16
+- Updated: 2026-07-17
 - Related Project:
 - Related Task:
 - Related Design: docs/design/control-plane.md; docs/design/execution-loop-plane.md; docs/design/human-control-view-plane.md; docs/design/policy-to-evidence-governance.md
@@ -149,6 +149,9 @@ AI execute loop의 내부 상태를 관찰 가능한 contract로 풀어냅니다
 - fast/full/continuous validator receipt와 마지막 결과, environment/revision을 연결합니다.
 - attention과 stop reason, residual risk, rollback/safe stop을 같은 snapshot에서 확인할 수 있게 합니다.
 - checkpoint 또는 budget source가 없으면 `not configured` 상태와 필요한 source contract를 명확히 표시합니다.
+- reference View는 loop-enabled `docs/tasks/T*.md`의 `checkpoint_ref`가 가리키는 canonical `docs/checkpoints/*.md` frontmatter만 execution source로 사용합니다. orphan file은 무시하고 task/checkpoint ID·revision·state 및 execution barrier를 검증합니다.
+- 여러 linked checkpoint는 active/blocked non-succeeded work, active succeeded closeout, draft, historical terminal task 순으로 우선하고 같은 group에서 `recorded_at`, `attempt_seq`, `checkpoint_seq`, path 순으로 결정론적으로 선택합니다. 별도 JSON mirror나 mtime에서 progress를 만들지 않으며 더 최신인 completed history로 진행 중인 work를 숨기지 않습니다.
+- checkpoint root/entry symlink, malformed frontmatter 또는 저장소 경계 위반은 `degraded`로 표시하고 다른 항목을 근거 없이 대신 선택하지 않습니다.
 
 ### Evidence
 
@@ -412,7 +415,7 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 | trace가 끊김 | explicit policy/directive/design/task refs | broken attention 생성, source에서 edge 수정; view inference write-back 금지 |
 | 잘못된 approval이 보임 | checkpoint/source/diff/scope fence | stale 처리하고 control disable, 새 preview 생성 |
 | optional watcher overflow | last full scan과 reconciliation | reference periodic reconciliation 또는 full scan 후 atomic snapshot publish |
-| parse 실패 | last valid record와 source readability | previous record 유지, degraded 표시, 오류 해결 후 retry |
+| parse 실패 | last valid record와 source readability | previous record는 `lastKnown`으로만 유지, 현재 approval/enforcement/evidence/execution은 `unverified`, 현재 승인·검토 count는 0, 오류 해결 후 retry |
 | optional SSE reconnect 반복 | Last-Event-ID와 buffer retention | full resync, reference ETag polling fallback, event payload 축소 |
 | cache 손상 | source와 cache authority | cache 폐기 후 source rebuild |
 | broker 중단 | capabilities와 health | view read-only 유지, source mutation 금지 |
@@ -429,10 +432,13 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] rapid save, rename, delete, watcher loss 뒤 올바른 snapshot으로 수렴한다.
 - [ ] parse 실패가 silent delete나 false fresh로 이어지지 않는다.
 - [ ] 한 snapshot에 서로 다른 source/checkpoint generation이 섞이지 않는다.
+- [ ] approved/effective badge는 complete current source fence와 실제 matching human decision/effective refs 없이는 표시되지 않는다.
+- [ ] Execution Status는 canonical `docs/checkpoints/*.md`를 deterministic하게 선택하고 symlink/malformed input을 degraded 처리한다.
 - [ ] alternate SSE profile이면 reconnect와 event gap full resync가 동작한다.
 - [ ] reference ETag polling과 304가 동작한다.
 - [ ] read-only API mutation method가 모두 거부된다.
 - [ ] stale/degraded approval 실행이 0건이다.
+- [ ] degraded fallback은 이전 승인·강제 상태를 녹색 current 상태로 표시하지 않고 `마지막 확인값 · 현재 미검증`으로 표시한다.
 - [ ] approved write는 별도 broker/executor/validator receipt를 거친다.
 - [ ] path traversal, symlink escape, excluded sensitivity, browser-origin 공격을 차단한다.
 - [ ] cache 삭제 뒤 hidden decision/approval truth가 손실되지 않는다.
@@ -463,3 +469,4 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - 2026-07-15: read-only local view, information architecture, attention, policy trace, freshness, SSE/polling, approval workflow, security 운영 기준을 생성했다.
 - 2026-07-16: repository 정적 identity, five top tabs, tab별 product plan, refresh-stable interaction과 PatternFly-inspired local semantic design 기준을 추가했다.
 - 2026-07-16: shipped reference View의 doctor/refresh/start/status/url/stop/test, Node no-DB/ETag/lease-safe runtime과 migration/current/source fence 운영 절차를 추가했다.
+- 2026-07-17: approval badge를 complete source/decision/effective evidence에 묶고 Execution Status를 canonical Markdown checkpoint의 deterministic fail-closed projection으로 정렬했다.

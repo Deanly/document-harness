@@ -95,11 +95,14 @@ render_template() {
   local output="$2"
   local doc_id="$3"
   local title="$4"
+  local marker_open='{'
+
+  marker_open="${marker_open}{"
 
   sed \
-    -e "s/{{DOC_ID}}/${doc_id}/g" \
-    -e "s/{{TITLE}}/${title}/g" \
-    -e "s/{{DATE}}/${TODAY}/g" \
+    -e "s/${marker_open}DOC_ID}}/${doc_id}/g" \
+    -e "s/${marker_open}TITLE}}/${title}/g" \
+    -e "s/${marker_open}DATE}}/${TODAY}/g" \
     "$template" > "$output"
 }
 
@@ -130,6 +133,7 @@ fi
 case "$TYPE" in
   task)
     DOC_DIR="$ROOT_DIR/tasks"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/task.md"
     NUMBER="$(next_number "$DOC_DIR" "T")"
     DOC_ID="T${NUMBER}"
@@ -139,6 +143,7 @@ case "$TYPE" in
     ;;
   project)
     DOC_DIR="$ROOT_DIR/projects"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/project.md"
     NUMBER="$(next_number "$DOC_DIR" "P")"
     DOC_ID="P${NUMBER}"
@@ -147,18 +152,24 @@ case "$TYPE" in
     NUMBERED_DOC="true"
     ;;
   design)
+    DOC_DIR="$ROOT_DIR/design"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/design.md"
     DOC_ID=""
     TITLE="$SLUG"
     OUTPUT="$ROOT_DIR/design/${SLUG}.md"
     ;;
   guide)
+    DOC_DIR="$ROOT_DIR/guide"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/guide.md"
     DOC_ID=""
     TITLE="$SLUG"
     OUTPUT="$ROOT_DIR/guide/${SLUG}.md"
     ;;
   report)
+    DOC_DIR="$ROOT_DIR/reports"
+    mkdir -p "$DOC_DIR"
     TEMPLATE="$ROOT_DIR/_templates/report.md"
     DOC_ID=""
     TITLE="$SLUG"

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import http from "node:http";
 import { mkdtemp, mkdir, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -76,8 +76,41 @@ function requestWithHost(url, host, method = "GET", origin = null) {
   });
 }
 
+async function approveFixturePolicy(fixture) {
+  const policy = fixture.catalog.policies[0];
+  policy.authorityState = "effective";
+  policy.approvalState = "approved";
+  policy.effectiveRef = "docs/design/effective-policy.md";
+  policy.decisionReceiptRef = "docs/receipts/POL-1.json";
+  await mkdir(path.join(fixture.root, "docs", "design"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "receipts"), { recursive: true });
+  const effectiveBytes = "# Effective policy\n";
+  await writeFile(path.join(fixture.root, policy.effectiveRef), effectiveBytes, "utf8");
+  await writeFile(path.join(fixture.root, policy.decisionReceiptRef), `${JSON.stringify({
+    schemaVersion: 1,
+    decisionId: "DEC-POL-1",
+    candidateId: policy.id,
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-07-17T00:00:00.000Z",
+    sourceFence: {
+      repositoryRevision: fixture.seedCommit,
+      sourceHashes: policy.sourceRefs.map(({ capturedSha256 }) => capturedSha256)
+    },
+    effectiveRef: policy.effectiveRef,
+    effectiveSha256: createHash("sha256").update(effectiveBytes).digest("hex"),
+    reason: "fixture approval"
+  }, null, 2)}\n`, "utf8");
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "catalog.json"),
+    `${JSON.stringify(fixture.catalog, null, 2)}\n`,
+    "utf8"
+  );
+}
+
 test("server is loopback, read-only, host/origin checked, ETag-aware, and serves the exact five-tab shell", async (t) => {
   const fixture = await createFixture({ projectId: "server-fixture" });
+  await approveFixturePolicy(fixture);
   const server = await startFixtureServer(fixture);
   t.after(async () => {
     await stopChild(server.child);
@@ -100,7 +133,10 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   const first = await fetch(`${server.lease.url}/api/v1/snapshot`);
   assert.equal(first.status, 200);
   const etag = first.headers.get("etag");
+  const firstSnapshot = await first.json();
   assert.ok(etag);
+  assert.equal(firstSnapshot.summary.approvedCount, 1);
+  assert.equal(firstSnapshot.policies[0].approvalState, "approved");
   assert.equal((await fetch(`${server.lease.url}/api/v1/snapshot`, { headers: { "If-None-Match": etag } })).status, 304);
   assert.equal((await fetch(`${server.lease.url}/api/v1/snapshot`, { method: "POST" })).status, 405);
   assert.equal((await requestWithHost(`${server.lease.url}/healthz`, `example.com:${server.lease.port}`)).statusCode, 403);
@@ -124,6 +160,25 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   await writeFile(path.join(fixture.root, "docs", "governance", "catalog.json"), "{ invalid json", "utf8");
   const degraded = await waitForSnapshot(server.lease.url, (snapshot) => snapshot.snapshot.freshness === "degraded" && snapshot.projectionError);
   assert.equal(degraded.summary.policyCount, 1, "previous valid records remain visible");
+  assert.equal(degraded.snapshot.verificationState, "last_known_unverified");
+  assert.equal(degraded.snapshot.sourceFence.sourceEvidenceState, "unverified");
+  assert.equal(degraded.snapshot.sourceFence.evidenceCurrent, 0);
+  assert.equal(degraded.snapshot.sourceFence.lastKnownEvidenceCurrent, 2);
+  assert.equal(degraded.summary.state, "last_known_unverified");
+  assert.equal(degraded.summary.approvedCount, 0);
+  assert.equal(degraded.summary.reviewCount, 0);
+  assert.equal(degraded.summary.unverifiedCount, 2);
+  assert.equal(degraded.summary.lastKnown.approvedCount, 1);
+  assert.equal(degraded.summary.lastKnown.reviewCount, 1);
+  assert.equal(degraded.summary.attentionCount, degraded.attention.length);
+  assert.equal(degraded.policies[0].approvalState, "unverified");
+  assert.equal(degraded.policies[0].authorityState, "unverified");
+  assert.equal(degraded.policies[0].enforcement, "unverified");
+  assert.equal(degraded.policies[0].evidenceState, "unverified");
+  assert.equal(degraded.policies[0].projectionState, "last_known_unverified");
+  assert.equal(degraded.policies[0].lastKnown.approvalState, "approved");
+  assert.ok(degraded.policies[0].sourceRefs.every(({ state }) => state === "unverified"));
+  assert.equal(degraded.execution.status, "unverified");
   assert.ok(degraded.attention.some((item) => item.id === "ATTN-PROJECTION-DEGRADED"));
   assert.doesNotMatch(degraded.projectionError.message, new RegExp(fixture.root));
   assert.equal((await fetch(`${server.lease.url}/readyz`)).status, 503);
@@ -131,6 +186,9 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   await writeFile(path.join(fixture.root, "docs", "governance", "catalog.json"), `${JSON.stringify(fixture.catalog, null, 2)}\n`, "utf8");
   const recovered = await waitForSnapshot(server.lease.url, (snapshot) => snapshot.snapshot.seq > degraded.snapshot.seq && snapshot.snapshot.freshness === "fresh");
   assert.equal(recovered.projectionError, undefined);
+  assert.equal(recovered.snapshot.verificationState, undefined);
+  assert.equal(recovered.summary.approvedCount, 1);
+  assert.equal(recovered.policies[0].approvalState, "approved");
   assert.equal((await fetch(`${server.lease.url}/readyz`)).status, 200);
 });
 

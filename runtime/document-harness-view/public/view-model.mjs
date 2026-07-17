@@ -7,12 +7,15 @@ const severityOrder = new Map([
 
 const evidenceOrder = new Map([
   ["invalid", 0],
+  ["unverified", 1],
   ["missing", 1],
   ["changed", 2],
   ["stale", 2],
   ["current", 3],
   ["unknown", 4]
 ]);
+
+export const LAST_KNOWN_UNVERIFIED = "last_known_unverified";
 
 function normalized(value) {
   return String(value ?? "").trim().toLocaleLowerCase("ko");
@@ -81,6 +84,7 @@ export function filterPolicies({ policies = [], guidelines = [], attention = [],
       || (filter === "attention" && severity !== "none")
       || (filter === "critical" && severity === "critical")
       || (filter === "unreviewed" && policy.approvalState === "unreviewed")
+      || (filter === "unverified" && policy.projectionState === LAST_KNOWN_UNVERIFIED)
       || (filter === "enforced" && policy.enforcement === "enforced")
       || (filter === "stale" && policy.evidenceState !== "current");
     if (!matchesFilter) return false;
@@ -102,6 +106,44 @@ export function filterPolicies({ policies = [], guidelines = [], attention = [],
     ].filter(Boolean).join(" ").toLocaleLowerCase("ko");
     return haystack.includes(needle);
   });
+}
+
+export function governanceStatusPresentation(item = {}, field) {
+  const value = item[field] ?? "unknown";
+  const unverified = item.projectionState === LAST_KNOWN_UNVERIFIED || value === "unverified";
+  return {
+    state: unverified ? LAST_KNOWN_UNVERIFIED : "verified",
+    value,
+    lastKnownValue: unverified ? item.lastKnown?.[field] ?? null : null,
+    tone: unverified ? "warning" : null
+  };
+}
+
+export function freshnessPresentation(snapshot = {}) {
+  const freshness = snapshot.snapshot?.freshness ?? "degraded";
+  const verificationState = snapshot.snapshot?.verificationState;
+  if (verificationState === LAST_KNOWN_UNVERIFIED || snapshot.projectionError?.presentationState === LAST_KNOWN_UNVERIFIED) {
+    const count = snapshot.summary?.unverifiedCount;
+    return {
+      state: LAST_KNOWN_UNVERIFIED,
+      tone: "degraded",
+      message: `Latest source could not be verified · showing ${count ?? "unknown"} last-known governance records as unverified.`
+    };
+  }
+  if (freshness === "fresh") {
+    return {
+      state: "fresh",
+      tone: "fresh",
+      message: `Source evidence is current · ${snapshot.snapshot?.sourceFence?.evidenceCurrent ?? "unknown"} references match their captured hashes.`
+    };
+  }
+  const migration = snapshot.migrationFence ?? {};
+  const fence = snapshot.snapshot?.sourceFence ?? {};
+  return {
+    state: freshness,
+    tone: freshness,
+    message: `Review required · migration fence ${migration.state ?? "unknown"} · changed ${fence.evidenceChanged ?? "unknown"} · missing ${fence.evidenceMissing ?? "unknown"}`
+  };
 }
 
 export function paginate(items = [], requestedPage = 1, requestedPageSize = 10) {

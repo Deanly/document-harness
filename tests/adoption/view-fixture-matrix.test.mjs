@@ -45,7 +45,8 @@ test("view fixture: execution checkpoint is explicitly not configured", async (t
   assert.deepEqual(snapshot.execution, {
     configured: false,
     status: "not_configured",
-    message: "No task checkpoint, next action, verification receipt, or budget source is configured."
+    sourceRoot: "docs/checkpoints",
+    message: "No canonical docs/checkpoints/*.md execution checkpoint is available."
   });
 });
 

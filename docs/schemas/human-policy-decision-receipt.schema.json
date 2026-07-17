@@ -4,7 +4,7 @@
   "title": "Human Policy Decision Receipt",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "decisionId", "candidateId", "decision", "decidedBy", "decidedAt", "sourceFence", "effectiveRef"],
+  "required": ["schemaVersion", "decisionId", "candidateId", "decision", "decidedBy", "decidedAt", "sourceFence", "effectiveRef", "effectiveSha256"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "decisionId": { "type": "string", "minLength": 1 },
@@ -30,6 +30,27 @@
       }
     },
     "effectiveRef": { "type": ["string", "null"] },
+    "effectiveSha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
     "reason": { "type": "string" }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "decision": { "enum": ["approved", "exception_accepted"] } }, "required": ["decision"] },
+      "then": {
+        "properties": {
+          "effectiveRef": { "type": "string", "minLength": 1 },
+          "effectiveSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "decision": { "enum": ["rejected", "deferred"] } }, "required": ["decision"] },
+      "then": {
+        "properties": {
+          "effectiveRef": { "type": "null" },
+          "effectiveSha256": { "type": "null" }
+        }
+      }
+    }
+  ]
 }

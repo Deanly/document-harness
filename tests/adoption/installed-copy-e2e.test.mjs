@@ -95,8 +95,11 @@ test("installed full-profile copy operates, preserves project instructions, roll
     env: isolatedTestEnvironment(),
     maxBuffer: 64 * 1024 * 1024,
   });
-  assert.match(installedRuntimeTests, /# pass 30/);
+  assert.match(installedRuntimeTests, /# tests [1-9][0-9]*/);
+  assert.match(installedRuntimeTests, /# pass [1-9][0-9]*/);
   assert.match(installedRuntimeTests, /# fail 0/);
+  assert.match(installedRuntimeTests, /# cancelled 0/);
+  assert.match(installedRuntimeTests, /# skipped 0/);
 
   const snapshot = JSON.parse(execFileSync(humanView, ["snapshot", "--root", target], {
     cwd: target,

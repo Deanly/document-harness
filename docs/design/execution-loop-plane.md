@@ -238,7 +238,9 @@ recorded_at: "2026-07-15T15:00:00+09:00"
 - `last_action`은 무엇을 했는지, `evidence`는 그 행동으로 새로 확인된 근거가 무엇인지 분리합니다.
 - `risks`, `attention`, `receipts`는 embedded copy가 아니라 stable reference 목록을 기본으로 합니다.
 - `policy_refs`와 `directive_refs`는 trace projection의 explicit edge source입니다.
-- `source_revision`은 provenance이고 `source_hash`는 checkpoint source bytes 검증에 사용합니다.
+- `source_hash`는 linked task의 현재 bytes SHA-256이며 `source_revision`은 `working-tree` 또는 같은 task blob을 resolve하는 full Git commit입니다. checkpoint가 다른 task generation을 mirror한 채 current로 보이지 않게 둘을 함께 검증합니다.
+- `succeeded`의 evidence와 receipt ref는 저장소 안의 non-empty regular file로 resolve되어야 하며 private/credential 경로나 symlink를 통과할 수 없습니다. receipt는 canonical identity, task/checkpoint, actor/time, statement/scope, evidence refs와 linked-task source revision/hash를 가져야 하며 checkpoint evidence를 명시적으로 연결합니다. 문자열이나 임의 파일만 채운 ref는 evidence barrier가 아닙니다.
+- 실행 가능한 non-terminal state는 iteration/time budget이 남아 있어야 합니다. limit에 도달한 미완료 attempt는 `stopped / BUDGET_EXCEEDED`이고, 마지막 허용 action에서 barrier를 완료한 `succeeded`만 limit과 공존할 수 있습니다.
 - 다음 실행이 goal, constraint, 마지막 valid evidence, 다음 actor/action, resume condition을 복구하지 못하면 checkpoint가 불완전합니다.
 
 ## Evidence And Decision Receipt Contract

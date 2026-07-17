@@ -3,6 +3,8 @@ import {
   buildEvidenceGroups,
   filterEvidence,
   filterPolicies,
+  freshnessPresentation,
+  governanceStatusPresentation,
   guidelineMap,
   paginate,
   policySeverity,
@@ -44,6 +46,8 @@ const labels = {
   advisory: "지침 수준",
   not_implemented: "미구현",
   unknown: "확인 필요",
+  unverified: "현재 미검증",
+  last_known_unverified: "마지막 확인값 · 현재 미검증",
   repository_instruction: "저장소 지침",
   current_design: "현재 설계",
   guide: "운영 가이드",
@@ -112,7 +116,7 @@ function number(value) {
 function toneFor(value) {
   if (["effective", "approved", "enforced", "fresh", "current", "clean", "UP"].includes(value)) return "success";
   if (["not_implemented", "stale", "degraded", "rejected", "missing", "invalid", "changed", "DOWN", "critical"].includes(value)) return "danger";
-  if (["partially_enforced", "review_requested", "proposed", "advisory", "dirty", "warning"].includes(value)) return "warning";
+  if (["partially_enforced", "review_requested", "proposed", "advisory", "dirty", "warning", "unverified", "last_known_unverified"].includes(value)) return "warning";
   if (["decision"].includes(value)) return "info";
   return "neutral";
 }
@@ -181,13 +185,18 @@ function setupTabs() {
 
 function renderFreshness(snapshot) {
   const banner = $("#freshness-banner");
-  const freshness = snapshot.snapshot.freshness ?? "degraded";
-  const fence = snapshot.snapshot.sourceFence ?? {};
-  banner.className = `freshness-banner ${freshness}`;
-  const migration = snapshot.migrationFence ?? {};
-  banner.textContent = freshness === "fresh"
-    ? `Source evidence is current · ${number(fence.evidenceCurrent)} references match their captured hashes.`
-    : `Review required · migration fence ${migration.state ?? "unknown"} · changed ${number(fence.evidenceChanged)} · missing ${number(fence.evidenceMissing)}`;
+  const presentation = freshnessPresentation(snapshot);
+  banner.className = `freshness-banner ${presentation.tone}`;
+  banner.textContent = presentation.message;
+}
+
+function governanceStatusLabel(item, field, suffix = "") {
+  const presentation = governanceStatusPresentation(item, field);
+  if (presentation.state === "last_known_unverified") {
+    const previous = labels[presentation.lastKnownValue] ?? presentation.lastKnownValue ?? "기록 없음";
+    return statusLabel("unverified", presentation.tone, `마지막 ${previous} · 현재 미검증${suffix}`);
+  }
+  return statusLabel(presentation.value, toneFor(presentation.value), `${labels[presentation.value] ?? presentation.value}${suffix}`);
 }
 
 function runtimeMetricSet(snapshot) {
@@ -238,11 +247,13 @@ function renderOverview(snapshot) {
   migration.textContent = snapshot.migration.status === "awaiting_human_review" ? "초기 이관 · 사용자 검토 대기" : snapshot.migration.status;
   migration.className = "status-label warning";
 
+  const unverified = snapshot.summary.state === "last_known_unverified";
   renderMetricSet($("#overview-summary"), [
     ["정책 후보", number(snapshot.summary.policyCount), "기존 소스에서 추출"],
     ["실행 지침", number(snapshot.summary.guidelineCount), "정책 구현 방법"],
-    ["승인 완료", number(snapshot.summary.approvedCount), "receipt 기준"],
-    ["검토 대기", number(snapshot.summary.reviewCount), "정책·지침 후보"],
+    [unverified ? "현재 확인된 승인" : "승인 완료", number(snapshot.summary.approvedCount), unverified ? `마지막 확인 ${number(snapshot.summary.lastKnown?.approvedCount)}` : "receipt 기준"],
+    [unverified ? "현재 확인된 검토 대기" : "검토 대기", number(snapshot.summary.reviewCount), unverified ? `마지막 확인 ${number(snapshot.summary.lastKnown?.reviewCount)}` : "정책·지침 후보"],
+    ...(unverified ? [["현재 미검증", number(snapshot.summary.unverifiedCount), "마지막 정상 snapshot에서 보존"]] : []),
     ["주의 항목", number(snapshot.summary.attentionCount), "위험·결정·공백"]
   ]);
 
@@ -276,6 +287,7 @@ function renderPolicyFilters(snapshot) {
     ["critical", "Critical"],
     ["attention", "검토 연결"],
     ["unreviewed", "승인 필요"],
+    ["unverified", "현재 미검증"],
     ["enforced", "강제"],
     ["stale", "근거 변경"]
   ];
@@ -312,6 +324,14 @@ function sourceLocation(ref) {
   return `${ref.path}${ref.lineStart ? `:${ref.lineStart}${ref.lineEnd ? `–${ref.lineEnd}` : ""}` : ""}`;
 }
 
+function sourceStateText(ref) {
+  if (ref.state === "unverified") {
+    const previous = labels[ref.lastKnownState] ?? ref.lastKnownState ?? "기록 없음";
+    return `마지막 ${previous} · 현재 미검증`;
+  }
+  return labels[ref.state] ?? ref.state;
+}
+
 function policyDetail(policy, linkedGuides) {
   const statement = element("div", { className: "detail-column" }, [
     element("span", { className: "detail-label", text: "정책 진술과 영향" }),
@@ -342,7 +362,7 @@ function policyDetail(policy, linkedGuides) {
   for (const ref of policy.sourceRefs) {
     evidenceList.append(element("li", {}, [
       element("code", { text: sourceLocation(ref) }),
-      document.createTextNode(` · ${labels[ref.state] ?? ref.state}`)
+      document.createTextNode(` · ${sourceStateText(ref)}`)
     ]));
   }
   evidence.append(evidenceList);
@@ -413,10 +433,10 @@ function renderPolicyTable(snapshot) {
           : [element("span", { text: "연결 없음" })])
       ]),
       element("td", {}, [policyRiskLabel(policy, snapshot)]),
-      element("td", {}, [statusLabel(policy.enforcement)]),
-      element("td", {}, [statusLabel(policy.approvalState)]),
+      element("td", {}, [governanceStatusLabel(policy, "enforcement")]),
+      element("td", {}, [governanceStatusLabel(policy, "approvalState")]),
       element("td", {}, [
-        statusLabel(policy.evidenceState, toneFor(policy.evidenceState), `${labels[policy.evidenceState] ?? policy.evidenceState} ${policy.sourceRefs.length}`)
+        governanceStatusLabel(policy, "evidenceState", ` · ${policy.sourceRefs.length}`)
       ])
     ]);
     body.append(row);
@@ -474,12 +494,14 @@ function renderReviewRail(snapshot) {
 }
 
 function renderPolicies(snapshot) {
+  const unverified = snapshot.summary.state === "last_known_unverified";
   renderMetricSet($("#policy-summary"), [
     ["정책", number(snapshot.summary.policyCount)],
     ["지침", number(snapshot.summary.guidelineCount)],
-    ["승인", number(snapshot.summary.approvedCount)],
+    [unverified ? "현재 확인된 승인" : "승인", number(snapshot.summary.approvedCount), unverified ? `마지막 ${number(snapshot.summary.lastKnown?.approvedCount)}` : null],
+    ...(unverified ? [["현재 미검증", number(snapshot.summary.unverifiedCount)]] : []),
     ["주의", number(snapshot.summary.attentionCount)],
-    ["검토 대기", number(snapshot.summary.reviewCount)]
+    [unverified ? "현재 확인된 검토 대기" : "검토 대기", number(snapshot.summary.reviewCount), unverified ? `마지막 ${number(snapshot.summary.lastKnown?.reviewCount)}` : null]
   ], "compact-metric");
   renderPolicyFilters(snapshot);
   renderPolicyTable(snapshot);
@@ -635,7 +657,10 @@ function renderExecution(snapshot) {
   const gapTitle = $("#execution-gap-title");
   const gapCopy = $("#execution-gap-copy");
   gap.className = `empty-state execution-gap ${execution.status}`;
-  if (!execution.configured) {
+  if (execution.status === "unverified") {
+    gapTitle.textContent = "Execution checkpoint is last-known and currently unverified";
+    gapCopy.textContent = `The latest projection failed. Last-known status was ${execution.lastKnownStatus ?? "unknown"}; progress and completion are not currently verified.`;
+  } else if (!execution.configured) {
     gapTitle.textContent = "Execution checkpoint is not configured";
     gapCopy.textContent = execution.message ?? "No checkpoint, next action, verification receipt, or budget source is configured. The View does not infer progress.";
   } else if (execution.status === "degraded") {
@@ -657,6 +682,7 @@ function renderEvidenceFilters(groups) {
   clear(container);
   const definitions = [
     ["all", "전체"],
+    ["unverified", "현재 미검증"],
     ["current", "현재 일치"],
     ["changed", "변경"],
     ["missing", "누락"],

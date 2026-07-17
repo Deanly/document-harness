@@ -3,13 +3,16 @@ import { execFileSync, spawnSync } from "node:child_process";
 import {
   chmodSync,
   existsSync,
+  lstatSync,
   mkdtempSync,
+  readlinkSync,
   readFileSync,
   readdirSync,
   rmSync,
   utimesSync,
   writeFileSync,
   mkdirSync,
+  symlinkSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -223,6 +226,28 @@ test("mature same-name project file becomes a no-write decision conflict", (t) =
   assert.equal(existsSync(path.join(target, INSTALLATION_LOCK_PATH)), false);
 });
 
+test("dangling leaf and ancestor symlinks are plan conflicts and are never overwritten", (t) => {
+  for (const scenario of [
+    { path: "document-harness.yaml", actionPath: "document-harness.yaml" },
+    { path: ".agents", actionPath: ".agents/skills/operate-document-harness/SKILL.md" },
+  ]) {
+    const { base, target } = fixture(t);
+    const link = path.join(target, ...scenario.path.split("/"));
+    symlinkSync("missing-project-owned-target", link);
+    const planFile = path.join(base, `${scenario.path.replaceAll("/", "-")}-plan.json`);
+    const plan = createPlan({ target, profiles: ["core"], output: planFile });
+    const conflict = plan.actions.find(({ path: actionPath }) => actionPath === scenario.actionPath);
+    assert.equal(plan.status, "NEEDS_DECISION");
+    assert.equal(conflict.action, "CONFLICT");
+    assert.match(conflict.reason, /unsafe|symlink/i);
+    const result = applyPlan({ planFile, expectedPlanHash: plan.planHash });
+    assert.equal(result.status, "NEEDS_DECISION");
+    assert.equal(result.writes, 0);
+    assert.equal(lstatSync(link).isSymbolicLink(), true);
+    assert.equal(readlinkSync(link), "missing-project-owned-target");
+  }
+});
+
 test("apply is fenced, installs atomically, and a second apply is a zero-write no-op", (t) => {
   const { target, planFile, plan } = createCorePlan(t);
   const first = applyPlan({ planFile, expectedPlanHash: plan.planHash });
@@ -308,6 +333,43 @@ test("a self-rehashed forged action is rejected against the release calculation"
   assert.equal(existsSync(path.join(target, INSTALLATION_LOCK_PATH)), false);
 });
 
+test("a self-rehashed release fence with extra properties is rejected before propagation", (t) => {
+  const { target, planFile, plan } = createCorePlan(t);
+  const before = inspectTarget(target);
+  const forged = structuredClone(plan);
+  forged.release.untrustedDisplay = "looks-authoritative";
+  delete forged.planHash;
+  forged.planHash = sha256(canonicalJson(forged));
+  writeFileSync(planFile, `${JSON.stringify(forged, null, 2)}\n`);
+
+  assert.throws(
+    () => applyPlan({ planFile, expectedPlanHash: forged.planHash }),
+    (error) => error.code === "RELEASE_FENCE_MISMATCH" && error.status === "NEEDS_DECISION",
+  );
+  assert.equal(inspectTarget(target).inventorySha256, before.inventorySha256);
+  assert.equal(existsSync(path.join(target, INSTALLATION_LOCK_PATH)), false);
+});
+
+test("self-rehashed decision tampering cannot bypass unborn repository attention", (t) => {
+  const { base, target } = fixture(t);
+  rmSync(path.join(target, ".git"), { recursive: true, force: true });
+  git(target, "init", "-q");
+  const planFile = path.join(base, "forged-unborn-plan.json");
+  const plan = createPlan({ target, profiles: ["governance"], output: planFile });
+  assert.ok(plan.attention.some(({ code }) => code === "UNBORN_REPOSITORY"));
+  const forged = structuredClone(plan);
+  forged.status = "PLAN_READY";
+  forged.attention = [];
+  delete forged.planHash;
+  forged.planHash = sha256(canonicalJson(forged));
+  writeFileSync(planFile, `${JSON.stringify(forged, null, 2)}\n`);
+  assert.throws(
+    () => applyPlan({ planFile, expectedPlanHash: forged.planHash }),
+    (error) => error.code === "PLAN_DECISION_MISMATCH" && error.status === "NEEDS_DECISION",
+  );
+  assert.equal(existsSync(path.join(target, INSTALLATION_LOCK_PATH)), false);
+});
+
 test("index-only fence changes are detected even when worktree bytes do not change", (t) => {
   const { base, target, planFile } = fixture(t, { mature: true });
   const userFile = path.join(target, "user-owned.txt");
@@ -385,6 +447,21 @@ test("rollback refuses post-apply edits, then restores and supports reapply", (t
   assert.equal(reapplied.applyResult, "applied");
 });
 
+test("rollback preserves empty parent directories that existed before apply", (t) => {
+  const { target, planFile } = fixture(t);
+  const preexistingDirectory = path.join(target, ".agents/skills");
+  mkdirSync(preexistingDirectory, { recursive: true });
+  const plan = createPlan({ target, profiles: ["core"], output: planFile });
+  const applied = applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  assert.equal(applied.applyResult, "applied");
+
+  const rolledBack = rollbackReceipt({ receiptFile: applyReceiptPath(target, plan.planHash) });
+  assert.equal(rolledBack.status, "ROLLED_BACK");
+  assert.equal(lstatSync(path.join(target, ".agents")).isDirectory(), true);
+  assert.equal(lstatSync(preexistingDirectory).isDirectory(), true);
+  assert.equal(existsSync(path.join(preexistingDirectory, "document-harness/SKILL.md")), false);
+});
+
 test("rollback rejects copied or internally inconsistent receipts before writes", (t) => {
   const { target, planFile, plan } = createCorePlan(t);
   applyPlan({ planFile, expectedPlanHash: plan.planHash });
@@ -404,6 +481,45 @@ test("rollback rejects copied or internally inconsistent receipts before writes"
     (error) => error.code === "INVALID_APPLY_RECEIPT" && error.status === "NEEDS_DECISION",
   );
   assert.equal(existsSync(path.join(target, INSTALLATION_LOCK_PATH)), true);
+});
+
+test("rollback rejects a receipt subset not matching the lock-anchored mutation set", (t) => {
+  const { target, planFile, plan } = createCorePlan(t);
+  const applied = applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  const receiptFile = applyReceiptPath(target, plan.planHash);
+  const managed = applied.mutations.find(({ path: mutationPath }) => mutationPath !== INSTALLATION_LOCK_PATH);
+  const managedFile = path.join(target, ...managed.path.split("/"));
+  const receipt = JSON.parse(readFileSync(receiptFile, "utf8"));
+  receipt.mutations = receipt.mutations.filter(({ path: mutationPath }) => mutationPath === INSTALLATION_LOCK_PATH);
+  receipt.writes = receipt.mutations.length + 1;
+  writeFileSync(receiptFile, `${JSON.stringify(receipt, null, 2)}\n`);
+  assert.throws(
+    () => rollbackReceipt({ receiptFile }),
+    (error) => error.code === "RECEIPT_MUTATION_SET_MISMATCH" && error.status === "NEEDS_DECISION",
+  );
+  assert.equal(existsSync(managedFile), true);
+  assert.equal(existsSync(path.join(target, INSTALLATION_LOCK_PATH)), true);
+});
+
+test("legacy v1 locks remain upgrade-readable but cannot authorize rollback before anchoring", (t) => {
+  const { base, target, planFile, plan } = createCorePlan(t);
+  applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  const receiptFile = applyReceiptPath(target, plan.planHash);
+  const lockFile = path.join(target, INSTALLATION_LOCK_PATH);
+  const legacyLock = JSON.parse(readFileSync(lockFile, "utf8"));
+  delete legacyLock.applyMutationSet;
+  writeFileSync(lockFile, `${JSON.stringify(legacyLock, null, 2)}\n`);
+  assert.throws(
+    () => rollbackReceipt({ receiptFile }),
+    (error) => error.code === "RECEIPT_MUTATION_SET_UNANCHORED" && error.status === "NEEDS_DECISION",
+  );
+  const upgradeFile = path.join(base, "legacy-lock-upgrade.json");
+  const upgrade = createPlan({ target, profiles: ["core"], output: upgradeFile });
+  assert.equal(upgrade.status, "PLAN_READY");
+  applyPlan({ planFile: upgradeFile, expectedPlanHash: upgrade.planHash });
+  const anchoredLock = JSON.parse(readFileSync(lockFile, "utf8"));
+  assert.equal(anchoredLock.migrationGeneration, legacyLock.migrationGeneration + 1);
+  assert.match(anchoredLock.applyMutationSet.sha256, /^[a-f0-9]{64}$/);
 });
 
 test("successful mature migration preserves unrelated dirty tracked and untracked bytes", (t) => {
@@ -441,6 +557,33 @@ test("valid installation lock selects upgrade and preserves release ownership", 
   assert.deepEqual(new Set(lock.files.map(({ ownership }) => ownership)), new Set(["harness-managed", "generated", "project-owned"]));
 });
 
+test("upgrade records, repairs, and can roll back a mode-only managed-file mutation", (t) => {
+  const { base, target, planFile, plan } = createCorePlan(t);
+  applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  const managedPath = "docs/ADOPT.md";
+  const managedFile = path.join(target, ...managedPath.split("/"));
+  chmodSync(managedFile, 0o600);
+  const upgradeFile = path.join(base, "mode-only-upgrade.json");
+  const upgrade = createPlan({ target, profiles: ["core"], output: upgradeFile });
+  const action = upgrade.actions.find(({ path: actionPath }) => actionPath === managedPath);
+  assert.equal(action.action, "UPDATE_UNMODIFIED");
+  assert.equal(action.beforeSha256, action.afterSha256);
+  assert.equal(action.beforeMode, 0o600);
+  assert.equal(Number.parseInt(action.mode, 8), 0o644);
+  assert.match(action.reason, /mode requires repair/);
+  assert.equal(action.rollbackAction, "RESTORE_PREIMAGE");
+  const actionSchema = JSON.parse(readFileSync(path.join(SCHEMAS, "adoption-plan.schema.json"), "utf8")).$defs.action.properties;
+  assert.equal(actionSchema.beforeMode.minimum, 0);
+  assert.equal(actionSchema.beforeMode.maximum, 0o777);
+  assert.ok(action.beforeMode >= actionSchema.beforeMode.minimum && action.beforeMode <= actionSchema.beforeMode.maximum);
+  const applied = applyPlan({ planFile: upgradeFile, expectedPlanHash: upgrade.planHash });
+  assert.ok(applied.mutations.some(({ path: mutationPath }) => mutationPath === managedPath));
+  assert.equal(lstatSync(managedFile).mode & 0o777, 0o644);
+  const rolledBack = rollbackReceipt({ receiptFile: applyReceiptPath(target, upgrade.planHash) });
+  assert.equal(rolledBack.status, "ROLLED_BACK");
+  assert.equal(lstatSync(managedFile).mode & 0o777, 0o600);
+});
+
 test("upgrade refuses implicit profile removal with zero writes", (t) => {
   const { base, target } = fixture(t);
   const installFile = path.join(base, "install-full.json");
@@ -453,6 +596,28 @@ test("upgrade refuses implicit profile removal with zero writes", (t) => {
   assert.ok(downgrade.attention.some(({ code }) => code === "PROFILE_REMOVAL_UNSUPPORTED"));
   const result = applyPlan({ planFile: downgradeFile, expectedPlanHash: downgrade.planHash });
   assert.equal(result.writes, 0);
+  assert.equal(inspectTarget(target).inventorySha256, before.inventorySha256);
+});
+
+test("self-rehashed decision tampering cannot bypass profile-removal attention", (t) => {
+  const { base, target } = fixture(t);
+  const installFile = path.join(base, "install-full-for-forgery.json");
+  const install = createPlan({ target, profiles: ["view"], output: installFile });
+  applyPlan({ planFile: installFile, expectedPlanHash: install.planHash });
+  const downgradeFile = path.join(base, "forged-downgrade.json");
+  const downgrade = createPlan({ target, profiles: ["core"], output: downgradeFile });
+  assert.ok(downgrade.attention.some(({ code }) => code === "PROFILE_REMOVAL_UNSUPPORTED"));
+  const before = inspectTarget(target);
+  const forged = structuredClone(downgrade);
+  forged.status = "PLAN_READY";
+  forged.attention = [];
+  delete forged.planHash;
+  forged.planHash = sha256(canonicalJson(forged));
+  writeFileSync(downgradeFile, `${JSON.stringify(forged, null, 2)}\n`);
+  assert.throws(
+    () => applyPlan({ planFile: downgradeFile, expectedPlanHash: forged.planHash }),
+    (error) => error.code === "PLAN_DECISION_MISMATCH" && error.status === "NEEDS_DECISION",
+  );
   assert.equal(inspectTarget(target).inventorySha256, before.inventorySha256);
 });
 
@@ -533,6 +698,29 @@ test("corrupt installation lock stops migration and apply writes zero", (t) => {
   assert.equal(result.status, "NEEDS_DECISION");
   assert.equal(result.writes, 0);
   assert.deepEqual(readFileSync(lockFile), lockBefore);
+});
+
+test("case-colliding installation lock stops before apply with zero writes", (t) => {
+  const { target, planFile } = fixture(t, { mature: true });
+  const aliasPath = path.join(target, "docs/_indexes/Harness-Installation.yaml");
+  mkdirSync(path.dirname(aliasPath), { recursive: true });
+  writeFileSync(aliasPath, "project-owned alias bytes\n");
+  const before = inspectTarget(target);
+  const aliasBefore = readFileSync(aliasPath);
+
+  const plan = createPlan({ target, profiles: ["core"], output: planFile });
+  assert.equal(plan.mode, "stopped");
+  assert.equal(plan.repositoryState, "unknown");
+  assert.equal(plan.status, "NEEDS_DECISION");
+  assert.ok(plan.attention.some(({ code, message }) => (
+    code === "INVALID_INSTALLATION_LOCK" && /differs only by case/.test(message)
+  )));
+
+  const result = applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  assert.equal(result.status, "NEEDS_DECISION");
+  assert.equal(result.writes, 0);
+  assert.deepEqual(readFileSync(aliasPath), aliasBefore);
+  assert.equal(inspectTarget(target).inventorySha256, before.inventorySha256);
 });
 
 test("verification rejects an incomplete installation inventory", (t) => {
@@ -625,6 +813,33 @@ test("verification is fail-closed until matching evidence and human review exist
   const catalog = JSON.parse(readFileSync(catalogFile, "utf8"));
   catalog.migration.status = "reviewed";
   catalog.migration.receiptRef = "docs/receipts/human-policy-decision.json";
+  const effectivePolicyRef = "docs/design/fixture-effective-policy.md";
+  const effectivePolicyBytes = "# Fixture effective policy\n";
+  const candidateSourceRef = "docs/ADOPT.md";
+  const candidateSourceBytes = readFileSync(path.join(target, candidateSourceRef));
+  writeFileSync(path.join(target, effectivePolicyRef), effectivePolicyBytes);
+  catalog.policies = [{
+    id: "POL-EFFECTIVE-FIXTURE",
+    kind: "policy",
+    title: "Fixture effective policy",
+    humanSummary: "A human-approved policy whose effective bytes are receipt-fenced.",
+    authorityClass: "current_design",
+    authorityState: "effective",
+    approvalState: "approved",
+    enforcement: "enforced",
+    confidence: "high",
+    effectiveRef: effectivePolicyRef,
+    decisionReceiptRef: "docs/receipts/POL-EFFECTIVE-FIXTURE.json",
+    sourceRefs: [{
+      path: candidateSourceRef,
+      heading: "Document Harness Adoption",
+      lineStart: 1,
+      lineEnd: 1,
+      capturedSha256: sha256(candidateSourceBytes),
+      capturedRepositoryRevision: lock.targetSourceRevision,
+    }],
+    conflicts: [],
+  }];
   const catalogBytes = `${JSON.stringify(catalog, null, 2)}\n`;
   writeFileSync(catalogFile, catalogBytes);
   const gateCommands = new Map([
@@ -649,7 +864,10 @@ test("verification is fail-closed until matching evidence and human review exist
     release: lock.release,
     targetSourceRevision: lock.targetSourceRevision,
     installationReceiptRef: lock.receiptRef,
-    humanDecisionReceiptRefs: ["docs/receipts/human-policy-decision.json"],
+    humanDecisionReceiptRefs: [
+      "docs/receipts/human-policy-decision.json",
+      "docs/receipts/POL-EFFECTIVE-FIXTURE.json",
+    ],
     gates: [...gateEvidence].map(([id, bytes]) => ({
       id,
       required: true,
@@ -680,11 +898,31 @@ test("verification is fail-closed until matching evidence and human review exist
     decidedBy: { actorKind: "human", identifier: "fixture-human" },
     decidedAt: "2026-07-16T00:00:00.000Z",
     sourceFence: { repositoryRevision: lock.targetSourceRevision, sourceHashes: [sha256(catalogBytes)] },
-    effectiveRef: "docs/receipts/human-policy-decision.json",
+    effectiveRef: "docs/_indexes/governance-catalog.json",
+    effectiveSha256: sha256(catalogBytes),
     reason: "fixture review",
+  }, null, 2)}\n`);
+  writeFileSync(path.join(evidenceDir, "POL-EFFECTIVE-FIXTURE.json"), `${JSON.stringify({
+    schemaVersion: 1,
+    decisionId: "DEC-POL-EFFECTIVE-FIXTURE",
+    candidateId: "POL-EFFECTIVE-FIXTURE",
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-07-16T00:00:00.000Z",
+    sourceFence: {
+      repositoryRevision: lock.targetSourceRevision,
+      sourceHashes: [sha256(candidateSourceBytes)],
+    },
+    effectiveRef: effectivePolicyRef,
+    effectiveSha256: sha256(effectivePolicyBytes),
+    reason: "fixture policy approval",
   }, null, 2)}\n`);
   const verified = verifyTarget({ target });
   assert.equal(verified.status, "MIGRATION_VERIFIED");
+  writeFileSync(path.join(target, effectivePolicyRef), "# Changed after human approval\n");
+  assert.equal(verifyTarget({ target }).status, "INSTALLED_AWAITING_REVIEW");
+  writeFileSync(path.join(target, effectivePolicyRef), effectivePolicyBytes);
+  assert.equal(verifyTarget({ target }).status, "MIGRATION_VERIFIED");
   writeFileSync(path.join(evidenceDir, "view-doctor.json"), `${gateEvidence.get("view-doctor")} `);
   const tamperedGate = verifyTarget({ target });
   assert.equal(tamperedGate.status, "INSTALLED_AWAITING_REVIEW");

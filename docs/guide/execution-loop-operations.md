@@ -4,7 +4,7 @@ title: execution-loop-operations
 status: current
 owner:
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-07-17
 related_project: []
 related_task: []
 related_design:
@@ -22,7 +22,7 @@ tags:
 - Type: guide
 - Status: current
 - Created: 2026-07-15
-- Updated: 2026-07-15
+- Updated: 2026-07-17
 - Related Design: docs/design/execution-loop-plane.md; docs/design/policy-to-evidence-governance.md
 
 ## Purpose
@@ -137,10 +137,15 @@ task lifecycle status와 loop state는 별도 vocabulary입니다.
 - `checkpoint_seq`는 같은 attempt 안에서 증가합니다.
 - 새 attempt는 `attempt_seq`를 증가시키고 checkpoint sequence를 새로 시작할 수 있습니다.
 - `task_contract_revision`은 checkpoint가 어떤 Goal Inventory/Scope 계약을 실행하는지 고정합니다.
-- `source_revision`과 `source_hash`는 evidence가 어느 working tree 상태를 관찰했는지 묶습니다.
+- `source_hash`는 linked task 문서의 현재 bytes SHA-256이고, `source_revision`은 `working-tree` 또는 같은 task blob을 resolve하는 full Git commit입니다.
 - `last_action`, `next_actor`, `next_action`, `resume_when`은 재시작 시 추론 없이 이어갈 수 있을 정도로 구체적으로 씁니다.
 - `evidence`, `risks`, `attention`, `receipts`는 긴 로그 복사본이 아니라 stable ID/path refs를 둡니다.
 - checkpoint body의 Human Snapshot은 frontmatter를 사람이 빠르게 읽는 mirror입니다.
+- repository-local View는 이 Markdown checkpoint를 직접 읽습니다. 별도 `docs/_indexes/execution-checkpoint.json` mirror를 만들지 않습니다.
+- View candidate는 loop-enabled `docs/tasks/T*.md`가 `checkpoint_ref`로 직접 연결한 checkpoint뿐입니다. orphan/newer checkpoint file은 표시 대상을 바꾸지 않습니다.
+- 여러 linked task checkpoint가 있으면 View는 active/blocked non-succeeded work를 completed history보다 우선하고, 이어 active succeeded closeout, draft, historical terminal task 순으로 선택합니다. 같은 group에서는 `recorded_at`, `attempt_seq`, `checkpoint_seq` 내림차순과 path 오름차순을 사용합니다. 따라서 `recorded_at`은 실제 checkpoint 갱신 시각으로 유지하며 filesystem mtime에 의존하지 않습니다.
+- View는 task status/loop compatibility와 task/checkpoint ID·revision·loop mirror뿐 아니라 checkpoint identity, linked task source hash/revision, state/actor/stop reason, budget bounds와 succeeded evidence/receipt/attention barrier를 검사합니다. `succeeded` evidence/receipt는 private/symlink가 아닌 실제 non-empty repository regular file이어야 하며 validator가 거부할 상태를 사용자 화면에서 성공으로 보이지 않습니다.
+- checkpoint root나 entry가 symlink이거나 canonical frontmatter가 malformed이면 View는 그 항목을 건너뛰어 진행을 추론하지 않고 execution projection을 `degraded`로 표시합니다.
 
 ## Human Attention And Handoff
 
@@ -166,7 +171,7 @@ Receipt는 다음 종류를 지원합니다.
 - `approval`: approver authority, exact revision, approval fence
 - `handoff`: next actor/consumer, residual risk, resume condition
 
-`succeeded` checkpoint는 evidence와 receipt ref가 모두 있어야 합니다. 자유 서술 evidence 한 줄만으로 성공하지 않습니다. 정적 validator는 ref와 schema를 검증할 뿐, runtime 명령 실행이나 human authority 자체를 증명하지 않는다는 경계를 유지합니다.
+`succeeded` checkpoint는 evidence와 receipt ref가 모두 있어야 하고 각 ref가 안전한 non-empty repository regular file로 resolve되어야 합니다. receipt는 task/checkpoint ID, actor/time, statement/scope, evidence refs, linked-task source revision/hash를 포함하고 checkpoint evidence를 연결해야 합니다. 자유 서술 evidence 한 줄, 존재하지 않는 path, 내용 없는 임의 JSON만으로 성공하지 않습니다. 정적 validator는 ref와 source fence를 검증할 뿐, runtime 명령 실행이나 human authority 자체를 증명하지 않는다는 경계를 유지합니다.
 
 ## Stop And Resume Rules
 
@@ -233,3 +238,4 @@ task contract 변경, scope 확대, 비가역 작업, production/secret 접근, 
 ## Change Log
 
 - 2026-07-15: opt-in execution loop, checkpoint, directive, attention, receipt, stop/resume 운영 계약 추가.
+- 2026-07-17: View execution projection을 별도 JSON mirror가 아닌 canonical `docs/checkpoints/*.md`와 deterministic selection에 연결했다.

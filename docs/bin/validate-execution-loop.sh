@@ -180,6 +180,29 @@ frontmatter_section_exists() {
   grep -Fq "## $section" "$file"
 }
 
+sha256_file() {
+  local file="$1"
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$file" | awk '{ print $1 }'
+  elif command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$file" | awk '{ print $1 }'
+  else
+    error "no SHA-256 command is available"
+    return 1
+  fi
+}
+
+sha256_stdin() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 | awk '{ print $1 }'
+  elif command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | awk '{ print $1 }'
+  else
+    error "no SHA-256 command is available"
+    return 1
+  fi
+}
+
 is_loop_state() {
   case "$1" in
     ready|running|awaiting_user|awaiting_external|needs_review|stopped|succeeded) return 0 ;;
@@ -235,6 +258,33 @@ validate_local_ref() {
 
   if [[ "$ref" == docs/* && ! -e "$REPO_ROOT/$ref" ]]; then
     error "$owner references missing path: $ref"
+  fi
+}
+
+validate_durable_ref() {
+  local ref="$1"
+  local owner="$2"
+  local cursor="$REPO_ROOT"
+  local segment
+
+  validate_local_ref "$ref" "$owner"
+  if [[ -z "$ref" || "$ref" == /* || "$ref" == *".."* || "$ref" == file://* ]]; then
+    return
+  fi
+  if [[ "$ref" =~ (^|/)(\.env($|\.)|secrets?|credentials?|private[-_.]?keys?|id_rsa($|\.)|[^/]+\.(pem|key|p12|pfx))($|/) ]]; then
+    error "$owner contains a private/credential ref: $ref"
+    return
+  fi
+  IFS='/' read -r -a ref_segments <<< "$ref"
+  for segment in "${ref_segments[@]}"; do
+    cursor="$cursor/$segment"
+    if [[ -L "$cursor" ]]; then
+      error "$owner contains a symlink ref: $ref"
+      return
+    fi
+  done
+  if [[ ! -f "$cursor" || ! -s "$cursor" ]]; then
+    error "$owner must reference a non-empty regular file: $ref"
   fi
 }
 
@@ -445,6 +495,12 @@ validate_checkpoint() {
   local iterations_max
   local elapsed_minutes
   local time_limit_minutes
+  local source_hash
+  local source_revision
+  local task_source_hash
+  local committed_task_hash
+  local task_relative
+  local budget_exhausted=0
 
   if [[ ! -f "$file" ]]; then
     error "checkpoint not found: ${file#$REPO_ROOT/}"
@@ -501,6 +557,26 @@ validate_checkpoint() {
       fi
       if [[ "$task_state" != "$(frontmatter_scalar "$file" loop_state)" ]]; then
         error "checkpoint loop_state does not match task mirror for $task_id"
+      fi
+      source_hash="$(frontmatter_scalar "$file" source_hash)"
+      task_source_hash="$(sha256_file "$task_file")"
+      if [[ "$source_hash" != "$task_source_hash" ]]; then
+        error "checkpoint source_hash does not match linked task bytes for $task_id"
+      fi
+      source_revision="$(frontmatter_scalar "$file" source_revision)"
+      if [[ "$source_revision" != "working-tree" ]]; then
+        if [[ ! "$source_revision" =~ ^[a-f0-9]{40}$ ]] || \
+           ! git -C "$REPO_ROOT" rev-parse --verify "${source_revision}^{commit}" >/dev/null 2>&1; then
+          error "checkpoint source_revision must be working-tree or a resolvable full Git commit for $task_id"
+        else
+          task_relative="${task_file#$REPO_ROOT/}"
+          if committed_task_hash="$(git -C "$REPO_ROOT" show "${source_revision}:${task_relative}" | sha256_stdin)"; then
+            [[ "$committed_task_hash" == "$source_hash" ]] || \
+              error "checkpoint source_revision does not resolve the linked task bytes for $task_id"
+          else
+            error "checkpoint source_revision cannot read the linked task for $task_id"
+          fi
+        fi
       fi
     fi
   else
@@ -586,6 +662,34 @@ validate_checkpoint() {
      (( elapsed_minutes > time_limit_minutes )); then
     error "checkpoint budget elapsed_minutes exceeds time_limit_minutes in ${file#$REPO_ROOT/}"
   fi
+  if [[ "$iterations_max" =~ ^[0-9]+$ ]] && (( iterations_max < 1 )); then
+    error "checkpoint budget.iterations_max must be positive in ${file#$REPO_ROOT/}"
+  fi
+  if [[ "$time_limit_minutes" =~ ^[0-9]+$ ]] && (( time_limit_minutes < 1 )); then
+    error "checkpoint budget.time_limit_minutes must be positive in ${file#$REPO_ROOT/}"
+  fi
+  if [[ "$iterations_used" =~ ^[0-9]+$ && "$iterations_max" =~ ^[1-9][0-9]*$ && \
+        "$elapsed_minutes" =~ ^[0-9]+$ && "$time_limit_minutes" =~ ^[1-9][0-9]*$ ]]; then
+    if (( iterations_used >= iterations_max || elapsed_minutes >= time_limit_minutes )); then
+      budget_exhausted=1
+    fi
+    if (( budget_exhausted == 1 )) && [[ "$state" != "stopped" && "$state" != "succeeded" ]]; then
+      error "exhausted checkpoint budget requires stopped/BUDGET_EXCEEDED or succeeded in ${file#$REPO_ROOT/}"
+    fi
+    if [[ "$state" == "stopped" && "$stop_reason" == "BUDGET_EXCEEDED" ]] && (( budget_exhausted == 0 )); then
+      error "BUDGET_EXCEEDED checkpoint has not reached a declared budget limit in ${file#$REPO_ROOT/}"
+    fi
+    if [[ "$state" == "stopped" && "$stop_reason" != "BUDGET_EXCEEDED" ]] && (( budget_exhausted == 1 )); then
+      error "stopped checkpoint at a budget limit must use BUDGET_EXCEEDED in ${file#$REPO_ROOT/}"
+    fi
+  fi
+
+  source_hash="$(frontmatter_scalar "$file" source_hash)"
+  source_revision="$(frontmatter_scalar "$file" source_revision)"
+  [[ "$source_hash" =~ ^[a-f0-9]{64}$ ]] || \
+    error "checkpoint source_hash must be a SHA-256 digest in ${file#$REPO_ROOT/}"
+  [[ "$source_revision" == "working-tree" || "$source_revision" =~ ^[a-f0-9]{40}$ ]] || \
+    error "checkpoint source_revision must be working-tree or a full Git commit in ${file#$REPO_ROOT/}"
 
   if [[ "$state" == "awaiting_user" || "$state" == "awaiting_external" || "$state" == "needs_review" || "$state" == "stopped" ]]; then
     count="$(frontmatter_list_count "$file" attention)"
@@ -601,6 +705,11 @@ validate_checkpoint() {
       error "succeeded checkpoint requires receipt refs in ${file#$REPO_ROOT/}"
     [[ "$(frontmatter_list_count "$file" attention)" == "0" ]] || \
       error "succeeded checkpoint cannot retain unresolved attention in ${file#$REPO_ROOT/}"
+    for key in evidence receipts; do
+      while IFS= read -r value; do
+        validate_durable_ref "$value" "${file#$REPO_ROOT/} $key"
+      done < <(frontmatter_list_items "$file" "$key")
+    done
   fi
 
   for key in \

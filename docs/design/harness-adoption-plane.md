@@ -5,7 +5,7 @@ status: current
 domain: harness-adoption
 owner:
 created: 2026-07-15
-updated: 2026-07-16
+updated: 2026-07-17
 retrieval_class:
   - domain-current
 context:
@@ -17,6 +17,7 @@ referenced_by:
   - docs/ADOPT.md
   - docs/guide/repository-policy-extraction.md
 source_refs:
+  - docs/releases/document-harness-v1.json
   - docs/design/policy-to-evidence-governance.md
   - docs/design/human-control-view-plane.md
   - docs/design/execution-loop-plane.md
@@ -105,8 +106,10 @@ REMOVE_GENERATED
 ### Apply
 
 - exact plan hash, target revision/dirty fence와 public source revision을 다시 확인합니다.
+- plan의 mode/status/attention은 authority가 아닙니다. apply는 current repository state, requested profile dependency closure, installation lock과 release actions에서 security-relevant decision state를 다시 계산하고 self-rehashed mismatch를 거부합니다.
 - fence mismatch면 0 write로 실패합니다.
 - `CONFLICT`와 unresolved human decision이 있으면 affected action을 실행하지 않습니다.
+- dangling leaf/ancestor symlink는 lstat 기반 conflict이며 write target이나 parent로 따라가지 않습니다.
 - atomic file replace 또는 reversible copy를 사용하고 apply receipt를 남깁니다.
 - partial failure는 applied action과 rollback result를 구분해 기록합니다.
 - 같은 plan을 두 번 apply하면 no-op 또는 이미 적용됨을 반환합니다.
@@ -117,7 +120,7 @@ REMOVE_GENERATED
 - `MIGRATION_VERIFIED`는 matching migration evidence pack, apply receipt, hash-pinned structured required gate evidence와 completed human review가 모두 있을 때만 반환합니다.
 - governance profile은 source-fenced human decision receipt가 없으면 `INSTALLED_AWAITING_REVIEW`에 머뭅니다.
 - governance audit finding이 있으면 `INSTALLED_AWAITING_REVIEW`로 완화하지 않고 `INSTALLED_NOT_VERIFIED`입니다. observation 승격, private/secret source, stale/invalid source ref와 approved unresolved conflict는 finding입니다.
-- rollback은 successful apply receipt의 mutation byte/mode가 그대로일 때만 preimage를 역순 복원합니다. post-apply drift가 있으면 `NEEDS_DECISION`, 0 write입니다.
+- rollback은 active installation lock이 SHA-256으로 anchor한 exact apply mutation set과 successful receipt가 일치하고 각 mutation byte/mode가 그대로일 때만 file preimage를 역순 복원합니다. anchor는 lock mutation의 self-referential after hash만 제외하고 lock preimage와 나머지 mutation descriptor 전체를 포함합니다. receipt에 없는 directory 소유권은 추론하지 않으며, added file 제거 뒤 빈 상위 directory를 자동 삭제하지 않습니다. post-apply drift, subset receipt, anchor 없는 legacy receipt는 `NEEDS_DECISION`, 0 write입니다. legacy v1 lock은 upgrade 입력으로 읽을 수 있지만 새 anchored apply 전에는 rollback authority가 없습니다.
 
 ## Lifecycle Status Model
 
@@ -164,7 +167,7 @@ effective_ref
 
 catalog migration fence는 `migration.capturedRepository.baseCommit`과 `workingTreeState`를 사용합니다. `baseCommit`은 target에서 resolve 가능한 full Git commit이어야 합니다. 각 source ref는 repository-relative `path`, `heading`, `lineStart`, `lineEnd`, `capturedSha256`, `capturedRepositoryRevision`을 가집니다.
 
-code/config observation과 retrieval authority metadata는 human policy approval이 아닙니다. schema는 `code_observation|config_observation`을 `kind: observation`, `approvalState: unreviewed`, `effectiveRef: null`, `decisionReceiptRef: null`로 제한합니다. source hash가 바뀌면 candidate review/approval은 stale입니다. 현재 HEAD가 captured base보다 이동했다는 사실만으로 unchanged per-source evidence를 stale 처리하지 않습니다.
+code/config observation과 retrieval authority metadata는 human policy approval이 아닙니다. schema는 `code_observation|config_observation`을 `kind: observation`, `approvalState: unreviewed`, `effectiveRef: null`, `decisionReceiptRef: null`로 제한합니다. 승인 receipt는 exact `effectiveRef`와 `effectiveSha256`을 함께 고정하며 adoption verification은 현재 effective artifact bytes가 그 digest와 일치하는지 확인합니다. source hash나 effective bytes가 바뀌면 candidate review/approval은 stale입니다. 현재 HEAD가 captured base보다 이동했다는 사실만으로 unchanged per-source evidence를 stale 처리하지 않습니다.
 
 `.env`, credential, token, private raw source와 secret value는 candidate catalog에 수집하지 않습니다. 안전한 source-backed statement가 없으면 `gaps`와 attention을 생성하며 policy를 추측하지 않습니다.
 
@@ -256,8 +259,10 @@ runtime unavailable은 `pass`가 아니라 `blocked/not_run`입니다. gate, fix
 - `.claude/skills/operate-document-harness/SKILL.md`: canonical project skill을 읽는 thin Claude adapter
 - `docs/ADOPT.md`: initialize/migrate orchestration
 - `docs/EXECUTE.md`: adopted task execution
-- repository-specific operation guide와 deterministic commands
-- static/runtime validators
+- reusable project/task/design/guide/report/QA와 execution-checkpoint template
+- project-owned terminology surface와 goal/project/QA/quality operation guide
+- `new-doc.sh`, execution/closeout validator와 validation-gated `close-doc.sh`
+- governance와 View static/runtime validators
 
 skill은 detailed rule을 복제하지 않고 intent를 repository의 durable entrypoint로 route합니다. AGENTS, human policy, effective design, approval receipt와 validator가 authority를 계속 소유합니다.
 
@@ -271,12 +276,16 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 | --- | --- | --- |
 | ADOPT-01 | new repo plan | selected profile의 add만 제시, target write 0 |
 | ADOPT-02 | mature repo detection | initialize가 아니라 migrate plan |
+| ADOPT-03 | fresh full-profile authoring | clean main에서 project/task/QA 발급 후 design/guide/report 생성, installed execution/closeout validator 통과, public development-only tree 의존 0 |
 | MIG-01 | customized same-name file | overwrite 0, conflict/project-owned |
 | MIG-02 | dirty repo | tracked/untracked bytes 보존 |
 | MIG-03 | second apply | no-op 또는 same unresolved conflict |
 | MIG-04 | target/public fence changed | apply write 0, `NEEDS_DECISION` |
 | MIG-05 | partial apply failure | preimage auto-restore와 `APPLY_FAILED` receipt |
 | MIG-06 | rollback after target edit | overwrite 0, `NEEDS_DECISION` |
+| MIG-07 | dangling leaf/ancestor symlink | overwrite 0, explicit conflict |
+| MIG-08 | self-rehashed status/attention bypass | recomputed decision mismatch, write 0 |
+| MIG-09 | subset apply receipt rollback | lock anchor mismatch, write 0 |
 | GOV-01 | code observation | policy approval로 표시하지 않음 |
 | GOV-02 | source change | candidate/approval stale |
 | GOV-03 | no safe authority source | invented policy 0, explicit gap/attention |
@@ -307,7 +316,7 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 - document-harness operation skill은 repository-local canonical surface와 thin tool adapter로 함께 설치합니다.
 - project skill은 router이며 repository instructions, human authority 또는 deterministic enforcement를 대체하지 않습니다.
 - user-global document-harness skill/config는 adoption surface가 아닙니다.
-- public v1 initializer는 Node-based repository-local executable이며 release manifest가 CLI/library/schema/reference View byte set을 pin합니다.
+- public v1 initializer는 Node-based repository-local executable이며 release manifest가 CLI/library/schema, reusable authoring core와 reference View byte set을 pin합니다.
 - reference View distribution은 public repo에 versioned `harness-managed` surface로 vendor하며 project identity/config만 generator가 만듭니다.
 - governance initialization은 nested migration fence와 explicit extraction gap을 만들고 policy wording은 source-backed extraction에서만 추가합니다.
 
@@ -332,3 +341,4 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 - 2026-07-16: repository-local `operate-document-harness` canonical skill, thin Claude adapter, bootstrap reload와 no-global-install contract를 추가했다.
 - 2026-07-16: adopted repository별 static identity, exact five top tabs, single snapshot fence와 refresh-stable local asset profile을 추가했다.
 - 2026-07-16: Node executable initializer v1, seven lifecycle statuses, lifecycle schemas/release manifest, nested governance migration fence, fail-closed verification/rollback과 versioned reference View distribution을 current contract로 고정했다.
+- 2026-07-17: fresh full-profile target가 public 개발 tree 없이 문서를 실제 발급·검증·종료할 수 있도록 reusable authoring core와 end-to-end acceptance를 release closure에 포함했다.

@@ -8,7 +8,7 @@ Reference View distribution version: `1.0.0`. The public release manifest pins t
 
 - `bin/human-view`: safe operator entrypoint
 - `control.mjs`: start/status/url/refresh/test/stop control
-- `lib/projection.mjs`: catalog, source, migration-fence, checkpoint, and torn-input-safe runtime projection
+- `lib/projection.mjs`: catalog, source, approval-receipt, migration-fence, canonical Markdown checkpoint, and torn-input-safe runtime projection
 - `lib/process-identity.mjs`: OS process start identity plus exact managed command/start-token verification
 - `lib/runtime-state.mjs`: repository-contained state directory and self-ignoring marker enforcement
 - `server.mjs`: exact-loopback, read-only HTTP runtime with OS-assigned port
@@ -43,7 +43,9 @@ Only these values vary by repository:
 - allowlisted credential-free loopback HTTP probes
 - declared fast/full/continuous quality commands
 
-The execution checkpoint path (`docs/_indexes/execution-checkpoint.json`), runtime state/probe paths, polling/reconciliation intervals, loopback bind, and OS-assigned port policy are versioned distribution constants. A missing checkpoint is shown as `not configured`; a project cannot redirect these internal paths through config.
+The execution checkpoint root (`docs/checkpoints/`), runtime state/probe paths, polling/reconciliation intervals, loopback bind, and OS-assigned port policy are versioned distribution constants. The projector derives candidates only from loop-enabled `docs/tasks/T*.md` `checkpoint_ref` values, requires task ID/revision/lifecycle/loop mirrors, linked-task source hash/revision, budget semantics, and checkpoint execution barriers to agree, and ignores orphan checkpoint files. A `succeeded` checkpoint additionally requires each evidence and receipt ref to resolve to a safe non-empty repository regular file. Each receipt must carry canonical identity/task/checkpoint/actor/time/scope/statement fields, bind the linked-task source revision/hash, and link the checkpoint evidence; all task/checkpoint/support bytes are rechecked before publication. It rejects symlinks or malformed frontmatter. Selection prioritizes active/blocked non-succeeded work, then active closeout, draft work, and historical terminal tasks; each group is ordered by `recorded_at`, `attempt_seq`, `checkpoint_seq` descending and path ascending. A missing checkpoint is shown as `not configured`; a project cannot redirect these internal paths through config.
+
+An item is projected as `approved` or `effective` only when every source ref has a complete repository revision/hash/line fence, all current bytes still match, and safe in-repository regular files provide both the effective ref and a matching human decision receipt. The receipt must bind the candidate ID, human actor, decision time, repository revision, every source hash, the exact effective ref, and its `effectiveSha256`; the current effective artifact bytes must still match that digest. Missing, private, symlinked, stale, or mismatched evidence fails closed.
 
 The View does not run quality commands. It only displays their declarations and read-only receipts/probes.
 
@@ -64,7 +66,7 @@ The governance catalog records the historical capture independently from current
 }
 ```
 
-`baseCommit` must resolve to a commit in the installed repository. A missing object or a receipt revision mismatch degrades the View and creates review attention. A later current `HEAD` is reported as advanced but does not make unchanged source hashes stale. `migrationFence`, `currentRepository`, and per-source evidence freshness remain separate snapshot fields.
+`baseCommit` must resolve to a commit in the installed repository. A reviewed migration additionally requires a safe human decision receipt for `CATALOG-REVIEW` whose source/effective SHA-256 equals the current catalog bytes; that receipt is part of the torn-input recheck. A missing object or mismatched decision degrades the View and creates review attention. A later current `HEAD` is reported as advanced but does not make unchanged source hashes stale. `migrationFence`, `currentRepository`, and per-source evidence freshness remain separate snapshot fields.
 
 ## Presentation and capability contract
 
@@ -73,6 +75,7 @@ The governance catalog records the historical capture independently from current
 - no repository selector, workspace switcher, or persistent left sidebar
 - same immutable snapshot and read fence across all tabs
 - governance catalog and source hashes are rechecked before snapshot publication; torn reads retry and then fail degraded
+- degraded fallback keeps prior records only as `lastKnown`, marks governance/evidence/execution unverified, and never carries green approval counts forward as current truth
 - tab/search/filter/pagination/expanded-row state survives polling and manual refresh
 - missing checkpoint/action/budget inputs display `not configured`; progress is never inferred
 - local same-origin assets only; no CDN, remote font, external script, or image

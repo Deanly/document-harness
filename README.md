@@ -53,13 +53,16 @@
 
 ## Quick Start
 
+### Public Distribution Source
+
 `project`와 `task` 문서 발급은 번호 충돌을 막기 위해 clean, up-to-date `main`에서 실행합니다. `new-doc.sh`는 생성된 `draft` 파일만 즉시 `main`에 commit합니다.
 
 ```bash
 ./docs/bin/new-doc.sh project example-project
 ./docs/bin/new-doc.sh task first-task
-./docs/bin/new-doc.sh design core-boundary
 ./docs/bin/new-doc.sh qa first-test-strategy
+# Fill required QA fields and commit numbered drafts before creating unnumbered drafts.
+./docs/bin/new-doc.sh design core-boundary
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
 ./docs/bin/validate-harness-adoption.sh
@@ -72,7 +75,24 @@
 
 한글 slug도 허용됩니다. 예: `./docs/bin/new-doc.sh task "첫 작업"`.
 
-새 저장소에 처음 적용한다면 repository-local `operate-document-harness` skill과 함께 initialize하고 `docs/design/ubiquitous-language.md`를 실제 프로젝트 용어로 채운 뒤 `docs/examples/`의 샘플 문서를 한 번 읽는 것을 권장합니다. 이미 AGENTS, design, task, validator가 있는 mature 저장소에는 최신 파일을 단순 복사하지 말고 먼저 `docs/ADOPT.md`의 no-write migration plan을 사용합니다. 이 workflow skill은 user-global 위치에 설치하지 않습니다.
+`validate-codex-readiness`, `validate-harness-foundation`, `validate-harness-adoption`, `validate-doc-retrieval`은 이 public distribution source의 전체 문서·release surface를 검증합니다. adopted target에 이 public-repository 전용 validator가 설치된다고 가정하지 않습니다.
+
+### Adopted Repository
+
+새 저장소에 처음 적용한다면 repository-local `operate-document-harness` skill과 authoring core를 full profile로 initialize하고 `docs/design/ubiquitous-language.md`를 실제 프로젝트 용어로 채웁니다. public distribution을 직접 살펴보는 경우에만 `docs/examples/`를 참고하며, adopted target의 authoring workflow는 examples에 의존하지 않습니다. 이미 AGENTS, design, task, validator가 있는 mature 저장소에는 최신 파일을 단순 복사하지 말고 먼저 `docs/ADOPT.md`의 no-write migration plan을 사용합니다. 이 workflow skill은 user-global 위치에 설치하지 않습니다.
+
+full-profile adoption은 다음 reusable authoring command와 그 template/reference/validator closure를 target에 함께 설치합니다.
+
+```bash
+./docs/bin/new-doc.sh project example-project
+./docs/bin/new-doc.sh task first-task
+./docs/bin/new-doc.sh qa first-test-strategy
+# Fill required QA fields and commit numbered drafts before creating unnumbered drafts.
+./docs/bin/new-doc.sh design core-boundary
+./docs/bin/validate-execution-loop.sh --all
+./docs/bin/validate-closeout.sh --all
+./docs/bin/harness-adopt verify --target .
+```
 
 새 프로젝트로 초기화한 뒤에는 아래 순서를 권장합니다. mature 저장소는 이 순서에 앞서 ownership inventory, policy/guideline extraction, human conflict review를 수행합니다.
 
@@ -88,8 +108,8 @@
 10. 새 문서는 YAML frontmatter properties와 첫 화면 bullet metadata를 함께 유지합니다.
 11. Codex가 바로 읽어야 하는 프로젝트라면 루트 `AGENTS.md`를 실제 repo 기준으로 조정하고 `.agents/skills/operate-document-harness/`를 project-local로 유지합니다. Claude Code도 운영한다면 `.claude/skills/operate-document-harness/`와 `docs/_templates/claude.md`의 thin adapters로 같은 canonical 규칙을 위임합니다.
 12. 현재 session 중 skill이 처음 설치됐다면 canonical `SKILL.md`를 직접 읽어 계속하고, 자동 discovery에 의존하기 전 새 session 또는 repository reload를 수행합니다.
-13. `./docs/bin/validate-codex-readiness.sh`, `./docs/bin/validate-harness-foundation.sh`, `./docs/bin/validate-execution-loop.sh --all`로 agent-facing/control/loop surface를 확인합니다.
-14. `done` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.
+13. `./docs/bin/validate-execution-loop.sh --all`과 `./docs/bin/harness-adopt verify --target .`로 installed execution/release surface를 확인합니다.
+14. `done` 전환 전에는 `./docs/bin/validate-closeout.sh --all`을 통과시키고, 가능하면 `./docs/bin/close-doc.sh`로 닫습니다.
 
 ## Closeout Gate
 

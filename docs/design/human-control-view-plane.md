@@ -5,7 +5,7 @@ status: current
 domain: human-view
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-16
+updated: 2026-07-17
 retrieval_class:
   - domain-current
 context:
@@ -39,7 +39,7 @@ tags:
 - Domain: human-view
 - Owner: Codex
 - Created: 2026-07-15
-- Updated: 2026-07-16
+- Updated: 2026-07-17
 - Referenced By:
   - `docs/guide/human-control-view.md`
 - Related Design: `docs/design/execution-loop-plane.md`; `docs/design/policy-to-evidence-governance.md`
@@ -90,7 +90,7 @@ Markdown / Git authority
 - cache를 삭제해도 registered source만으로 logical snapshot을 재구성할 수 있습니다.
 - 하나의 response는 하나의 read fence와 snapshot generation만 포함합니다.
 - watcher event 또는 SSE 연결은 freshness proof가 아닙니다.
-- parse/read 실패를 source delete로 해석하지 않고 이전 valid record와 degraded 상태를 유지합니다.
+- parse/read 실패를 source delete로 해석하지 않고 이전 valid record를 `lastKnown` 참고값으로 유지합니다. 다만 현재 approval/enforcement/evidence/execution 상태는 `unverified`로 낮추고 현재 승인·검토 count를 0으로 다시 계산해, 이전 녹색 상태를 현재 truth처럼 표시하지 않습니다.
 - explicit source ref가 없는 trace edge는 `candidate`이며 authority로 표시하지 않습니다.
 - lifecycle `status`와 execution `loop_state`를 함께 보여주되 합치지 않습니다.
 - `succeeded`를 `done`으로, `awaiting_user`를 lifecycle `blocked`로 바꾸어 표시하지 않습니다.
@@ -158,10 +158,14 @@ PatternFly의 enterprise information-density, semantic status, tab accessibility
 6. build 전후 source hash가 달라지면 generation을 폐기하고 최신 source를 다시 처리합니다.
 7. 완전한 generation만 monotonic `snapshot_seq`와 함께 atomic publish합니다.
 8. startup과 주기적 reconciliation이 missed event, rename, delete, orphan/stale edge를 복구합니다.
-9. parse 실패 resource는 이전 valid value를 유지하고 error와 `degraded` freshness를 붙입니다.
+9. parse 실패 resource는 이전 valid value를 `lastKnown`으로 유지하고, 현재 상태를 `unverified`로 낮춘 뒤 error와 `degraded` freshness를 붙입니다.
 10. 어느 current snapshot/read fence도 참조하지 않는 이전 cache/event만 정리합니다.
 
 projector는 missing reference를 추론해 source에 write-back하지 않습니다.
+
+reference projector는 governance catalog의 `approved`/`effective` 문자열을 그대로 신뢰하지 않습니다. 모든 source ref의 path, heading, line range, captured SHA-256과 captured repository revision이 완전하고 현재 bytes와 일치해야 하며, `effectiveRef`와 `decisionReceiptRef`는 private/credential 또는 symlink 경로가 아닌 repository regular file이어야 합니다. human decision receipt의 candidate ID, actor kind/identifier, decision time, repository revision, source hashes, exact effective ref와 `effectiveSha256`이 현재 effective artifact bytes와 모두 일치한 경우에만 승인 상태를 publish합니다. 하나라도 없거나 stale이면 false-fresh/false-approved snapshot 대신 generation을 fail closed 처리합니다.
+
+execution source는 별도 JSON mirror가 아니라 canonical task→checkpoint link입니다. reference projector는 loop-enabled `docs/tasks/T*.md`의 `checkpoint_ref`로만 `docs/checkpoints/*.md` candidate를 찾으므로 더 최신인 orphan file이 화면을 hijack할 수 없습니다. task status vocabulary와 status↔loop compatibility, task/checkpoint ID·revision·loop mirror, checkpoint ID identity, linked task source hash/revision, state↔next actor/stop reason, budget exhaustion, succeeded evidence/receipt/attention barrier를 모두 확인합니다. `succeeded` evidence/receipt ref는 실제 safe non-empty repository regular file이어야 하며 receipt identity/task/checkpoint/source fence가 checkpoint evidence를 연결해야 합니다. 모든 support bytes는 snapshot generation 중 다시 확인합니다. checkpoint root 밖의 경로와 symlink를 거부합니다. 선택은 active/blocked non-succeeded work, active succeeded closeout, draft, historical terminal task 순으로 우선한 뒤 같은 group에서 `recorded_at`, `attempt_seq`, `checkpoint_seq` 내림차순과 repository-relative path 오름차순을 적용합니다. 따라서 더 최신인 completed task가 아직 진행 중인 task를 숨기지 않습니다. malformed linked candidate를 조용히 건너뛰거나 filesystem mtime으로 진행 상태를 추론하지 않습니다.
 
 ### Migration And Evidence Fence
 
@@ -171,7 +175,7 @@ reference profile은 세 상태를 독립적으로 projection합니다.
 - `currentRepository`: 현재 HEAD, working-tree state/dirty count와 captured base 이후 HEAD 이동 여부
 - `snapshot.sourceFence.sourceEvidenceState`: 각 source ref의 captured/current SHA-256이 `fresh|stale|degraded|unknown` 중 무엇인가
 
-unresolvable captured base와 receipt revision mismatch는 View 전체를 degraded로 만들고 review attention을 생성합니다. current HEAD가 나중에 이동한 사실만으로 unchanged source evidence를 stale 처리하지 않습니다. file hash가 바뀌거나 source가 missing/escaped일 때만 해당 evidence freshness가 stale/degraded가 됩니다.
+unresolvable captured base와 catalog digest/effective bytes에 묶이지 않은 migration human-decision receipt는 View 전체를 degraded로 만들고 review attention을 생성합니다. migration receipt도 snapshot publish 직전 다시 읽어 torn generation을 차단합니다. current HEAD가 나중에 이동한 사실만으로 unchanged source evidence를 stale 처리하지 않습니다. file hash가 바뀌거나 source가 missing/escaped일 때만 해당 evidence freshness가 stale/degraded가 됩니다.
 
 ## Snapshot API Contract
 
@@ -277,7 +281,7 @@ event gap, restart, buffer overflow에서는 `resync.required`를 보내거나 �
 | source workspace | authoritative docs, policy/directive, task/checkpoint/receipt/evidence |
 | optional broker | human identity, exact approval fence, constrained source write, validator receipt |
 
-reference v1은 Node 20 built-in module, persistent DB 없음, `.document-harness/runtime/view/` rebuildable state, exact `127.0.0.1:0`, ETag polling과 repository fingerprint/instance/PID/health lease supervisor를 고정합니다. repository-specific static identity, catalog/checkpoint path, allowlisted loopback probe와 quality command만 generated config로 달라집니다. remote profile, authentication, SSE와 organization-specific sensitivity extension은 별도 decision입니다.
+reference v1은 Node 20 built-in module, persistent DB 없음, `.document-harness/runtime/view/` rebuildable state, exact `127.0.0.1:0`, ETag polling과 repository fingerprint/instance/PID/health lease supervisor를 고정합니다. repository-specific static identity, governance catalog path, allowlisted loopback probe와 quality command만 generated config로 달라지며 canonical checkpoint root는 `docs/checkpoints/`로 고정됩니다. remote profile, authentication, SSE와 organization-specific sensitivity extension은 별도 decision입니다.
 
 ## Failure Boundaries And Recovery
 
@@ -364,3 +368,4 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - 2026-07-15: execution-loop-plane에서 projector, snapshot API, SSE, freshness, security, runtime, observability와 view acceptance 책임을 분리했다.
 - 2026-07-16: repository별 정적 identity, five top tabs, cross-tab snapshot fence, refresh-stable interaction과 local semantic asset profile을 고정했다.
 - 2026-07-16: shipped Node/ETag reference View distribution, exact read endpoints, migration/current/source fence separation과 lease-safe no-DB runtime profile을 current contract로 정렬했다.
+- 2026-07-17: approved/effective projection을 complete source fence와 real decision/effective evidence에 묶고, Execution Status 입력을 canonical `docs/checkpoints/*.md`의 deterministic fail-closed selection으로 정렬했다.

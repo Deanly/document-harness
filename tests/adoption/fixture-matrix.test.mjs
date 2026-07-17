@@ -270,10 +270,10 @@ test("[fixture:symlink-case] path aliases and case-colliding project paths fail 
     const outside = path.join(base, "outside");
     mkdirSync(outside);
     symlinkSync(outside, path.join(target, definition.symlinkPath));
-    assert.throws(
-      () => createPlan({ target, profiles: definition.profiles, output: planFile }),
-      (error) => error.code === "SYMLINK_CONFLICT",
-    );
+    const plan = createPlan({ target, profiles: definition.profiles, output: planFile });
+    assert.equal(plan.status, "NEEDS_DECISION");
+    assert.ok(plan.actions.some(({ action, reason }) => action === "CONFLICT" && /symlink|unsafe/i.test(reason)));
+    assert.equal(applyPlan({ planFile, expectedPlanHash: plan.planHash }).writes, 0);
     assert.deepEqual(Object.keys(readFileTree(outside)), []);
   });
   await t.test("empty case-colliding parent directory", () => {

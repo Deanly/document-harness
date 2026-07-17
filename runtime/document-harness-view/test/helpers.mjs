@@ -49,7 +49,8 @@ export async function createFixture(options = {}) {
     lineStart: 1,
     lineEnd: 1,
     evidenceKind: "current_design",
-    capturedSha256: sha256("# Current policy\n")
+    capturedSha256: sha256("# Current policy\n"),
+    capturedRepositoryRevision: capturedBase
   };
   const migration = {
     status: "awaiting_human_review",
