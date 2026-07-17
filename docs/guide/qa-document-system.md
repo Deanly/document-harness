@@ -4,7 +4,7 @@ title: qa-document-system
 status: current
 owner:
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-15
 source_refs: []
 tags:
   - docs/guide
@@ -15,7 +15,7 @@ tags:
 - Type: guide
 - Status: current
 - Created: 2026-07-10
-- Updated: 2026-07-10
+- Updated: 2026-07-15
 
 ## Purpose
 
@@ -24,6 +24,8 @@ QA(테스트) 문서를 harness의 1급 통제 문서로 운영하는 규칙. �
 ## The Four QA Types
 
 `./docs/bin/new-doc.sh qa <slug>` → `docs/qa/QA####-slug.md`. frontmatter `qa_type`으로 역할을 선언한다.
+
+QA 번호도 task/project와 마찬가지로 clean, up-to-date `main`에서 발급하며, 생성된 draft를 즉시 commit해 번호를 예약합니다.
 
 | qa_type | 역할 | 답하는 질문 |
 | --- | --- | --- |
@@ -47,6 +49,16 @@ design (불변식·위험)  →  strategy (레벨·원칙)  →  plan (스위트
 1. `cases` 문서의 케이스는 **`Source Documents`에 나열된 문서의 변경, 또는 결함 task closeout에서만** 추가된다.
 2. **신규 방어 테스트는 `cases`의 갭 백로그에서만 파생**된다 — "무작정 테스트 작성"을 구조적으로 차단한다.
 3. 새 기능은 수용 케이스를 `cases`에 먼저 등재한 뒤 구현한다.
+
+governance-sensitive work에서는 `Source Documents`의 effective design만 normative source로 사용하고 다음 trace를 한 행에 유지합니다.
+
+```text
+Policy Clause → Standard Rule → Task / Goal → Check → Evidence → Exception → Verdict
+```
+
+- proposal report는 승인된 normative design으로 승격되기 전까지 case의 의무 근거가 아닙니다.
+- policy/standard는 `latest`가 아니라 exact version과 stable clause/rule ID를 pin합니다.
+- exception은 base failure를 pass로 바꾸지 않고 `excepted` verdict, exception ID, expiry, compensating check를 남깁니다.
 
 ## Anti-Decay Mechanisms
 
@@ -72,3 +84,5 @@ design (불변식·위험)  →  strategy (레벨·원칙)  →  plan (스위트
 ## Change Log
 
 - 2026-07-10: 최초 작성 — DeepMusic 파일럿(재생 도메인, QA0001~0004)에서 검증된 체계를 일반화.
+- 2026-07-15: QA 번호의 main-issued draft 규칙을 명시.
+- 2026-07-15: policy-to-evidence traceability와 proposal/exception 판정 규칙을 추가.

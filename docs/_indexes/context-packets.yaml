@@ -2,13 +2,39 @@
 # Default packets must not include all design docs, all task docs, or the full
 # ubiquitous language registry.
 
-version: 1
-updated: 2026-05-16
+version: 2
+updated: 2026-07-16
 source_guides:
   - docs/guide/context-loading-playbooks.md
+  - docs/guide/hybrid-retrieval-and-freshness.md
+  - docs/guide/policy-proposal-and-approval.md
+  - docs/guide/execution-loop-operations.md
+  - docs/guide/human-control-view.md
+  - docs/guide/repository-policy-extraction.md
   - docs/design/README.md
 
 packets:
+  harness_adoption:
+    default_load:
+      - docs/ADOPT.md
+      - .agents/skills/operate-document-harness/SKILL.md
+      - docs/design/harness-adoption-plane.md
+      - docs/guide/repository-policy-extraction.md
+      - target_repository_AGENTS
+      - target_current_control_plane
+    dynamic_load:
+      - target_repository_inventory_and_dirty_state
+      - target_security_and_operator_guides
+      - target_policy_designs_and_validators
+      - target_view_and_quality_runtime_surfaces
+    avoid_by_default:
+      - wholesale_public_harness_copy
+      - target_build_outputs_and_generated_cache
+      - unrelated_completed_task_history
+      - raw_private_sources
+    section_only:
+      - relevant_ubiquitous_language_sections
+
   docs_harness:
     default_load:
       - docs/README.md
@@ -42,6 +68,7 @@ packets:
 
   project_task_execution:
     default_load:
+      - docs/EXECUTE.md
       - current_task_doc
       - parent_or_reference_project_doc
       - docs/design/control-plane.md
@@ -52,6 +79,59 @@ packets:
       - docs/tasks/*.md
       - docs/reports/*.md
       - docs/design/ubiquitous-language.md
+    section_only:
+      - docs/design/ubiquitous-language.md
+
+  execution_resume:
+    default_load:
+      - docs/EXECUTE.md
+      - current_task_doc
+      - current_execution_checkpoint
+      - docs/_indexes/execution-loop-policy.yaml
+    dynamic_load:
+      - exact_effective_policy_and_standard_refs
+      - latest_decision_and_verification_receipts
+      - directly_referenced_execution_design_sections
+      - directly_required_guide_or_validator
+    avoid_by_default:
+      - full_chat_history
+      - unrelated_tasks
+      - superseded_policy_or_standard_versions
+      - raw_execution_logs
+    section_only:
+      - docs/design/ubiquitous-language.md
+
+  policy_governance:
+    default_load:
+      - docs/design/policy-to-evidence-governance.md
+      - docs/guide/policy-proposal-and-approval.md
+      - exact_human_policy_source
+    dynamic_load:
+      - affected_normative_designs
+      - active_tasks_and_qa_pinning_affected_rules
+      - approval_and_exception_receipts
+    avoid_by_default:
+      - unrelated_policy_domains
+      - proposal_reports_as_normative_truth
+      - all_task_history
+    section_only:
+      - relevant_ubiquitous_language_sections
+
+  human_view_runtime:
+    default_load:
+      - docs/design/human-control-view-plane.md
+      - docs/guide/human-control-view.md
+      - docs/design/retrieval-plane.md
+    dynamic_load:
+      - docs/design/execution-loop-plane.md
+      - source_registry_and_sensitivity_policy
+      - representative_policy_task_checkpoint_and_receipt_fixtures
+      - runtime_security_and_deployment_design
+    avoid_by_default:
+      - full_raw_logs
+      - browser_cache_as_work_truth
+      - proposal_reports_as_effective_policy
+      - unrelated_task_history
     section_only:
       - docs/design/ubiquitous-language.md
 
@@ -70,6 +150,21 @@ packets:
     section_only:
       - docs/design/ubiquitous-language.md
 
+  qa_maintenance:
+    default_load:
+      - current_qa_doc
+      - docs/guide/qa-document-system.md
+    dynamic_load:
+      - qa_source_documents
+      - related_design_invariants
+      - linked_test_evidence
+    avoid_by_default:
+      - docs/qa/*.md
+      - unrelated_tasks
+      - docs/design/ubiquitous-language.md
+    section_only:
+      - docs/design/ubiquitous-language.md
+
   closeout:
     default_load:
       - target_project_or_task_doc
@@ -81,3 +176,20 @@ packets:
     avoid_by_default:
       - unrelated_sibling_tasks
       - docs/reports/*.md
+
+  retrieval_incident:
+    default_load:
+      - docs/design/retrieval-plane.md
+      - docs/guide/hybrid-retrieval-and-freshness.md
+      - docs/_indexes/retrieval-policy.yaml
+    dynamic_load:
+      - affected_source_files
+      - source_registry_entry
+      - index_status_and_revision_receipts
+      - relevant_golden_queries
+    avoid_by_default:
+      - docs/design/*.md
+      - docs/tasks/*.md
+      - unrelated_source_roots
+    section_only:
+      - docs/design/ubiquitous-language.md

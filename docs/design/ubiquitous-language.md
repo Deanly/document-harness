@@ -5,7 +5,7 @@ status: current
 domain: ubiquitous-language
 owner:
 created: 2026-04-10
-updated: 2026-06-14
+updated: 2026-07-16
 retrieval_class:
   - term-excerpt
 context:
@@ -30,7 +30,7 @@ tags:
 - Domain: ubiquitous-language
 - Owner:
 - Created: 2026-04-10
-- Updated: 2026-06-14
+- Updated: 2026-07-16
 - Referenced By:
   - `docs/README.md`
   - `docs/design/control-plane.md`
@@ -68,6 +68,12 @@ placeholder 대신 채워진 예시가 필요하면 `docs/examples/README.md`를
 Codex 같은 coding agent가 작업 전에 자동으로 읽는 짧은 repository guidance를 뜻합니다.
 
 이 하네스에서는 루트 `AGENTS.md`가 기본 agent instruction surface입니다.
+
+### `repository-local harness skill`
+
+document-harness의 initialize/migrate/upgrade, execution, policy extraction, Human Control View operation 요청을 현재 repository의 durable entrypoint로 route하는 project-scoped workflow입니다.
+
+canonical path는 `.agents/skills/operate-document-harness/SKILL.md`이고 `.claude/skills/operate-document-harness/SKILL.md`는 그 파일을 읽는 thin adapter입니다. 별도 policy·approval·verification authority를 만들지 않으며 user-global skill로 설치하지 않습니다.
 
 ### `project-system-name`
 
@@ -118,6 +124,130 @@ Codex 같은 coding agent가 작업 전에 자동으로 읽는 짧은 repository
 - 외부 서비스 접근
 
 ## Domain Terms
+
+### `human policy`
+
+사람 또는 authorized human role이 소유하는 outcome, scope, non-waivable constraint, risk authority를 뜻합니다. AI는 초안과 세부화 proposal을 만들 수 있지만 human policy를 스스로 승인할 수 없습니다.
+
+### `policy clause`
+
+policy 안에서 독립적으로 참조하고 검증할 수 있는 stable ID가 있는 규범 단위입니다.
+
+### `proposal`
+
+AI 또는 사람이 작성한 option, standard, exception 후보입니다. `proposed` 또는 `accepted_for_promotion` 상태는 `effective`가 아니며 normative authority가 없습니다.
+
+### `normative standard`
+
+human policy에서 파생되고 승인되어 effective인 MUST/SHOULD, invariant, failure boundary, stable rule ID 집합입니다.
+
+### `approval reference`
+
+human approver, approval time, policy/standard/exception ID, exact source revision 또는 diff, scope를 연결하는 참조입니다. 문서 안의 승인 문자열만으로 authority를 증명하지 않습니다.
+
+### `scoped exception`
+
+base rule을 수정하지 않고 특정 scope/time에만 적용하는 승인된 overlay입니다. human risk acceptor, residual risk, compensating controls, required checks, expiry, exit task가 필요합니다.
+
+### `loop state`
+
+task lifecycle `status`와 별도로 현재 실행 제어 상태를 나타내는 값입니다. `ready`, `running`, `awaiting_user`, `awaiting_external`, `needs_review`, `stopped`, `succeeded`를 사용합니다.
+
+### `execution checkpoint`
+
+한 loop-enabled task의 current resumable snapshot입니다. task contract revision, attempt/checkpoint sequence, current hypothesis, last evidence, next actor/action, resume condition, attention, risk, receipt refs를 담으며 task `Status`의 append-only history를 대체하지 않습니다.
+
+### `attention request`
+
+loop가 계속되기 위해 사람 또는 외부 actor가 제공해야 하는 정확한 input, decision, approval, review를 뜻합니다. why now, requested response, alternatives/impact, risk, revision fence, resume condition을 포함합니다.
+
+### `decision receipt`
+
+누가 어떤 선택을 어떤 source/checkpoint revision에 대해 언제 내렸는지 보존하는 immutable evidence입니다.
+
+### `verification receipt`
+
+어떤 command/check가 어떤 input revision과 환경에서 어떤 결과를 냈는지 보존하는 immutable evidence입니다.
+
+### `evidence barrier`
+
+required check, receipt, goal verification, unresolved attention 여부를 결합해 `succeeded` 또는 closeout을 허용하는 gate입니다.
+
+### `human control view`
+
+policy, task, checkpoint, attention, evidence를 사람이 빠르게 읽도록 투영한 local-first interface입니다. Markdown/Git source에서 재생성 가능해야 하며 자체적으로 task/approval truth를 소유하지 않습니다.
+
+### `view snapshot`
+
+하나의 source read fence에서 원자 publish된 immutable human-view projection 세대입니다. source revision, projection time, lag, freshness, snapshot sequence를 가집니다.
+
+### `hybrid retrieval`
+
+lexical retrieval과 dense retrieval을 독립 실행하고 rank fusion으로 결합하는 검색 방식을 뜻합니다. 이 하네스의 기본 fusion은 RRF입니다.
+
+### `exact arm`
+
+ID, path, YAML key, command, error string처럼 analyzer가 분해하면 안 되는 값을 untokenized keyword/term 또는 scoped direct source search로 찾는 retrieval arm입니다.
+
+### `source revision`
+
+authoritative source의 특정 내용 상태를 provenance에서 식별하는 opaque revision입니다. 순서 비교는 별도 `revision sequence`, byte 동일성 확인은 `source hash`를 사용합니다.
+
+### `revision sequence`
+
+같은 document의 source revision 순서를 비교할 수 있는 monotonic number입니다. content hash는 동일성 확인에 쓰고 revision sequence는 늦은 job의 publish 거부에 씁니다.
+
+### `document head`
+
+한 document의 현재 authoritative revision sequence, source hash, active/tombstone 상태를 가리키는 control record입니다.
+
+### `indexed revision`
+
+검색 결과 row가 실제로 반영한 source revision입니다. source revision보다 낮으면 그 결과는 stale 후보입니다.
+
+### `read-your-writes barrier`
+
+같은 작업 세션의 검색이 자신이 방금 쓴 source revision 이상만 사용하도록 기다리거나 direct-read fallback하는 freshness gate입니다.
+
+### `publish barrier`
+
+exact/lexical/dense arm이 같은 revision을 준비했는지 확인한 뒤 hybrid active revision을 원자 전환하는 gate입니다.
+
+### `logical read fence`
+
+한 query의 여러 retrieval arm이 하나의 논리 snapshot을 읽도록 고정하는 fence입니다. registry snapshot revision, index generation, document-head/pointer epoch, arm별 backend version evidence로 구성하며 backend-native version 하나를 전제로 하지 않습니다.
+
+### `dirty source union`
+
+same-session index receipt가 아직 없는 작은 변경 문서 집합을 direct source search 후보에 합쳐 stale index를 보완하는 계층입니다.
+
+### `registry revision`
+
+source include/exclude, sensitivity, branch/worktree scope 같은 검색 control metadata snapshot의 version입니다. source content가 같아도 registry revision 변화는 별도 mutation이며 chunk row의 과거 revision과 전역 equality를 요구하지 않습니다.
+
+### `presence state`
+
+source의 존재 판정 상태입니다. 정상 확인된 `PRESENT`, 오류나 일시 부재인 `INDETERMINATE`, readable settled scan 또는 authoritative source signal로 삭제가 확인된 `ABSENT_CONFIRMED`를 사용합니다.
+
+### `searchable delta`
+
+background compaction이나 full index rebuild 전에 새·수정 content를 즉시 검색할 수 있게 하는 최신 변경 계층입니다.
+
+### `tombstone`
+
+삭제되거나 rename으로 대체된 identity를 physical cleanup 전부터 검색 결과에서 제외하는 논리 삭제 표식입니다.
+
+### `reconciliation scan`
+
+watcher 이벤트와 무관하게 authoritative source manifest와 index manifest의 content hash를 비교해 누락, orphan, stale revision을 복구하는 점검입니다.
+
+### `index generation`
+
+schema, chunker, tokenizer, embedding model의 호환 가능한 한 조합으로 만든 검색 projection 세대입니다.
+
+### `visibility lag`
+
+source write가 완료된 시점부터 해당 revision이 authoritative 검색 결과로 보이거나 삭제 결과가 사라질 때까지의 지연입니다.
 
 ### `raw source`
 
@@ -191,8 +321,12 @@ downstream에 전달하거나 이후 단계가 소비하는 구조화 결과를 
 
 ## Change Log
 
+- 2026-07-16: repository-local harness skill, canonical project path, thin Claude adapter와 no-global-install 경계를 추가했다.
+- 2026-07-15: human policy, proposal, normative standard, approval, exception, loop/checkpoint/attention/receipt, human control view vocabulary 추가.
+
 - 2026-04-10: 하네스 starter 문서 생성.
 - 2026-04-14: control-plane과의 whole-system control surface 연결 규칙 추가.
 - 2026-05-09: LLM Wiki 운영을 위한 raw source, source_refs, markdown properties, ingest/lint 용어 추가.
 - 2026-05-09: Codex 운영을 위한 agent instruction surface와 done criteria 용어 추가.
 - 2026-06-14: main-issued draft 용어 추가.
+- 2026-07-15: hybrid retrieval, revision, read-your-writes, searchable delta, tombstone, reconciliation, visibility 용어 추가.

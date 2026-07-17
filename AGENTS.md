@@ -3,8 +3,20 @@
 ## Repository Map
 
 - `README.md` is the human quickstart for this reusable document harness.
+- `CLAUDE.md` imports this file so Claude Code follows the same repository contract without duplicating authority.
+- `.agents/skills/operate-document-harness/SKILL.md` is the canonical repository-local router for adoption, execution, policy extraction, and View operation.
+- `.claude/skills/operate-document-harness/SKILL.md` is a thin Claude project adapter to the canonical skill.
 - `docs/README.md` is the main schema for document types, issuing rules, update rules, and commands.
+- `docs/ADOPT.md` is the single entrypoint for initializing, migrating, or upgrading the harness in a target repository.
+- `docs/EXECUTE.md` is the single orchestration index for starting or resuming a loop-enabled task.
 - `docs/design/control-plane.md` is the top-level control surface for goals, pipeline, validators, and handoff rules.
+- `docs/design/harness-adoption-plane.md` defines ownership-aware plan/apply migration, policy extraction, repo-local View, and quality handoff contracts.
+- `docs/design/retrieval-plane.md` defines scalable search, revision, and freshness contracts.
+- `docs/design/policy-to-evidence-governance.md` defines human policy, AI proposal, approval, exception, and traceability authority.
+- `docs/design/execution-loop-plane.md` defines task checkpoint, attention, stop/resume, and evidence contracts.
+- `docs/design/human-control-view-plane.md` defines projector, snapshot API/SSE, freshness, security, and runtime boundaries.
+- `docs/guide/human-control-view.md` defines how a person operates the read-only local human view.
+- `docs/guide/repository-policy-extraction.md` defines how existing repository rules become reviewable policy/guideline candidates without AI self-approval.
 - `docs/design/ubiquitous-language.md` holds canonical terms.
 - `docs/guide/` holds reusable operating rules, including Codex guidance and artifact contracts.
 - `docs/_templates/` holds templates used by `docs/bin/new-doc.sh`.
@@ -13,10 +25,19 @@
 
 ## Codex Workflow
 
-- Start by reading this file, then `docs/README.md`, then the specific guide/design/template relevant to the task.
+- Start by reading this file and `docs/README.md`. For existing-repository adoption or migration, read `docs/ADOPT.md`; for loop-enabled work, read `docs/EXECUTE.md`, then the current task/checkpoint and only their exact policy/design/guide refs.
+- Use the repository-local `operate-document-harness` skill for harness workflows. It routes to durable repository contracts and creates no authority; never install or update a user-global document-harness skill as part of this repository.
+- Treat mature-repository adoption as a no-write migration plan first. Preserve project-owned files and dirty tracked/untracked changes; never wholesale-copy public harness files over customized target files.
 - For ambiguous or broad work, first identify goal, context, constraints, and done criteria before editing.
 - Keep changes scoped to the requested harness behavior. Avoid unrelated rewrites or style churn.
 - Prefer `rg` and the scripts in `docs/bin/` for navigation and verification.
+- If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.
+- Before loop-enabled execution, read the effective policy/standard refs, current task contract, and current checkpoint; keep lifecycle `status` separate from `loop_state`.
+- AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.
+- Keep extraction confidence, source authority, human approval, and implementation enforcement as separate fields. Code/config observations and retrieval metadata are not human policy approval.
+- Repo-local View servers default to exact loopback binding and OS-assigned ports. Never kill an existing process to obtain a port, and never expose the View remotely without a separate human decision.
+- After a meaningful action, validation, checkpoint, or attention change, refresh sanitized View probes and wait for a new snapshot sequence. Browser polling alone is not freshness evidence.
+- Update the current checkpoint after a meaningful action, validation result, attention request, or stop/resume transition; keep task `Status` as append-only milestone history.
 - When changing document rules, update the template, the guide that explains the rule, and the validator in the same change when applicable.
 - Do not issue a new `project` document unless the user explicitly asks for it or approves it. Suggest the need and rationale instead.
 - Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
@@ -37,7 +58,9 @@ Run these after harness changes:
 ```bash
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
+./docs/bin/validate-harness-adoption.sh
 ./docs/bin/validate-doc-retrieval.sh
+./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 git diff --check
 ```
@@ -50,5 +73,8 @@ A harness change is done only when:
 
 - The relevant docs and templates agree with each other.
 - Codex-facing instructions remain concise enough to load automatically.
+- Codex and Claude entrypoints delegate to the same durable contracts rather than defining competing rules.
 - Validators pass or any skipped validator is explicitly explained.
+- Human-owned policy and approval state are not inferred from AI-authored prose alone.
+- Existing repository ownership, migration conflicts, and runtime-local state remain explicit and reversible.
 - The final response names the changed surfaces and the verification result.

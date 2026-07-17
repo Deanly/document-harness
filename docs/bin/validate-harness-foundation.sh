@@ -35,11 +35,20 @@ require_contains() {
 }
 
 DOCS_README="$ROOT_DIR/README.md"
+EXECUTION_ENTRY="$ROOT_DIR/EXECUTE.md"
 CONTROL_PLANE="$ROOT_DIR/design/control-plane.md"
 QUALITY_AXES="$ROOT_DIR/guide/quality-axes.md"
 ARTIFACT_CONTRACTS="$ROOT_DIR/guide/artifact-contracts.md"
 UBIQUITOUS_LANGUAGE="$ROOT_DIR/design/ubiquitous-language.md"
+RETRIEVAL_PLANE="$ROOT_DIR/design/retrieval-plane.md"
+POLICY_GOVERNANCE="$ROOT_DIR/design/policy-to-evidence-governance.md"
+EXECUTION_LOOP="$ROOT_DIR/design/execution-loop-plane.md"
+HUMAN_VIEW_DESIGN="$ROOT_DIR/design/human-control-view-plane.md"
 LLM_WIKI_OPERATIONS="$ROOT_DIR/guide/llm-wiki-operations.md"
+HYBRID_RETRIEVAL="$ROOT_DIR/guide/hybrid-retrieval-and-freshness.md"
+POLICY_GUIDE="$ROOT_DIR/guide/policy-proposal-and-approval.md"
+EXECUTION_GUIDE="$ROOT_DIR/guide/execution-loop-operations.md"
+HUMAN_VIEW="$ROOT_DIR/guide/human-control-view.md"
 CODEX_AGENT_GUIDANCE="$ROOT_DIR/guide/codex-agent-guidance.md"
 PROJECT_CUTTING="$ROOT_DIR/guide/project-cutting-and-execution.md"
 DOCUMENT_LIFECYCLE="$ROOT_DIR/guide/document-lifecycle-and-active-reading.md"
@@ -48,21 +57,52 @@ AGENTS_TEMPLATE="$ROOT_DIR/_templates/agents.md"
 NEW_DOC_SCRIPT="$ROOT_DIR/bin/new-doc.sh"
 CODEX_READINESS="$ROOT_DIR/bin/validate-codex-readiness.sh"
 DOC_RETRIEVAL="$ROOT_DIR/bin/validate-doc-retrieval.sh"
+RETRIEVAL_POLICY="$ROOT_DIR/_indexes/retrieval-policy.yaml"
+EXECUTION_POLICY="$ROOT_DIR/_indexes/execution-loop-policy.yaml"
+EXECUTION_CHECKPOINT_TEMPLATE="$ROOT_DIR/_templates/execution-checkpoint.md"
+EXECUTION_VALIDATOR="$ROOT_DIR/bin/validate-execution-loop.sh"
+TASK_TEMPLATE="$ROOT_DIR/_templates/task.md"
+REPORT_TEMPLATE="$ROOT_DIR/_templates/report.md"
+QA_TEMPLATE="$ROOT_DIR/_templates/qa.md"
 
 require_file "$DOCS_README"
+require_file "$EXECUTION_ENTRY"
 require_file "$AGENTS_FILE"
 require_file "$AGENTS_TEMPLATE"
 require_file "$CONTROL_PLANE"
 require_file "$QUALITY_AXES"
 require_file "$ARTIFACT_CONTRACTS"
 require_file "$UBIQUITOUS_LANGUAGE"
+require_file "$RETRIEVAL_PLANE"
+require_file "$POLICY_GOVERNANCE"
+require_file "$EXECUTION_LOOP"
+require_file "$HUMAN_VIEW_DESIGN"
 require_file "$LLM_WIKI_OPERATIONS"
+require_file "$HYBRID_RETRIEVAL"
+require_file "$POLICY_GUIDE"
+require_file "$EXECUTION_GUIDE"
+require_file "$HUMAN_VIEW"
 require_file "$CODEX_AGENT_GUIDANCE"
 require_file "$PROJECT_CUTTING"
 require_file "$DOCUMENT_LIFECYCLE"
 require_file "$NEW_DOC_SCRIPT"
 require_file "$CODEX_READINESS"
 require_file "$DOC_RETRIEVAL"
+require_file "$RETRIEVAL_POLICY"
+require_file "$EXECUTION_POLICY"
+require_file "$EXECUTION_CHECKPOINT_TEMPLATE"
+require_file "$EXECUTION_VALIDATOR"
+require_file "$TASK_TEMPLATE"
+require_file "$REPORT_TEMPLATE"
+require_file "$QA_TEMPLATE"
+
+for header in \
+  '## Purpose' '## Load Order' '## Start Gate' '## Execute Loop' \
+  '## State Routing' '## Evidence Barrier' '## Stop And Ask' \
+  '## Closeout' '## Verification' '## Human Handoff'
+do
+  require_section "$EXECUTION_ENTRY" "$header"
+done
 
 for header in \
   "## Repository Map" \
@@ -72,6 +112,38 @@ for header in \
   "## Done Criteria"
 do
   require_section "$AGENTS_FILE" "$header"
+done
+
+for header in \
+  "## Context" \
+  "## Authority Boundary" \
+  "## Governance Roles" \
+  "## Proposal And Promotion Contract" \
+  "## Policy To Evidence Traceability" \
+  "## Approval Contract" \
+  "## Exception Contract" \
+  "## View Projection Contract" \
+  "## Invariants" \
+  "## Failure Boundaries" \
+  "## References" \
+  "## Change Log"
+do
+  require_section "$POLICY_GOVERNANCE" "$header"
+done
+
+for header in \
+  "## Purpose" \
+  "## Operating Principle" \
+  "## Policy Intake" \
+  "## Proposal Workflow" \
+  "## Human Review And Approval" \
+  "## Promotion Workflow" \
+  "## Task And QA Traceability" \
+  "## Exception Workflow" \
+  "## Human View Presentation" \
+  "## Change Log"
+do
+  require_section "$POLICY_GUIDE" "$header"
 done
 
 for header in \
@@ -117,12 +189,55 @@ for header in \
   "## Source Layer" \
   "## Ingest Workflow" \
   "## Query Workflow" \
+  "## Scalable Retrieval Loop" \
   "## Lint Workflow" \
   "## Index And Log Mapping" \
   "## Properties Contract" \
   "## Change Log"
 do
   require_section "$LLM_WIKI_OPERATIONS" "$header"
+done
+
+for header in \
+  "## Purpose" \
+  "## Whole-System Role" \
+  "## Authority Boundary" \
+  "## Invariants" \
+  "## Scale Activation" \
+  "## Retrieval Components" \
+  "## Interfaces" \
+  "## Revision And Identity" \
+  "## Incremental Projection" \
+  "## Publish And Concurrency Contract" \
+  "## Query Contract" \
+  "## Freshness Contract" \
+  "## Failure Recovery" \
+  "## Failure Boundaries" \
+  "## Evaluation Contract" \
+  "## Quality Axes" \
+  "## Decisions" \
+  "## Artifact Contracts" \
+  "## Open Questions" \
+  "## References" \
+  "## Change Log"
+do
+  require_section "$RETRIEVAL_PLANE" "$header"
+done
+
+for header in \
+  "## Purpose" \
+  "## Operating Principle" \
+  "## Profile Selection" \
+  "## Ingest Loop" \
+  "## Query Loop" \
+  "## Same-Session Freshness" \
+  "## Delete And Rename" \
+  "## Evaluation And Operations" \
+  "## Failure Response" \
+  "## References" \
+  "## Change Log"
+do
+  require_section "$HYBRID_RETRIEVAL" "$header"
 done
 
 for header in \
@@ -141,12 +256,25 @@ done
 
 require_section "$PROJECT_CUTTING" "## Main-Issued Numbered Document Rule"
 require_section "$DOCUMENT_LIFECYCLE" "## Lifecycle Rules"
-require_contains "$DOCS_README" '`task`와 `project` 번호 발급 기준 브랜치는 항상 `main`입니다.'
-require_contains "$AGENTS_FILE" 'Issue numbered `project`/`task` docs only from clean, up-to-date `main`'
-require_contains "$AGENTS_TEMPLATE" 'Issue numbered `project`/`task` docs only from clean, up-to-date `main`'
+require_contains "$DOCS_README" '`task`, `project`, `qa` 번호 발급 기준 브랜치는 항상 `main`입니다.'
+require_contains "$AGENTS_FILE" 'Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$AGENTS_TEMPLATE" 'Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$RETRIEVAL_POLICY" 'source_of_truth: filesystem'
+require_contains "$RETRIEVAL_POLICY" 'profile_after_activation: hybrid'
+require_contains "$RETRIEVAL_POLICY" 'exact: keyword_or_direct_source'
+require_contains "$RETRIEVAL_POLICY" 'indexed_only_search: false'
+require_contains "$AGENTS_FILE" 'AI may draft policy/standard/exception proposals but must not self-approve them.'
+require_contains "$AGENTS_TEMPLATE" 'AI may draft policy/standard/exception proposals but must not self-approve them.'
+require_contains "$TASK_TEMPLATE" 'execution_contract: v1'
+require_contains "$TASK_TEMPLATE" 'loop_state: ready'
+require_contains "$TASK_TEMPLATE" '## Execution Readiness'
+require_contains "$TASK_TEMPLATE" '## Execution Loop'
+require_contains "$REPORT_TEMPLATE" 'proposal_status:'
+require_contains "$QA_TEMPLATE" 'Policy Clause'
 require_contains "$NEW_DOC_SCRIPT" "require_numbered_doc_issue_context"
 require_contains "$NEW_DOC_SCRIPT" "commit_numbered_doc_draft"
 
 "$DOC_RETRIEVAL"
+"$EXECUTION_VALIDATOR" --all
 
 echo "Validated harness foundation."

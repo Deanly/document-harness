@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/rollback-receipt.schema.json",
+  "title": "Document Harness Rollback Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "command", "status", "applyId", "planHash", "targetIdentity", "rolledBackAt", "writes", "restored"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "command": { "const": "rollback" },
+    "status": { "const": "ROLLED_BACK" },
+    "applyId": { "type": "string", "minLength": 1 },
+    "planHash": { "$ref": "#/$defs/sha256" },
+    "targetIdentity": { "$ref": "#/$defs/sha256" },
+    "rolledBackAt": { "type": "string", "format": "date-time" },
+    "writes": { "type": "integer", "minimum": 0 },
+    "restored": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "restoredSha256"],
+        "properties": {
+          "path": { "$ref": "#/$defs/relativePath" },
+          "restoredSha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "relativePath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" }
+  }
+}

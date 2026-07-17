@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "id": "document-harness",
+    "name": "Document Harness",
+    "description": "A repository-local, read-only projection of governance, execution, and evidence sources."
+  },
+  "governanceCatalog": "docs/_indexes/governance-catalog.json",
+  "bindHost": "127.0.0.1",
+  "portMode": "auto",
+  "qualityCommands": {
+    "fast": "./runtime/document-harness-view/bin/human-view doctor",
+    "full": "./runtime/document-harness-view/bin/human-view test",
+    "continuous": "./runtime/document-harness-view/bin/human-view snapshot"
+  },
+  "probes": []
+}

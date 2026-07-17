@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+NODE_BIN="${DOCUMENT_HARNESS_VIEW_NODE_BIN:-$(command -v node || true)}"
+
+if [[ -z "${NODE_BIN}" ]]; then
+  echo "Node.js is required for the document-harness human view." >&2
+  exit 1
+fi
+
+exec "${NODE_BIN}" \
+  "${REPO_ROOT}/runtime/document-harness-view/control.mjs" \
+  "${1:-help}" \
+  --root "${REPO_ROOT}" \
+  "${@:2}"

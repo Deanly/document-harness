@@ -1,0 +1,149 @@
+# Machine-readable, vendor-neutral retrieval and freshness defaults.
+version: 2
+updated: 2026-07-15
+
+authority:
+  source_of_truth: filesystem
+  index_is_rebuildable: true
+
+activation:
+  profile_before_activation: static
+  profile_after_activation: hybrid
+  operator_review_project_count: 30
+  operator_review_overridable: true
+  measurement_triggers:
+    - document_and_chunk_count
+    - edit_rate
+    - visibility_lag
+    - query_latency
+    - query_concurrency
+    - retrieval_miss_rate
+
+freshness:
+  same_session: read_your_writes
+  watcher_role: latency_hint
+  reconciliation_role: correctness_authority
+  normal_lexical_visibility_p95_ms: 1000
+  normal_hybrid_visibility_p95_ms: 5000
+  normal_delete_visibility_p95_ms: 1000
+  reconciliation_convergence_max_ms: 120000
+  direct_read_fallback: true
+  direct_dirty_source_union: true
+
+retrieval:
+  exact: keyword_or_direct_source
+  lexical: bm25
+  dense: multilingual
+  fusion: rrf
+  parameters_provisional: true
+  rrf_k: 60
+  lexical_candidates: 50
+  dense_candidates: 50
+  final_results: 10
+  indexed_only_search: false
+
+publish:
+  coordinator: single_writer_or_compare_and_swap
+  revision_order: monotonic_sequence
+  document_head: authoritative
+  row_layout: revision_keyed_immutable_staging
+  lexical_visibility: lexical_revision_pointer
+  hybrid_visibility: all_arms_same_revision
+  query_snapshot: logical_read_fence
+  revision_retention: while_any_pointer_or_query_fence_references
+  registry_changes: versioned_snapshot_filter_fail_closed
+  generation_cutover: cutoff_replay_watermark_atomic_switch
+
+metadata_contracts:
+  registry_entry:
+    - project_id
+    - source_id
+    - valid_from_registry_revision
+    - valid_to_registry_revision
+    - include_exclude_scope
+    - sensitivity_policy
+    - branch_scope
+    - worktree_id
+  document_head:
+    - source_id
+    - doc_id
+    - source_revision
+    - revision_seq
+    - source_hash
+    - relative_path
+    - presence_state
+    - is_tombstone
+    - lexical_active_revision
+    - hybrid_active_revision
+    - pointer_epoch
+  chunk_row:
+    - project_id
+    - source_id
+    - doc_id
+    - chunk_id
+    - doc_type
+    - status
+    - relative_path
+    - heading_path
+    - source_revision
+    - revision_seq
+    - source_hash
+    - content_hash
+    - index_generation
+    - arm
+    - staged_state
+  arm_receipt:
+    - source_id
+    - doc_id
+    - revision_seq
+    - source_hash
+    - arm
+    - indexed_revision
+    - index_generation
+    - backend_commit_version
+    - state
+  query_envelope:
+    - query_text
+    - scope_filter
+    - registry_snapshot_revision
+    - mode
+    - minimum_revision_seq_by_doc
+    - minimum_source_hash_by_doc
+    - logical_read_fence
+  query_result:
+    - project_id
+    - source_id
+    - doc_id
+    - chunk_id
+    - relative_path
+    - heading_path
+    - revision_seq
+    - source_hash
+    - content_hash
+    - index_generation
+    - logical_read_fence
+    - retrieval_provenance
+    - freshness_state
+
+mutation:
+  identity: stable_persisted
+  doc_id_fallback: catalog_persisted_identity
+  catalog_state: versioned_and_backup_required
+  update: inactive_revision_staging_then_pointer_publish
+  job_commit_guard: current_head_check_before_pointer_publish
+  destructive_write_guard: lease_before_write_held_through_publish
+  replacement_input: full_document_chunk_manifest
+  delete: tombstone_before_compaction
+  delete_confirmation: settled_readable_scan_or_authoritative_source_signal
+  rename: atomic_old_path_remove_and_new_path_activate
+  transient_absence: present_indeterminate_absent_confirmed
+  physical_cleanup: after_pointer_retirement
+
+evaluation:
+  required_metrics:
+    - recall_at_10
+    - ndcg_at_10
+    - mrr
+    - exact_identifier_hit_rate
+    - stale_hit_rate
+    - visibility_lag

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/verification-receipt.schema.json",
+  "title": "Document Harness Verification Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "command", "status", "targetIdentity", "checkedAt", "findings", "evidencePack"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "command": { "const": "verify" },
+    "status": { "enum": ["INSTALLED_NOT_VERIFIED", "INSTALLED_AWAITING_REVIEW", "MIGRATION_VERIFIED"] },
+    "targetIdentity": { "$ref": "#/$defs/sha256" },
+    "release": { "type": "object" },
+    "targetSourceRevision": { "type": "string" },
+    "checkedAt": { "type": "string", "format": "date-time" },
+    "findings": { "type": "array", "items": { "type": "object", "required": ["code"] } },
+    "evidencePack": { "type": ["string", "null"] }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

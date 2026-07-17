@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/adoption-plan.schema.json",
+  "title": "Document Harness Adoption Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "command", "status", "mode", "repositoryState", "requestedProfiles", "profiles", "target", "release", "installationLockPath", "actions", "attention", "planHash"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "command": { "const": "plan" },
+    "status": { "enum": ["PLAN_READY", "NEEDS_DECISION"] },
+    "mode": { "enum": ["initialize", "migrate", "upgrade", "stopped"] },
+    "repositoryState": { "enum": ["new", "mature", "installed", "unknown"] },
+    "requestedProfiles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+    "profiles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+    "target": { "$ref": "#/$defs/targetFence" },
+    "release": { "$ref": "#/$defs/releaseFence" },
+    "installationLockPath": { "$ref": "#/$defs/relativePath" },
+    "actions": { "type": "array", "items": { "$ref": "#/$defs/action" } },
+    "attention": { "type": "array", "items": { "type": "object" } },
+    "planHash": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "relativePath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+    "targetFence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "identity", "revision", "dirtyFingerprint", "inventorySha256"],
+      "properties": {
+        "locator": { "type": "string", "minLength": 1, "pattern": "^(?!/).+$" },
+        "identity": { "$ref": "#/$defs/sha256" },
+        "revision": { "type": "string", "minLength": 1 },
+        "dirtyFingerprint": { "$ref": "#/$defs/sha256" },
+        "inventorySha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "releaseFence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "manifestSha256", "sourceRevision"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "sourceRevision": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sourcePath", "profiles", "ownership", "beforeSha256", "beforeMode", "afterSha256", "mode", "action", "reason", "rollbackAction"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "sourcePath": { "$ref": "#/$defs/relativePath" },
+        "profiles": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "ownership": { "enum": ["harness-managed", "project-owned", "generated", "runtime-local"] },
+        "beforeSha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "beforeMode": { "type": ["integer", "null"], "enum": [420, 493, null] },
+        "afterSha256": { "$ref": "#/$defs/sha256" },
+        "mode": { "enum": ["0644", "0755"] },
+        "generator": { "type": ["string", "null"], "enum": ["repository-view-config-v1", "repository-adoption-profile-v1", "repository-governance-catalog-v1", null] },
+        "generationContext": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["targetRevision", "workingTreeState", "capturedAt"],
+              "properties": {
+                "targetRevision": { "type": "string", "minLength": 1 },
+                "workingTreeState": { "enum": ["clean", "dirty"] },
+                "capturedAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          ]
+        },
+        "artifactType": { "type": "string", "enum": ["runtime", "template", "generated"] },
+        "action": { "enum": ["ADD", "UPDATE_UNMODIFIED", "KEEP_PROJECT_OWNED", "CONFLICT", "GRANDFATHER", "DEFER", "REMOVE_GENERATED"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "rollbackAction": { "enum": ["REMOVE_ADDED", "RESTORE_PREIMAGE", "NONE"] }
+      }
+    }
+  }
+}

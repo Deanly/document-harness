@@ -1,0 +1,53 @@
+# Human-owned adoption profile. Runtime-local values belong in the ignored
+# runtime directory, not this file.
+schema_version: 1
+repository_id: "{{REPOSITORY_ID}}"
+source_root: .
+profiles:
+  - core
+  - governance
+  - view
+installation_lock: docs/_indexes/harness-installation.yaml
+governance_catalog: docs/_indexes/governance-catalog.json
+agent_skill:
+  name: operate-document-harness
+  scope: repository
+  canonical_path: .agents/skills/operate-document-harness/SKILL.md
+  claude_adapter_path: .claude/skills/operate-document-harness/SKILL.md
+  global_install: false
+view:
+  enabled: true
+  bind_host: 127.0.0.1
+  port_mode: auto
+  presentation:
+    profile: single-repository-top-tabs-v1
+    repository_identity: static
+    repository_selector: false
+    sidebar: false
+    tabs:
+      - Overview
+      - Policies & Guidelines
+      - Review Queue
+      - Execution Status
+      - Evidence
+    external_assets: false
+  consistency:
+    cross_tab_snapshot_fence: single
+    preserve_on_refresh:
+      - active_tab
+      - filters
+      - search_query
+      - expanded_rows
+  capabilities:
+    read: true
+    write: false
+    execution: false
+    approval: false
+quality:
+  fast: ./runtime/document-harness-view/bin/human-view doctor
+  full: ./runtime/document-harness-view/bin/human-view test
+  continuous: ./runtime/document-harness-view/bin/human-view snapshot
+adoption:
+  default_mode: plan
+  preserve_dirty_worktree: true
+  overwrite_project_owned: false

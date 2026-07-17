@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "command": "rollback",
+  "status": "ROLLED_BACK",
+  "applyId": "{{APPLY_ID}}",
+  "planHash": "{{PLAN_SHA256}}",
+  "targetIdentity": "{{TARGET_IDENTITY_SHA256}}",
+  "rolledBackAt": "{{RFC3339_TIMESTAMP}}",
+  "writes": 0,
+  "restored": []
+}

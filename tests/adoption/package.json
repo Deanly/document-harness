@@ -1,0 +1,20 @@
+{
+  "name": "document-harness-release-acceptance",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "setup:browser": "playwright install chromium",
+    "test": "./run-all.sh",
+    "test:initializer": "node --test harness-adopt.test.mjs fixture-matrix.test.mjs installed-copy-e2e.test.mjs view-fixture-matrix.test.mjs",
+    "test:view": "node --test ../../runtime/document-harness-view/test/*.test.mjs",
+    "test:browser": "node view-browser-gate.mjs"
+  },
+  "devDependencies": {
+    "pixelmatch": "7.2.0",
+    "playwright": "1.61.1",
+    "pngjs": "7.0.0"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "migration": {
+    "status": "awaiting_human_review",
+    "capturedRepository": {
+      "baseCommit": "{{REPOSITORY_BASE_COMMIT}}",
+      "workingTreeState": "{{WORKING_TREE_STATE}}"
+    },
+    "capturedAt": "{{CAPTURED_AT}}",
+    "approvalRule": "AI-extracted candidates remain unapproved until a source-fenced human decision receipt exists."
+  },
+  "direction": [],
+  "policies": [],
+  "guidelines": [],
+  "attention": [],
+  "gaps": [
+    {
+      "id": "GAP-POLICY-EXTRACTION",
+      "summary": "No source-linked policy candidate has been reviewed.",
+      "reason": "The initializer does not invent or self-approve repository policy."
+    }
+  ]
+}
