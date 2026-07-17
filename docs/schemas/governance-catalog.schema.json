@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/governance-catalog.schema.json",
+  "title": "Repository Governance Candidate Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "migration", "direction", "policies", "guidelines", "attention", "gaps"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "migration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "capturedRepository", "capturedAt", "approvalRule"],
+      "properties": {
+        "status": { "enum": ["awaiting_human_review", "reviewed", "stale", "degraded"] },
+        "capturedRepository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["baseCommit", "workingTreeState"],
+          "properties": {
+            "baseCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            "workingTreeState": { "enum": ["clean", "dirty", "unknown"] }
+          }
+        },
+        "capturedAt": { "type": "string", "format": "date-time" },
+        "approvalRule": { "type": "string", "minLength": 1 },
+        "receiptRef": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "reviewed" } }, "required": ["status"] },
+          "then": { "required": ["receiptRef"] }
+        }
+      ]
+    },
+    "direction": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "policies": { "type": "array", "items": { "$ref": "#/$defs/candidate" } },
+    "guidelines": { "type": "array", "items": { "$ref": "#/$defs/candidate" } },
+    "attention": { "type": "array", "items": { "$ref": "#/$defs/attention" } },
+    "gaps": { "type": "array", "items": { "$ref": "#/$defs/gap" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "title", "humanSummary", "authorityClass", "authorityState", "approvalState", "enforcement", "confidence", "effectiveRef", "decisionReceiptRef", "sourceRefs", "conflicts"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["policy", "guideline", "observation"] },
+        "title": { "type": "string", "minLength": 1 },
+        "humanSummary": { "type": "string", "minLength": 1 },
+        "why": { "type": "string" },
+        "scope": { "type": "string" },
+        "risk": { "type": "string" },
+        "policyRefs": { "type": "array", "items": { "type": "string" } },
+        "authorityClass": { "enum": ["repository_instruction", "human_policy", "normative_standard", "current_design", "approved_guide", "task_or_receipt", "report_or_history", "code_observation", "config_observation", "unknown"] },
+        "authorityState": { "enum": ["proposed", "accepted_for_promotion", "effective", "superseded"] },
+        "approvalState": { "enum": ["unreviewed", "review_requested", "approved", "rejected", "stale", "superseded"] },
+        "enforcement": { "enum": ["enforced", "partially_enforced", "advisory", "not_implemented", "unknown"] },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "effectiveRef": { "type": ["string", "null"] },
+        "decisionReceiptRef": { "type": ["string", "null"] },
+        "sourceRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/sourceRef" } },
+        "conflicts": { "type": "array", "items": { "type": "string" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "authorityClass": { "enum": ["code_observation", "config_observation"] } } },
+          "then": {
+            "properties": {
+              "kind": { "const": "observation" },
+              "authorityState": { "const": "proposed" },
+              "approvalState": { "const": "unreviewed" },
+              "effectiveRef": { "type": "null" },
+              "decisionReceiptRef": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "approvalState": { "const": "approved" } } },
+          "then": {
+            "properties": {
+              "effectiveRef": { "type": "string", "minLength": 1 },
+              "decisionReceiptRef": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "authorityState": { "const": "effective" } }, "required": ["authorityState"] },
+          "then": {
+            "properties": {
+              "approvalState": { "const": "approved" },
+              "effectiveRef": { "type": "string", "minLength": 1 },
+              "decisionReceiptRef": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "heading", "lineStart", "lineEnd", "capturedSha256", "capturedRepositoryRevision"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+        "heading": { "type": "string", "minLength": 1 },
+        "lineStart": { "type": "integer", "minimum": 1 },
+        "lineEnd": { "type": "integer", "minimum": 1 },
+        "evidenceKind": { "type": "string" },
+        "note": { "type": ["string", "null"] },
+        "capturedSha256": { "$ref": "#/$defs/sha256" },
+        "capturedRepositoryRevision": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+      }
+    },
+    "attention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "severity", "title", "humanSummary", "relatedRefs"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "severity": { "enum": ["critical", "decision", "warning", "info"] },
+        "title": { "type": "string", "minLength": 1 },
+        "humanSummary": { "type": "string", "minLength": 1 },
+        "relatedRefs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "summary", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

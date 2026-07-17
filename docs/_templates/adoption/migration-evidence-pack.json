@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "release": {
+    "id": "{{RELEASE_ID}}",
+    "version": "{{RELEASE_VERSION}}",
+    "manifestSha256": "{{MANIFEST_SHA256}}",
+    "sourceRevision": "{{SOURCE_REVISION_SHA256}}"
+  },
+  "targetSourceRevision": "{{TARGET_SOURCE_REVISION}}",
+  "installationReceiptRef": "{{APPLY_RECEIPT_REF}}",
+  "humanDecisionReceiptRefs": [],
+  "gates": [],
+  "allRequiredGatesPassed": false,
+  "humanReviewComplete": false,
+  "rollbackRef": null
+}

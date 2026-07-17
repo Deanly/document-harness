@@ -1,0 +1,11 @@
+# Local dependency installations
+node_modules/
+
+# Rebuildable repository-local document-harness runtime state
+.document-harness/
+
+# Optional browser-gate artifacts when explicitly written inside the repository
+/tests/adoption/artifacts/
+
+# macOS metadata
+.DS_Store

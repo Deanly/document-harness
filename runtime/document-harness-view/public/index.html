@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Document Harness · Human Control View</title>
+    <link rel="stylesheet" href="/styles.css?v=1">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <header class="masthead">
+      <div class="repository-identity" aria-label="Current repository">
+        <strong>Document Harness</strong>
+        <span class="identity-separator" aria-hidden="true">/</span>
+        <span id="repository-name">Repository</span>
+      </div>
+      <div class="masthead-status">
+        <span class="status-label info">Read only</span>
+        <span class="status-label success">local-only</span>
+        <span id="last-updated" class="last-updated">Checking freshness</span>
+        <button id="refresh-button" class="button secondary" type="button">Refresh now</button>
+        <div id="live-state" class="connection-state pending" role="status" aria-live="polite">Connecting</div>
+      </div>
+    </header>
+
+    <nav class="tab-bar" aria-label="Human Control View">
+      <div class="tabs" role="tablist" aria-orientation="horizontal">
+        <button id="tab-overview" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-overview" tabindex="-1" data-tab="overview">Overview</button>
+        <button id="tab-policies" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-policies" tabindex="0" data-tab="policies">Policies &amp; Guidelines</button>
+        <button id="tab-review" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-review" tabindex="-1" data-tab="review">Review Queue <span id="review-tab-count" class="tab-count">-</span></button>
+        <button id="tab-execution" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-execution" tabindex="-1" data-tab="execution">Execution Status</button>
+        <button id="tab-evidence" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-evidence" tabindex="-1" data-tab="evidence">Evidence</button>
+      </div>
+    </nav>
+
+    <div id="freshness-banner" class="freshness-banner pending" role="status" aria-live="polite">
+      Checking source and migration freshness.
+    </div>
+
+    <main id="main" class="app-shell">
+      <section id="panel-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-overview" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">PROJECT OVERVIEW</p>
+            <h1 id="overview-title">프로젝트 개요</h1>
+            <p id="project-description" class="page-description">프로젝트 정보를 불러오는 중입니다.</p>
+          </div>
+          <span id="migration-badge" class="status-label warning">초기화 중</span>
+        </div>
+        <div id="overview-summary" class="metric-strip" aria-label="프로젝트 요약"></div>
+        <div class="overview-grid">
+          <section class="panel-card" aria-labelledby="direction-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">DIRECTION</p>
+                <h2 id="direction-title">현재 개발 방향</h2>
+              </div>
+            </div>
+            <ol id="direction-list" class="direction-list"></ol>
+          </section>
+          <section class="panel-card" aria-labelledby="overview-review-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow attention">REVIEW</p>
+                <h2 id="overview-review-title">먼저 확인할 항목</h2>
+              </div>
+              <button class="text-button" type="button" data-open-tab="review">전체 보기</button>
+            </div>
+            <div id="overview-review-list" class="review-preview-list"></div>
+          </section>
+        </div>
+        <section class="panel-card" aria-labelledby="overview-runtime-title">
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow">RUNTIME</p>
+              <h2 id="overview-runtime-title">현재 관찰 상태</h2>
+            </div>
+            <button class="text-button" type="button" data-open-tab="execution">실행 상태 보기</button>
+          </div>
+          <div id="overview-runtime" class="runtime-strip"></div>
+        </section>
+      </section>
+
+      <section id="panel-policies" class="tab-panel" role="tabpanel" aria-labelledby="tab-policies">
+        <div class="page-heading policy-heading">
+          <div>
+            <p class="eyebrow">GOVERNANCE</p>
+            <h1>정책·지침</h1>
+            <p class="page-description">사람이 읽고 결정해야 하는 정책 후보와 이를 구현하는 지침을 근거까지 연결해 보여줍니다.</p>
+          </div>
+          <div id="policy-summary" class="compact-metrics" aria-label="정책 현황"></div>
+        </div>
+
+        <div class="policy-layout">
+          <div class="policy-workspace">
+            <div class="table-toolbar" role="search">
+              <label class="search-field">
+                <span class="visually-hidden">정책과 지침 검색</span>
+                <input id="policy-search" type="search" placeholder="정책 ID, 지침, 근거 경로 검색" autocomplete="off">
+              </label>
+              <div id="policy-filters" class="filter-group" aria-label="정책 필터"></div>
+              <button id="clear-policy-filters" class="text-button" type="button">필터 초기화</button>
+            </div>
+            <div class="result-line">
+              <strong id="policy-result-count">0개 결과</strong>
+              <label class="page-size-label">페이지당
+                <select id="policy-page-size">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                </select>
+              </label>
+            </div>
+            <div class="table-scroll" tabindex="0" aria-label="정책 표 가로 스크롤 영역">
+              <table class="data-table policy-table">
+                <thead>
+                  <tr>
+                    <th scope="col"><span class="visually-hidden">상세</span></th>
+                    <th scope="col">정책 ID</th>
+                    <th scope="col">사람이 읽는 정책</th>
+                    <th scope="col">관련 지침</th>
+                    <th scope="col">위험</th>
+                    <th scope="col">강제 수준</th>
+                    <th scope="col">승인 상태</th>
+                    <th scope="col">증거</th>
+                  </tr>
+                </thead>
+                <tbody id="policy-table-body"></tbody>
+              </table>
+            </div>
+            <div id="policy-pagination" class="pagination" aria-label="정책 페이지"></div>
+          </div>
+
+          <aside class="review-rail" aria-labelledby="review-rail-title">
+            <div class="rail-heading">
+              <div>
+                <p class="eyebrow attention">REVIEW SUMMARY</p>
+                <h2 id="review-rail-title">검토 요약</h2>
+              </div>
+              <button class="text-button" type="button" data-open-tab="review">전체 보기</button>
+            </div>
+            <div id="review-rail-list" class="review-rail-list"></div>
+          </aside>
+        </div>
+        <div id="policy-runtime-strip" class="runtime-strip bordered"></div>
+      </section>
+
+      <section id="panel-review" class="tab-panel" role="tabpanel" aria-labelledby="tab-review" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow attention">HUMAN REVIEW</p>
+            <h1>검토 대기</h1>
+            <p class="page-description">Critical부터 Decision, Attention 순으로 정렬합니다. 이 화면에서는 결정을 실행하지 않고 정확한 검토 대상을 보여줍니다.</p>
+          </div>
+          <div id="review-summary" class="compact-metrics" aria-label="검토 대기 현황"></div>
+        </div>
+        <div class="table-toolbar">
+          <div id="review-filters" class="filter-group" aria-label="검토 심각도 필터"></div>
+        </div>
+        <div id="review-list" class="review-list"></div>
+        <aside class="read-only-callout">
+          <strong>결정은 승인 receipt로 남깁니다.</strong>
+          <span id="approval-rule">이 페이지는 정책을 승인하거나 수정하지 않습니다.</span>
+        </aside>
+      </section>
+
+      <section id="panel-execution" class="tab-panel" role="tabpanel" aria-labelledby="tab-execution" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">OBSERVED RUNTIME</p>
+            <h1>실행 상태</h1>
+            <p class="page-description">Read-only observations for this repository and its allowlisted local probes. This View cannot execute, restart, or deploy anything.</p>
+          </div>
+          <button class="button secondary" type="button" data-refresh>관찰 상태 갱신</button>
+        </div>
+        <div id="execution-summary" class="runtime-strip bordered"></div>
+        <div id="runtime-grid" class="runtime-grid"></div>
+        <section class="empty-state execution-gap" aria-labelledby="execution-gap-title">
+          <h2 id="execution-gap-title">AI 실행 체크포인트가 아직 연결되지 않았습니다</h2>
+          <p id="execution-gap-copy">No task checkpoint, next action, verification receipt, or budget source is configured. The View does not infer progress.</p>
+        </section>
+      </section>
+
+      <section id="panel-evidence" class="tab-panel" role="tabpanel" aria-labelledby="tab-evidence" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">SOURCE EVIDENCE</p>
+            <h1>증거</h1>
+            <p class="page-description">정책과 지침이 참조하는 저장소 상대 경로와 초기 이관 시점의 hash를 보여줍니다. 원문 내용은 제공하지 않습니다.</p>
+          </div>
+          <div id="evidence-summary" class="compact-metrics" aria-label="증거 현황"></div>
+        </div>
+        <div class="evidence-layout">
+          <div class="evidence-workspace">
+            <div class="table-toolbar" role="search">
+              <label class="search-field">
+                <span class="visually-hidden">증거 경로 검색</span>
+                <input id="evidence-search" type="search" placeholder="경로, heading, 관련 정책 검색" autocomplete="off">
+              </label>
+              <div id="evidence-filters" class="filter-group" aria-label="증거 상태 필터"></div>
+            </div>
+            <div class="result-line"><strong id="evidence-result-count">0개 경로</strong></div>
+            <div class="table-scroll" tabindex="0" aria-label="증거 표 가로 스크롤 영역">
+              <table class="data-table evidence-table">
+                <thead>
+                  <tr>
+                    <th scope="col">소스 경로</th>
+                    <th scope="col">종류·위치</th>
+                    <th scope="col">관련 항목</th>
+                    <th scope="col">Hash</th>
+                    <th scope="col">상태</th>
+                  </tr>
+                </thead>
+                <tbody id="evidence-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+          <aside id="source-fence-card" class="source-fence-card" aria-labelledby="source-fence-title">
+            <p class="eyebrow">READ FENCE</p>
+            <h2 id="source-fence-title">Snapshot 기준</h2>
+            <dl id="source-fence-list" class="definition-list"></dl>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>읽기 전용 projection · 정책 승인, 코드 변경, 실행 명령은 이 화면에서 수행되지 않습니다.</p>
+      <p id="footer-fence"></p>
+    </footer>
+
+    <template id="empty-template">
+      <div class="empty-state">표시할 항목이 없습니다.</div>
+    </template>
+
+    <script type="module" src="/app.mjs?v=1"></script>
+  </body>
+</html>

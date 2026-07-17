@@ -7,6 +7,11 @@ created: {{DATE}}
 updated: {{DATE}}
 current_focus:
 report_type:
+governance_role:
+proposal_kind:
+proposal_status:
+policy_refs: []
+standard_refs: []
 related_project:
 related_task:
 related_design: []
@@ -24,6 +29,7 @@ tags:
 - Updated: {{DATE}}
 - Current Focus:
 - Report Type:
+- Governance Role / Proposal Status:
 - Related Project:
 
 ## Summary
@@ -47,6 +53,23 @@ tags:
 ## Recommendations
 
 - 후속 조치
+
+## Governance Proposal
+
+정책·표준·예외 proposal일 때만 채웁니다. 일반 report면 `Not applicable`로 둡니다.
+
+- policy clause와 exact version
+- 사실 / inference / assumption / unknown
+- competing options와 impact
+- proposed rule, verification method, evidence shape
+- rollout / rollback / residual risk
+- 영향을 받는 design / guide / task / QA
+
+## Approval Request
+
+- 사람에게 필요한 정확한 응답: `approve`, `reject`, `choose`, `revise`
+- 필요한 approver role, exact source/diff revision, effective 조건
+- proposal은 승인된 normative design으로 승격되기 전까지 효력이 없음을 적습니다.
 
 ## Follow-Up Promotion
 

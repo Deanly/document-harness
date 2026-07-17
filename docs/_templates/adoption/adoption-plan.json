@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "command": "plan",
+  "status": "PLAN_READY",
+  "mode": "initialize",
+  "repositoryState": "new",
+  "requestedProfiles": ["core"],
+  "profiles": ["core"],
+  "target": {
+    "locator": "{{PLAN_RELATIVE_TARGET_LOCATOR}}",
+    "identity": "{{TARGET_IDENTITY_SHA256}}",
+    "revision": "{{TARGET_REVISION}}",
+    "dirtyFingerprint": "{{DIRTY_FINGERPRINT_SHA256}}",
+    "inventorySha256": "{{INVENTORY_SHA256}}"
+  },
+  "release": {
+    "id": "{{RELEASE_ID}}",
+    "version": "{{RELEASE_VERSION}}",
+    "manifestSha256": "{{MANIFEST_SHA256}}",
+    "sourceRevision": "{{SOURCE_REVISION_SHA256}}"
+  },
+  "installationLockPath": "docs/_indexes/harness-installation.yaml",
+  "actions": [],
+  "attention": [],
+  "planHash": "{{PLAN_SHA256}}"
+}

@@ -17,11 +17,16 @@
 - `docs/design/`: 도메인, 경계, 계약, 정책 설계 문서
 - `docs/guide/`: 반복적으로 참조하는 운영/구현/판단 가이드
 - `docs/reports/`: 요청성 보고 문서
+- `docs/qa/`: 기획·설계에서 파생된 QA 전략, 계획, 케이스, 런북 문서
 - `docs/examples/`: 완성형 샘플 문서
 - `docs/_templates/`: 문서 템플릿
-- `docs/_indexes/`: active docs, design map, context packet 같은 LLM retrieval-plane index
+- `docs/_indexes/`: active docs, design map, context packet, machine-readable retrieval/execution policy
+- downstream `docs/checkpoints/`: loop-enabled task의 unnumbered current execution checkpoint
 - `docs/bin/`: 문서 생성 및 검증 도구
 - `AGENTS.md`: Codex가 자동으로 읽는 repository-level instruction surface
+- `CLAUDE.md`: `AGENTS.md`를 import하는 thin Claude Code instruction adapter
+- `.agents/skills/operate-document-harness/`: 각 repository에 설치하는 canonical project skill
+- `.claude/skills/operate-document-harness/`: canonical skill을 읽는 thin Claude project adapter
 - 프로젝트별 `raw/` 또는 `sources/`: 필요 시 원문 source를 불변으로 두는 입력 계층
 
 ## Harness Philosophy
@@ -31,6 +36,10 @@
 - focused execution: `project`와 `task`는 전체 목표를 잃지 않은 채 부분 작업에 집중하게 만드는 focus surface여야 합니다.
 - umbrella-first lineage: human-facing initiative는 기본적으로 umbrella project 1개로 유지하고, 하위 실행은 그 아래 `task`로 관리합니다.
 - human-issued project: `project`는 human-facing initiative owner를 잠그는 surface이므로 사람만 발급하고, 에이전트는 발급 필요성과 근거만 제안합니다.
+- human-governed policy: AI는 policy/standard/exception proposal을 작성할 수 있지만 human approval 없이 effective로 만들지 않습니다.
+- observable execution: loop-enabled task는 current checkpoint, next actor/action, attention, evidence receipt, stop/resume 상태를 외부화합니다.
+- human-view projection: Markdown/Git은 authority로 유지하고 사용자를 위한 화면은 freshness가 보이는 rebuildable read-only projection으로 만듭니다.
+- ownership-aware adoption: mature repository는 파일 복사가 아니라 project-owned surface와 dirty state를 보존하는 plan/apply migration으로 도입합니다.
 - evidence-backed: 완료, 위험, 운영 판단은 실제 관찰 결과와 연결합니다.
 - goal-locked completion: 발급 시점의 목적과 완료 기준은 나중에 더 작은 조각으로 쪼개도 약해지지 않습니다.
 - current-truth design: 설계 문서는 append-only 이력보다 현재 기준의 정확성을 우선합니다.
@@ -39,10 +48,12 @@
 - compounding answers: 재사용 가치가 생긴 답변, 비교, 판단은 대화에만 두지 않고 `report`, `guide`, `design`, `project`, `task` 중 맞는 surface로 파일링합니다.
 - property-first markdown: YAML frontmatter는 에이전트, Obsidian, Dataview가 읽는 machine-readable index surface로 유지합니다.
 - codex-readable entrypoint: 루트 `AGENTS.md`는 Codex가 즉시 읽는 짧은 instruction surface이고, 상세 규칙은 `docs/guide/`로 연결합니다.
+- repository-local skill: harness workflow router는 target repository의 `.agents/skills/operate-document-harness/`에 설치하고 user-global skill에 의존하지 않습니다.
 - verifiable agent work: Codex가 완료 여부를 확인할 수 있도록 한 번에 실행 가능한 validator를 제공합니다.
 - narrow scope: v1 범위를 명시적으로 좁게 고정하고, 후속 경계는 먼저 같은 umbrella 아래 `task`로 수용하며 예외일 때만 별도 `project`로 분리합니다.
 - ubiquitous language: 핵심 용어는 한 곳에서 canonical term을 고정하고 설계 변경과 함께 갱신합니다.
 - human-readable active surface: active 문서는 폴더 입구와 문서 첫 화면에서 바로 식별 가능해야 합니다.
+- source-authoritative retrieval: 검색 index는 재생성 가능한 후보 surface이며, 방금 바뀌었거나 freshness가 불확실한 파일은 원문을 직접 읽습니다.
 
 자세한 철학은 `docs/guide/harness-philosophy.md`를, 수명주기와 human reading 규칙은 `docs/guide/document-lifecycle-and-active-reading.md`를, source-backed wiki 운영은 `docs/guide/llm-wiki-operations.md`를, Codex 운영은 `docs/guide/codex-agent-guidance.md`를 봅니다.
 
@@ -59,6 +70,10 @@
   - related umbrella project
   - whole-system anchor
   - completion mode
+  - execution contract, task contract revision, lifecycle과 분리된 loop state
+  - policy / normative rule / exception refs
+  - execution readiness와 current checkpoint ref
+  - attention / decision / verification receipt
   - committed outcome
   - goal inventory
   - goal verification
@@ -117,6 +132,8 @@
   - 필요 시 지속 수정합니다.
   - 설계가 바뀌면 관련 `task`, `project`, `guide`보다 먼저 갱신합니다.
   - whole-system role, artifact contract, failure boundary, quality axis를 함께 잠급니다.
+  - `governance_role: human-policy`는 인간 소유 policy clause를, `governance_role: normative-standard`는 승인되어 effective인 rule을 담습니다.
+  - AI proposal은 design에 바로 effective로 쓰지 않고 `report`에서 검토·승인한 뒤 승격합니다.
 
 ### Guide
 
@@ -126,6 +143,7 @@
   - 설계 문서보다 설명적입니다.
   - 요청성 보고보다 지속적으로 재사용됩니다.
   - project/task/design의 의사결정을 보조합니다.
+  - `operational-guidance`는 effective design을 실행하는 HOW이며 design에 없는 새 MUST를 단독으로 만들 수 없습니다.
 
 ### Report
 
@@ -136,6 +154,20 @@
   - 날짜를 앞에 두어 시간순 정렬과 human scan을 쉽게 합니다.
   - 요청 목적에 맞는 구조를 사용합니다.
   - 재사용 가치가 생긴 내용은 `guide`, `design`, `project`, `task`로 승격합니다.
+  - policy/standard/exception proposal은 `governance_role: proposal`과 `proposal_status`를 사용하며, 승인된 design으로 승격되기 전까지 normative authority가 없습니다.
+
+### QA
+
+- 파일명 규칙: `QA0001-abc.md`
+- prefix: `QA`
+- 의미: design과 planning source에서 파생된 테스트 전략, 계획, 케이스 카탈로그, 런북
+- 상태: `draft`, `current`, `retired`
+- 특징:
+  - `qa_type`은 `strategy`, `plan`, `cases`, `runbook` 중 하나입니다.
+  - source documents와 traceability를 유지합니다.
+  - 번호는 clean, up-to-date `main`에서 발급하고 draft를 즉시 commit합니다.
+  - current 문서는 `docs/qa/README.md`와 `docs/_indexes/active-docs.md`에 함께 표시합니다.
+  - governance 적용 시 Policy Clause → Standard Rule → Task/Goal → Check → Evidence → Exception/Verdict를 exact version/ID로 추적합니다.
 
 ### Ubiquitous Language
 
@@ -165,6 +197,15 @@
   - 상세 규칙은 `docs/guide/codex-agent-guidance.md`로 분리합니다.
   - Codex instruction budget을 고려해 간결하게 유지합니다.
 
+### Repository-Local Harness Skill
+
+- canonical path: `.agents/skills/operate-document-harness/SKILL.md`
+- Claude adapter path: `.claude/skills/operate-document-harness/SKILL.md`
+- 의미: adoption, loop execution, policy extraction, View operation 요청을 repository의 durable entrypoint로 route하는 project skill
+- authority: 별도 policy·approval·verification authority를 만들지 않으며 `AGENTS.md`, human-owned policy, effective design과 validator를 따릅니다.
+- 설치 범위: 각 target repository 안에 document-harness와 함께 설치하며 user-global location에는 설치하지 않습니다.
+- bootstrap: 현재 session 중 처음 설치되면 canonical file을 direct-read하고, 자동 discovery는 새 session 또는 repository reload 뒤 기대합니다.
+
 ## Markdown Properties
 
 새 템플릿은 YAML frontmatter를 기본으로 생성합니다. 이 properties는 Obsidian, Dataview, 검색 도구, 에이전트가 문서를 빠르게 분류하고 연결하기 위한 machine-readable surface입니다.
@@ -173,9 +214,12 @@
 - `project` / `task`: `doc_id`, `completion_mode`, `related_control_plane`, `quality_axes`
 - `project`: `project_role`, `umbrella_initiative`, `parent_umbrella_project`
 - `task`: `related_umbrella_project`
-- `design`: `domain`, `referenced_by`
+- `task` execution: `execution_contract`, `task_contract_revision`, `loop_state`, `risk_tier`, `checkpoint_ref`, `policy_refs`, `normative_refs`, `exception_refs`
+- `design`: `domain`, `referenced_by`, optional `governance_role`, `governance_id`, `normative_version`, `approval_ref`
 - `design` retrieval hints: `retrieval_class`, `context.default_load`, `context.section_load`, `context.size_tier`
 - `guide` / `report`: `related_project`, `related_task`, `related_design`
+- governance proposal: `governance_role`, `proposal_kind`, `proposal_status`, `policy_refs`, `standard_refs`
+- `qa`: `doc_id`, `qa_type`, `source_documents`, `related_design`, `related_project`
 
 첫 화면의 bullet metadata는 사람이 바로 읽는 mirror입니다. `status`, `updated`, `current_focus`, 관계 property를 바꾸면 frontmatter와 bullet metadata를 같은 변경 셋에서 맞춥니다.
 
@@ -183,11 +227,11 @@
 
 ## Issuing Rules
 
-- `task`와 `project`는 독립된 번호 시퀀스를 가집니다.
+- `task`, `project`, `qa`는 각각 독립된 번호 시퀀스를 가집니다.
 - 번호는 중앙 카운터 파일 없이 기존 파일을 스캔해 계산합니다.
-- `task`와 `project` 번호 발급 기준 브랜치는 항상 `main`입니다.
-- `task` 또는 `project` 발급 전에는 local `main`을 remote tracking branch 기준으로 최신화합니다.
-- `./docs/bin/new-doc.sh task|project ...`는 clean, up-to-date `main`에서만 실행하며, 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다.
+- `task`, `project`, `qa` 번호 발급 기준 브랜치는 항상 `main`입니다.
+- numbered document 발급 전에는 local `main`을 remote tracking branch 기준으로 최신화합니다.
+- `./docs/bin/new-doc.sh task|project|qa ...`는 clean, up-to-date `main`에서만 실행하며, 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다.
 - 발급된 `draft` commit은 번호 reservation입니다. 공유 remote가 있으면 work branch로 돌아가기 전에 push 또는 공유까지 끝냅니다.
 - 발급 후 기존 work branch는 `main`을 merge해서 새 문서와 그 사이 `main`에 들어온 배포본을 함께 가져온 뒤 작업을 이어갑니다.
 - work branch가 dirty해서 바로 `main`으로 전환할 수 없으면 untracked 파일을 포함해 stash하고, `main` 병합 후 stash를 되돌리며 충돌을 해결합니다.
@@ -203,7 +247,7 @@
 - YAML frontmatter는 검색과 index를 위한 properties이고, 첫 화면 bullet metadata는 human scan을 위한 mirror입니다.
 - 새 문서는 템플릿의 properties를 유지하며, 임의 key가 필요하면 템플릿과 `docs/guide/llm-wiki-operations.md`를 함께 갱신합니다.
 - source 기반 판단을 남길 때는 `source_refs`와 본문 `References` 또는 `Inputs`를 함께 채웁니다.
-- Codex-facing 규칙을 바꾸면 루트 `AGENTS.md`, `docs/_templates/agents.md`, `docs/guide/codex-agent-guidance.md`, `./docs/bin/validate-codex-readiness.sh`를 함께 검토합니다.
+- AI-facing 규칙을 바꾸면 루트 `AGENTS.md`, `CLAUDE.md`, `.agents/skills/operate-document-harness/`, `.claude/skills/operate-document-harness/`, `docs/_templates/agents.md`, `docs/_templates/claude.md`, `docs/guide/codex-agent-guidance.md`, `./docs/bin/validate-codex-readiness.sh`를 함께 검토합니다.
 - `task`와 `project`의 `Status` 섹션은 append-only로 운영합니다.
 - 새 이력은 문서 하단에 계속 추가합니다.
 - WBS와 진행률은 현재 상태를 반영하도록 갱신합니다.
@@ -229,13 +273,18 @@
 - whole-system control surface의 기본 구조는 `./docs/bin/validate-harness-foundation.sh`를 통과해야 합니다.
 - Codex-facing surface의 기본 구조는 `./docs/bin/validate-codex-readiness.sh`를 통과해야 합니다.
 - retrieval-plane surface의 기본 구조는 `./docs/bin/validate-doc-retrieval.sh`를 통과해야 합니다.
+- hybrid runtime을 쓰더라도 filesystem source가 authoritative하며, 현재 작업에서 바뀐 파일이나 freshness가 불확실한 결과는 source를 직접 읽습니다.
+- retrieval runtime은 `docs/_indexes/retrieval-policy.yaml`의 revision, tombstone, direct-read fallback 계약을 따릅니다.
+- lifecycle `status`와 execution `loop_state`를 분리하고, active execution은 current checkpoint를 연결합니다.
+- policy/standard/exception proposal은 human approval과 effective design revision 없이 mandatory rule이 될 수 없습니다.
+- view cache와 AI summary는 derived projection이며 task, approval, evidence의 유일한 truth를 소유하지 않습니다.
 - `done` 전환은 가능하면 메타데이터를 직접 고치기보다 `./docs/bin/close-doc.sh <doc-path> "<note>"`를 사용합니다.
 - `project` 문서의 WBS는 실제 `task` 문서와 1:1로 대응하는 것을 기본 규칙으로 합니다.
 - umbrella project의 WBS와 status history는 후속 분화가 생겨도 human-facing lineage를 먼저 설명해야 합니다.
 - `project` 문서의 WBS `ID`는 해당 `task`의 문서 번호를 그대로 사용합니다.
 - `task` 내부 WBS의 `ID`는 `W1`, `W2`, `W3` 형식을 사용합니다.
 - `project`, `task`, `report`는 기본적으로 제자리에서 닫습니다. `archive/`는 기본 규칙이 아닙니다.
-- `docs/projects/README.md`, `docs/tasks/README.md`, `docs/reports/README.md`는 active 문서만 보여주는 얇은 입구로 유지합니다.
+- `docs/projects/README.md`, `docs/tasks/README.md`, `docs/reports/README.md`는 active 문서만, `docs/qa/README.md`는 current QA 문서만 보여주는 얇은 입구로 유지합니다.
 - 문서가 `active`가 되거나 닫히면 해당 폴더 `README.md`도 같은 변경 셋에서 갱신합니다.
 - active `project`, `task`, `report`는 첫 화면에 `Status`, `Owner`, `Updated`, `Current Focus`를 드러냅니다.
 - `report`는 살아 있는 truth를 누적하는 문서가 아닙니다. 재사용 규칙이나 현재 기준이 생기면 해당 타입 문서로 승격하고 링크를 남깁니다.
@@ -283,46 +332,63 @@
 
 ## Recommended Workflow
 
-1. 프로젝트 시작 시 `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 먼저 채웁니다.
-2. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.
-3. Codex가 작업할 프로젝트라면 루트 `AGENTS.md`를 실제 repo 기준으로 조정합니다.
-4. 첫 umbrella `project` 문서는 clean, up-to-date `main`에서 발급합니다. `new-doc.sh`가 생성된 draft를 즉시 `main`에 commit합니다.
-5. 핵심 boundary와 계약을 `design`으로 고정하고, 필요하면 control-plane을 같은 변경 셋에서 갱신합니다.
-6. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
-7. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
-8. 예외 조건이 명확할 때만 새 `project`를 `main`에서 발급하고 issuance check에 그 이유를 남깁니다.
-9. `project`와 `task`에는 whole-system anchor, outputs / handoff, quality axes in scope를 함께 적습니다.
-10. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
-11. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
-12. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
-13. 주기적으로 `docs/guide/llm-wiki-operations.md`의 lint workflow로 stale claim, orphan, property drift를 점검합니다.
-14. `./docs/bin/validate-codex-readiness.sh`로 Codex entrypoint를 확인합니다.
-15. `./docs/bin/validate-harness-foundation.sh`로 전체 control surface를, `./docs/bin/validate-closeout.sh`로 closeout gate를 확인합니다.
+1. 새 repository인지 mature repository인지 먼저 판정합니다. 기존 AGENTS, design, template, validator 또는 numbered doc가 있다면 `docs/ADOPT.md`의 no-write migrate plan부터 사용하고 public 파일을 단순 복사하지 않습니다.
+2. 새 프로젝트 시작 시 `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 먼저 채웁니다.
+3. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.
+4. Codex가 작업할 프로젝트라면 루트 `AGENTS.md`와 repository-local `operate-document-harness` skill을 실제 repo 기준으로 조정합니다.
+5. 첫 umbrella `project` 문서는 clean, up-to-date `main`에서 발급합니다. `new-doc.sh`가 생성된 draft를 즉시 `main`에 commit합니다.
+6. 핵심 boundary와 계약을 `design`으로 고정하고, 필요하면 control-plane을 같은 변경 셋에서 갱신합니다.
+7. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
+8. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
+9. 예외 조건이 명확할 때만 새 `project`를 `main`에서 발급하고 issuance check에 그 이유를 남깁니다.
+10. 인간 policy를 받으면 missing decision과 AI proposal을 먼저 분리하고, 승인된 rule만 normative design으로 승격합니다.
+11. `project`와 `task`에는 whole-system anchor, outputs / handoff, quality axes in scope를 함께 적습니다.
+12. loop-enabled task 실행 중에는 current checkpoint, attention, decision/verification receipt를 갱신합니다.
+13. 현재 읽어야 하는 문서가 생기면 해당 폴더 `README.md`의 active 목록도 함께 갱신합니다.
+14. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
+15. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
+16. 주기적으로 `docs/guide/llm-wiki-operations.md`의 lint workflow로 stale claim, orphan, property drift를 점검합니다.
+17. corpus 규모나 freshness 병목이 생기면 `docs/design/retrieval-plane.md`와 `docs/guide/hybrid-retrieval-and-freshness.md`에 따라 hybrid profile을 활성화합니다.
+18. `./docs/bin/validate-codex-readiness.sh`와 `./docs/bin/validate-harness-adoption.sh`로 Codex/adoption entrypoint를 확인합니다.
+19. `./docs/bin/validate-harness-foundation.sh`, `./docs/bin/validate-execution-loop.sh --all`, `./docs/bin/validate-closeout.sh`로 control, loop, closeout gate를 확인합니다.
 
 프로젝트 분할 규칙은 `docs/guide/project-cutting-and-execution.md`를 우선합니다.
 
 ## Commands
 
-`project`와 `task` 발급 명령은 clean, up-to-date `main`에서만 실행합니다.
+`project`, `task`, `qa` 발급 명령은 clean, up-to-date `main`에서만 실행합니다.
 
 ```bash
 ./docs/bin/new-doc.sh project example-runtime-boundary
 ./docs/bin/new-doc.sh task bootstrap-ingestion-worker
 ./docs/bin/new-doc.sh task "문서 하네스 정리"
+./docs/bin/new-doc.sh qa first-test-strategy
 ./docs/bin/new-doc.sh design event-ingestion
 ./docs/bin/new-doc.sh guide project-cutting-and-execution
 ./docs/bin/new-doc.sh report sprint-01-status
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
+./docs/bin/validate-harness-adoption.sh
 ./docs/bin/validate-doc-retrieval.sh
+./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/close-doc.sh docs/tasks/T0001-bootstrap-ingest.md "issued goals and evidence verified"
 ```
 
 ## Starter Docs
 
+- `docs/EXECUTE.md`
+- `docs/ADOPT.md`
+- `CLAUDE.md`
+- `.agents/skills/operate-document-harness/SKILL.md`
+- `.claude/skills/operate-document-harness/SKILL.md`
 - `docs/design/ubiquitous-language.md`
 - `docs/design/control-plane.md`
+- `docs/design/harness-adoption-plane.md`
+- `docs/design/retrieval-plane.md`
+- `docs/design/policy-to-evidence-governance.md`
+- `docs/design/execution-loop-plane.md`
+- `docs/design/human-control-view-plane.md`
 - `AGENTS.md`
 - `docs/guide/harness-philosophy.md`
 - `docs/guide/codex-agent-guidance.md`
@@ -330,15 +396,23 @@
 - `docs/guide/artifact-contracts.md`
 - `docs/guide/quality-axes.md`
 - `docs/guide/llm-wiki-operations.md`
+- `docs/guide/hybrid-retrieval-and-freshness.md`
+- `docs/guide/policy-proposal-and-approval.md`
+- `docs/guide/execution-loop-operations.md`
+- `docs/guide/human-control-view.md`
+- `docs/guide/repository-policy-extraction.md`
 - `docs/guide/document-lifecycle-and-active-reading.md`
 - `docs/guide/project-cutting-and-execution.md`
 - `docs/guide/goal-locked-completion.md`
 
 ## Active Entry Points
 
+- `docs/EXECUTE.md`
+- `docs/ADOPT.md`
 - `docs/projects/README.md`
 - `docs/tasks/README.md`
 - `docs/reports/README.md`
+- `docs/qa/README.md`
 
 ## Examples
 

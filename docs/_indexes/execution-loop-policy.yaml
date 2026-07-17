@@ -1,0 +1,223 @@
+# Machine-readable, vendor-neutral defaults for the opt-in execution loop.
+# Human-owned policy and normative standards remain design artifacts; this file
+# defines runtime state, stop, checkpoint, and evidence mechanics only.
+version: 1
+updated: 2026-07-15
+contract: v1
+
+opt_in:
+  task_key: execution_contract
+  task_value: v1
+  grandfather_without_opt_in: true
+  checkpoint_root: docs/checkpoints
+  checkpoint_ref_key: checkpoint_ref
+
+authority:
+  task_contract_source: task_goal_inventory
+  policy_source: effective_human_policy_or_normative_standard_design
+  directive_source: explicit_human_or_repository_directive
+  ai_self_approval: forbidden
+  task_goal_weakening: supersede_or_reissue
+  unresolved_conflict: stop_with_conflict
+  policy_refs_required: true
+  directive_refs_required: true
+
+directive_precedence:
+  - platform_safety_and_tool_constraints
+  - effective_human_policy
+  - effective_normative_standard
+  - repository_instructions
+  - user_approved_task_contract
+  - latest_in_scope_human_directive
+  - active_execution_plan
+
+loop_state:
+  task_status_separate: true
+  initial: ready
+  vocabulary:
+    - ready
+    - running
+    - awaiting_user
+    - awaiting_external
+    - needs_review
+    - stopped
+    - succeeded
+  terminal:
+    - stopped
+    - succeeded
+  next_actor_vocabulary:
+    - agent
+    - user
+    - reviewer
+    - external
+    - none
+  transitions:
+    ready:
+      - running
+      - awaiting_user
+      - awaiting_external
+      - stopped
+    running:
+      - running
+      - awaiting_user
+      - awaiting_external
+      - needs_review
+      - stopped
+      - succeeded
+    awaiting_user:
+      - running
+      - stopped
+    awaiting_external:
+      - running
+      - stopped
+    needs_review:
+      - running
+      - awaiting_user
+      - stopped
+      - succeeded
+    stopped:
+      - ready
+    succeeded: []
+
+lifecycle_compatibility:
+  vocabulary:
+    - draft
+    - active
+    - blocked
+    - done
+    - closed
+    - superseded
+    - cancelled
+  allowed_loop_states:
+    draft:
+      - ready
+    active:
+      - ready
+      - running
+      - awaiting_user
+      - awaiting_external
+      - needs_review
+      - stopped
+      - succeeded
+    blocked:
+      - awaiting_user
+      - awaiting_external
+      - needs_review
+      - stopped
+    done:
+      - succeeded
+    closed:
+      - succeeded
+    superseded:
+      - stopped
+    cancelled:
+      - stopped
+
+stop:
+  reasons:
+    - NO_PROGRESS
+    - BUDGET_EXCEEDED
+    - BLOCKED
+    - CONFLICT
+    - SAFETY
+  no_progress_consecutive_limit: 3
+  same_failure_consecutive_limit: 3
+  scope_drift_action: stop_with_conflict
+  safety_action: stop_immediately
+  resume_requires_new_checkpoint: true
+  stopped_to_ready_requires_attempt_increment: true
+
+budget:
+  iterations_default: 10
+  elapsed_minutes_default: 60
+  budget_exhaustion_reason: BUDGET_EXCEEDED
+  extension_requires_human_directive: true
+
+risk:
+  vocabulary:
+    - low
+    - medium
+    - high
+    - critical
+  human_approval_required:
+    - task_contract_change
+    - scope_expansion
+    - irreversible_action
+    - production_or_secret_access
+    - high_or_critical_risk
+    - policy_exception
+
+checkpoint:
+  projection: latest_task_execution_state
+  identity: task_id_attempt_seq_checkpoint_seq
+  task_contract_revision_required: true
+  monotonic_attempt_seq: true
+  monotonic_checkpoint_seq: true
+  required_fields:
+    - checkpoint_id
+    - checkpoint_seq
+    - task_id
+    - task_contract_revision
+    - attempt_seq
+    - loop_state
+    - stop_reason
+    - next_actor
+    - current_hypothesis
+    - last_action
+    - next_action
+    - resume_when
+    - policy_refs
+    - directive_refs
+    - evidence
+    - risks
+    - attention
+    - receipts
+    - budget
+    - source_revision
+    - source_hash
+    - recorded_at
+  budget_fields:
+    - iterations_used
+    - iterations_max
+    - elapsed_minutes
+    - time_limit_minutes
+
+attention:
+  required_states:
+    - awaiting_user
+    - awaiting_external
+    - needs_review
+    - stopped
+  awaiting_user_actor: user
+  awaiting_external_actor: external
+  needs_review_actor: reviewer
+  no_silent_attention_drop: true
+
+receipts:
+  immutable: true
+  required_fields:
+    - receipt_id
+    - receipt_kind
+    - task_id
+    - checkpoint_seq
+    - actor
+    - issued_at
+    - scope
+    - statement
+    - evidence_refs
+    - approval_fence
+  kinds:
+    - command
+    - test
+    - review
+    - decision
+    - approval
+    - handoff
+
+closeout:
+  required_loop_state: succeeded
+  unresolved_attention_allowed: false
+  evidence_required: true
+  receipts_required: true
+  goal_verification_must_reference_evidence: true
+  trusted_runtime_verification_separate_from_static_validation: true

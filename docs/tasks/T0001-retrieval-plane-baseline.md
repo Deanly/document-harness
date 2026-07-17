@@ -15,7 +15,7 @@ related_design:
   - docs/design/control-plane.md
   - docs/design/ubiquitous-language.md
 source_refs:
-  - ../silverstone-core/docs/reports/2026-05-16-document-taxonomy-context-window-analysis.md
+  - "repo:silverstone-core:docs/reports/2026-05-16-document-taxonomy-context-window-analysis.md"
 quality_axes:
   - WHOLE
   - GOAL
@@ -98,7 +98,7 @@ tags:
 
 ## References
 
-- `../silverstone-core/docs/reports/2026-05-16-document-taxonomy-context-window-analysis.md`
+- `repo:silverstone-core:docs/reports/2026-05-16-document-taxonomy-context-window-analysis.md`
 - `docs/design/control-plane.md`
 - `docs/design/ubiquitous-language.md`
 - `docs/guide/llm-wiki-operations.md`

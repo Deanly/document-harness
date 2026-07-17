@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "command": "verify",
+  "status": "INSTALLED_NOT_VERIFIED",
+  "targetIdentity": "{{TARGET_IDENTITY_SHA256}}",
+  "release": {},
+  "targetSourceRevision": "{{TARGET_SOURCE_REVISION}}",
+  "checkedAt": "{{RFC3339_TIMESTAMP}}",
+  "findings": [],
+  "evidencePack": null
+}

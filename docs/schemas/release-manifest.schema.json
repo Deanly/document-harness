@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/release-manifest.schema.json",
+  "title": "Document Harness Release Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "releaseId", "version", "profiles", "profileDependencies", "files", "verification"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "releaseId": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "profiles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "profileDependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": { "type": "string", "minLength": 1 }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourcePath", "targetPath", "profiles"],
+        "properties": {
+          "sourcePath": { "$ref": "#/$defs/relativePath" },
+          "targetPath": { "$ref": "#/$defs/relativePath" },
+          "profiles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+          "mode": { "type": "string", "enum": ["0644", "0755"] },
+          "ownership": { "type": "string", "enum": ["harness-managed", "project-owned"] },
+          "generator": { "type": "string", "enum": ["repository-view-config-v1", "repository-adoption-profile-v1", "repository-governance-catalog-v1"] },
+          "artifactType": { "type": "string", "enum": ["runtime", "template", "generated"] }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidencePackPath", "requiredProfiles", "requiredInstalledPaths", "requiredGateIds", "verifiedStatusRequiresAllGates", "verifiedStatusRequiresHumanReview"],
+      "properties": {
+        "evidencePackPath": { "$ref": "#/$defs/relativePath" },
+        "requiredProfiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "requiredInstalledPaths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/relativePath" }
+        },
+        "requiredGateIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "verifiedStatusRequiresAllGates": { "const": true },
+        "verifiedStatusRequiresHumanReview": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "relativePath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" }
+  }
+}

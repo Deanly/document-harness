@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/apply-receipt.schema.json",
+  "title": "Document Harness Apply Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "command", "status", "applyResult", "planHash", "targetIdentity", "targetLocator", "release", "profiles", "writes", "mutations", "rollback", "installationLockPath"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "command": { "const": "apply" },
+    "status": { "enum": ["APPLY_FAILED", "INSTALLED_NOT_VERIFIED", "INSTALLED_AWAITING_REVIEW"] },
+    "applyResult": { "enum": ["applied", "failed"] },
+    "applyId": { "type": "string" },
+    "planHash": { "$ref": "#/$defs/sha256" },
+    "targetIdentity": { "$ref": "#/$defs/sha256" },
+    "targetLocator": { "const": "../.." },
+    "release": { "type": "object" },
+    "profiles": { "type": "array", "items": { "type": "string" } },
+    "installedAt": { "type": "string", "format": "date-time" },
+    "postApplyFence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "dirtyFingerprint", "inventorySha256"],
+      "properties": {
+        "revision": { "type": "string", "minLength": 1 },
+        "dirtyFingerprint": { "$ref": "#/$defs/sha256" },
+        "inventorySha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "failedAt": { "type": "string", "format": "date-time" },
+    "writes": { "type": "integer", "minimum": 0 },
+    "mutations": { "type": "array", "items": { "$ref": "#/$defs/mutation" } },
+    "failure": { "type": "object" },
+    "rollback": {
+      "type": "object",
+      "required": ["attempted", "result"],
+      "properties": {
+        "attempted": { "type": "boolean" },
+        "result": { "enum": ["not_requested", "restored", "incomplete"] },
+        "errors": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "installationLockPath": { "$ref": "#/$defs/relativePath" },
+    "alreadyApplied": { "type": "boolean" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "relativePath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "existed", "beforeSha256", "afterSha256", "beforeMode", "afterMode", "preimageBase64"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "existed": { "type": "boolean" },
+        "beforeSha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "afterSha256": { "$ref": "#/$defs/sha256" },
+        "beforeMode": { "type": ["integer", "null"] },
+        "afterMode": { "type": "integer" },
+        "preimageBase64": { "type": ["string", "null"], "contentEncoding": "base64" }
+      }
+    }
+  }
+}

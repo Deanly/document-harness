@@ -3,9 +3,25 @@ type: design
 title: {{TITLE}}
 status: current
 domain:
+governance_role:
+governance_id:
+normative_version:
+approval_status:
+approval_ref:
+effective_from:
+supersedes:
+policy_refs: []
+standard_refs: []
 owner:
 created: {{DATE}}
 updated: {{DATE}}
+retrieval_class:
+  - domain-current
+context:
+  default_load: false
+  section_load: false
+  evidence_only: false
+  size_tier: small
 referenced_by: []
 source_refs: []
 tags:
@@ -16,6 +32,9 @@ tags:
 
 - Type: design
 - Domain:
+- Governance Role:
+- Governance ID / Normative Version:
+- Approval Status / Reference:
 - Owner:
 - Created: {{DATE}}
 - Updated: {{DATE}}
@@ -45,6 +64,28 @@ tags:
 ## Invariants
 
 - 반드시 지켜져야 하는 규칙
+
+## Governance Extension
+
+정책 또는 표준 역할일 때만 채웁니다. 일반 domain design이면 `Not applicable`로 둡니다.
+
+- `human-policy`: human-owned outcome, policy clause, non-waivable rule, approver role
+- `normative-standard`: policy에서 파생되어 승인된 stable rule ID, MUST/SHOULD, verification method
+- AI가 만든 초안은 이 문서에서 effective로 표시하지 않고 `report` proposal로 먼저 검토합니다.
+
+| Rule / Clause ID | Normative Statement | Derived From | Required Check | Waivable |
+| --- | --- | --- | --- | --- |
+| | | | | |
+
+### Approval And Versioning
+
+- exact content revision 또는 diff에 묶인 human approval reference
+- effective date, change kind, superseded version
+- approval authority를 검증할 downstream mechanism
+
+### Approved Exceptions
+
+- exception ID, exact rule ref, scope, human risk acceptor, expiry, compensating check, exit task
 
 ## Failure Boundaries
 

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "scenarios": [
+    {
+      "id": "new-empty",
+      "seed": null,
+      "profiles": ["core"],
+      "expectedMode": "initialize",
+      "expectedStatus": "PLAN_READY"
+    },
+    {
+      "id": "mature-docs",
+      "seed": "adoption/seeds/mature-docs",
+      "profiles": ["core"],
+      "expectedMode": "migrate",
+      "expectedStatus": "PLAN_READY"
+    },
+    {
+      "id": "dirty-tracked-untracked",
+      "seed": "adoption/seeds/dirty-repository",
+      "profiles": ["core"],
+      "expectedMode": "migrate",
+      "expectedStatus": "PLAN_READY",
+      "trackedPath": "application.conf",
+      "trackedDirtyContent": "availability.mode=active-active\n",
+      "untrackedPath": "operator-notes.txt",
+      "untrackedContent": "fixture work in progress\n"
+    },
+    {
+      "id": "project-owned-name-conflict",
+      "seed": "adoption/seeds/project-owned-conflict",
+      "profiles": ["core"],
+      "expectedMode": "migrate",
+      "expectedStatus": "NEEDS_DECISION",
+      "conflictPath": "docs/ADOPT.md"
+    },
+    {
+      "id": "unmodified-managed",
+      "seed": null,
+      "profiles": ["core"],
+      "expectedMode": "upgrade",
+      "expectedManagedAction": "UPDATE_UNMODIFIED",
+      "expectedProjectOwnedAction": "KEEP_PROJECT_OWNED"
+    },
+    {
+      "id": "concurrent-fence-conflict",
+      "seed": null,
+      "profiles": ["core"],
+      "mutationPath": "concurrent-user-change.txt",
+      "expectedError": "TARGET_FENCE_MISMATCH"
+    },
+    {
+      "id": "upstream-project-conflict",
+      "seed": null,
+      "profiles": ["core"],
+      "managedPath": "docs/ADOPT.md",
+      "priorVersion": "0.9.0",
+      "expectedAction": "CONFLICT"
+    },
+    {
+      "id": "damaged-lock",
+      "seed": "adoption/seeds/damaged-lock",
+      "profiles": ["core"],
+      "expectedMode": "stopped",
+      "expectedStatus": "NEEDS_DECISION"
+    },
+    {
+      "id": "symlink-case",
+      "seed": "adoption/seeds/case-collision",
+      "profiles": ["core"],
+      "caseConflictPath": "docs/ADOPT.md",
+      "symlinkPath": "docs"
+    },
+    {
+      "id": "n-minus-one-to-n",
+      "seed": null,
+      "profiles": ["core"],
+      "priorVersion": "0.9.0",
+      "priorManagedPath": "docs/ADOPT.md",
+      "expectedVersion": "1.0.0",
+      "expectedGeneration": 2
+    },
+    {
+      "id": "injected-failure",
+      "seed": null,
+      "profiles": ["core"],
+      "failureAfter": 2,
+      "expectedStatus": "APPLY_FAILED"
+    },
+    {
+      "id": "rollback-reapply",
+      "seed": null,
+      "profiles": ["core"],
+      "expectedRollbackStatus": "ROLLED_BACK"
+    },
+    {
+      "id": "plan-apply-twice",
+      "seed": null,
+      "profiles": ["core"],
+      "expectedSecondApplyWrites": 0
+    }
+  ]
+}
