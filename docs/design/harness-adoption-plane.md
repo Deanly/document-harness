@@ -64,9 +64,11 @@ mode detection 결과는 plan에 포함합니다. `migrate`를 `initialize`로 �
 | `generated` | declared source + generator | source fence가 맞을 때 rebuild |
 | `runtime-local` | local process | untracked create/delete only |
 
-installation lock은 file path, ownership, upstream baseline hash, installed hash, source revision과 migration generation을 기록합니다.
+installation lock은 file path, ownership, upstream baseline hash, installed hash, apply 대상 source revision과 migration generation을 기록합니다. `targetSourceRevision`은 이번 initialize/migrate/upgrade plan과 quality gate가 실제로 검사한 target HEAD입니다.
 
 baseline이 없는 same-name file은 modified 여부를 추측할 수 없으므로 `project-owned` 또는 `CONFLICT`로 처리합니다.
+
+`project-owned` 보존은 현재 authoring 계약의 검증 면제가 아닙니다. upgrade 뒤 verify는 `new-doc.sh`, Project/Task template, closeout validator가 Initiative 발급 승인과 Policy/Guideline → Initiative → Project → Task lineage를 의미적으로 구현하는지 검사합니다. exact upstream byte가 아니라 stable field, placeholder, validator/call token을 검사하며, 구형 umbrella-only 계약이면 `LEGACY_GOVERNANCE_AUTHORING_CONTRACT`와 빠진 capability를 반환해 수동 병합 전에는 완료 상태로 올라가지 못하게 합니다.
 
 ## Plan And Apply Contract
 
@@ -86,6 +88,7 @@ public v1 command surface:
 - target revision, dirty status, inventory hash, public harness revision과 selected profile을 pin합니다.
 - `requestedProfiles`에는 사용자가 고른 profile만, `profiles`에는 dependency-expanded installation set을 기록합니다. `governance -> core`, `view -> core + governance`를 release manifest가 고정합니다.
 - partial bootstrap은 허용하지만 release `verification.requiredProfiles`와 `requiredInstalledPaths`가 완전하지 않으면 `MIGRATION_VERIFIED`로 승격하지 않습니다.
+- governance profile에서는 승인·효력 상태인 정책 또는 지침의 `effectiveRef`와 `sourceRefs[].path`를 현재 catalog에서 읽어 release action과 대조합니다. `ADD|UPDATE_UNMODIFIED`가 해당 path의 bytes를 실제로 바꾸면 `APPROVED_GOVERNANCE_SOURCE_MUTATION`으로 fail closed 하며, before/after SHA-256이 같은 mode-only repair는 허용합니다.
 - 같은 input은 같은 ordered action set과 plan hash를 만듭니다.
 - target source byte, Git index, runtime service와 `$HOME`을 변경하지 않습니다.
 
@@ -150,7 +153,7 @@ ROLLED_BACK
 
 ## Governance Extraction Handoff
 
-migration apply는 `docs/_indexes/governance-catalog.json`에 nested captured repository fence, explicit review attention과 extraction gap을 초기화합니다. v1 CLI는 policy wording을 발명하거나 code를 policy로 승격하지 않습니다. repository-local skill이 direct source를 읽어 schema-valid candidate를 채우는 별도 derived step을 수행합니다.
+migration apply는 `docs/_indexes/governance-catalog.json`에 nested captured repository fence, 정책과 추진안 각각의 explicit review attention/extraction gap을 초기화합니다. v1 CLI는 policy 또는 initiative wording을 발명하거나 code를 policy로 승격하지 않습니다. repository-local skill이 direct source를 읽어 schema-valid policy/guideline candidate를 채운 뒤 initiative bootstrap을 수행하는 별도 derived step을 맡습니다.
 
 필수 독립 축:
 
@@ -167,6 +170,8 @@ effective_ref
 
 catalog migration fence는 `migration.capturedRepository.baseCommit`과 `workingTreeState`를 사용합니다. `baseCommit`은 target에서 resolve 가능한 full Git commit이어야 합니다. 각 source ref는 repository-relative `path`, `heading`, `lineStart`, `lineEnd`, `capturedSha256`, `capturedRepositoryRevision`을 가집니다.
 
+catalog의 `baseCommit`은 정책·지침을 추출한 역사적 기준이고 installation lock의 `targetSourceRevision`은 현재 설치·업그레이드와 quality gate의 기준입니다. 이후 HEAD에서 harness를 upgrade해도 두 revision을 같다고 강제하지 않습니다. human policy decision은 catalog base와 source hash에, gate evidence와 migration evidence pack은 installation lock의 현재 target revision에 각각 묶습니다. 이 분리는 unchanged source evidence를 단순 HEAD 이동만으로 stale 처리하지 않으면서 새 release gate의 provenance를 유지합니다.
+
 code/config observation과 retrieval authority metadata는 human policy approval이 아닙니다. schema는 `code_observation|config_observation`을 `kind: observation`, `approvalState: unreviewed`, `effectiveRef: null`, `decisionReceiptRef: null`로 제한합니다. 승인 receipt는 exact `effectiveRef`와 `effectiveSha256`을 함께 고정하며 adoption verification은 현재 effective artifact bytes가 그 digest와 일치하는지 확인합니다. source hash나 effective bytes가 바뀌면 candidate review/approval은 stale입니다. 현재 HEAD가 captured base보다 이동했다는 사실만으로 unchanged per-source evidence를 stale 처리하지 않습니다.
 
 `.env`, credential, token, private raw source와 secret value는 candidate catalog에 수집하지 않습니다. 안전한 source-backed statement가 없으면 `gaps`와 attention을 생성하며 policy를 추측하지 않습니다.
@@ -175,9 +180,30 @@ code/config observation과 retrieval authority metadata는 human policy approval
 
 세부 절차는 `docs/guide/repository-policy-extraction.md`가 소유합니다.
 
+### Mature Repository Initiative Bootstrap
+
+정책·지침 후보를 분리한 다음 기존 project/design/roadmap/task에서 여러 delivery를 하나의 outcome으로 묶는 근거를 찾습니다. 초기화 결과는 다음 둘 중 하나를 반드시 가져야 합니다.
+
+```text
+source-backed INIT-* migration candidate
+OR
+ATTN-INITIATIVE-EXTRACTION + GAP-INITIATIVE-EXTRACTION
+```
+
+`INIT-*` candidate는 다음 migration fence를 만족합니다.
+
+- `lifecycleState: draft`이며 검토 중인 후보는 `approvalState: unreviewed|review_requested`입니다. rejected/stale/superseded 후보만 남았다면 새 gap/attention이 필요합니다.
+- `documentRef`, `effectiveRef`, `decisionReceiptRef`는 `null`입니다.
+- 하나 이상의 existing `P####`를 `legacyProjectRefs`로 연결합니다.
+- 하나 이상의 policy를 exact `policyRelationships`로 연결하고, 적용할 guideline은 exact `guidelineRelationships`로 연결합니다.
+- outcome, why now, current focus, success signals, risks와 source revision/hash/line을 기록합니다.
+- candidate가 있다는 사실은 `I####` 발급, activation 또는 approval이 아닙니다.
+
+근거가 부족하거나 portfolio 경계가 충돌하면 AI는 빈 register를 완료처럼 두지 않고 initiative gap과 decision attention을 함께 유지합니다. 둘 중 하나가 누락되거나, candidate가 auto-approved·source-stale·private-source·broken-lineage 상태면 adoption verify는 finding을 반환합니다. 후보와 gap은 일부 portfolio만 분류된 상태를 정직하게 표현하기 위해 함께 존재할 수 있습니다.
+
 ## Repo-Local View Instance Contract
 
-각 adopted repository는 독립 View instance를 가집니다.
+각 adopted repository는 독립 View instance를 가집니다. 사용자에게 보이는 고정 이름은 `보드`이고 기술 executable은 호환성을 위해 `human-view`를 유지합니다. top bar 왼쪽의 `보드 / <repository>`는 모든 tab과 scroll 위치에서 유지되며 repository별 generated config로 rename하지 않습니다.
 
 human-owned envelope 예시:
 
@@ -187,7 +213,7 @@ view:
   bind_host: 127.0.0.1
   port_mode: auto
   presentation:
-    profile: single-repository-top-tabs-v1
+    profile: single-repository-top-tabs-v2
     locale: ko-KR
     repository_identity: static
     repository_selector: false
@@ -207,33 +233,38 @@ view:
 - stop은 repo fingerprint, instance, PID/start identity와 live health가 일치할 때만 허용합니다.
 - remote bind, privileged port, browser external exposure는 separate human decision입니다.
 - static repository identity는 runtime이 시작된 target repository에서만 계산하며 selector나 workspace switcher를 제공하지 않습니다.
-- page shell은 left sidebar 없이 `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거`의 exact five horizontal tabs를 사용합니다. 내부 route key는 안정된 영문 기술 식별자를 유지할 수 있습니다.
-- 모든 tab은 같은 snapshot/read fence를 공유하고 polling/manual refresh 뒤 active tab, filter, search와 expanded item을 유지합니다.
+- page shell은 left sidebar 없이 `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거`의 exact seven horizontal tabs를 사용합니다. 내부 route key는 `overview|policies|guidelines|initiatives|review|execution|evidence` 같은 안정된 영문 기술 식별자를 유지합니다.
+- 정책과 지침은 서로 연결되지만 독립된 first-class tab입니다. 정책 detail은 관련 지침을, 지침 detail은 관련 정책을 보여주고 각 tab의 search/filter/pagination/expanded state를 따로 유지합니다.
+- 모든 tab은 같은 snapshot/read fence를 공유하고 polling/manual refresh 뒤 active tab, tab별 filter/search/pagination과 expanded item을 유지합니다.
 - UI asset은 same-origin local file로 제공하며 external CDN, remote font와 third-party runtime fetch를 사용하지 않습니다.
 
 `view` profile은 `runtime/document-harness-view/`의 versioned, harness-managed reference distribution과 repository-specific generated `config.json`을 함께 설치합니다. adopter가 HTML/CSS/interaction을 매번 다시 생성하지 않습니다. reference runtime은 Node built-in module만 사용하고 persistent DB 없이 `.document-harness/runtime/view/`에 rebuildable runtime-local state를 둡니다. controller는 `doctor|refresh|start|status|url|stop|test`, exact loopback auto-port, lease/health identity safe-stop과 ETag polling을 제공합니다.
+
+View runtime upgrade가 새 필수 config field를 도입하면 known-safe legacy shape에 한해서 누락 field만 additive migration하고, 기존 project identity·probe·quality command·extension 값은 보존합니다. 이 mutation은 preimage-fenced rollback 대상이며, config JSON 또는 legacy shape를 안전하게 판정할 수 없으면 runtime만 먼저 교체하지 않고 plan을 `CONFLICT`로 중단합니다.
 
 View runtime은 `docs/design/human-control-view-plane.md`의 source/snapshot/freshness/security 계약을 유지합니다. alternate downstream runtime은 같은 release artifact로 간주하지 않으며 별도 profile, installation baseline과 acceptance evidence가 필요합니다.
 
 ## Initializing Human-Readable Data
 
-mature repository의 첫 View는 silent empty dashboard가 아니어야 합니다. apply 직후 아직 source extraction이 없다면 generated catalog의 `ATTN-POLICY-EXTRACTION`과 `GAP-POLICY-EXTRACTION`, migration fence, repository identity와 execution not-configured state를 한국어 human summary와 함께 명시합니다. repository-local AI extraction이 끝난 뒤에는 다음 source-backed projection을 준비하며, 이 단계 전에는 `MIGRATION_VERIFIED`를 선언하지 않습니다.
+mature repository의 첫 View는 silent empty dashboard가 아니어야 합니다. apply 직후 아직 source extraction이 없다면 generated catalog의 정책 extraction gap/attention과 `ATTN-INITIATIVE-EXTRACTION`/`GAP-INITIATIVE-EXTRACTION`, migration fence, repository identity와 execution not-configured state를 한국어 human summary와 함께 명시합니다. repository-local AI extraction이 끝난 뒤에는 정책·지침과 source-backed `INIT-*` 후보 또는 계속 유효한 initiative gap을 projection하며, 이 단계 전에는 `MIGRATION_VERIFIED`를 선언하지 않습니다.
 
-첫 source-linked 변경 뒤 governance catalog는 project-owned state입니다. upgrade planner는 이를 release template으로 덮어쓰지 않고 `KEEP_PROJECT_OWNED`로 보존하며, installation lock의 ownership/baseline을 갱신합니다. 보존은 검증 면제가 아니므로 catalog schema, source freshness, secret exclusion과 human decision/evidence barrier는 계속 fail closed로 검사합니다.
+첫 source-linked 변경 뒤 governance catalog는 project-owned state입니다. upgrade planner는 이를 release template으로 덮어쓰지 않고 `KEEP_PROJECT_OWNED`로 보존하며, installation lock의 ownership/baseline을 갱신합니다. 보존은 검증 면제가 아니므로 catalog schema, source freshness, secret exclusion과 human decision/evidence barrier는 계속 fail closed로 검사합니다. catalog가 승인·효력 상태로 가리키는 release-managed source/effective artifact의 bytes도 묵시적으로 갱신하지 않습니다. plan과 apply가 같은 decision evaluator에서 mutation attention을 재계산하므로 plan JSON의 status/attention을 바꿔도 이 경계를 우회할 수 없습니다.
 
 1. repository identity, revision, dirty state와 migration status
 2. 사람이 이해하는 product direction
 3. source-linked policy candidates
 4. related implementation guidelines
-5. approval state와 effective source ref
-6. code/config enforcement와 last verification
-7. conflict, missing decision, known risk attention
-8. project fast/full/continuous quality status
+5. source-backed initiative migration candidate 또는 부족한 source/decision을 설명하는 initiative gap
+6. approval state와 effective source ref
+7. code/config enforcement와 last verification
+8. conflict, missing decision, known risk attention
+9. project fast/full/continuous quality status
 
 이 data는 첫 snapshot의 exact read fence에서 함께 publish하고 다음 tab으로 배치합니다. 사람이 읽는 project description과 derived wording은 `ko-KR`이 기본이며, 긴 stable ID는 각 cell/card 안에서 줄바꿈되는 보조 metadata로 표시해 제목과 겹치지 않게 합니다.
 
 - `개요`: repository direction, summary count, current attention과 freshness
-- `정책·지침`: policy/guideline candidate, authority, approval, enforcement와 provenance
+- `정책`: policy candidate, authority, approval, enforcement, related guideline summary와 provenance
+- `지침`: guideline candidate, linked policy, authority, approval, enforcement와 provenance
 - `검토 대기`: conflict, missing decision, stale approval와 사람이 판단할 action
 - `실행 상태`: task/checkpoint/loop/quality 상태 또는 명시적인 not-configured gap
 - `근거`: source, validator, decision/approval와 handoff receipt
@@ -294,14 +325,20 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 | GOV-03 | no safe authority source | invented policy 0, explicit gap/attention |
 | GOV-04 | captured migration base invalid | View degraded attention; source hash freshness와 별도 표시 |
 | GOV-05 | current HEAD moved only | migration fence relation 표시, unchanged source evidence fresh |
+| GOV-06 | mature initiative extraction | source-backed unapproved `INIT-*` candidate, valid numbered `I####`, 또는 explicit initiative gap/attention |
+| GOV-07 | initiative candidate authority | AI self-approval 0, exact source/legacy project/policy-guideline relation fence |
+| GOV-08 | project-owned legacy authoring | customized bytes 보존, repo-local skill·ADOPT/EXECUTE, source-fenced activation validator, modern Initiative issuance/Project/Task/closeout lineage 의미 계약 누락 시 fail closed |
+| GOV-09 | approved governance release reference | source/effective bytes 변경은 `NEEDS_DECISION`·write 0, mode-only repair와 catalog 보존은 허용 |
+| GOV-10 | numbered Initiative tamper | `I####` schema, relationship, canonical document, lifecycle, effective/decision receipt, committed source fence 불일치 시 fail closed |
 | VIEW-01 | two repositories | distinct OS ports와 repo fingerprints |
 | VIEW-02 | foreign PID | stop/kill 0 |
 | VIEW-03 | source/cache | cache 삭제 뒤 rebuild |
-| VIEW-04 | single-repository shell | static repo identity, selector/sidebar 0, exact five top tabs |
+| VIEW-04 | single-repository shell | `보드 / <repository>` fixed chrome, selector/sidebar 0, exact seven top tabs |
 | VIEW-05 | refresh while reading | same snapshot fence and tab/filter/search/expansion continuity |
 | VIEW-06 | asset isolation | external CDN/font/script request 0 |
 | VIEW-07 | Korean-first initialization | chrome, project description와 synthesized governance wording은 `ko-KR`; technical/source value는 원형 |
 | VIEW-08 | long technical metadata | 긴 ID/path/hash가 자기 container 안에서 줄바꿈되고 adjacent content와 겹치지 않음 |
+| VIEW-09 | independent governance tabs | 정책/지침 각각 독립 search/filter/pagination/detail, related refs 양방향 연결 |
 | QUAL-01 | runtime unavailable | blocked/not_run, never pass |
 | SKILL-01 | initialize or migrate | canonical project skill과 thin Claude adapter 설치 |
 | SKILL-02 | plan/apply inventory | user-global document-harness skill/config write 0 |
@@ -316,7 +353,8 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 - plan is default, apply requires exact fence, and repeat apply is idempotent.
 - governance extraction은 high-confidence candidate도 human approval로 승격하지 않습니다.
 - repo-local View는 independent loopback process와 OS-assigned port를 기본으로 합니다.
-- repo-local View presentation은 `single-repository-top-tabs-v1`로 고정하고 repository selector와 left sidebar를 두지 않습니다.
+- repo-local View presentation은 `single-repository-top-tabs-v2`로 고정하고 repository selector와 left sidebar를 두지 않습니다.
+- 사용자용 View 이름은 `보드`로 고정하고 기술 command/path의 `human-view` 호환성을 유지합니다.
 - application deploy와 harness migration은 별도 failure/rollback boundary입니다.
 - document-harness operation skill은 repository-local canonical surface와 thin tool adapter로 함께 설치합니다.
 - project skill은 router이며 repository instructions, human authority 또는 deterministic enforcement를 대체하지 않습니다.
@@ -324,6 +362,7 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 - public v1 initializer는 Node-based repository-local executable이며 release manifest가 CLI/library/schema, reusable authoring core와 reference View byte set을 pin합니다.
 - reference View distribution은 public repo에 versioned `harness-managed` surface로 vendor하며 project identity/config만 generator가 만듭니다.
 - governance initialization은 nested migration fence와 explicit extraction gap을 만들고 policy wording은 source-backed extraction에서만 추가합니다.
+- mature initiative bootstrap은 source-backed `INIT-*` candidate 또는 paired gap/attention을 요구하며 AI가 `I####` issuance/activation/approval을 추론하지 못하게 합니다.
 - human-facing initialization/migration은 `ko-KR`이 기본이며 localization은 stable ID, authority, approval와 evidence fence를 바꾸지 않습니다.
 
 ## Open Questions
@@ -336,6 +375,7 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 ## References
 
 - `docs/design/policy-to-evidence-governance.md`
+- `docs/design/initiative-governance-plane.md`
 - `docs/design/human-control-view-plane.md`
 - `docs/design/execution-loop-plane.md`
 - [Codex Skills](https://developers.openai.com/codex/skills/)
@@ -349,3 +389,8 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 - 2026-07-16: Node executable initializer v1, seven lifecycle statuses, lifecycle schemas/release manifest, nested governance migration fence, fail-closed verification/rollback과 versioned reference View distribution을 current contract로 고정했다.
 - 2026-07-17: fresh full-profile target가 public 개발 tree 없이 문서를 실제 발급·검증·종료할 수 있도록 reusable authoring core와 end-to-end acceptance를 release closure에 포함했다.
 - 2026-07-17: `ko-KR` initialization/migration, technical provenance 원형 보존과 long-ID containment acceptance를 추가했다.
+- 2026-07-17: `보드` 고정 사용자명과 정책/지침 독립 최상위 tab 계약을 adoption profile에 반영했다.
+- 2026-07-18: mature repository의 정책·지침 추출 뒤 unapproved `INIT-*` candidate 또는 explicit initiative extraction gap/attention을 요구하는 bootstrap/verification 계약을 추가했다.
+- 2026-07-18: project-owned authoring surface를 byte overwrite 없이 보존하되 modern Initiative lineage 의미 계약 누락은 verify finding으로 차단하도록 했다.
+- 2026-07-18: 승인·효력 상태인 governance source/effective path의 release byte 변경을 plan/apply 양쪽에서 fail closed 하고 mode-only repair와 catalog 보존을 허용하는 upgrade fence를 추가했다.
+- 2026-07-18: numbered `I####` register와 project-owned AGENTS/CLAUDE governance entrypoint도 adoption verify가 의미·근거 기준으로 감사하도록 확장했다.

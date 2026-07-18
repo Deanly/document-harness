@@ -13,10 +13,13 @@
 - `docs/design/harness-adoption-plane.md` defines ownership-aware plan/apply migration, policy extraction, repo-local View, and quality handoff contracts.
 - `docs/design/retrieval-plane.md` defines scalable search, revision, and freshness contracts.
 - `docs/design/policy-to-evidence-governance.md` defines human policy, AI proposal, approval, exception, and traceability authority.
+- `docs/design/initiative-governance-plane.md` defines the distinct Initiative → Project → Task hierarchy, policy/guideline relationships, approval, and legacy umbrella bridge.
 - `docs/design/execution-loop-plane.md` defines task checkpoint, attention, stop/resume, and evidence contracts.
 - `docs/design/human-control-view-plane.md` defines projector, snapshot API/SSE, freshness, security, and runtime boundaries.
 - `docs/guide/human-control-view.md` defines how a person operates the read-only local human view.
 - `docs/guide/repository-policy-extraction.md` defines how existing repository rules become reviewable policy/guideline candidates without AI self-approval.
+- `docs/guide/initiative-governance.md` defines how approved policy/guideline direction becomes a human-approved `I####` 추진안 and linked delivery projects.
+- `docs/guide/governance-authoring-assistance.md` defines how AI tools help non-specialists author reviewable Korean policy, guideline, and initiative drafts without taking approval authority.
 - `docs/design/ubiquitous-language.md` holds canonical terms.
 - `docs/guide/` holds reusable operating rules, including Codex guidance and artifact contracts.
 - `docs/_templates/` holds templates used by `docs/bin/new-doc.sh`.
@@ -32,6 +35,8 @@
 - Keep changes scoped to the requested harness behavior. Avoid unrelated rewrites or style churn.
 - Prefer `rg` and the scripts in `docs/bin/` for navigation and verification.
 - If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.
+- Treat policy, guideline, and initiative as mandatory upper governance for project/task work. Before planning, issuing, or executing delivery, direct-read the current project lineage, active approved initiative, exact effective policy/guideline refs, approval receipts, and freshness. Project/task text may refine delivery but must not weaken or reinterpret them; stop with attention on missing, stale, unapproved-required, or conflicting governance.
+- When a user needs help expressing governance, follow `docs/guide/governance-authoring-assistance.md`: ask the smallest useful questions, draft human-facing wording in clear Korean, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence and unknowns, and request exact human review. Never turn assistance into self-approval.
 - Before loop-enabled execution, read the effective policy/standard refs, current task contract, and current checkpoint; keep lifecycle `status` separate from `loop_state`.
 - AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.
 - Keep extraction confidence, source authority, human approval, and implementation enforcement as separate fields. Code/config observations and retrieval metadata are not human policy approval.
@@ -39,16 +44,17 @@
 - After a meaningful action, validation, checkpoint, or attention change, refresh sanitized View probes and wait for a new snapshot sequence. Browser polling alone is not freshness evidence.
 - Update the current checkpoint after a meaningful action, validation result, attention request, or stop/resume transition; keep task `Status` as append-only milestone history.
 - When changing document rules, update the template, the guide that explains the rule, and the validator in the same change when applicable.
-- Do not issue a new `project` document unless the user explicitly asks for it or approves it. Suggest the need and rationale instead.
-- Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
+- Do not issue a new `initiative` or `project` document unless the user explicitly asks for it or approves it. Initiative issuance also requires an exact human issuance-approval ref; suggest the need and rationale instead of inferring authority.
+- Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
+- Pass Initiative issuance a safe exact human approval ref. Issue Project only under an active/approved Initiative whose repository-relative JSON activation receipt and current source/effective bytes pass `docs/lib/initiative-authority.mjs`, and issue Task only under a Project whose modern Initiative lineage passes the same gate; active/approved prose alone grants no authority. Never infer default `I0001`/`P0001`. Complete explicit legacy Project lineage is the migration-only Task-parent exception.
 
 ## Documentation Rules
 
 - Preserve YAML frontmatter on generated markdown templates.
 - Keep frontmatter properties and first-screen bullet metadata in sync.
 - Keep `source_refs` populated when a claim depends on raw source material, external docs, transcripts, datasets, or official references.
-- `design` documents hold current truth; `task` and `project` status sections hold append-only execution history.
-- If a reusable answer emerges from a report or conversation, promote it into `guide`, `design`, `project`, or `task` as appropriate.
+- `design` documents hold current truth; `initiative`, `task`, and `project` status sections hold append-only lifecycle or execution history.
+- If a reusable answer emerges from a report or conversation, promote it into `guide`, `design`, `initiative`, `project`, or `task` as appropriate.
 - Prefer adding a narrow guide over expanding `docs/README.md` when a rule needs detailed explanation.
 
 ## Verification Commands
@@ -76,5 +82,6 @@ A harness change is done only when:
 - Codex and Claude entrypoints delegate to the same durable contracts rather than defining competing rules.
 - Validators pass or any skipped validator is explicitly explained.
 - Human-owned policy and approval state are not inferred from AI-authored prose alone.
+- Applicable governance lineage and freshness are verified before delivery work, and unresolved conflicts stop execution.
 - Existing repository ownership, migration conflicts, and runtime-local state remain explicit and reversible.
 - The final response names the changed surfaces and the verification result.

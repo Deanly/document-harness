@@ -14,6 +14,7 @@
 
 - `docs/tasks/`: 작업 단위 문서
 - `docs/projects/`: 프로젝트 단위 문서
+- `docs/initiatives/`: 정책·지침을 delivery portfolio로 잇는 추진안 문서
 - `docs/design/`: 도메인, 경계, 계약, 정책 설계 문서
 - `docs/guide/`: 반복적으로 참조하는 운영/구현/판단 가이드
 - `docs/reports/`: 요청성 보고 문서
@@ -33,9 +34,10 @@
 
 - boundary-first: 구현보다 먼저 책임 경계와 비범위를 고정합니다.
 - whole-system control: `design`은 전체 시스템 목표, pipeline, invariant, handoff를 붙잡는 control surface여야 합니다.
-- focused execution: `project`와 `task`는 전체 목표를 잃지 않은 채 부분 작업에 집중하게 만드는 focus surface여야 합니다.
-- umbrella-first lineage: human-facing initiative는 기본적으로 umbrella project 1개로 유지하고, 하위 실행은 그 아래 `task`로 관리합니다.
-- human-issued project: `project`는 human-facing initiative owner를 잠그는 surface이므로 사람만 발급하고, 에이전트는 발급 필요성과 근거만 제안합니다.
+- strategy-to-delivery lineage: `initiative`는 정책·지침을 portfolio outcome으로, `project`는 bounded delivery로, `task`는 실행 slice로 연결합니다.
+- focused execution: `project`와 `task`는 승인된 추진안의 방향을 잃지 않은 채 delivery와 실행에 집중하게 만드는 focus surface여야 합니다.
+- human-issued initiative: `I####`는 exact human issuance approval 뒤에만 발급하고, activation approval과 lifecycle을 별도로 관리합니다.
+- human-approved project: `project`는 bounded delivery boundary를 잠그므로 사람의 명시적 요청 또는 승인 하에서 발급합니다.
 - human-governed policy: AI는 policy/standard/exception proposal을 작성할 수 있지만 human approval 없이 effective로 만들지 않습니다.
 - observable execution: loop-enabled task는 current checkpoint, next actor/action, attention, evidence receipt, stop/resume 상태를 외부화합니다.
 - human-view projection: Markdown/Git은 authority로 유지하고 사용자를 위한 화면은 freshness가 보이는 rebuildable read-only projection으로 만듭니다.
@@ -50,7 +52,7 @@
 - codex-readable entrypoint: 루트 `AGENTS.md`는 Codex가 즉시 읽는 짧은 instruction surface이고, 상세 규칙은 `docs/guide/`로 연결합니다.
 - repository-local skill: harness workflow router는 target repository의 `.agents/skills/operate-document-harness/`에 설치하고 user-global skill에 의존하지 않습니다.
 - verifiable agent work: Codex가 완료 여부를 확인할 수 있도록 한 번에 실행 가능한 validator를 제공합니다.
-- narrow scope: v1 범위를 명시적으로 좁게 고정하고, 후속 경계는 먼저 같은 umbrella 아래 `task`로 수용하며 예외일 때만 별도 `project`로 분리합니다.
+- narrow scope: v1 범위를 명시적으로 좁게 고정하고, 후속 경계는 먼저 같은 project 아래 `task`로 수용하며 별도 delivery boundary일 때만 새 `project`로 분리합니다.
 - ubiquitous language: 핵심 용어는 한 곳에서 canonical term을 고정하고 설계 변경과 함께 갱신합니다.
 - human-readable active surface: active 문서는 폴더 입구와 문서 첫 화면에서 바로 식별 가능해야 합니다.
 - source-authoritative retrieval: 검색 index는 재생성 가능한 후보 surface이며, 방금 바뀌었거나 freshness가 불확실한 파일은 원문을 직접 읽습니다.
@@ -58,6 +60,23 @@
 자세한 철학은 `docs/guide/harness-philosophy.md`를, 수명주기와 human reading 규칙은 `docs/guide/document-lifecycle-and-active-reading.md`를, source-backed wiki 운영은 `docs/guide/llm-wiki-operations.md`를, Codex 운영은 `docs/guide/codex-agent-guidance.md`를 봅니다.
 
 ## Document Types
+
+### Initiative (사용자 용어: 추진안)
+
+- 파일명 규칙: `I0001-abc.md`
+- prefix: `I`
+- 의미: 정책과 지침을 여러 bounded project의 outcome portfolio로 연결하는 strategy owner
+- 발급 주체: exact human issuance approval이 있을 때만
+- 필수 내용:
+  - outcome과 why now
+  - scope / out of scope
+  - issuance approval과 activation approval 분리
+  - policy direct relationship (`advances`, `constrained-by`, `exception-to`)
+  - guideline direct relationship (`required`, `recommended`) 또는 명시적인 `guideline_disposition` 비적용·검토 사유
+  - linked project projection의 비권위 경계
+  - success signals와 outcome review
+  - risks, review cadence, completion guardrails
+  - append-only `Status`
 
 ### Task
 
@@ -67,7 +86,7 @@
 - 필수 내용:
   - 목적
   - related control plane
-  - related umbrella project
+  - related project (추진안은 Project의 `related_initiative`를 통해 추적)
   - whole-system anchor
   - completion mode
   - execution contract, task contract revision, lifecycle과 분리된 loop state
@@ -95,14 +114,12 @@
 
 - 파일명 규칙: `P0001-abc.md`
 - prefix: `P`
-- 의미: 하나의 bounded delivery/project 단위
-- 기본값: human-facing initiative owner인 umbrella project
-- 발급 주체: 사람만
+- 의미: 승인된 추진안 아래의 하나의 bounded delivery/project 단위
+- 기본값: 한 개의 canonical `related_initiative`를 가진 project
+- 발급 주체: 사람의 명시적 요청 또는 승인
 - 필수 내용:
   - 목적
-  - project role
-  - umbrella initiative
-  - parent umbrella project
+  - initiative ref와 initiative alignment
   - related control plane
   - whole-system anchor
   - completion mode
@@ -114,7 +131,6 @@
   - completion evidence
   - 범위와 비범위
   - 관련 문서 참조
-  - umbrella lineage
   - project issuance check
   - 프로젝트 WBS
   - 전체 진행률
@@ -201,7 +217,7 @@
 
 - canonical path: `.agents/skills/operate-document-harness/SKILL.md`
 - Claude adapter path: `.claude/skills/operate-document-harness/SKILL.md`
-- 의미: adoption, loop execution, policy extraction, View operation 요청을 repository의 durable entrypoint로 route하는 project skill
+- 의미: adoption, loop execution, policy/initiative extraction와 `보드` operation 요청을 repository의 durable entrypoint로 route하는 project skill. “보드를 띄워줘”는 현재 repository의 `human-view start` + `url`을 뜻합니다.
 - authority: 별도 policy·approval·verification authority를 만들지 않으며 `AGENTS.md`, human-owned policy, effective design과 validator를 따릅니다.
 - 설치 범위: 각 target repository 안에 document-harness와 함께 설치하며 user-global location에는 설치하지 않습니다.
 - bootstrap: 현재 session 중 처음 설치되면 canonical file을 direct-read하고, 자동 discovery는 새 session 또는 repository reload 뒤 기대합니다.
@@ -211,9 +227,10 @@
 새 템플릿은 YAML frontmatter를 기본으로 생성합니다. 이 properties는 Obsidian, Dataview, 검색 도구, 에이전트가 문서를 빠르게 분류하고 연결하기 위한 machine-readable surface입니다.
 
 - 공통 property: `type`, `title`, `status`, `owner`, `created`, `updated`, `source_refs`, `tags`
-- `project` / `task`: `doc_id`, `completion_mode`, `related_control_plane`, `quality_axes`
-- `project`: `project_role`, `umbrella_initiative`, `parent_umbrella_project`
-- `task`: `related_umbrella_project`
+- `initiative`: `doc_id`, `approval_status`, `issuance_approval_ref`, `approval_ref`, `policy_refs`, `guideline_refs`, `related_control_plane`, `quality_axes`
+- `project`: `doc_id`, `related_initiative`, `initiative_relation`, `completion_mode`, `related_control_plane`, `quality_axes`
+- `task`: `doc_id`, `related_project`, `completion_mode`, `related_control_plane`, `quality_axes`
+- legacy bridge: 기존 `project_role`, `umbrella_initiative`, `parent_umbrella_project`, `related_umbrella_project`는 migration 전까지 허용하지만 새 template 기본값은 아닙니다.
 - `task` execution: `execution_contract`, `task_contract_revision`, `loop_state`, `risk_tier`, `checkpoint_ref`, `policy_refs`, `normative_refs`, `exception_refs`
 - `design`: `domain`, `referenced_by`, optional `governance_role`, `governance_id`, `normative_version`, `approval_ref`
 - `design` retrieval hints: `retrieval_class`, `context.default_load`, `context.section_load`, `context.size_tier`
@@ -227,11 +244,15 @@
 
 ## Issuing Rules
 
-- `task`, `project`, `qa`는 각각 독립된 번호 시퀀스를 가집니다.
+- `initiative`, `task`, `project`, `qa`는 각각 독립된 번호 시퀀스를 가집니다.
 - 번호는 중앙 카운터 파일 없이 기존 파일을 스캔해 계산합니다.
-- `task`, `project`, `qa` 번호 발급 기준 브랜치는 항상 `main`입니다.
+- `initiative`, `task`, `project`, `qa` 번호 발급 기준 브랜치는 항상 `main`입니다.
 - numbered document 발급 전에는 local `main`을 remote tracking branch 기준으로 최신화합니다.
-- `./docs/bin/new-doc.sh task|project|qa ...`는 clean, up-to-date `main`에서만 실행하며, 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다.
+- `./docs/bin/new-doc.sh initiative|task|project|qa ...`는 clean, up-to-date `main`에서만 실행하며, 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다.
+- initiative는 `./docs/bin/new-doc.sh initiative <slug> <issuance-approval-ref>` 형식으로만 발급하며 exact human approval ref가 없으면 생성하지 않습니다.
+- `<issuance-approval-ref>`는 안전한 ASCII token, repository-relative path 또는 `http(s)` URL만 허용합니다. YAML/Markdown 구조를 바꿀 수 있는 공백, quote, bracket, backtick, pipe, backslash와 control character는 거부합니다.
+- project는 `./docs/bin/new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]` 형식으로 발급하며 canonical `I####`를 반드시 지정합니다. `status: active`, `approval_status: approved` 문자열만으로 충분하지 않으며 `approval_ref`가 repository-relative JSON activation receipt이고 human actor·approved decision·candidate ID·source revision/hashes·canonical initiative bytes를 정확히 고정해야 합니다. 관계 기본값은 `delivers`입니다.
+- task는 `./docs/bin/new-doc.sh task <slug> <project-id>` 형식으로 발급하며 존재하는 canonical `P####`를 반드시 지정합니다. modern Project의 `related_initiative`는 위 activation receipt와 current effective/approved policy, required guideline까지 검증된 active `I####`로 해소되어야 합니다. 추진안 도입 전 legacy Project는 `project_role`, `umbrella_initiative`, `parent_umbrella_project` 세 field가 모두 명시된 경우에만 grandfathered parent로 허용합니다.
 - 발급된 `draft` commit은 번호 reservation입니다. 공유 remote가 있으면 work branch로 돌아가기 전에 push 또는 공유까지 끝냅니다.
 - 발급 후 기존 work branch는 `main`을 merge해서 새 문서와 그 사이 `main`에 들어온 배포본을 함께 가져온 뒤 작업을 이어갑니다.
 - work branch가 dirty해서 바로 `main`으로 전환할 수 없으면 untracked 파일을 포함해 stash하고, `main` 병합 후 stash를 되돌리며 충돌을 해결합니다.
@@ -248,16 +269,18 @@
 - 새 문서는 템플릿의 properties를 유지하며, 임의 key가 필요하면 템플릿과 `docs/guide/llm-wiki-operations.md`를 함께 갱신합니다.
 - source 기반 판단을 남길 때는 `source_refs`와 본문 `References` 또는 `Inputs`를 함께 채웁니다.
 - AI-facing 규칙을 바꾸면 루트 `AGENTS.md`, `CLAUDE.md`, `.agents/skills/operate-document-harness/`, `.claude/skills/operate-document-harness/`, `docs/_templates/agents.md`, `docs/_templates/claude.md`, `docs/guide/codex-agent-guidance.md`, `./docs/bin/validate-codex-readiness.sh`를 함께 검토합니다.
-- `task`와 `project`의 `Status` 섹션은 append-only로 운영합니다.
+- `initiative`, `task`, `project`의 `Status` 섹션은 append-only로 운영합니다.
 - 새 이력은 문서 하단에 계속 추가합니다.
 - WBS와 진행률은 현재 상태를 반영하도록 갱신합니다.
 - `task`와 `project`는 관련 `design` 문서를 명시적으로 참조합니다.
 - `task`와 `project`는 `Related Control Plane`을 통해 whole-system 기준 문서를 명시적으로 참조합니다.
-- human-facing initiative는 기본적으로 umbrella project 1개로 유지합니다.
-- 새 work는 먼저 기존 umbrella project의 새 `task`로 수용 가능한지 검토합니다.
-- 새 `project`는 사용자 명시 요청, 본질적 completion mode 분리, owner/운영 검증 체계 분리 같은 예외 조건이 명확할 때만 발급합니다.
-- `project`는 `Project Role`, `Umbrella Initiative`, `Parent Umbrella Project`, `Umbrella Lineage`, `Project Issuance Check`를 통해 lineage와 예외 사유를 남깁니다.
-- `task`는 `Related Umbrella Project`와 `Task Placement Check`를 통해 왜 task가 맞고 왜 project가 아닌지 남깁니다.
+- human-facing strategy/portfolio owner는 별도 `initiative`로 유지하고 project는 bounded delivery만 소유합니다.
+- 추진안은 policy와 guideline을 모두 직접 연결하되 WHY/WHAT과 HOW/EVIDENCE 역할을 구분합니다.
+- 새 work는 먼저 기존 project의 새 `task`로 수용 가능한지 검토합니다.
+- 새 `project`는 별도 delivery boundary가 명확하고 사람이 요청하거나 승인할 때만 발급합니다.
+- `project`는 `Initiative Ref`, `Initiative Alignment`, `Project Issuance Check`를 통해 추진안 lineage와 분리 이유를 남깁니다.
+- `task`는 `Related Project`, `Task Placement Check`를 통해 왜 task가 맞고 왜 project가 아닌지 남기며, 해당 Project의 `related_initiative`를 통해 추진안 계보를 따릅니다.
+- 기존 umbrella field는 `docs/design/initiative-governance-plane.md`의 legacy bridge에 따라 점진적으로 migration하며 일괄 rewrite하지 않습니다.
 - `Goal Inventory`는 발급 시점에 잠그는 목표 목록입니다. `Goal ID`는 후속 분해가 생겨도 유지합니다.
 - `Goal Verification`은 `Goal Inventory`의 각 `Goal ID`를 1:1로 다시 적고 현재 상태와 evidence를 기록합니다.
 - `Whole-System Anchor`에는 이 문서가 전체 시스템에서 무엇을 보존해야 하는지, 어떤 invariant와 design surface를 깨면 안 되는지를 적습니다.
@@ -278,13 +301,13 @@
 - lifecycle `status`와 execution `loop_state`를 분리하고, active execution은 current checkpoint를 연결합니다.
 - policy/standard/exception proposal은 human approval과 effective design revision 없이 mandatory rule이 될 수 없습니다.
 - view cache와 AI summary는 derived projection이며 task, approval, evidence의 유일한 truth를 소유하지 않습니다.
-- `done` 전환은 가능하면 메타데이터를 직접 고치기보다 `./docs/bin/close-doc.sh <doc-path> "<note>"`를 사용합니다.
+- `project`와 `task`의 `done` 전환은 가능하면 메타데이터를 직접 고치기보다 `./docs/bin/close-doc.sh <doc-path> "<note>"`를 사용합니다. Initiative 종료는 canonical 문서, initiative register, exact terminal human decision receipt를 한 변경 셋으로 갱신해야 하므로 현재 스크립트가 거부합니다.
 - `project` 문서의 WBS는 실제 `task` 문서와 1:1로 대응하는 것을 기본 규칙으로 합니다.
-- umbrella project의 WBS와 status history는 후속 분화가 생겨도 human-facing lineage를 먼저 설명해야 합니다.
+- initiative tab의 project link는 project source에서 reverse-index한 projection이며 WBS나 task 상태를 복제하지 않습니다.
 - `project` 문서의 WBS `ID`는 해당 `task`의 문서 번호를 그대로 사용합니다.
 - `task` 내부 WBS의 `ID`는 `W1`, `W2`, `W3` 형식을 사용합니다.
 - `project`, `task`, `report`는 기본적으로 제자리에서 닫습니다. `archive/`는 기본 규칙이 아닙니다.
-- `docs/projects/README.md`, `docs/tasks/README.md`, `docs/reports/README.md`는 active 문서만, `docs/qa/README.md`는 current QA 문서만 보여주는 얇은 입구로 유지합니다.
+- `docs/initiatives/README.md`, `docs/projects/README.md`, `docs/tasks/README.md`, `docs/reports/README.md`는 active 문서만, `docs/qa/README.md`는 current QA 문서만 보여주는 얇은 입구로 유지합니다.
 - 문서가 `active`가 되거나 닫히면 해당 폴더 `README.md`도 같은 변경 셋에서 갱신합니다.
 - active `project`, `task`, `report`는 첫 화면에 `Status`, `Owner`, `Updated`, `Current Focus`를 드러냅니다.
 - `report`는 살아 있는 truth를 누적하는 문서가 아닙니다. 재사용 규칙이나 현재 기준이 생기면 해당 타입 문서로 승격하고 링크를 남깁니다.
@@ -336,11 +359,11 @@
 2. 새 프로젝트 시작 시 `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 먼저 채웁니다.
 3. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.
 4. Codex가 작업할 프로젝트라면 루트 `AGENTS.md`와 repository-local `operate-document-harness` skill을 실제 repo 기준으로 조정합니다.
-5. 첫 umbrella `project` 문서는 clean, up-to-date `main`에서 발급합니다. `new-doc.sh`가 생성된 draft를 즉시 `main`에 commit합니다.
-6. 핵심 boundary와 계약을 `design`으로 고정하고, 필요하면 control-plane을 같은 변경 셋에서 갱신합니다.
+5. 정책·지침을 검토한 뒤 사람의 exact approval로 첫 `I####` 추진안을 발급합니다.
+6. 추진안 아래 첫 bounded `project`를 발급하고 핵심 boundary와 계약을 `design`으로 고정합니다.
 7. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
-8. 실제 작업 단위가 생기면 먼저 기존 umbrella 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
-9. 예외 조건이 명확할 때만 새 `project`를 `main`에서 발급하고 issuance check에 그 이유를 남깁니다.
+8. 실제 작업 단위가 생기면 먼저 현재 project 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
+9. 별도 delivery boundary가 명확하고 사람이 승인할 때만 새 `project`를 발급하고 issuance check에 그 이유를 남깁니다.
 10. 인간 policy를 받으면 missing decision과 AI proposal을 먼저 분리하고, 승인된 rule만 normative design으로 승격합니다.
 11. `project`와 `task`에는 whole-system anchor, outputs / handoff, quality axes in scope를 함께 적습니다.
 12. loop-enabled task 실행 중에는 current checkpoint, attention, decision/verification receipt를 갱신합니다.
@@ -359,9 +382,12 @@
 `project`, `task`, `qa` 발급 명령은 clean, up-to-date `main`에서만 실행합니다.
 
 ```bash
-./docs/bin/new-doc.sh project example-runtime-boundary
-./docs/bin/new-doc.sh task bootstrap-ingestion-worker
-./docs/bin/new-doc.sh task "문서 하네스 정리"
+./docs/bin/new-doc.sh initiative service-resilience DECISION-EXAMPLE
+# Complete human activation review; project issuance requires I0001 to be active and approved.
+./docs/bin/new-doc.sh project example-runtime-boundary I0001
+# Task issuance verifies P0001 resolves to an active, approved initiative.
+./docs/bin/new-doc.sh task bootstrap-ingestion-worker P0001
+./docs/bin/new-doc.sh task "문서 하네스 정리" P0001
 ./docs/bin/new-doc.sh qa first-test-strategy
 ./docs/bin/new-doc.sh design event-ingestion
 ./docs/bin/new-doc.sh guide project-cutting-and-execution
@@ -384,6 +410,7 @@
 - `.claude/skills/operate-document-harness/SKILL.md`
 - `docs/design/ubiquitous-language.md`
 - `docs/design/control-plane.md`
+- `docs/design/initiative-governance-plane.md`
 - `docs/design/harness-adoption-plane.md`
 - `docs/design/retrieval-plane.md`
 - `docs/design/policy-to-evidence-governance.md`
@@ -393,6 +420,7 @@
 - `docs/guide/harness-philosophy.md`
 - `docs/guide/codex-agent-guidance.md`
 - `docs/guide/umbrella-project-governance.md`
+- `docs/guide/initiative-governance.md`
 - `docs/guide/artifact-contracts.md`
 - `docs/guide/quality-axes.md`
 - `docs/guide/llm-wiki-operations.md`
@@ -410,6 +438,7 @@
 - `docs/EXECUTE.md`
 - `docs/ADOPT.md`
 - `docs/projects/README.md`
+- `docs/initiatives/README.md`
 - `docs/tasks/README.md`
 - `docs/reports/README.md`
 - `docs/qa/README.md`

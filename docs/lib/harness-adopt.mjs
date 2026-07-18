@@ -16,11 +16,13 @@ import {
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { verifyInitiativeAuthority } from "./initiative-authority.mjs";
 
 export const SCHEMA_VERSION = 1;
 export const INSTALLATION_LOCK_PATH = "docs/_indexes/harness-installation.yaml";
 export const EVIDENCE_PACK_PATH = "docs/receipts/migration-evidence-pack.json";
 export const GOVERNANCE_CATALOG_PATH = "docs/_indexes/governance-catalog.json";
+export const INITIATIVE_REGISTER_PATH = "docs/_indexes/initiative-register.json";
 export const VIEW_CONFIG_PATH = "runtime/document-harness-view/config.json";
 export const ALLOWED_ACTIONS = Object.freeze([
   "ADD",
@@ -46,6 +48,10 @@ export const PUBLIC_ROOT = path.resolve(MODULE_DIR, "../..");
 export const RELEASE_MANIFEST_PATH = path.join(
   PUBLIC_ROOT,
   "docs/releases/document-harness-v1.json",
+);
+const INITIATIVE_REGISTER_SCHEMA_PATH = path.join(
+  PUBLIC_ROOT,
+  "docs/schemas/initiative-register.schema.json",
 );
 
 const RECEIPT_RE = /^docs\/receipts\/harness-(?:apply|rollback)-[a-f0-9]+\.json$/;
@@ -455,12 +461,69 @@ function repositoryGenerationContext(root, revision = currentRevision(root)) {
   };
 }
 
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function inspectRepositoryViewConfigUpgrade(root, sourceConfig) {
+  const configFile = safeAbsolute(root, VIEW_CONFIG_PATH);
+  const info = lstatIfPresent(configFile);
+  if (!info) return { state: "absent", bytes: null };
+  if (!info.isFile() || info.isSymbolicLink()) return { state: "unsafe", bytes: null };
+
+  let current;
+  try {
+    current = JSON.parse(readFileSync(configFile, "utf8"));
+  } catch {
+    return { state: "unsafe", bytes: null };
+  }
+  if (!isPlainObject(current)) return { state: "unsafe", bytes: null };
+  if (typeof current.initiativeRegister === "string" && current.initiativeRegister.length > 0) {
+    return { state: "current", bytes: null };
+  }
+  if (Object.hasOwn(current, "initiativeRegister")) {
+    return { state: "unsafe", bytes: null };
+  }
+
+  const legacyShapeIsSafe = (
+    current.schemaVersion === SCHEMA_VERSION &&
+    isPlainObject(current.project) &&
+    ["id", "name", "description"].every((key) => typeof current.project[key] === "string" && current.project[key].length > 0) &&
+    typeof current.governanceCatalog === "string" && current.governanceCatalog.length > 0 &&
+    current.bindHost === "127.0.0.1" &&
+    current.portMode === "auto" &&
+    isPlainObject(current.qualityCommands) &&
+    ["fast", "full", "continuous"].every((key) => typeof current.qualityCommands[key] === "string" && current.qualityCommands[key].length > 0) &&
+    Array.isArray(current.probes)
+  );
+  if (!legacyShapeIsSafe || typeof sourceConfig.initiativeRegister !== "string" || sourceConfig.initiativeRegister.length === 0) {
+    return { state: "unsafe", bytes: null };
+  }
+
+  const migrated = {};
+  for (const [key, value] of Object.entries(current)) {
+    migrated[key] = value;
+    if (key === "governanceCatalog") migrated.initiativeRegister = sourceConfig.initiativeRegister;
+  }
+  return { state: "add-initiative-register-v1", bytes: Buffer.from(prettyJson(migrated)) };
+}
+
+function repositoryViewConfigUpgradeForRelease(root, releaseEntry) {
+  if (releaseEntry.generator !== "repository-view-config-v1") return null;
+  const source = path.join(PUBLIC_ROOT, ...releaseEntry.sourcePath.split("/"));
+  return inspectRepositoryViewConfigUpgrade(root, JSON.parse(readFileSync(source, "utf8")));
+}
+
 function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
   const source = path.join(PUBLIC_ROOT, ...releaseEntry.sourcePath.split("/"));
   const sourceBytes = readFileSync(source);
   if (!releaseEntry.generator) return { bytes: sourceBytes, sha256: sha256(sourceBytes) };
   if (releaseEntry.generator === "repository-view-config-v1") {
     const config = JSON.parse(sourceBytes.toString("utf8"));
+    const upgrade = inspectRepositoryViewConfigUpgrade(root, config);
+    if (upgrade.state === "add-initiative-register-v1") {
+      return { bytes: upgrade.bytes, sha256: sha256(upgrade.bytes) };
+    }
     const repositoryName = path.basename(root);
     config.project = {
       id: repositoryName,
@@ -503,18 +566,34 @@ function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
     catalog.direction = [];
     catalog.policies = [];
     catalog.guidelines = [];
-    catalog.attention = [{
-      id: "ATTN-POLICY-EXTRACTION",
-      severity: "decision",
-      title: "저장소 정책 추출 결과를 사람이 검토해야 합니다",
-      humanSummary: "아직 적용 중인 정책은 없습니다. 소스와 연결된 후보를 추출하고 승격 전에 사람이 검토해야 합니다.",
-      relatedRefs: [],
-    }];
-    catalog.gaps = [{
-      id: "GAP-POLICY-EXTRACTION",
-      summary: "소스와 연결된 정책 후보를 아직 사람이 검토하지 않았습니다.",
-      reason: "초기화 도구는 저장소 정책을 임의로 만들거나 스스로 승인하지 않습니다.",
-    }];
+    catalog.attention = [
+      {
+        id: "ATTN-POLICY-EXTRACTION",
+        severity: "decision",
+        title: "저장소 정책 추출 결과를 사람이 검토해야 합니다",
+        humanSummary: "아직 적용 중인 정책은 없습니다. 소스와 연결된 후보를 추출하고 승격 전에 사람이 검토해야 합니다.",
+        relatedRefs: [],
+      },
+      {
+        id: "ATTN-INITIATIVE-EXTRACTION",
+        severity: "decision",
+        title: "기존 업무를 어떤 추진안으로 묶을지 확인해 주세요",
+        humanSummary: "정책과 지침을 실제 업무로 잇는 추진안 후보가 아직 없습니다. 기존 프로젝트와 설계 근거를 분석한 뒤 후보를 검토하거나, 근거가 부족한 이유를 확인해야 합니다.",
+        relatedRefs: [INITIATIVE_REGISTER_PATH],
+      },
+    ];
+    catalog.gaps = [
+      {
+        id: "GAP-POLICY-EXTRACTION",
+        summary: "소스와 연결된 정책 후보를 아직 사람이 검토하지 않았습니다.",
+        reason: "초기화 도구는 저장소 정책을 임의로 만들거나 스스로 승인하지 않습니다.",
+      },
+      {
+        id: "GAP-INITIATIVE-EXTRACTION",
+        summary: "기존 프로젝트를 정책·지침과 연결하는 추진안 후보를 아직 만들지 않았습니다.",
+        reason: "AI는 기존 문서와 코드에서 결과·범위·성공 기준을 근거와 함께 추출할 수 있지만, 추진안을 임의로 발급하거나 승인할 수 없습니다.",
+      },
+    ];
     const bytes = Buffer.from(prettyJson(catalog));
     return { bytes, sha256: sha256(bytes) };
   }
@@ -745,6 +824,7 @@ function buildAction(root, releaseFile, installedEntry, generationContext) {
     ? generationContext
     : null;
   const materialized = materializeReleaseEntry(root, releaseFile, actionGenerationContext);
+  const viewConfigUpgrade = repositoryViewConfigUpgradeForRelease(root, releaseFile);
   const before = pathState(root, releaseFile.targetPath);
   const desiredMode = Number.parseInt(releaseFile.mode, 8);
   const contentAndModeCurrent = before.sha256 === materialized.sha256 && before.mode === desiredMode;
@@ -800,7 +880,25 @@ function buildAction(root, releaseFile, installedEntry, generationContext) {
       rollbackAction: "NONE",
     };
   }
+  if (viewConfigUpgrade?.state === "unsafe") {
+    return {
+      ...base,
+      ownership: "project-owned",
+      action: "CONFLICT",
+      reason: "repository-specific View config has no valid initiativeRegister and cannot be upgraded additively without changing project-owned settings",
+      rollbackAction: "NONE",
+    };
+  }
   if (installedEntry.ownership === "project-owned") {
+    if (viewConfigUpgrade?.state === "add-initiative-register-v1") {
+      return {
+        ...base,
+        ownership: "project-owned",
+        action: "UPDATE_UNMODIFIED",
+        reason: "add the required initiativeRegister field while preserving repository-specific View settings",
+        rollbackAction: "RESTORE_PREIMAGE",
+      };
+    }
     return {
       ...base,
       ownership: "project-owned",
@@ -812,6 +910,15 @@ function buildAction(root, releaseFile, installedEntry, generationContext) {
   if (installedEntry.ownership === "generated" && releaseFile.generator) {
     const trustedHash = installedEntry.installedSha256 ?? installedEntry.upstreamBaselineSha256;
     if (before.sha256 !== trustedHash && before.sha256 !== materialized.sha256) {
+      if (viewConfigUpgrade?.state === "add-initiative-register-v1") {
+        return {
+          ...base,
+          ownership: "project-owned",
+          action: "UPDATE_UNMODIFIED",
+          reason: "add the required initiativeRegister field while preserving repository-specific View settings",
+          rollbackAction: "RESTORE_PREIMAGE",
+        };
+      }
       if ([GOVERNANCE_CATALOG_PATH, VIEW_CONFIG_PATH].includes(releaseFile.targetPath)) {
         return {
           ...base,
@@ -943,6 +1050,72 @@ export function writeJsonAtomic(file, value) {
   atomicWrite(file, Buffer.from(prettyJson(value)), 0o644);
 }
 
+function protectedGovernanceReferenceIndex(root) {
+  const references = new Map();
+  try {
+    const catalogFile = safeAbsolute(root, GOVERNANCE_CATALOG_PATH);
+    const info = lstatIfPresent(catalogFile);
+    if (!info?.isFile() || info.isSymbolicLink()) return references;
+    const catalog = JSON.parse(readFileSync(catalogFile, "utf8"));
+    for (const collectionName of ["policies", "guidelines"]) {
+      const candidates = Array.isArray(catalog?.[collectionName]) ? catalog[collectionName] : [];
+      candidates.forEach((candidate, index) => {
+        if (
+          !candidate ||
+          typeof candidate !== "object" ||
+          (candidate.approvalState !== "approved" && candidate.authorityState !== "effective")
+        ) return;
+        const candidateId = typeof candidate.id === "string" && candidate.id.trim().length > 0
+          ? candidate.id
+          : `${collectionName}[${index}]`;
+        const addReference = (value, referenceKind) => {
+          if (typeof value !== "string" || value.length === 0) return;
+          try {
+            const referencePath = normalizeRelativePath(value, `${candidateId} ${referenceKind}`);
+            if (referencePath === GOVERNANCE_CATALOG_PATH) return;
+            const indexed = references.get(referencePath) ?? {
+              candidateIds: new Set(),
+              referenceKinds: new Set(),
+            };
+            indexed.candidateIds.add(candidateId);
+            indexed.referenceKinds.add(referenceKind);
+            references.set(referencePath, indexed);
+          } catch {
+            // Invalid catalog references are reported by verify; planning must remain deterministic.
+          }
+        };
+        addReference(candidate.effectiveRef, "effectiveRef");
+        for (const sourceRef of Array.isArray(candidate.sourceRefs) ? candidate.sourceRefs : []) {
+          addReference(sourceRef?.path, "sourceRefs[].path");
+        }
+      });
+    }
+  } catch {
+    // Missing or invalid catalogs are handled by normal install/verify contracts.
+  }
+  return references;
+}
+
+function approvedGovernanceMutationAttention(root, actions) {
+  const references = protectedGovernanceReferenceIndex(root);
+  return actions
+    .filter(({ action }) => ["ADD", "UPDATE_UNMODIFIED"].includes(action))
+    .filter(({ path: actionPath }) => actionPath !== GOVERNANCE_CATALOG_PATH)
+    .filter(({ beforeSha256, afterSha256 }) => beforeSha256 !== afterSha256)
+    .flatMap(({ path: actionPath }) => {
+      const reference = references.get(actionPath);
+      if (!reference) return [];
+      return [{
+        code: "APPROVED_GOVERNANCE_SOURCE_MUTATION",
+        path: actionPath,
+        candidateIds: [...reference.candidateIds].sort((a, b) => a.localeCompare(b, "en")),
+        referenceKinds: [...reference.referenceKinds].sort((a, b) => a.localeCompare(b, "en")),
+        message: "release upgrade가 승인·효력 상태인 거버넌스의 근거 또는 효력 경로 bytes를 변경합니다. 현재 근거를 보존하거나 새로운 인간 결정을 받은 뒤 다시 plan 하세요.",
+      }];
+    })
+    .sort((a, b) => a.path.localeCompare(b.path, "en"));
+}
+
 function evaluatePlanState({ snapshot, profiles, lockState, actions }) {
   const classification = classifyTarget(snapshot, lockState);
   const attention = [];
@@ -964,6 +1137,9 @@ function evaluatePlanState({ snapshot, profiles, lockState, actions }) {
   }
   for (const action of actions.filter(({ action }) => action === "CONFLICT")) {
     attention.push({ code: "FILE_CONFLICT", path: action.path, message: action.reason });
+  }
+  if (profiles.includes("governance")) {
+    attention.push(...approvedGovernanceMutationAttention(snapshot.root, actions));
   }
   return {
     ...classification,
@@ -1643,6 +1819,171 @@ function auditInstallationInventory(lock, release) {
   return findings;
 }
 
+function tokenCount(text, token) {
+  return text.split(token).length - 1;
+}
+
+function auditProjectOwnedGovernanceAuthoringContracts(root, lock) {
+  const findings = [];
+  const installed = new Map(lock.files.map((entry) => [entry.path, entry]));
+  const contracts = [
+    {
+      path: "AGENTS.md",
+      checks: [
+        {
+          capability: "Codex can discover the canonical repository-local document-harness skill",
+          matches: (text) => (
+            text.includes(".agents/skills/operate-document-harness/SKILL.md")
+            || (/operate-document-harness/i.test(text) && /repository-local|저장소(?:에|의)?\s*(?:전용|로컬)/i.test(text))
+          ),
+        },
+        {
+          capability: "Codex is routed through the durable adoption and execution governance entrypoints",
+          matches: (text) => text.includes("docs/ADOPT.md") && text.includes("docs/EXECUTE.md"),
+        },
+      ],
+    },
+    {
+      path: "CLAUDE.md",
+      checks: [
+        {
+          capability: "Claude delegates harness operation to repository instructions or the canonical repository-local skill",
+          matches: (text) => (
+            text.includes(".agents/skills/operate-document-harness/SKILL.md")
+            || (text.includes("AGENTS.md") && /operate-document-harness|doc(?:ument)?[- ]harness/i.test(text))
+          ),
+        },
+        {
+          capability: "Claude is routed through the durable adoption and execution governance entrypoints",
+          matches: (text) => text.includes("docs/ADOPT.md") && text.includes("docs/EXECUTE.md"),
+        },
+      ],
+    },
+    {
+      path: "docs/bin/new-doc.sh",
+      checks: [
+        {
+          capability: "initiative issuance requires an exact human approval ref",
+          matches: (text) => (
+            text.includes("initiative)") &&
+            text.includes("_templates/initiative.md") &&
+            text.includes("issuance_approval_ref") &&
+            text.includes("validate_issuance_approval_ref")
+          ),
+        },
+        {
+          capability: "project issuance resolves an active approved Initiative",
+          matches: (text) => (
+            text.includes("project)") &&
+            text.includes("related_initiative") &&
+            tokenCount(text, "require_active_approved_initiative") >= 2
+          ),
+        },
+        {
+          capability: "project/task issuance calls a deterministic source-fenced Initiative activation authority validator",
+          matches: (text) => (
+            text.includes("initiative-authority.mjs") &&
+            text.includes("INITIATIVE_AUTHORITY_VALIDATOR") &&
+            /node\s+"?\$INITIATIVE_AUTHORITY_VALIDATOR"?/.test(text)
+          ),
+        },
+        {
+          capability: "task issuance resolves Project to modern Initiative lineage",
+          matches: (text) => (
+            text.includes("task)") &&
+            text.includes("related_project") &&
+            tokenCount(text, "require_task_parent_lineage") >= 2
+          ),
+        },
+      ],
+    },
+    {
+      path: "docs/_templates/project.md",
+      checks: [
+        {
+          capability: "Project template declares lineage_contract v2",
+          matches: (text) => /^lineage_contract:\s*v2\s*$/m.test(text),
+        },
+        {
+          capability: "Project template renders canonical Initiative lineage",
+          matches: (text) => (
+            /^related_initiative:\s*\{\{RELATED_INITIATIVE\}\}\s*$/m.test(text) &&
+            /^initiative_relation:\s*\{\{INITIATIVE_RELATION\}\}\s*$/m.test(text)
+          ),
+        },
+      ],
+    },
+    {
+      path: "docs/_templates/task.md",
+      checks: [
+        {
+          capability: "Task template declares lineage_contract v2",
+          matches: (text) => /^lineage_contract:\s*v2\s*$/m.test(text),
+        },
+        {
+          capability: "Task template renders its canonical Project parent",
+          matches: (text) => /^related_project:\s*\{\{RELATED_PROJECT\}\}\s*$/m.test(text),
+        },
+      ],
+    },
+    {
+      path: "docs/bin/validate-closeout.sh",
+      checks: [
+        {
+          capability: "closeout validates active approved Initiative authority",
+          matches: (text) => (
+            tokenCount(text, "validate_active_approved_initiative_ref") >= 2 &&
+            text.includes("initiative_contract") &&
+            text.includes("approval_status")
+          ),
+        },
+        {
+          capability: "closeout calls a deterministic source-fenced Initiative activation authority validator",
+          matches: (text) => (
+            text.includes("initiative-authority.mjs") &&
+            text.includes("INITIATIVE_AUTHORITY_VALIDATOR") &&
+            /node\s+"?\$INITIATIVE_AUTHORITY_VALIDATOR"?/.test(text)
+          ),
+        },
+        {
+          capability: "closeout validates Project to Initiative lineage",
+          matches: (text) => (
+            tokenCount(text, "validate_project_governance_lineage") >= 2 &&
+            text.includes("related_initiative")
+          ),
+        },
+        {
+          capability: "closeout validates Task to Project to Initiative lineage",
+          matches: (text) => (
+            tokenCount(text, "validate_task_governance_lineage") >= 2 &&
+            text.includes("related_project")
+          ),
+        },
+      ],
+    },
+  ];
+
+  for (const contract of contracts) {
+    if (installed.get(contract.path)?.ownership !== "project-owned") continue;
+    const file = safeAbsolute(root, contract.path);
+    const info = lstatIfPresent(file);
+    if (!info || !info.isFile() || info.isSymbolicLink()) continue;
+    const text = readFileSync(file, "utf8");
+    const missingCapabilities = contract.checks
+      .filter(({ matches }) => !matches(text))
+      .map(({ capability }) => capability);
+    if (missingCapabilities.length === 0) continue;
+    findings.push({
+      code: "LEGACY_GOVERNANCE_AUTHORING_CONTRACT",
+      path: contract.path,
+      message: "project-owned authoring surface does not enforce the current Policy/Guideline -> Initiative -> Project -> Task lineage contract",
+      missingCapabilities,
+      remediation: "merge the current semantic contract into this project-owned file while preserving repository-specific rules, then run verify again",
+    });
+  }
+  return findings;
+}
+
 function expectedGateCommands(root, lock) {
   const commands = new Map();
   if (!lock.profiles.includes("view")) return null;
@@ -1679,7 +2020,177 @@ const CANDIDATE_AUTHORITIES = new Set([
   "task_or_receipt", "report_or_history", "code_observation", "config_observation", "unknown",
 ]);
 
-function auditGovernanceCatalog(root, lock) {
+function jsonValueMatchesType(value, type) {
+  if (type === "null") return value === null;
+  if (type === "array") return Array.isArray(value);
+  if (type === "object") return value !== null && !Array.isArray(value) && typeof value === "object";
+  if (type === "integer") return Number.isInteger(value);
+  return typeof value === type;
+}
+
+function resolveLocalSchemaRef(rootSchema, reference) {
+  if (typeof reference !== "string" || !reference.startsWith("#/")) {
+    throw new Error(`unsupported initiative schema ref: ${reference}`);
+  }
+  return reference.slice(2).split("/").reduce((current, segment) => (
+    current?.[segment.replaceAll("~1", "/").replaceAll("~0", "~")]
+  ), rootSchema);
+}
+
+function validateJsonSchemaSubset(value, schema, rootSchema, label, errors) {
+  if (!schema || typeof schema !== "object") {
+    errors.push(`${label}: schema node is unavailable`);
+    return;
+  }
+  if (schema.$ref) {
+    validateJsonSchemaSubset(value, resolveLocalSchemaRef(rootSchema, schema.$ref), rootSchema, label, errors);
+    return;
+  }
+  if (Array.isArray(schema.anyOf)) {
+    const matched = schema.anyOf.some((branch) => {
+      const branchErrors = [];
+      validateJsonSchemaSubset(value, branch, rootSchema, label, branchErrors);
+      return branchErrors.length === 0;
+    });
+    if (!matched) errors.push(`${label}: anyOf branches do not match`);
+  }
+  if (Array.isArray(schema.allOf)) {
+    for (const branch of schema.allOf) {
+      validateJsonSchemaSubset(value, branch, rootSchema, label, errors);
+    }
+  }
+  if (schema.if) {
+    const conditionErrors = [];
+    validateJsonSchemaSubset(value, schema.if, rootSchema, label, conditionErrors);
+    if (conditionErrors.length === 0 && schema.then) {
+      validateJsonSchemaSubset(value, schema.then, rootSchema, label, errors);
+    } else if (conditionErrors.length > 0 && schema.else) {
+      validateJsonSchemaSubset(value, schema.else, rootSchema, label, errors);
+    }
+  }
+
+  if (schema.type) {
+    const allowedTypes = Array.isArray(schema.type) ? schema.type : [schema.type];
+    if (!allowedTypes.some((type) => jsonValueMatchesType(value, type))) {
+      errors.push(`${label}: expected ${allowedTypes.join("|")}`);
+      return;
+    }
+  }
+  if (Object.hasOwn(schema, "const") && canonicalJson(value) !== canonicalJson(schema.const)) {
+    errors.push(`${label}: const does not match`);
+  }
+  if (Array.isArray(schema.enum) && !schema.enum.some((entry) => canonicalJson(entry) === canonicalJson(value))) {
+    errors.push(`${label}: value is outside enum`);
+  }
+  if (typeof value === "string") {
+    if (Number.isInteger(schema.minLength) && value.length < schema.minLength) errors.push(`${label}: string is too short`);
+    if (schema.pattern && !new RegExp(schema.pattern).test(value)) errors.push(`${label}: pattern does not match`);
+  }
+  if (typeof value === "number" && Number.isFinite(schema.minimum) && value < schema.minimum) {
+    errors.push(`${label}: value is below minimum`);
+  }
+  if (Array.isArray(value)) {
+    if (Number.isInteger(schema.minItems) && value.length < schema.minItems) errors.push(`${label}: array has too few items`);
+    if (Number.isInteger(schema.maxItems) && value.length > schema.maxItems) errors.push(`${label}: array has too many items`);
+    if (schema.uniqueItems === true && new Set(value.map((entry) => canonicalJson(entry))).size !== value.length) {
+      errors.push(`${label}: array items are not unique`);
+    }
+    if (schema.items) {
+      value.forEach((entry, index) => validateJsonSchemaSubset(entry, schema.items, rootSchema, `${label}[${index}]`, errors));
+    }
+  }
+  if (value !== null && !Array.isArray(value) && typeof value === "object") {
+    for (const required of schema.required ?? []) {
+      if (!Object.hasOwn(value, required)) errors.push(`${label}.${required}: required property is missing`);
+    }
+    const properties = schema.properties ?? {};
+    for (const [key, propertySchema] of Object.entries(properties)) {
+      if (Object.hasOwn(value, key)) {
+        validateJsonSchemaSubset(value[key], propertySchema, rootSchema, `${label}.${key}`, errors);
+      }
+    }
+    if (schema.additionalProperties === false) {
+      for (const key of Object.keys(value)) {
+        if (!Object.hasOwn(properties, key)) errors.push(`${label}.${key}: additional property is not allowed`);
+      }
+    }
+  }
+}
+
+function loadInitiativeRegisterSchema() {
+  return JSON.parse(readFileSync(INITIATIVE_REGISTER_SCHEMA_PATH, "utf8"));
+}
+
+function parseFrontmatterScalar(raw) {
+  const value = raw.trim();
+  if (value === "") return null;
+  if (value === "[]") return [];
+  if (value === "null" || value === "~") return null;
+  if (value.startsWith('"') && value.endsWith('"')) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value.slice(1, -1);
+    }
+  }
+  if (value.startsWith("'") && value.endsWith("'")) return value.slice(1, -1).replaceAll("''", "'");
+  return value;
+}
+
+function parseMarkdownFrontmatter(bytes, label) {
+  const lines = bytes.toString("utf8").split(/\r?\n/);
+  if (lines[0] !== "---") throw new Error(`${label} has no YAML frontmatter`);
+  const end = lines.indexOf("---", 1);
+  if (end < 2) throw new Error(`${label} frontmatter is not closed`);
+  const values = {};
+  let parent = null;
+  for (const line of lines.slice(1, end)) {
+    if (line.trim() === "" || line.trimStart().startsWith("#")) continue;
+    const listItem = line.match(/^ {2}-\s*(.+)$/);
+    if (listItem && parent) {
+      if (values[parent] === null) values[parent] = [];
+      if (!Array.isArray(values[parent])) throw new Error(`${label}#${parent} mixes list and scalar values`);
+      values[parent].push(parseFrontmatterScalar(listItem[1]));
+      continue;
+    }
+    const match = line.match(/^(\s*)([A-Za-z0-9_]+):(.*)$/);
+    if (!match) continue;
+    const [, indentation, key, rawValue] = match;
+    if (indentation.length === 0) {
+      const value = parseFrontmatterScalar(rawValue);
+      values[key] = value;
+      parent = value === null ? key : null;
+    }
+  }
+  return values;
+}
+
+function parseInitiativeRelationshipTable(bytes, heading, kind, minimumRows) {
+  const lines = bytes.toString("utf8").split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === heading);
+  if (start < 0) throw new Error(`${heading} table is missing`);
+  const tableLines = [];
+  for (const line of lines.slice(start + 1)) {
+    if (line.startsWith("## ")) break;
+    if (line.trim().startsWith("|")) tableLines.push(line.trim());
+  }
+  if (tableLines.length < 2) throw new Error(`${heading} table header is invalid`);
+  const rows = tableLines.slice(1).filter((line) => !/^\|[\s:|-]+\|$/.test(line));
+  if (rows.length < minimumRows) throw new Error(`${heading} table has too few relationship rows`);
+  return rows.map((line) => {
+    const cells = line.split("|").slice(1, -1).map((cell) => cell.trim().replace(/^`|`$/g, ""));
+    if (cells.length !== 4 || cells[0] === "") throw new Error(`${heading} relationship row is invalid`);
+    return kind === "policy"
+      ? { policyId: cells[0], relation: cells[1], rationale: cells[2], exceptionRef: cells[3] || null }
+      : { guidelineId: cells[0], adoption: cells[1], rationale: cells[2], verification: cells[3] };
+  });
+}
+
+function sortedInitiativeRelationships(items, idField) {
+  return [...items].sort((left, right) => String(left[idField]).localeCompare(String(right[idField]), "en"));
+}
+
+function auditGovernanceCatalog(root) {
   const findings = [];
   const file = safeAbsolute(root, GOVERNANCE_CATALOG_PATH);
   if (!existsSync(file) || !lstatSync(file).isFile() || lstatSync(file).isSymbolicLink()) {
@@ -1714,9 +2225,6 @@ function auditGovernanceCatalog(root, lock) {
     execFileSync("git", ["-C", root, "cat-file", "-e", `${baseCommit}^{commit}`], { stdio: "ignore" });
   } catch {
     findings.push({ code: "UNRESOLVABLE_MIGRATION_BASE", path: GOVERNANCE_CATALOG_PATH, revision: baseCommit });
-  }
-  if (baseCommit !== lock.targetSourceRevision) {
-    findings.push({ code: "MIGRATION_BASE_LOCK_MISMATCH", path: GOVERNANCE_CATALOG_PATH, expected: lock.targetSourceRevision, actual: baseCommit });
   }
   const candidates = [...catalog.policies, ...catalog.guidelines];
   const ids = new Set();
@@ -1776,7 +2284,300 @@ function auditGovernanceCatalog(root, lock) {
   return { findings, reviewed, catalog, bytes };
 }
 
-function readHumanDecision(root, reference, lock) {
+function initiativeRelationshipsAreValid(initiative, catalog) {
+  const policyIds = new Set((catalog?.policies ?? []).filter(({ kind }) => kind === "policy").map(({ id }) => id));
+  const guidelinesById = new Map((catalog?.guidelines ?? []).map((item) => [item.id, item]));
+  const guidelineIds = new Set(guidelinesById.keys());
+  if (!["policyRefs", "policyRelationships", "guidelineRefs", "guidelineRelationships"].every((field) => Array.isArray(initiative?.[field]))) {
+    return false;
+  }
+  const uniquePolicyRefs = new Set(initiative.policyRefs);
+  const uniqueGuidelineRefs = new Set(initiative.guidelineRefs);
+  const policyRelationshipIds = new Set(initiative.policyRelationships.map((relationship) => relationship?.policyId));
+  const guidelineRelationshipIds = new Set(initiative.guidelineRelationships.map((relationship) => relationship?.guidelineId));
+  return (
+    uniquePolicyRefs.size === initiative.policyRefs.length &&
+    uniqueGuidelineRefs.size === initiative.guidelineRefs.length &&
+    policyRelationshipIds.size === initiative.policyRelationships.length &&
+    guidelineRelationshipIds.size === initiative.guidelineRelationships.length &&
+    initiative.policyRelationships.length === initiative.policyRefs.length &&
+    initiative.guidelineRelationships.length === initiative.guidelineRefs.length &&
+    initiative.policyRefs.every((id) => typeof id === "string" && policyIds.has(id) && policyRelationshipIds.has(id)) &&
+    initiative.guidelineRefs.every((id) => typeof id === "string" && guidelineIds.has(id) && guidelineRelationshipIds.has(id)) &&
+    initiative.policyRelationships.every((relationship) => (
+      typeof relationship?.rationale === "string" && relationship.rationale.length > 0 &&
+      ["advances", "constrained-by", "exception-to"].includes(relationship?.relation) &&
+      (relationship.relation === "exception-to"
+        ? typeof relationship.exceptionRef === "string" && relationship.exceptionRef.length > 0
+        : relationship.exceptionRef === null)
+    )) &&
+    initiative.guidelineRelationships.every((relationship) => (
+      ["required", "recommended"].includes(relationship?.adoption) &&
+      typeof relationship?.rationale === "string" && relationship.rationale.length > 0 &&
+      typeof relationship?.verification === "string" && relationship.verification.length > 0 &&
+      (guidelinesById.get(relationship.guidelineId)?.policyRefs ?? []).some((policyRef) => initiative.policyRefs.includes(policyRef))
+    )) &&
+    ["linked", "no_applicable_guideline", "needs_review"].includes(initiative.guidelineDisposition) &&
+    (initiative.guidelineDisposition !== "linked" || initiative.guidelineRefs.length > 0) &&
+    (initiative.guidelineDisposition !== "no_applicable_guideline" || initiative.guidelineRefs.length === 0)
+  );
+}
+
+function initiativeLegacyRefsAreValid(root, initiative) {
+  if (!Array.isArray(initiative?.legacyProjectRefs)) return false;
+  const seen = new Set();
+  return initiative.legacyProjectRefs.every((legacyRef) => {
+    try {
+      if (
+        !/^P[0-9]{4}$/.test(legacyRef?.id ?? "") ||
+        seen.has(legacyRef.id) ||
+        typeof legacyRef?.path !== "string" ||
+        !new RegExp(`^docs/projects/${legacyRef.id}-.+\\.md$`).test(legacyRef.path)
+      ) return false;
+      seen.add(legacyRef.id);
+      const legacyFile = safeAbsolute(root, normalizeRelativePath(legacyRef.path, "legacy project ref"));
+      const stat = lstatIfPresent(legacyFile);
+      if (!stat || !stat.isFile() || stat.isSymbolicLink()) return false;
+      const frontmatter = parseMarkdownFrontmatter(readFileSync(legacyFile), legacyRef.path);
+      return frontmatter.type === "project" && frontmatter.doc_id === legacyRef.id;
+    } catch {
+      return false;
+    }
+  });
+}
+
+function auditInitiativeSourceFence(root, initiative, initiativePath, findings) {
+  try {
+    execFileSync("git", ["-C", root, "cat-file", "-e", `${initiative.sourceRevision}^{commit}`], { stdio: "ignore" });
+  } catch {
+    findings.push({
+      code: "UNRESOLVABLE_INITIATIVE_SOURCE_REVISION",
+      path: initiativePath,
+      revision: initiative.sourceRevision,
+    });
+  }
+  for (const source of initiative.sourceRefs ?? []) {
+    try {
+      if (
+        typeof source?.path !== "string" || SECRET_SOURCE_PATH.test(source.path) ||
+        typeof source?.heading !== "string" || source.heading.length === 0 ||
+        !Number.isInteger(source?.lineStart) || !Number.isInteger(source?.lineEnd) ||
+        source.lineStart < 1 || source.lineEnd < source.lineStart ||
+        !/^[a-f0-9]{64}$/.test(source?.capturedSha256 ?? "") ||
+        source?.capturedRepositoryRevision !== initiative.sourceRevision
+      ) throw new Error("invalid initiative source fence");
+      const sourceFile = safeAbsolute(root, normalizeRelativePath(source.path, "initiative source ref"));
+      const sourceStat = lstatIfPresent(sourceFile);
+      if (!sourceStat || !sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error("unsafe initiative source file");
+      const sourceBytes = readFileSync(sourceFile);
+      const lineCount = sourceBytes.toString("utf8").split(/\r?\n/).length;
+      if (sha256(sourceBytes) !== source.capturedSha256 || source.lineEnd > lineCount) {
+        throw new Error("stale initiative source fence");
+      }
+      const committedBytes = execFileSync("git", ["-C", root, "show", `${initiative.sourceRevision}:${source.path}`], {
+        encoding: null,
+        maxBuffer: 32 * 1024 * 1024,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      if (sha256(committedBytes) !== source.capturedSha256) {
+        throw new Error("initiative source fence does not match sourceRevision bytes");
+      }
+    } catch (error) {
+      findings.push({
+        code: SECRET_SOURCE_PATH.test(source?.path ?? "")
+          ? "PRIVATE_INITIATIVE_SOURCE_EXCLUDED"
+          : "STALE_OR_INVALID_INITIATIVE_SOURCE_REF",
+        path: initiativePath,
+        source: source?.path ?? null,
+        message: error.message,
+      });
+    }
+  }
+}
+
+function auditNumberedInitiative(root, initiative, initiativePath, findings) {
+  let documentBytes;
+  let document;
+  try {
+    if (
+      typeof initiative.documentRef !== "string" ||
+      SECRET_SOURCE_PATH.test(initiative.documentRef) ||
+      !new RegExp(`^docs/initiatives/${initiative.id}-.+\\.md$`).test(initiative.documentRef)
+    ) throw new Error("documentRef is not the canonical I#### document path");
+    const documentFile = safeAbsolute(root, normalizeRelativePath(initiative.documentRef, "initiative document ref"));
+    const documentStat = lstatIfPresent(documentFile);
+    if (!documentStat || !documentStat.isFile() || documentStat.isSymbolicLink()) {
+      throw new Error("documentRef is not a safe repository regular file");
+    }
+    documentBytes = readFileSync(documentFile);
+    document = parseMarkdownFrontmatter(documentBytes, initiative.documentRef);
+    if (
+      document.type !== "initiative" ||
+      document.doc_id !== initiative.id ||
+      document.initiative_contract !== "v1" ||
+      document.status !== initiative.lifecycleState ||
+      document.approval_status !== initiative.approvalState ||
+      document.guideline_disposition !== initiative.guidelineDisposition ||
+      document.guideline_disposition_reason !== initiative.guidelineDispositionReason ||
+      typeof document.issuance_approval_ref !== "string" || document.issuance_approval_ref.length === 0
+    ) throw new Error("document identity, lifecycle, approval, issuance, or guideline mirror does not match the register");
+    const documentPolicyRefs = Array.isArray(document.policy_refs) ? [...document.policy_refs].sort() : [];
+    const documentGuidelineRefs = Array.isArray(document.guideline_refs) ? [...document.guideline_refs].sort() : [];
+    if (
+      canonicalJson(documentPolicyRefs) !== canonicalJson([...initiative.policyRefs].sort()) ||
+      canonicalJson(documentGuidelineRefs) !== canonicalJson([...initiative.guidelineRefs].sort())
+    ) throw new Error("document policy/guideline refs do not match the register");
+    const documentPolicies = parseInitiativeRelationshipTable(documentBytes, "## Policy Alignment", "policy", 1);
+    const documentGuidelines = parseInitiativeRelationshipTable(documentBytes, "## Guideline Disposition", "guideline", 0);
+    if (
+      canonicalJson(sortedInitiativeRelationships(documentPolicies, "policyId"))
+        !== canonicalJson(sortedInitiativeRelationships(initiative.policyRelationships, "policyId")) ||
+      canonicalJson(sortedInitiativeRelationships(documentGuidelines, "guidelineId"))
+        !== canonicalJson(sortedInitiativeRelationships(initiative.guidelineRelationships, "guidelineId"))
+    ) throw new Error("document relationship tables do not match the register");
+  } catch (error) {
+    findings.push({ code: "INVALID_NUMBERED_INITIATIVE_DOCUMENT", path: initiativePath, message: error.message });
+    return;
+  }
+
+  if (["active", "done"].includes(initiative.lifecycleState)) {
+    try {
+      verifyInitiativeAuthority({ repoRoot: root, initiativeId: initiative.id, allowDone: true });
+    } catch (error) {
+      findings.push({
+        code: "INVALID_NUMBERED_INITIATIVE_LIFECYCLE_AUTHORITY",
+        path: initiativePath,
+        message: error.message,
+      });
+    }
+  } else if (initiative.approvalState === "approved") {
+    const decision = readHumanDecision(root, initiative.decisionReceiptRef, initiative.sourceRevision);
+    const sourceHashes = initiative.sourceRefs.map(({ capturedSha256 }) => capturedSha256);
+    if (
+      initiative.effectiveRef !== initiative.documentRef ||
+      document.approval_ref !== initiative.decisionReceiptRef ||
+      !decision ||
+      decision.candidateId !== initiative.id ||
+      decision.decision !== "approved" ||
+      !sourceHashes.every((digest) => decision.sourceFence.sourceHashes.includes(digest)) ||
+      !decisionEffectiveArtifactMatches(root, decision, initiative.effectiveRef)
+    ) {
+      findings.push({
+        code: "INVALID_NUMBERED_INITIATIVE_APPROVAL_FENCE",
+        path: initiativePath,
+        message: "approved Initiative effective/document/decision refs do not resolve to one exact human-approved source fence",
+      });
+    }
+  }
+}
+
+function auditInitiativeBootstrap(root, governanceAudit) {
+  const findings = [];
+  const file = safeAbsolute(root, INITIATIVE_REGISTER_PATH);
+  if (!existsSync(file) || !lstatSync(file).isFile() || lstatSync(file).isSymbolicLink()) {
+    return [{ code: "INITIATIVE_REGISTER_UNAVAILABLE", path: INITIATIVE_REGISTER_PATH }];
+  }
+
+  let register;
+  try {
+    register = JSON.parse(readFileSync(file, "utf8"));
+  } catch {
+    return [{ code: "INVALID_INITIATIVE_REGISTER_JSON", path: INITIATIVE_REGISTER_PATH }];
+  }
+  if (register?.schemaVersion !== SCHEMA_VERSION || !Array.isArray(register?.initiatives)) {
+    return [{ code: "INVALID_INITIATIVE_REGISTER_SHAPE", path: INITIATIVE_REGISTER_PATH }];
+  }
+
+  let initiativeSchema;
+  try {
+    initiativeSchema = loadInitiativeRegisterSchema();
+    const schemaErrors = [];
+    validateJsonSchemaSubset(register, initiativeSchema, initiativeSchema, "initiativeRegister", schemaErrors);
+    if (schemaErrors.length > 0) {
+      findings.push({
+        code: "INVALID_INITIATIVE_REGISTER_SCHEMA",
+        path: INITIATIVE_REGISTER_PATH,
+        errors: schemaErrors.slice(0, 50),
+      });
+    }
+  } catch (error) {
+    return [{ code: "INITIATIVE_REGISTER_SCHEMA_UNAVAILABLE", path: INITIATIVE_REGISTER_PATH, message: error.message }];
+  }
+
+  const catalog = governanceAudit?.catalog;
+  const attentionEntries = Array.isArray(catalog?.attention) ? catalog.attention : [];
+  const gapEntries = Array.isArray(catalog?.gaps) ? catalog.gaps : [];
+  const hasInitiativeAttention = attentionEntries.some(({ id, severity }) => (
+    id === "ATTN-INITIATIVE-EXTRACTION" && severity === "decision"
+  ));
+  const hasInitiativeGap = gapEntries.some(({ id }) => id === "GAP-INITIATIVE-EXTRACTION");
+  if (hasInitiativeAttention !== hasInitiativeGap) {
+    findings.push({
+      code: "INCOMPLETE_INITIATIVE_EXTRACTION_GAP",
+      path: GOVERNANCE_CATALOG_PATH,
+      message: "initiative extraction gap과 decision attention은 함께 존재해야 합니다",
+    });
+  }
+
+  const candidates = register.initiatives.filter((initiative) => /^INIT-[A-Z0-9][A-Z0-9-]*$/.test(initiative?.id ?? ""));
+  const numberedInitiatives = register.initiatives.filter((initiative) => /^I[0-9]{4}$/.test(initiative?.id ?? ""));
+  const duplicateIds = register.initiatives.map(({ id }) => id).filter((id, index, ids) => ids.indexOf(id) !== index);
+  if (duplicateIds.length > 0) {
+    findings.push({ code: "DUPLICATE_INITIATIVE_ID", path: INITIATIVE_REGISTER_PATH, ids: [...new Set(duplicateIds)] });
+  }
+  const reviewableCandidates = candidates.filter(({ approvalState }) => ["unreviewed", "review_requested"].includes(approvalState));
+
+  for (const initiative of register.initiatives) {
+    const initiativePath = `${INITIATIVE_REGISTER_PATH}#${initiative?.id ?? "unknown"}`;
+    const entryErrors = [];
+    validateJsonSchemaSubset(initiative, initiativeSchema.$defs.initiative, initiativeSchema, initiativePath, entryErrors);
+    const schemaValid = entryErrors.length === 0;
+
+    if (/^INIT-/.test(initiative?.id ?? "")) {
+      const requiredText = [
+        "title", "humanSummary", "outcome", "whyNow", "owner", "currentFocus",
+        "guidelineDisposition", "guidelineDispositionReason", "sourceRevision",
+      ].every((field) => typeof initiative?.[field] === "string" && initiative[field].length > 0);
+      const requiredArrays = [
+        "policyRefs", "policyRelationships", "guidelineRefs", "guidelineRelationships",
+        "legacyProjectRefs", "successSignals", "risks", "sourceRefs",
+      ].every((field) => Array.isArray(initiative?.[field]));
+      const candidateShape = (
+        requiredText && requiredArrays && initiative.kind === "initiative" && initiative.lifecycleState === "draft" &&
+        ["unreviewed", "review_requested", "rejected", "stale", "superseded"].includes(initiative.approvalState) &&
+        initiative.documentRef === null && initiative.effectiveRef === null && initiative.decisionReceiptRef === null &&
+        /^[a-f0-9]{40}$/.test(initiative.sourceRevision) && initiative.policyRefs.length > 0 &&
+        initiative.legacyProjectRefs.length > 0 && initiative.successSignals.length > 0 && initiative.sourceRefs.length > 0
+      );
+      if (!candidateShape) {
+        findings.push({ code: "INVALID_INITIATIVE_MIGRATION_CANDIDATE", path: initiativePath });
+        continue;
+      }
+    }
+    if (!schemaValid) continue;
+    if (!initiativeRelationshipsAreValid(initiative, catalog)) {
+      findings.push({ code: "INVALID_INITIATIVE_GOVERNANCE_RELATIONSHIPS", path: initiativePath });
+    }
+    if (!initiativeLegacyRefsAreValid(root, initiative)) {
+      findings.push({ code: "INVALID_INITIATIVE_LEGACY_PROJECT_REF", path: initiativePath });
+    }
+    auditInitiativeSourceFence(root, initiative, initiativePath, findings);
+    if (/^I[0-9]{4}$/.test(initiative.id)) {
+      auditNumberedInitiative(root, initiative, initiativePath, findings);
+    }
+  }
+
+  if (reviewableCandidates.length === 0 && numberedInitiatives.length === 0 && !(hasInitiativeAttention && hasInitiativeGap)) {
+    findings.push({
+      code: "INITIATIVE_BOOTSTRAP_UNRESOLVED",
+      path: INITIATIVE_REGISTER_PATH,
+      message: "source-backed INIT-* migration candidate, valid I#### Initiative, 또는 explicit initiative extraction gap/attention이 필요합니다",
+    });
+  }
+  return findings;
+}
+
+function readHumanDecision(root, reference, expectedSourceRevision) {
   try {
     const decisionFile = safeAbsolute(root, normalizeRelativePath(reference, "human decision receipt ref"));
     if (!existsSync(decisionFile) || !lstatSync(decisionFile).isFile() || lstatSync(decisionFile).isSymbolicLink()) return null;
@@ -1793,7 +2594,7 @@ function readHumanDecision(root, reference, lock) {
       !(promotesEffectiveArtifact
         ? typeof decision?.effectiveRef === "string" && decision.effectiveRef.length > 0 && /^[a-f0-9]{64}$/.test(decision?.effectiveSha256 ?? "")
         : decision?.effectiveRef === null && decision?.effectiveSha256 === null) ||
-      decision?.sourceFence?.repositoryRevision !== lock.targetSourceRevision ||
+      decision?.sourceFence?.repositoryRevision !== expectedSourceRevision ||
       !Array.isArray(decision?.sourceFence?.sourceHashes) || decision.sourceFence.sourceHashes.length === 0 ||
       !decision.sourceFence.sourceHashes.every((digest) => /^[a-f0-9]{64}$/.test(digest))
     ) return null;
@@ -1828,7 +2629,12 @@ function evidenceAllowsVerified(root, lock, governanceAudit) {
   try {
     const pack = JSON.parse(readFileSync(file, "utf8"));
     const decisionRefs = Array.isArray(pack.humanDecisionReceiptRefs) ? pack.humanDecisionReceiptRefs : [];
-    const decisions = new Map(decisionRefs.map((reference) => [reference, readHumanDecision(root, reference, lock)]));
+    const governanceSourceRevision = governanceAudit?.catalog?.migration?.capturedRepository?.baseCommit
+      ?? lock.targetSourceRevision;
+    const decisions = new Map(decisionRefs.map((reference) => [
+      reference,
+      readHumanDecision(root, reference, governanceSourceRevision),
+    ]));
     const requiredDecisionsPresent = !lock.profiles.includes("governance") || (() => {
       if (!governanceAudit?.reviewed || decisions.size === 0 || [...decisions.values()].some((decision) => decision === null)) return false;
       const catalog = governanceAudit.catalog;
@@ -1939,9 +2745,12 @@ export function verifyTarget({ target }) {
   }
   const findings = scanInstalledContent(root, state.lock);
   const governanceAudit = state.lock.profiles.includes("governance")
-    ? auditGovernanceCatalog(root, state.lock)
+    ? auditGovernanceCatalog(root)
     : { findings: [], reviewed: true, catalog: null, bytes: null };
   findings.push(...governanceAudit.findings);
+  if (state.lock.profiles.includes("governance")) {
+    findings.push(...auditInitiativeBootstrap(root, governanceAudit));
+  }
   const manifest = loadReleaseManifest();
   const missingVerificationProfiles = manifest.verification.requiredProfiles
     .filter((profile) => !state.lock.profiles.includes(profile));
@@ -1954,6 +2763,9 @@ export function verifyTarget({ target }) {
   }
   const release = selectedRelease(manifest, state.lock.profiles);
   findings.push(...auditInstallationInventory(state.lock, release));
+  if (state.lock.profiles.includes("core")) {
+    findings.push(...auditProjectOwnedGovernanceAuthoringContracts(root, state.lock));
+  }
   if (!sameReleaseFence({ release: state.lock.release }, release)) {
     findings.push({ code: "RELEASE_FENCE_MISMATCH", message: "installed release differs from current public release bytes" });
   }
@@ -2087,7 +2899,11 @@ export function rollbackReceipt({ receiptFile }) {
       entry &&
       releaseEntry &&
       (["harness-managed", "generated"].includes(entry.ownership) ||
-        (entry.ownership === "project-owned" && releaseEntry.ownership === "project-owned" && mutation.existed === false)) &&
+        (entry.ownership === "project-owned" && releaseEntry.ownership === "project-owned" && mutation.existed === false) ||
+        (entry.ownership === "project-owned" &&
+          mutation.path === VIEW_CONFIG_PATH &&
+          releaseEntry.generator === "repository-view-config-v1" &&
+          mutation.existed === true)) &&
       entry.installedSha256 === mutation.afterSha256 &&
       entry.installedMode === mutation.afterMode &&
       Number.parseInt(releaseEntry.mode, 8) === mutation.afterMode &&

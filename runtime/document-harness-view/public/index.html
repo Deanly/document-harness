@@ -4,15 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <title>문서 하네스 · 사용자 화면</title>
-    <link rel="stylesheet" href="/styles.css?v=2">
+    <title>보드 · 문서 하네스</title>
+    <link rel="stylesheet" href="/styles.css?v=4">
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 바로가기</a>
 
-    <header class="masthead">
-      <div class="repository-identity" aria-label="현재 저장소">
-        <strong>문서 하네스</strong>
+    <div class="app-chrome">
+      <header class="masthead">
+      <div class="repository-identity" aria-label="보드, 현재 저장소">
+        <strong>보드</strong>
         <span class="identity-separator" aria-hidden="true">/</span>
         <span id="repository-name">저장소</span>
       </div>
@@ -23,17 +24,20 @@
         <button id="refresh-button" class="button secondary" type="button">지금 새로고침</button>
         <div id="live-state" class="connection-state pending" role="status" aria-live="polite">연결 중</div>
       </div>
-    </header>
+      </header>
 
-    <nav class="tab-bar" aria-label="문서 하네스 사용자 화면">
+      <nav class="tab-bar" aria-label="보드 주 메뉴">
       <div class="tabs" role="tablist" aria-orientation="horizontal">
         <button id="tab-overview" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-overview" tabindex="-1" data-tab="overview">개요</button>
-        <button id="tab-policies" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-policies" tabindex="0" data-tab="policies">정책·지침</button>
+        <button id="tab-policies" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-policies" tabindex="0" data-tab="policies">정책</button>
+        <button id="tab-guidelines" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-guidelines" tabindex="-1" data-tab="guidelines">지침</button>
+        <button id="tab-initiatives" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-initiatives" tabindex="-1" data-tab="initiatives">추진안</button>
         <button id="tab-review" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-review" tabindex="-1" data-tab="review">검토 대기 <span id="review-tab-count" class="tab-count">-</span></button>
         <button id="tab-execution" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-execution" tabindex="-1" data-tab="execution">실행 상태</button>
         <button id="tab-evidence" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-evidence" tabindex="-1" data-tab="evidence">근거</button>
       </div>
-    </nav>
+      </nav>
+    </div>
 
     <div id="freshness-banner" class="freshness-banner pending" role="status" aria-live="polite">
       소스와 초기 이관 상태를 확인하고 있습니다.
@@ -87,14 +91,21 @@
         <div class="page-heading policy-heading">
           <div>
             <p class="eyebrow">정책 운영</p>
-            <h1>정책·지침</h1>
-            <p class="page-description">사람이 읽고 결정해야 하는 정책 후보와 이를 구현하는 지침을 근거까지 연결해 보여줍니다.</p>
+            <h1>정책</h1>
+            <p class="page-description">프로젝트가 지켜야 할 원칙과 경계를 사람이 읽고 결정할 수 있도록 근거와 연결 지침을 함께 보여줍니다.</p>
           </div>
           <div id="policy-summary" class="compact-metrics" aria-label="정책 현황"></div>
         </div>
 
         <div class="policy-layout">
-          <div class="policy-workspace">
+          <section id="policy-workspace" class="policy-workspace" aria-labelledby="policy-list-title">
+            <div class="governance-section-heading">
+              <div>
+                <p class="eyebrow">정책 목록</p>
+                <h2 id="policy-list-title">지켜야 할 정책</h2>
+                <p>무엇을 보호하고 어떤 경계를 지켜야 하는지 확인합니다.</p>
+              </div>
+            </div>
             <div class="table-toolbar" role="search">
               <label class="search-field">
                 <span class="visually-hidden">정책과 지침 검색</span>
@@ -132,20 +143,169 @@
               </table>
             </div>
             <div id="policy-pagination" class="pagination" aria-label="정책 페이지"></div>
-          </div>
+          </section>
 
-          <aside class="review-rail" aria-labelledby="review-rail-title">
+          <aside class="review-rail" aria-labelledby="policy-review-rail-title">
             <div class="rail-heading">
               <div>
-                <p class="eyebrow attention">검토 요약</p>
-                <h2 id="review-rail-title">검토 요약</h2>
+                <p class="eyebrow attention">정책 검토</p>
+                <h2 id="policy-review-rail-title">정책 검토 요약</h2>
               </div>
               <button class="text-button" type="button" data-open-tab="review">전체 보기</button>
             </div>
-            <div id="review-rail-list" class="review-rail-list"></div>
+            <div id="policy-review-rail-list" class="review-rail-list"></div>
           </aside>
         </div>
         <div id="policy-runtime-strip" class="runtime-strip bordered"></div>
+      </section>
+
+      <section id="panel-guidelines" class="tab-panel" role="tabpanel" aria-labelledby="tab-guidelines" hidden>
+        <div class="page-heading policy-heading">
+          <div>
+            <p class="eyebrow">구현 지침</p>
+            <h1>지침</h1>
+            <p class="page-description">정책을 설계·개발·검증에 적용하는 구체적인 방법을 독립적으로 살펴보고 연결 정책과 근거를 확인합니다.</p>
+          </div>
+          <div id="guideline-summary" class="compact-metrics" aria-label="지침 현황"></div>
+        </div>
+
+        <div class="policy-layout">
+          <section id="guideline-workspace" class="policy-workspace" aria-labelledby="guideline-list-title">
+            <div class="governance-section-heading">
+              <div>
+                <p class="eyebrow">지침 목록</p>
+                <h2 id="guideline-list-title">구현하고 검증할 지침</h2>
+                <p>정책을 실제 설계·개발·검증에 적용하는 방법과 연결 근거를 확인합니다.</p>
+              </div>
+            </div>
+            <div class="table-toolbar" role="search">
+              <label class="search-field">
+                <span class="visually-hidden">지침과 연결 정책 검색</span>
+                <input id="guideline-search" type="search" placeholder="지침 ID, 정책, 근거 경로 검색" autocomplete="off">
+              </label>
+              <div id="guideline-filters" class="filter-group" aria-label="지침 필터"></div>
+              <button id="clear-guideline-filters" class="text-button" type="button">필터 초기화</button>
+            </div>
+            <div class="result-line">
+              <strong id="guideline-result-count">0개 결과</strong>
+              <span class="table-scroll-hint">표는 좌우로 스크롤할 수 있습니다.</span>
+              <label class="page-size-label">페이지당
+                <select id="guideline-page-size">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                </select>
+              </label>
+            </div>
+            <div class="table-scroll" tabindex="0" aria-label="지침 표 가로 스크롤 영역">
+              <table class="data-table policy-table guideline-table">
+                <thead>
+                  <tr>
+                    <th scope="col"><span class="visually-hidden">상세</span></th>
+                    <th scope="col">지침 ID</th>
+                    <th scope="col">사람이 읽는 지침</th>
+                    <th scope="col">연결 정책</th>
+                    <th scope="col">위험</th>
+                    <th scope="col">강제 수준</th>
+                    <th scope="col">승인 상태</th>
+                    <th scope="col">증거</th>
+                  </tr>
+                </thead>
+                <tbody id="guideline-table-body"></tbody>
+              </table>
+            </div>
+            <div id="guideline-pagination" class="pagination" aria-label="지침 페이지"></div>
+          </section>
+
+          <aside class="review-rail" aria-labelledby="guideline-review-rail-title">
+            <div class="rail-heading">
+              <div>
+                <p class="eyebrow attention">지침 검토</p>
+                <h2 id="guideline-review-rail-title">지침 검토 요약</h2>
+              </div>
+              <button class="text-button" type="button" data-open-tab="review">전체 보기</button>
+            </div>
+            <div id="guideline-review-rail-list" class="review-rail-list"></div>
+          </aside>
+        </div>
+        <div id="guideline-runtime-strip" class="runtime-strip bordered"></div>
+      </section>
+
+      <section id="panel-initiatives" class="tab-panel" role="tabpanel" aria-labelledby="tab-initiatives" hidden>
+        <div class="page-heading policy-heading">
+          <div>
+            <p class="eyebrow">방향에서 실행으로</p>
+            <h1>추진안</h1>
+            <p class="page-description">정책의 목적과 경계, 선택한 지침의 실행 방식을 실제 프로젝트 묶음으로 전환합니다. 프로젝트는 연결 상태만 보여주며 상세 실행은 각 프로젝트 문서가 소유합니다.</p>
+          </div>
+          <div id="initiative-summary" class="compact-metrics" aria-label="추진안 현황"></div>
+        </div>
+
+        <div class="policy-layout">
+          <section id="initiative-workspace" class="policy-workspace" aria-labelledby="initiative-list-title">
+            <div class="governance-section-heading">
+              <div>
+                <p class="eyebrow">추진안 목록</p>
+                <h2 id="initiative-list-title">정책을 프로젝트로 잇는 추진안</h2>
+                <p>무엇을 달성할지, 어떤 정책·지침을 따르는지, 어느 프로젝트가 실행을 맡는지 확인합니다.</p>
+              </div>
+            </div>
+            <div class="table-toolbar" role="search">
+              <label class="search-field">
+                <span class="visually-hidden">추진안과 연결 항목 검색</span>
+                <input id="initiative-search" type="search" placeholder="추진안 ID, 정책, 지침, 프로젝트 검색" autocomplete="off">
+              </label>
+              <div id="initiative-filters" class="filter-group" aria-label="추진안 필터"></div>
+              <button id="clear-initiative-filters" class="text-button" type="button">필터 초기화</button>
+            </div>
+            <div class="result-line">
+              <strong id="initiative-result-count">0개 결과</strong>
+              <span class="table-scroll-hint">표는 좌우로 스크롤할 수 있습니다.</span>
+              <label class="page-size-label">페이지당
+                <select id="initiative-page-size">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                </select>
+              </label>
+            </div>
+            <div class="table-scroll" tabindex="0" aria-label="추진안 표 가로 스크롤 영역">
+              <table class="data-table policy-table initiative-table">
+                <thead>
+                  <tr>
+                    <th scope="col"><span class="visually-hidden">상세</span></th>
+                    <th scope="col">추진안 ID</th>
+                    <th scope="col">달성 목표</th>
+                    <th scope="col">진행 상태</th>
+                    <th scope="col">연결 정책</th>
+                    <th scope="col">선택 지침</th>
+                    <th scope="col">연결 프로젝트</th>
+                    <th scope="col">승인 상태</th>
+                    <th scope="col">근거</th>
+                  </tr>
+                </thead>
+                <tbody id="initiative-table-body"></tbody>
+              </table>
+            </div>
+            <div id="initiative-pagination" class="pagination" aria-label="추진안 페이지"></div>
+          </section>
+
+          <aside class="review-rail" aria-labelledby="initiative-review-rail-title">
+            <div class="rail-heading">
+              <div>
+                <p class="eyebrow attention">추진안 검토</p>
+                <h2 id="initiative-review-rail-title">방향 확인 항목</h2>
+              </div>
+              <button class="text-button" type="button" data-open-tab="review">전체 보기</button>
+            </div>
+            <div id="initiative-review-rail-list" class="review-rail-list"></div>
+          </aside>
+        </div>
+        <aside class="read-only-callout initiative-scope-callout">
+          <strong>추진안은 방향과 연결을 관리합니다.</strong>
+          <span>프로젝트·작업의 상세 실행 상태나 진척률을 이 화면에서 추정하거나 수정하지 않습니다.</span>
+        </aside>
+        <div id="initiative-runtime-strip" class="runtime-strip bordered"></div>
       </section>
 
       <section id="panel-review" class="tab-panel" role="tabpanel" aria-labelledby="tab-review" hidden>
@@ -228,7 +388,7 @@
     </main>
 
     <footer>
-      <p>읽기 전용 투영 화면 · 정책 승인, 코드 변경, 실행 명령은 이 화면에서 수행되지 않습니다.</p>
+      <p>보드는 문서 하네스의 읽기 전용 투영 화면입니다 · 정책 승인, 코드 변경, 실행 명령은 이 화면에서 수행되지 않습니다.</p>
       <p id="footer-fence"></p>
     </footer>
 
@@ -236,6 +396,6 @@
       <div class="empty-state">표시할 항목이 없습니다.</div>
     </template>
 
-    <script type="module" src="/app.mjs?v=2"></script>
+    <script type="module" src="/app.mjs?v=4"></script>
   </body>
 </html>

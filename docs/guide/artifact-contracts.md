@@ -2,11 +2,11 @@
 
 - Type: guide
 - Created: 2026-04-14
-- Updated: 2026-07-15
+- Updated: 2026-07-18
 
 ## Purpose
 
-이 문서는 `design`, `project`, `task`, `guide`, `report`가 각각 어떤 truth를 담고, 어떤 문서를 읽고, 어떤 문서로 handoff하는지 계약 형태로 고정합니다.
+이 문서는 `design`, `initiative`, `project`, `task`, `guide`, `report`가 각각 어떤 truth를 담고, 어떤 문서를 읽고, 어떤 문서로 handoff하는지 계약 형태로 고정합니다.
 
 문서 품질이 흔들리는 가장 흔한 이유는 타입 경계가 약해서 같은 정보가 여러 surface에 중복되거나, 반대로 어디에도 authoritative truth가 없기 때문입니다.
 
@@ -21,7 +21,8 @@
 
 ### Focused Execution
 
-- `project`: 큰 delivery boundary, 분해 전략, handoff map
+- `initiative`: policy/guideline을 portfolio outcome과 project 방향으로 연결하는 strategy owner
+- `project`: bounded delivery boundary, 분해 전략, handoff map
 - `task`: 실제로 닫는 execution slice, goal inventory, evidence
 - execution checkpoint: current hypothesis, last evidence, next actor/action, attention, stop/resume state
 
@@ -47,7 +48,7 @@
 
 - raw source: 원문, clipping, transcript, dataset, image, PDF
 - source summary: raw source를 읽고 만든 시점성 `report` 또는 관련 문서의 `Inputs`
-- source-backed synthesis: source를 근거로 갱신된 `design`, `guide`, `project`, `task`
+- source-backed synthesis: source를 근거로 갱신된 `design`, `guide`, `initiative`, `project`, `task`
 
 ### Agent Control
 
@@ -62,21 +63,30 @@
 
 - Holds: 현재 truth, 경계, 계약, invariant, failure boundary
 - Reads: control-plane, ubiquitous-language, 관련 상위 요구, source-backed synthesis
-- Feeds: project, task, guide
+- Feeds: initiative, project, task, guide
 - Must not hold: 긴 실행 이력, 임시 작업 메모
 - Governance role: `human-policy`는 human authority를, `normative-standard`는 승인된 effective rule을 소유할 수 있음
 
+### `initiative`
+
+- User-facing term: `추진안`
+- Holds: approved portfolio outcome, why now, scope, policy/guideline direct relationships, success signals, risks, review cadence
+- Reads: control-plane, exact human policy, effective guideline/standard, source-backed proposal, human approval receipt
+- Feeds: project direction, portfolio review, human control view
+- Must not hold: project WBS/task lifecycle의 복제본, self-issued approval, policy/guideline authority의 원본
+- Link ownership: project source가 `related_initiative`와 contribution relation을 소유하고 View/index가 reverse-index함
+
 ### `project`
 
-- Holds: bounded delivery 목표, 범위, task map, whole-system anchor, handoff 방향
-- Reads: control-plane, design, quality axes
-- Feeds: task, report, 예외 branch project
+- Holds: bounded delivery 목표, initiative alignment, 범위, task map, whole-system anchor, handoff 방향
+- Reads: approved initiative, control-plane, design, quality axes
+- Feeds: task, report, initiative outcome review, sibling project
 - Must not hold: 미확정 브레인스토밍, 설계 truth의 원본
 
 ### `task`
 
 - Holds: execution slice, goal inventory, goal verification, current checkpoint ref, evidence/decision receipts, outputs / handoff
-- Reads: project, effective policy/standard design, control-plane, quality axes, current checkpoint
+- Reads: initiative, project, effective policy/standard design, control-plane, quality axes, current checkpoint
 - Feeds: 다음 task, downstream system, project closeout
 - Must not hold: 전체 시스템 전략의 원본 정의
 
@@ -84,7 +94,7 @@
 
 - Holds: 반복 판단, 운영 규칙, checklists, Q&A
 - Reads: design, project, task, report
-- Feeds: future task/project/operator
+- Feeds: future initiative/task/project/operator
 - Must not hold: current truth의 유일한 원본
 - Governance rule: design에 없는 새 mandatory rule을 단독 생성하거나 effective standard를 완화할 수 없음
 
@@ -92,7 +102,7 @@
 
 - Holds: 시점성 조사, 요청 응답, 일회성 정리
 - Reads: 현재 active surface 전반, raw source, source summary
-- Feeds: 필요 시 guide/design/project/task로 승격
+- Feeds: 필요 시 guide/design/initiative/project/task로 승격
 - Must not hold: 장기 authoritative truth
 - Governance role: `proposal`은 options, impact, approval request를 담지만 effective design으로 승격되기 전까지 normative source가 아님
 
@@ -105,6 +115,7 @@
 
 ### `human control view`
 
+- User-facing name: `보드`
 - Holds: source에서 재생성 가능한 immutable snapshot과 presentation-only preference
 - Reads: Markdown/Git source, checkpoint, policy/standard, task/QA/evidence, freshness metadata
 - Feeds: human understanding와 attention routing
@@ -114,13 +125,13 @@
 
 - Holds: 원문 파일 또는 외부 source의 보존 사본
 - Reads: 없음
-- Feeds: report, design, guide, project, task
+- Feeds: report, design, guide, initiative, project, task
 - Must not hold: LLM이 덧붙인 해석, 현재 truth, 실행 상태
 
 ### `AGENTS.md`
 
 - Holds: Codex가 작업 전에 알아야 하는 repo layout, workflow, documentation rules, verification commands, done criteria
-- Reads: docs/README, control-plane, Codex guidance, active project/task/design surfaces
+- Reads: docs/README, control-plane, Codex guidance, active initiative/project/task/design surfaces
 - Feeds: Codex local/cloud/IDE sessions
 - Must not hold: 전체 문서 schema의 복제본, 긴 배경 설명, 시점성 상태 보고
 
@@ -129,6 +140,8 @@
 | From | To | What Moves |
 | --- | --- | --- |
 | `design` | `project` | boundary, invariant, interface, out-of-scope 기준 |
+| human policy / guideline | `initiative` | WHY/WHAT authority, HOW/EVIDENCE disposition, exact approval refs |
+| `initiative` | `project` | outcome, scope, policy/guideline direction, success signals, portfolio relation |
 | human policy `design` | proposal `report` | clause, outcome, missing decision, proposal scope |
 | proposal `report` | normative `design` | human-approved rule, rejected alternatives, impact, approval ref |
 | normative `design` | `guide/task/qa` | exact rule version, invariant, check/evidence requirement |
@@ -137,12 +150,13 @@
 | `task` | execution checkpoint | current contract revision, next action, risk, attention, receipt refs |
 | execution checkpoint | next agent/human/view | resumable current state, exact requested response, source fence |
 | `task` | `project` | closeout evidence, remaining scope, supersede/cancel reason |
-| `report` | `guide/design/project/task` | reusable rule, truth, execution boundary |
+| `project` | `initiative` | reverse-indexable `related_initiative`, contribution relation, delivery evidence |
+| `report` | `guide/design/initiative/project/task` | reusable rule, truth, strategy 또는 execution boundary |
 | `design` | `qa` | 불변식, 위험, 시나리오 — qa 케이스의 유일한 파생 근거 |
 | `task` | `qa` | closeout 시 케이스 증거 갱신, 결함에서 파생된 신규 케이스 |
 | `qa` | `task` | 방어 갭 백로그 항목 — 신규 방어 테스트 작업의 유일한 출처 |
 | `task/qa` | human control view | policy-to-evidence lineage, state/evidence summary, freshness metadata |
-| `raw source` | `report/design/guide/project/task` | source_refs, extracted facts, contradiction notes |
+| `raw source` | `report/design/guide/initiative/project/task` | source_refs, extracted facts, contradiction notes |
 | `AGENTS.md` | `Codex session` | repo map, workflow, constraints, verification commands |
 
 ## Authoring Rule
@@ -165,3 +179,4 @@
 - 2026-05-09: raw source layer, source_refs, markdown properties contract 추가.
 - 2026-05-09: AGENTS.md artifact contract와 Codex readiness surface 추가.
 - 2026-07-15: governance role, execution checkpoint, policy-to-evidence, read-only human view artifact contract 추가.
+- 2026-07-18: 별도 initiative artifact와 policy/guideline → initiative → project → task handoff, project-owned reverse link를 추가.

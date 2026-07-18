@@ -8,6 +8,7 @@ export const VIEW_RUNTIME_CONTRACT = Object.freeze({
   stateDir: ".document-harness/runtime/view",
   runtimeProbes: ".document-harness/runtime/view/runtime-probes.json",
   executionCheckpointRoot: "docs/checkpoints",
+  projectRoot: "docs/projects",
   refreshIntervalMs: 2000,
   reconcileIntervalMs: 5000
 });
@@ -57,6 +58,15 @@ const ALLOWED_ENFORCEMENT = new Set([
   "advisory",
   "not_implemented",
   "unknown"
+]);
+
+const ALLOWED_INITIATIVE_LIFECYCLE = new Set([
+  "draft",
+  "active",
+  "blocked",
+  "done",
+  "cancelled",
+  "superseded"
 ]);
 
 export function sha256(value) {
@@ -113,6 +123,15 @@ function requireArray(value, label) {
     throw new Error(`${label}은 배열이어야 합니다.`);
   }
   return value;
+}
+
+function assertAllowedKeys(value, allowed, label) {
+  if (!value || Array.isArray(value) || typeof value !== "object") {
+    throw new Error(`${label}은 object여야 합니다.`);
+  }
+  for (const key of Object.keys(value)) {
+    if (!allowed.has(key)) throw new Error(`${label}에 지원하지 않는 key가 있습니다: ${key}`);
+  }
 }
 
 function pathIsInside(repoRoot, candidate) {
@@ -305,7 +324,7 @@ export async function loadViewConfig(repoRoot, configPath) {
   const config = await readJson(resolvedConfig, "View config");
 
   const allowedConfigKeys = new Set([
-    "schemaVersion", "project", "governanceCatalog", "bindHost", "portMode", "qualityCommands", "probes",
+    "schemaVersion", "project", "governanceCatalog", "initiativeRegister", "bindHost", "portMode", "qualityCommands", "probes",
     "stateDir", "runtimeProbes", "refreshIntervalMs", "reconcileIntervalMs"
   ]);
   for (const key of Object.keys(config)) {
@@ -322,6 +341,7 @@ export async function loadViewConfig(repoRoot, configPath) {
     throw new Error("config.project에는 id, name, description만 허용됩니다.");
   }
   requireString(config.governanceCatalog, "config.governanceCatalog");
+  requireString(config.initiativeRegister, "config.initiativeRegister");
   if ((config.bindHost ?? "127.0.0.1") !== "127.0.0.1") {
     throw new Error("View config.bindHost는 정확히 127.0.0.1이어야 합니다.");
   }
@@ -530,6 +550,378 @@ async function inspectItems(repoRoot, items, kind, capturedRepositoryRevision) {
   return { items: inspected, approvalInputs };
 }
 
+function validateInitiative(initiative, index) {
+  const prefix = `initiatives[${index}]`;
+  assertAllowedKeys(initiative, new Set([
+    "id", "kind", "title", "humanSummary", "outcome", "whyNow", "lifecycleState", "approvalState", "owner", "currentFocus",
+    "policyRefs", "policyRelationships", "guidelineRefs", "guidelineRelationships", "guidelineDisposition", "guidelineDispositionReason", "legacyProjectRefs",
+    "successSignals", "risks", "documentRef", "effectiveRef", "decisionReceiptRef", "sourceRevision", "sourceRefs"
+  ]), prefix);
+  for (const field of ["id", "kind", "title", "humanSummary", "outcome", "whyNow", "lifecycleState", "approvalState", "owner", "currentFocus", "guidelineDisposition", "guidelineDispositionReason", "sourceRevision"]) {
+    requireString(initiative[field], `${prefix}.${field}`);
+  }
+  const numbered = /^I[0-9]{4}$/.test(initiative.id);
+  const migrationCandidate = /^INIT-[A-Z0-9][A-Z0-9-]*$/.test(initiative.id);
+  if (!numbered && !migrationCandidate) {
+    throw new Error(`${prefix}.id는 I#### 또는 INIT-* migration candidate 형식이어야 합니다.`);
+  }
+  if (initiative.kind !== "initiative") {
+    throw new Error(`${prefix}.kind는 initiative여야 합니다.`);
+  }
+  if (!ALLOWED_INITIATIVE_LIFECYCLE.has(initiative.lifecycleState)) {
+    throw new Error(`${prefix}.lifecycleState 값이 지원되지 않습니다: ${initiative.lifecycleState}`);
+  }
+  if (!ALLOWED_APPROVAL_STATES.has(initiative.approvalState)) {
+    throw new Error(`${prefix}.approvalState 값이 지원되지 않습니다: ${initiative.approvalState}`);
+  }
+  if (!/^[a-f0-9]{40}$/.test(initiative.sourceRevision)) {
+    throw new Error(`${prefix}.sourceRevision이 Git commit 형식이 아닙니다.`);
+  }
+  for (const field of ["policyRefs", "policyRelationships", "guidelineRefs", "guidelineRelationships", "legacyProjectRefs", "successSignals", "risks", "sourceRefs"]) {
+    requireArray(initiative[field], `${prefix}.${field}`);
+  }
+  if (initiative.policyRefs.length === 0) {
+    throw new Error(`${prefix}.policyRefs는 최소 한 개의 정책을 직접 연결해야 합니다.`);
+  }
+  if (initiative.sourceRefs.length === 0) {
+    throw new Error(`${prefix}.sourceRefs는 최소 한 건의 근거를 포함해야 합니다.`);
+  }
+  if (initiative.successSignals.length === 0) {
+    throw new Error(`${prefix}.successSignals는 최소 한 건의 결과 판정 기준을 포함해야 합니다.`);
+  }
+  for (const [sourceIndex, sourceRef] of initiative.sourceRefs.entries()) {
+    const sourcePrefix = `${prefix}.sourceRefs[${sourceIndex}]`;
+    assertAllowedKeys(sourceRef, new Set([
+      "path", "heading", "lineStart", "lineEnd", "evidenceKind", "note", "capturedSha256", "capturedRepositoryRevision"
+    ]), sourcePrefix);
+    requireString(sourceRef.path, `${sourcePrefix}.path`);
+    assertPublicEvidencePath(sourceRef.path, `${sourcePrefix}.path`);
+    requireString(sourceRef.heading, `${sourcePrefix}.heading`);
+    if (!/^[a-f0-9]{64}$/.test(sourceRef.capturedSha256 ?? "")) {
+      throw new Error(`${sourcePrefix}.capturedSha256가 SHA-256 형식이 아닙니다.`);
+    }
+    if (sourceRef.capturedRepositoryRevision !== initiative.sourceRevision) {
+      throw new Error(`${sourcePrefix}.capturedRepositoryRevision이 initiative sourceRevision과 일치하지 않습니다.`);
+    }
+    for (const field of ["lineStart", "lineEnd"]) {
+      if (!Number.isInteger(sourceRef[field]) || sourceRef[field] < 1) {
+        throw new Error(`${sourcePrefix}.${field}는 1 이상의 정수여야 합니다.`);
+      }
+    }
+    if (sourceRef.lineEnd < sourceRef.lineStart) {
+      throw new Error(`${sourcePrefix}.lineEnd는 lineStart 이상이어야 합니다.`);
+    }
+  }
+  for (const [field, values] of [["policyRefs", initiative.policyRefs], ["guidelineRefs", initiative.guidelineRefs]]) {
+    const seen = new Set();
+    for (const [refIndex, ref] of values.entries()) {
+      requireString(ref, `${prefix}.${field}[${refIndex}]`);
+      if (seen.has(ref)) throw new Error(`${prefix}.${field}에 중복 ID가 있습니다: ${ref}`);
+      seen.add(ref);
+    }
+  }
+  const policyRelationshipIds = new Set();
+  for (const [relationshipIndex, relationship] of initiative.policyRelationships.entries()) {
+    const relationshipPrefix = `${prefix}.policyRelationships[${relationshipIndex}]`;
+    assertAllowedKeys(relationship, new Set(["policyId", "relation", "rationale", "exceptionRef"]), relationshipPrefix);
+    requireString(relationship.policyId, `${relationshipPrefix}.policyId`);
+    requireString(relationship.relation, `${relationshipPrefix}.relation`);
+    requireString(relationship.rationale, `${relationshipPrefix}.rationale`);
+    if (!["advances", "constrained-by", "exception-to"].includes(relationship.relation)) {
+      throw new Error(`${relationshipPrefix}.relation 값이 지원되지 않습니다.`);
+    }
+    if (!initiative.policyRefs.includes(relationship.policyId) || policyRelationshipIds.has(relationship.policyId)) {
+      throw new Error(`${relationshipPrefix}.policyId가 policyRefs와 1:1로 일치하지 않습니다.`);
+    }
+    policyRelationshipIds.add(relationship.policyId);
+    if (relationship.relation === "exception-to") {
+      requireString(relationship.exceptionRef, `${relationshipPrefix}.exceptionRef`);
+      assertPublicEvidencePath(relationship.exceptionRef, `${relationshipPrefix}.exceptionRef`);
+    } else if (relationship.exceptionRef !== null) {
+      throw new Error(`${relationshipPrefix}.exceptionRef는 exception-to 관계에서만 사용할 수 있습니다.`);
+    }
+  }
+  if (policyRelationshipIds.size !== initiative.policyRefs.length) {
+    throw new Error(`${prefix}.policyRelationships는 policyRefs와 정확히 1:1이어야 합니다.`);
+  }
+  const guidelineRelationshipIds = new Set();
+  for (const [relationshipIndex, relationship] of initiative.guidelineRelationships.entries()) {
+    const relationshipPrefix = `${prefix}.guidelineRelationships[${relationshipIndex}]`;
+    assertAllowedKeys(relationship, new Set(["guidelineId", "adoption", "rationale", "verification"]), relationshipPrefix);
+    requireString(relationship.guidelineId, `${relationshipPrefix}.guidelineId`);
+    requireString(relationship.adoption, `${relationshipPrefix}.adoption`);
+    requireString(relationship.rationale, `${relationshipPrefix}.rationale`);
+    requireString(relationship.verification, `${relationshipPrefix}.verification`);
+    if (!["required", "recommended"].includes(relationship.adoption)) {
+      throw new Error(`${relationshipPrefix}.adoption 값이 지원되지 않습니다.`);
+    }
+    if (!initiative.guidelineRefs.includes(relationship.guidelineId) || guidelineRelationshipIds.has(relationship.guidelineId)) {
+      throw new Error(`${relationshipPrefix}.guidelineId가 guidelineRefs와 1:1로 일치하지 않습니다.`);
+    }
+    guidelineRelationshipIds.add(relationship.guidelineId);
+  }
+  if (guidelineRelationshipIds.size !== initiative.guidelineRefs.length) {
+    throw new Error(`${prefix}.guidelineRelationships는 guidelineRefs와 정확히 1:1이어야 합니다.`);
+  }
+  if (numbered) {
+    requireString(initiative.documentRef, `${prefix}.documentRef`);
+    assertPublicEvidencePath(initiative.documentRef, `${prefix}.documentRef`);
+    if (!new RegExp(`^docs/initiatives/${initiative.id}-.+\\.md$`).test(initiative.documentRef)) {
+      throw new Error(`${prefix}.documentRef는 해당 I####의 canonical 문서 경로여야 합니다.`);
+    }
+  } else if (initiative.documentRef !== null) {
+    throw new Error(`${prefix} migration candidate의 documentRef는 null이어야 합니다.`);
+  }
+  if (migrationCandidate && (
+    initiative.lifecycleState !== "draft"
+    || initiative.approvalState === "approved"
+    || initiative.effectiveRef !== null
+    || initiative.decisionReceiptRef !== null
+    || initiative.legacyProjectRefs.length === 0
+  )) {
+    throw new Error(`${prefix} INIT-* migration candidate는 draft이며 승인되지 않은 상태여야 합니다.`);
+  }
+  if (!["linked", "no_applicable_guideline", "needs_review"].includes(initiative.guidelineDisposition)) {
+    throw new Error(`${prefix}.guidelineDisposition 값이 지원되지 않습니다.`);
+  }
+  if (initiative.guidelineDisposition === "linked" && initiative.guidelineRefs.length === 0) {
+    throw new Error(`${prefix}.guidelineDisposition이 linked이면 guidelineRefs가 필요합니다.`);
+  }
+  if (initiative.guidelineDisposition === "no_applicable_guideline" && initiative.guidelineRefs.length > 0) {
+    throw new Error(`${prefix}.guidelineDisposition이 no_applicable_guideline이면 guidelineRefs는 비어 있어야 합니다.`);
+  }
+  const governedLifecycle = ["active", "done"].includes(initiative.lifecycleState);
+  if (governedLifecycle && initiative.approvalState !== "approved") {
+    throw new Error(`${prefix}.${initiative.lifecycleState} lifecycle에는 approved 상태가 필요합니다.`);
+  }
+  if (initiative.approvalState === "approved" && (
+    typeof initiative.effectiveRef !== "string" || initiative.effectiveRef.trim() === ""
+    || typeof initiative.decisionReceiptRef !== "string" || initiative.decisionReceiptRef.trim() === ""
+  )) {
+    throw new Error(`${prefix} approved 상태에는 effectiveRef와 decisionReceiptRef가 필요합니다.`);
+  }
+  const legacyIds = new Set();
+  for (const [legacyIndex, projectRef] of initiative.legacyProjectRefs.entries()) {
+    const legacyPrefix = `${prefix}.legacyProjectRefs[${legacyIndex}]`;
+    assertAllowedKeys(projectRef, new Set(["id", "path"]), legacyPrefix);
+    requireString(projectRef.id, `${legacyPrefix}.id`);
+    requireString(projectRef.path, `${legacyPrefix}.path`);
+    if (!/^P[0-9]{4}$/.test(projectRef.id)) throw new Error(`${legacyPrefix}.id는 P#### 형식이어야 합니다.`);
+    if (legacyIds.has(projectRef.id)) throw new Error(`${prefix}.legacyProjectRefs에 중복 project가 있습니다: ${projectRef.id}`);
+    legacyIds.add(projectRef.id);
+    assertPublicEvidencePath(projectRef.path, `${legacyPrefix}.path`);
+  }
+}
+
+async function inspectInitiativeProjects(repoRoot, projectRoot, initiativeIds) {
+  const resolved = await resolveInsideRoot(repoRoot, projectRoot);
+  let rootStat;
+  try {
+    rootStat = await lstat(resolved);
+  } catch (error) {
+    if (error.code === "ENOENT") return { byInitiative: new Map(), orphaned: [], inputs: [] };
+    throw error;
+  }
+  if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) {
+    throw new Error(`initiative project root는 symlink가 아닌 directory여야 합니다: ${projectRoot}`);
+  }
+  const canonical = await realpath(resolved);
+  if (!pathIsInside(repoRoot, canonical)) throw new Error(`initiative project root가 저장소 경계를 벗어납니다: ${projectRoot}`);
+  const entries = (await readdir(canonical, { withFileTypes: true }))
+    .filter(({ name }) => /^P[0-9]{4}-.+\.md$/.test(name))
+    .sort((left, right) => left.name.localeCompare(right.name, "en"));
+  const byInitiative = new Map();
+  const orphaned = [];
+  const inputs = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) throw new Error(`initiative project entry는 regular Markdown file이어야 합니다: ${entry.name}`);
+    const relativePath = `${projectRoot}/${entry.name}`;
+    const input = await captureRepositoryFile(repoRoot, relativePath, "initiative project");
+    if (input.state !== "file") throw new Error(`initiative project를 안전하게 읽을 수 없습니다: ${relativePath}`);
+    inputs.push({ label: "initiative project", relativePath, fence: input.fence });
+    const project = parseMarkdownFrontmatter(input, "initiative project");
+    if (project.type !== "project" || !/^P[0-9]{4}$/.test(project.doc_id ?? "")) continue;
+    const initiativeRef = project.related_initiative;
+    if (!initiativeRef) {
+      if (project.lineage_contract === "v2") {
+        orphaned.push({ id: project.doc_id, path: relativePath, initiativeRef: null, reason: "missing_initiative" });
+      }
+      continue;
+    }
+    if (!/^I[0-9]{4}$/.test(initiativeRef) || !initiativeIds.has(initiativeRef)) {
+      orphaned.push({ id: project.doc_id, path: relativePath, initiativeRef, reason: "unknown_initiative" });
+      continue;
+    }
+    const relation = project.initiative_relation;
+    if (!["delivers", "supports", "explores"].includes(relation)) {
+      orphaned.push({ id: project.doc_id, path: relativePath, initiativeRef, reason: "missing_or_invalid_relation" });
+      continue;
+    }
+    const linked = byInitiative.get(initiativeRef) ?? [];
+    linked.push({
+      id: project.doc_id,
+      path: relativePath,
+      relation,
+      linkState: "confirmed",
+      state: "current",
+      title: project.title ?? project.doc_id,
+      status: project.status ?? "unknown",
+      currentFocus: project.current_focus ?? null,
+      relatedInitiative: initiativeRef,
+      lineageContract: project.lineage_contract ?? "legacy"
+    });
+    byInitiative.set(initiativeRef, linked);
+  }
+  return { byInitiative, orphaned, inputs };
+}
+
+async function inspectInitiatives(repoRoot, initiatives, policies, guidelines, projectRoot) {
+  const policyIds = new Set(policies.map((item) => item.id));
+  const guidelineIds = new Set(guidelines.map((item) => item.id));
+  const policiesById = new Map(policies.map((item) => [item.id, item]));
+  const guidelinesById = new Map(guidelines.map((item) => [item.id, item]));
+  const initiativeIds = new Set();
+  const approvalInputs = [];
+  const stableInputs = [];
+  const inspected = [];
+
+  for (const [index, initiative] of initiatives.entries()) {
+    validateInitiative(initiative, index);
+    if (initiativeIds.has(initiative.id)) throw new Error(`initiative id가 중복됩니다: ${initiative.id}`);
+    initiativeIds.add(initiative.id);
+    for (const policyRef of initiative.policyRefs) {
+      if (!policyIds.has(policyRef)) throw new Error(`${initiative.id}.policyRefs가 없는 policy를 참조합니다: ${policyRef}`);
+    }
+    for (const guidelineRef of initiative.guidelineRefs) {
+      if (!guidelineIds.has(guidelineRef)) throw new Error(`${initiative.id}.guidelineRefs가 없는 guideline을 참조합니다: ${guidelineRef}`);
+    }
+    if (initiative.guidelineRefs.length > 0) {
+      const linkedGuidelines = initiative.guidelineRefs.map((ref) => guidelines.find((item) => item.id === ref));
+      if (!linkedGuidelines.every((guideline) => (guideline.policyRefs ?? []).some((ref) => initiative.policyRefs.includes(ref)))) {
+        throw new Error(`${initiative.id}.guidelineRefs의 각 지침은 연결 policyRefs 중 하나를 구현해야 합니다.`);
+      }
+    }
+    if (["active", "done"].includes(initiative.lifecycleState)) {
+      for (const policyRef of initiative.policyRefs) {
+        const policy = policiesById.get(policyRef);
+        if (policy.authorityState !== "effective" || policy.approvalState !== "approved" || policy.evidenceState !== "current") {
+          throw new Error(`${initiative.id} active/done 추진안은 current effective/approved policy만 사용할 수 있습니다: ${policyRef}`);
+        }
+      }
+      if (initiative.guidelineDisposition === "needs_review") {
+        throw new Error(`${initiative.id} active/done 추진안은 guidelineDisposition needs_review 상태일 수 없습니다.`);
+      }
+      for (const relationship of initiative.guidelineRelationships) {
+        if (relationship.adoption !== "required") continue;
+        const guideline = guidelinesById.get(relationship.guidelineId);
+        if (guideline.authorityState !== "effective" || guideline.approvalState !== "approved" || guideline.evidenceState !== "current") {
+          throw new Error(`${initiative.id} required guideline은 current effective/approved 상태여야 합니다: ${relationship.guidelineId}`);
+        }
+      }
+      if (initiative.policyRelationships.some((relationship) => relationship.relation === "exception-to")) {
+        throw new Error(`${initiative.id} exception-to 관계는 active exception receipt 검증 계약이 없으면 활성화할 수 없습니다.`);
+      }
+    }
+
+    const sourceRefs = await Promise.all(initiative.sourceRefs.map((sourceRef) => {
+      if (sourceRef.capturedRepositoryRevision !== initiative.sourceRevision) {
+        throw new Error(`${initiative.id}.sourceRefs의 revision이 sourceRevision과 일치하지 않습니다.`);
+      }
+      return inspectSourceRef(repoRoot, sourceRef, initiative.sourceRevision);
+    }));
+    const evidenceState = sourceRefs.some((ref) => ref.state === "missing" || ref.state === "invalid")
+      ? "missing"
+      : sourceRefs.some((ref) => ref.state === "changed")
+        ? "stale"
+        : "current";
+
+    if (initiative.approvalState === "approved") {
+      approvalInputs.push(...await verifyApprovedItemEvidence(
+        repoRoot,
+        initiative,
+        initiative.sourceRevision,
+        evidenceState
+      ));
+    }
+
+    let documentState = "migration_candidate";
+    if (initiative.documentRef) {
+      const documentInput = await captureRepositoryFile(repoRoot, initiative.documentRef, `${initiative.id} initiative document`);
+      if (documentInput.state !== "file") throw new Error(`${initiative.id}.documentRef를 읽을 수 없습니다: ${initiative.documentRef}`);
+      const document = parseMarkdownFrontmatter(documentInput, `${initiative.id} initiative document`);
+      if (document.type !== "initiative" || document.doc_id !== initiative.id || document.initiative_contract !== "v1") {
+        throw new Error(`${initiative.id}.documentRef가 canonical initiative 문서를 가리키지 않습니다.`);
+      }
+      if (document.status !== initiative.lifecycleState
+        || document.approval_status !== initiative.approvalState
+        || document.guideline_disposition !== initiative.guidelineDisposition
+        || document.guideline_disposition_reason !== initiative.guidelineDispositionReason) {
+        throw new Error(`${initiative.id}.documentRef의 lifecycle/approval/guideline disposition이 register mirror와 일치하지 않습니다.`);
+      }
+      requireString(document.issuance_approval_ref, `${initiative.id}.documentRef issuance_approval_ref`);
+      if (initiative.approvalState === "approved" && (
+        initiative.effectiveRef !== initiative.documentRef
+        || document.approval_ref !== initiative.decisionReceiptRef
+      )) {
+        throw new Error(`${initiative.id} approved 상태는 canonical document와 exact decision receipt를 함께 승인해야 합니다.`);
+      }
+      const documentPolicyRefs = [...(document.policy_refs ?? [])].sort();
+      const documentGuidelineRefs = [...(document.guideline_refs ?? [])].sort();
+      if (stableStringify(documentPolicyRefs) !== stableStringify([...initiative.policyRefs].sort())
+        || stableStringify(documentGuidelineRefs) !== stableStringify([...initiative.guidelineRefs].sort())) {
+        throw new Error(`${initiative.id}.documentRef의 policy/guideline refs가 register mirror와 일치하지 않습니다.`);
+      }
+      const policyRelationships = parseInitiativeRelationshipTable(documentInput, "## Policy Alignment", "policy", 1);
+      const guidelineRelationships = parseInitiativeRelationshipTable(documentInput, "## Guideline Disposition", "guideline", 0);
+      if (stableStringify(sortedRelationships(policyRelationships, "policyId"))
+          !== stableStringify(sortedRelationships(initiative.policyRelationships, "policyId"))
+        || stableStringify(sortedRelationships(guidelineRelationships, "guidelineId"))
+          !== stableStringify(sortedRelationships(initiative.guidelineRelationships, "guidelineId"))) {
+        throw new Error(`${initiative.id}.documentRef의 관계 표가 register relationship mirror와 일치하지 않습니다.`);
+      }
+      stableInputs.push({ label: "initiative document", relativePath: initiative.documentRef, fence: documentInput.fence });
+      documentState = document.status ?? "draft";
+    }
+    const legacyProjects = [];
+    for (const legacyRef of initiative.legacyProjectRefs) {
+      const projectInput = await captureRepositoryFile(repoRoot, legacyRef.path, `${initiative.id} legacy project ref`);
+      if (projectInput.state !== "file") throw new Error(`${initiative.id} legacy project를 읽을 수 없습니다: ${legacyRef.path}`);
+      stableInputs.push({ label: "initiative legacy project", relativePath: legacyRef.path, fence: projectInput.fence });
+      const project = parseMarkdownFrontmatter(projectInput, `${initiative.id} legacy project`);
+      if (project.type !== "project" || project.doc_id !== legacyRef.id) {
+        throw new Error(`${initiative.id} legacyProjectRefs가 해당 Project를 가리키지 않습니다: ${legacyRef.path}`);
+      }
+      legacyProjects.push({
+        id: project.doc_id,
+        path: legacyRef.path,
+        relation: "migration_candidate",
+        linkState: "legacy_candidate",
+        state: "current",
+        title: project.title ?? project.doc_id,
+        status: project.status ?? "unknown",
+        currentFocus: project.current_focus ?? null,
+        relatedInitiative: null,
+        lineageContract: "legacy"
+      });
+    }
+    inspected.push({ ...initiative, sourceRefs, evidenceState, documentState, projects: legacyProjects });
+  }
+  const projectInspection = await inspectInitiativeProjects(repoRoot, projectRoot, initiativeIds);
+  stableInputs.push(...projectInspection.inputs);
+  return {
+    items: inspected.map((initiative) => ({
+      ...initiative,
+      projects: [...new Map([
+        ...initiative.projects,
+        ...(projectInspection.byInitiative.get(initiative.id) ?? [])
+      ].map((project) => [project.id, project])).values()]
+    })),
+    approvalInputs,
+    stableInputs,
+    orphanedProjects: projectInspection.orphaned
+  };
+}
+
 async function readRuntimeProbes(repoRoot, configuredPath) {
   const relativePath = configuredPath ?? ".document-harness/runtime/view/runtime-probes.json";
   let resolved;
@@ -709,6 +1101,33 @@ function parseMarkdownFrontmatter(captured, label) {
     }
   }
   return values;
+}
+
+function parseInitiativeRelationshipTable(captured, heading, kind, minimumRows) {
+  const lines = captured.bytes.toString("utf8").split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === heading);
+  if (start < 0) throw new Error(`${captured.relativePath}에 ${heading} 표가 없습니다.`);
+  const tableLines = [];
+  for (const line of lines.slice(start + 1)) {
+    if (line.startsWith("## ")) break;
+    if (line.trim().startsWith("|")) tableLines.push(line.trim());
+  }
+  if (tableLines.length < 2) throw new Error(`${captured.relativePath}의 ${heading} 표 header가 올바르지 않습니다.`);
+  const rows = tableLines.slice(1).filter((line) => !/^\|[\s:|-]+\|$/.test(line));
+  if (rows.length < minimumRows) throw new Error(`${captured.relativePath}의 ${heading} 표에 필요한 관계 행이 없습니다.`);
+  return rows.map((line, index) => {
+    const cells = line.split("|").slice(1, -1).map((cell) => cell.trim().replace(/^`|`$/g, ""));
+    if (cells.length !== 4 || cells[0] === "") {
+      throw new Error(`${captured.relativePath}의 ${heading} ${index + 1}번째 관계 행이 올바르지 않습니다.`);
+    }
+    return kind === "policy"
+      ? { policyId: cells[0], relation: cells[1], rationale: cells[2], exceptionRef: cells[3] || null }
+      : { guidelineId: cells[0], adoption: cells[1], rationale: cells[2], verification: cells[3] };
+  });
+}
+
+function sortedRelationships(items, idField) {
+  return [...items].sort((left, right) => String(left[idField]).localeCompare(String(right[idField]), "en"));
 }
 
 function parseExecutionCheckpoint(captured) {
@@ -1049,9 +1468,10 @@ async function readExecutionCheckpoint(repoRoot, checkpointRoot) {
   }
 }
 
-function createGeneratedAttention(register, policies, guidelines, migrationFence, execution) {
+function createGeneratedAttention(register, policies, guidelines, initiatives, orphanedProjects, migrationFence, execution) {
   const attention = [...(register.attention ?? [])];
-  const staleItems = [...policies, ...guidelines].filter((item) => item.evidenceState !== "current");
+  const staleItems = [...policies, ...guidelines, ...initiatives].filter((item) => item.evidenceState !== "current");
+  const initiativeReviews = initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState));
 
   if (register.migration?.status === "awaiting_human_review") {
     attention.unshift({
@@ -1070,6 +1490,26 @@ function createGeneratedAttention(register, policies, guidelines, migrationFence
       title: "정책 근거가 변경되었거나 사라졌습니다",
       humanSummary: `${staleItems.length}개 항목의 근거를 다시 읽고 후보를 재검토해야 합니다.`,
       relatedRefs: staleItems.map((item) => item.id)
+    });
+  }
+
+  if (initiativeReviews.length > 0) {
+    attention.unshift({
+      id: "ATTN-INITIATIVE-REVIEW",
+      severity: "decision",
+      title: "추진안의 방향과 프로젝트 연결을 확인해 주세요",
+      humanSummary: `${initiativeReviews.length}개 추진안은 아직 초안 상태입니다. 정책·지침·성과 기준과 연결 프로젝트를 확인한 뒤 승인 여부를 결정해야 합니다.`,
+      relatedRefs: initiativeReviews.map((item) => item.id)
+    });
+  }
+
+  if (orphanedProjects.length > 0) {
+    attention.unshift({
+      id: "ATTN-INITIATIVE-LINEAGE",
+      severity: "decision",
+      title: "프로젝트의 추진안 연결을 바로잡아 주세요",
+      humanSummary: `${orphanedProjects.length}개 프로젝트가 알 수 없는 추진안, 누락된 추진안 또는 명시되지 않은 관계를 가리킵니다. 연결을 추론하지 말고 사람이 정한 계보로 수정해야 합니다.`,
+      relatedRefs: orphanedProjects.flatMap((project) => [project.id, project.initiativeRef]).filter(Boolean)
     });
   }
 
@@ -1124,6 +1564,8 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
   const config = await loadViewConfig(repoRoot, configPath);
   const registerInput = await captureRepositoryFile(config.resolvedRoot, config.governanceCatalog, "governance catalog");
   const register = parseCapturedJson(registerInput, "governance catalog");
+  const initiativeRegisterInput = await captureRepositoryFile(config.resolvedRoot, config.initiativeRegister, "initiative register");
+  const initiativeRegister = parseCapturedJson(initiativeRegisterInput, "initiative register");
 
   if (register.schemaVersion !== 1) {
     throw new Error(`지원하지 않는 governance catalog schemaVersion입니다: ${register.schemaVersion}`);
@@ -1137,6 +1579,10 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
   requireArray(register.policies, "register.policies");
   requireArray(register.guidelines, "register.guidelines");
   requireArray(register.attention ?? [], "register.attention");
+  if (initiativeRegister.schemaVersion !== 1) {
+    throw new Error(`지원하지 않는 initiative register schemaVersion입니다: ${initiativeRegister.schemaVersion}`);
+  }
+  requireArray(initiativeRegister.initiatives, "initiativeRegister.initiatives");
 
   const allItems = [...register.policies, ...register.guidelines];
   const itemIds = new Set();
@@ -1160,11 +1606,27 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
   const guidelineInspection = await inspectItems(config.resolvedRoot, register.guidelines, "guidelines", capturedRepositoryRevision);
   const policies = policyInspection.items;
   const guidelines = guidelineInspection.items;
+  const initiativeInspection = await inspectInitiatives(
+    config.resolvedRoot,
+    initiativeRegister.initiatives,
+    policies,
+    guidelines,
+    config.projectRoot
+  );
+  const initiatives = initiativeInspection.items;
   const runtime = await readRuntimeProbes(config.resolvedRoot, config.runtimeProbes);
   const executionInspection = await readExecutionCheckpoint(config.resolvedRoot, config.executionCheckpointRoot);
   const execution = executionInspection.execution;
-  const attention = createGeneratedAttention(register, policies, guidelines, migrationFence, execution);
-  const allRefs = [...policies, ...guidelines].flatMap((item) => item.sourceRefs);
+  const attention = createGeneratedAttention(
+    register,
+    policies,
+    guidelines,
+    initiatives,
+    initiativeInspection.orphanedProjects,
+    migrationFence,
+    execution
+  );
+  const allRefs = [...policies, ...guidelines, ...initiatives].flatMap((item) => item.sourceRefs);
   const sourceEvidenceState = allRefs.length === 0
     ? "unknown"
     : allRefs.some((ref) => ref.state === "missing" || ref.state === "invalid")
@@ -1181,6 +1643,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     migration: register.migration,
     policies,
     guidelines,
+    initiatives,
     attention,
     runtime,
     migrationFence,
@@ -1203,6 +1666,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
       freshness: projectionState,
       sourceFence: {
         governanceCatalog: config.governanceCatalog,
+        initiativeRegister: config.initiativeRegister,
         sourceEvidenceState,
         evidenceCurrent: allRefs.filter((ref) => ref.state === "current").length,
         evidenceChanged: allRefs.filter((ref) => ref.state === "changed").length,
@@ -1223,6 +1687,10 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     summary: {
       policyCount: policies.length,
       guidelineCount: guidelines.length,
+      initiativeCount: initiatives.length,
+      initiativeActiveCount: initiatives.filter((item) => item.lifecycleState === "active").length,
+      initiativeReviewCount: initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState)).length,
+      linkedProjectCount: new Set(initiatives.flatMap((item) => item.projects.map((project) => project.id))).size,
       approvedCount: [...policies, ...guidelines].filter((item) => item.approvalState === "approved").length,
       reviewCount: [...policies, ...guidelines].filter((item) => item.approvalState === "unreviewed" || item.approvalState === "review_requested").length,
       attentionCount: attention.length,
@@ -1231,6 +1699,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     },
     policies,
     guidelines,
+    initiatives,
     attention,
     runtime,
     execution,
@@ -1241,7 +1710,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
   };
 
   if (beforeInputRecheck) await beforeInputRecheck({ attempt, snapshot });
-  const sourceInputs = [...policies, ...guidelines]
+  const sourceInputs = [...policies, ...guidelines, ...initiatives]
     .flatMap((item) => item.sourceRefs)
     .map((sourceRef) => ({
       label: "source ref",
@@ -1254,14 +1723,21 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
       relativePath: config.governanceCatalog,
       fence: registerInput.fence
     },
+    {
+      label: "initiative register",
+      relativePath: config.initiativeRegister,
+      fence: initiativeRegisterInput.fence
+    },
     ...sourceInputs,
     ...policyInspection.approvalInputs,
     ...guidelineInspection.approvalInputs,
+    ...initiativeInspection.approvalInputs,
+    ...initiativeInspection.stableInputs,
     ...(migrationFence.receiptInput ? [migrationFence.receiptInput] : []),
     ...executionInspection.inputs
   ]);
 
-  return { config, register, snapshot, semanticHash };
+  return { config, register, initiativeRegister, snapshot, semanticHash };
 }
 
 export async function buildProjection(options) {

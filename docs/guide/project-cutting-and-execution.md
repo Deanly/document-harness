@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-06-14
+- Updated: 2026-07-18
 
 ## Purpose
 
@@ -21,20 +21,20 @@
 
 ## When To Issue A New Project
 
-새 work가 생기면 기본값은 새 `project`가 아니라 기존 umbrella `project` 아래의 새 `task`입니다.
+새 work가 생기면 기본값은 새 `project`가 아니라 현재 bounded `project` 아래의 새 `task`입니다.
 
 먼저 아래를 확인합니다.
 
-- 기존 umbrella `project`의 새 `task`로 처리 가능한가
-- 기존 umbrella `project`의 WBS와 `Status` 이력 안에서 설명 가능한가
-- human이 봤을 때 같은 initiative의 일부로 읽히는가
+- 현재 `project`의 새 `task`로 처리 가능한가
+- 현재 `project`의 WBS와 `Status` 이력 안에서 설명 가능한가
+- human이 봤을 때 같은 delivery boundary의 일부로 읽히는가
 
 셋 중 대부분이 `yes`면 새 `project`가 아니라 새 `task`입니다.
 
 아래 조건 중 하나가 명확할 때만 새 `project`를 허용합니다.
 
 - 사용자가 명시적으로 별도 `project` 분리를 요청한 경우
-- completion mode가 본질적으로 달라 기존 umbrella 아래 `task`로 담기 어려운 경우
+- completion mode가 본질적으로 달라 현재 project 아래 `task`로 담기 어려운 경우
 - owner, 운영 검증 체계, handoff 대상이 실질적으로 분리되는 경우
 
 대표적인 예외 트리거:
@@ -45,21 +45,21 @@
 
 ## Human-Issued Project Rule
 
-`project`는 human-facing initiative owner와 bounded delivery boundary를 함께 잠그는 surface이므로 사람만 발급합니다.
+`project`는 승인된 추진안 아래 bounded delivery boundary를 잠그는 surface이므로 사람의 명시적 요청 또는 승인 하에서 발급합니다. Strategy/portfolio owner는 별도 `initiative`입니다.
 
 - 에이전트는 새 `project` 필요성을 분석하고 `Project Issuance Check` 초안을 준비할 수 있습니다.
 - 하지만 사람의 명시적 요청 또는 승인 없이 새 `project` 문서를 발급하거나 기존 work를 새 `project`로 승격하지 않습니다.
-- 승인 전 기본값은 기존 umbrella `project` 아래의 새 `task`이며, 아직 경계가 흐리면 `guide` 또는 `design`으로 남깁니다.
+- 승인 전 기본값은 현재 `project` 아래의 새 `task`이며, 아직 경계가 흐리면 `guide` 또는 `design`으로 남깁니다.
 
 ## Main-Issued Numbered Document Rule
 
-번호가 붙는 `project`와 `task` 문서는 항상 `main`의 문서 집합을 기준으로 발급합니다. feature branch에서 직접 번호를 계산하면 branch별 문서 집합이 달라져 같은 번호가 서로 다른 문서를 가리킬 수 있습니다.
+번호가 붙는 `initiative`, `project`, `task` 문서는 항상 `main`의 문서 집합을 기준으로 발급합니다. feature branch에서 직접 번호를 계산하면 branch별 문서 집합이 달라져 같은 번호가 서로 다른 문서를 가리킬 수 있습니다. Initiative는 추가로 exact human issuance-approval ref가 필요합니다.
 
 기본 흐름:
 
 1. 현재 work branch가 dirty하면 `git stash push -u`로 untracked 파일까지 보관합니다.
 2. `main`으로 전환하고 remote tracking branch가 있으면 `git pull --ff-only`로 최신화합니다.
-3. clean `main`에서 `./docs/bin/new-doc.sh project <slug>` 또는 `./docs/bin/new-doc.sh task <slug>`를 실행합니다.
+3. clean `main`에서 해당 명령을 실행합니다. Initiative는 `./docs/bin/new-doc.sh initiative <slug> <issuance-approval-ref>`, project는 `./docs/bin/new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]`, task는 `./docs/bin/new-doc.sh task <slug> <project-id>`를 사용합니다. Project의 상위 `I####`는 active/approved여야 하고 Task의 `P####`는 그 active/approved Initiative로 해소되어야 하며 기본 상위를 추론하지 않습니다. 명시적인 legacy lineage 세 field를 모두 가진 기존 Project만 migration 동안 예외적으로 Task parent가 될 수 있습니다.
 4. `new-doc.sh`가 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다. 공유 remote가 있으면 push 또는 공유까지 끝냅니다.
 5. 원래 work branch로 돌아가 `main`을 merge해서 새 문서와 그 사이 `main`에 들어온 배포본을 함께 가져옵니다.
 6. stash를 썼다면 merge 후 `git stash pop`하고 충돌을 해결합니다.
@@ -68,17 +68,18 @@
 
 개발 도중 `main`에 이미 배포된 버전을 work branch로 가져오는 것은 허용됩니다. 이는 문서 번호 정합성을 유지하면서 배포된 baseline 위에서 계속 개발하게 만드는 정상적인 refresh입니다.
 
-## Umbrella Project Default
+## Initiative And Project Default
 
-- human이 인식하는 하나의 product, initiative, workstream은 기본적으로 umbrella `project` 1개로 유지합니다.
-- umbrella `project`는 lineage와 현재 위치를 설명하는 human-facing owner입니다.
-- 실제 실행 단위는 그 umbrella 아래의 bounded `task`로 분해합니다.
+- human-facing strategy/portfolio owner는 `I####` 추진안입니다.
+- project는 추진안 outcome에 기여하는 bounded delivery boundary입니다.
+- task는 project 아래의 executable slice입니다.
 - single-task 성격의 작은 분화는 새 `project`가 아니라 새 `task`입니다.
+- legacy umbrella project는 `docs/guide/umbrella-project-governance.md`의 compatibility rule을 따릅니다.
 
 ## Project Cutting Rules
 
 - project는 기술 스택이 아니라 책임 경계로 자릅니다.
-- 책임 경계가 달라 보여도 human-facing initiative가 같고 task로 담길 수 있으면 기본값은 새 `task`입니다.
+- 책임 경계가 달라 보여도 현재 delivery boundary 안에서 task로 담길 수 있으면 기본값은 새 `task`입니다.
 - 구현 준비 단계와 현장 검증 단계의 성공 조건이 다르면 project 분리를 검토합니다.
 - 후속 시스템이 아직 설계되지 않았다면 "다음 project 후보"로만 남기고 현재 project에 포함시키지 않습니다.
 - project 문서의 WBS는 실제 `task` 문서와 1:1 대응시키는 것을 기본으로 합니다.
@@ -87,7 +88,7 @@
 
 새 `project`를 발급하려면 발급 전에 아래 두 문장을 남깁니다.
 
-- 왜 기존 umbrella `project`의 `task`로 처리하면 안 되는지
+- 왜 현재 `project`의 `task`로 처리하면 안 되는지
 - 왜 human 입장에서 별도 `project`가 더 이해하기 쉬운지
 
 이 기록은 `Project Issuance Check` 섹션에 남깁니다.
@@ -152,12 +153,12 @@
 `project`와 `task`는 부분 작업 문서이므로, 발급 시 아래를 함께 적어야 합니다.
 
 - `Related Control Plane`
-- `Related Umbrella Project` 또는 `Umbrella Initiative`
+- project: `Initiative Ref`; task: `Related Project`; 또는 legacy `Related Umbrella Project`
 - `Whole-System Anchor`
 - `Outputs / Handoff`
 - `Quality Axes In Scope`
 
-이 네 가지가 없으면 부분 작업은 전체와 분리된 local memo가 되기 쉽습니다.
+이 다섯 가지가 없으면 부분 작업은 전체와 분리된 local memo가 되기 쉽습니다.
 
 ## Non-Functional Mode Rule
 
@@ -194,9 +195,10 @@ gate 문서화 규칙:
 
 구현에 들어가기 전에는 최소한 아래를 한 번 정렬합니다.
 
-- active umbrella `project`가 무엇인지
+- active `initiative`가 무엇인지
+- active bounded `project`가 무엇인지
 - active `task`가 무엇인지
-- 이번 작업이 왜 새 `project`가 아니라 해당 umbrella 아래 `task`인지
+- 이번 작업이 왜 새 `project`가 아니라 해당 project 아래 `task`인지
 
 이 정렬 없이 바로 분해를 시작하면, 실행 중간에 lineage가 쉽게 흔들립니다.
 
@@ -239,3 +241,4 @@ Status와 완료 판단에는 가능하면 아래를 남깁니다.
 - 2026-04-16: umbrella project default, task-first issuance, exception record 규칙 추가.
 - 2026-05-01: project human issuance 규칙 추가.
 - 2026-06-14: `project`/`task` 번호 발급을 clean, up-to-date `main`에서만 수행하고 draft를 즉시 commit하는 규칙 추가.
+- 2026-07-18: strategy owner를 별도 `I####` 추진안으로 분리하고 project/task cutting을 initiative→project→task hierarchy에 정렬.

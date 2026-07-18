@@ -157,7 +157,7 @@
 2. `Goal Verification`이 같은 `Goal ID`를 1:1로 가지고 있는지 확인합니다.
 3. 각 goal의 `Evidence`를 채웁니다.
 4. `./docs/bin/validate-closeout.sh <doc-path>`를 실행합니다.
-5. 통과하면 `./docs/bin/close-doc.sh <doc-path> "<note>"`로 닫습니다.
+5. Project/Task라면 통과 후 `./docs/bin/close-doc.sh <doc-path> "<note>"`로 닫습니다. Initiative는 canonical 문서·initiative register·exact terminal human decision receipt를 같은 변경 셋으로 갱신한 뒤 validator를 다시 실행하며, 현재 `close-doc.sh`는 Initiative 입력을 거부합니다.
 
 이 과정을 우회해 메타데이터만 `done`으로 바꾸지 않습니다.
 
@@ -178,7 +178,7 @@ checkpoint 자체는 mutable current snapshot이므로 `Goal Verification`에는
 
 문서 원칙만으로는 약합니다. 진짜 강제는 검증 명령을 자동으로 돌릴 때 생깁니다.
 
-- 로컬에서는 `./docs/bin/close-doc.sh`가 닫기 전 검증을 먼저 수행합니다.
+- 로컬에서는 `./docs/bin/close-doc.sh`가 Project/Task를 닫기 전 검증을 먼저 수행합니다. Initiative는 coordinated document/register/receipt workflow가 구현될 때까지 자동 종료하지 않습니다.
 - 저장소에서는 `./docs/bin/validate-closeout.sh --all`을 CI나 pre-push hook에 연결합니다.
 - 특정 CI provider의 workflow가 기본 포함되어 있다고 가정하지 않습니다. repository owner가 사용하는 CI 또는 pre-push gate에 검증 명령을 명시적으로 연결합니다.
 

@@ -3,9 +3,9 @@ type: project
 doc_id: {{DOC_ID}}
 title: {{TITLE}}
 status: draft
-project_role: umbrella
-umbrella_initiative: {{TITLE}}
-parent_umbrella_project: self
+lineage_contract: v2
+related_initiative: {{RELATED_INITIATIVE}}
+initiative_relation: {{INITIATIVE_RELATION}}
 completion_mode: functional
 owner:
 created: {{DATE}}
@@ -27,9 +27,8 @@ tags:
 - Type: project
 - Document ID: {{DOC_ID}}
 - Status: draft
-- Project Role: umbrella
-- Umbrella Initiative: {{TITLE}}
-- Parent Umbrella Project: self
+- Related Initiative: {{RELATED_INITIATIVE}}
+- Initiative Relation: {{INITIATIVE_RELATION}}
 - Completion Mode: functional
 - Owner:
 - Created: {{DATE}}
@@ -42,20 +41,20 @@ tags:
 
 이 프로젝트의 목적과 기대 결과를 적습니다.
 
-## Umbrella Lineage
+## Initiative Alignment
 
-- 이 문서가 human-facing umbrella project인지, 예외 분기 project인지 적습니다.
-- `Project Role: umbrella`면 이 문서가 initiative의 기본 owner라고 적습니다.
-- `Project Role: exception-branch`면 parent umbrella project와 lineage 관계를 적습니다.
+- 이 project가 어떤 승인된 `I####`의 outcome에 기여하는지 적습니다.
+- 관계가 `delivers`, `supports`, `explores` 중 무엇인지와 이유를 적습니다.
+- initiative의 policy/guideline 관계를 이 문서에서 재해석하지 않고 exact initiative revision을 참조합니다.
 
 ## Project Issuance Check
 
-- 이 문서는 human-facing owner를 잠그는 surface이므로 사람만 발급합니다.
+- 이 문서는 bounded delivery boundary를 잠그는 surface이므로 사람의 명시적 요청 또는 승인 아래 발급합니다.
 - 이 문서 번호가 clean, up-to-date `main`에서 main-issued draft로 발급되고 즉시 commit되었는지 확인합니다.
 - 에이전트가 초안을 준비했다면 어떤 human 요청 또는 승인으로 발급했는지 적습니다.
-- 이 문서가 새 `project`여야 하는 이유를 적습니다.
-- 예외 분기 project라면 왜 기존 umbrella project의 `task`로는 안 되는지 적습니다.
-- 예외 분기 project라면 왜 human 입장에서 별도 project가 더 이해하기 쉬운지 적습니다.
+- 이 문서가 승인된 추진안 안의 새 `project`여야 하는 이유를 적습니다.
+- 왜 기존 project의 `task`로는 닫을 수 없는 별도 delivery boundary인지 적습니다.
+- 왜 human 입장에서 별도 project가 더 이해하기 쉬운지 적습니다.
 
 ## Whole-System Anchor
 
@@ -89,7 +88,7 @@ tags:
 
 ## Out Of Scope
 
-- 후속 `task`, 예외 branch `project`, 또는 다른 시스템의 책임
+- 후속 `task`, 다른 `project`, 별도 `initiative` 또는 다른 시스템의 책임
 - 이번 project에서 고정하지 않을 범위
 
 ## References
@@ -130,7 +129,7 @@ tags:
 
 ## Outputs / Handoff
 
-- 이 project가 닫힐 때 다음 `task`, 예외 branch `project`, downstream system, operator surface로 무엇을 넘기는지 적습니다.
+- 이 project가 닫힐 때 다음 `task`, sibling `project`, initiative outcome review, downstream system, operator surface로 무엇을 넘기는지 적습니다.
 - output path, operator note, residual scope, next consumer가 있으면 적습니다.
 
 ## Quality Axes In Scope
@@ -156,7 +155,7 @@ tags:
 - 남은 핵심 목표를 후속 project나 task로 넘겼다면 이 project는 `done`이 아니라 `active`, `blocked`, `superseded`, `cancelled` 중 하나여야 합니다.
 - `done`으로 닫기 전 `Goal Inventory`와 `Goal Verification`을 맞추고 `./docs/bin/validate-closeout.sh`를 통과해야 합니다.
 - `Related Control Plane`, `Whole-System Anchor`, `Outputs / Handoff`, `Quality Axes In Scope` 없이 부분 delivery를 전체와 분리된 local project처럼 닫지 않습니다.
-- 새 `project`를 쉽게 남발하지 않으며, 기본값은 umbrella project 아래의 새 `task`입니다.
+- 새 `project`를 쉽게 남발하지 않으며, 기본값은 현재 project 아래의 새 `task`입니다.
 - `Completion Mode`는 terminal condition이어야 하며 `implementation-only`, `test-only`, `documentation-only`, `analysis-only` 같은 phase 이름을 쓰지 않습니다.
 
 ## Status

@@ -2,12 +2,13 @@
 # Default packets must not include all design docs, all task docs, or the full
 # ubiquitous language registry.
 
-version: 2
-updated: 2026-07-16
+version: 3
+updated: 2026-07-18
 source_guides:
   - docs/guide/context-loading-playbooks.md
   - docs/guide/hybrid-retrieval-and-freshness.md
   - docs/guide/policy-proposal-and-approval.md
+  - docs/guide/initiative-governance.md
   - docs/guide/execution-loop-operations.md
   - docs/guide/human-control-view.md
   - docs/guide/repository-policy-extraction.md
@@ -71,6 +72,7 @@ packets:
       - docs/EXECUTE.md
       - current_task_doc
       - parent_or_reference_project_doc
+      - referenced_initiative_doc
       - docs/design/control-plane.md
     dynamic_load:
       - directly_referenced_design_docs
@@ -114,6 +116,23 @@ packets:
       - unrelated_policy_domains
       - proposal_reports_as_normative_truth
       - all_task_history
+    section_only:
+      - relevant_ubiquitous_language_sections
+
+  initiative_governance:
+    default_load:
+      - docs/design/initiative-governance-plane.md
+      - docs/guide/initiative-governance.md
+      - exact_human_policy_and_guideline_sources
+    dynamic_load:
+      - candidate_or_current_initiative_doc
+      - linked_project_sources_by_initiative_ref
+      - issuance_and_activation_approval_receipts
+      - relevant_legacy_umbrella_project_sources
+    avoid_by_default:
+      - all_project_and_task_history
+      - proposal_reports_as_approved_initiatives
+      - duplicated_project_lists_in_initiative_source
     section_only:
       - relevant_ubiquitous_language_sections
 

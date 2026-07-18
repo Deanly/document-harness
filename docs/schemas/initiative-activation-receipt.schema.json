@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.dev/schemas/initiative-activation-receipt.schema.json",
+  "title": "Human Initiative Activation Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decisionId", "candidateId", "decision", "decidedBy", "decidedAt", "sourceFence", "effectiveRef", "effectiveSha256"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "decisionId": { "type": "string", "minLength": 1 },
+    "candidateId": { "type": "string", "pattern": "^I[0-9]{4}$" },
+    "decision": { "const": "approved" },
+    "decidedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorKind", "identifier"],
+      "properties": {
+        "actorKind": { "enum": ["human", "human_delegated_system"] },
+        "identifier": { "type": "string", "minLength": 1 }
+      }
+    },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "sourceFence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repositoryRevision", "sourceHashes"],
+      "properties": {
+        "repositoryRevision": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "sourceHashes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "effectiveRef": {
+      "type": "string",
+      "pattern": "^docs/initiatives/I[0-9]{4}-.+\\.md$"
+    },
+    "effectiveSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reason": { "type": "string", "minLength": 1 }
+  }
+}

@@ -143,7 +143,8 @@ AI는 먼저 다음을 결정해 달라고 요청합니다.
 
 ## Human View Presentation
 
-- policy와 effective rule을 화면의 “Direction” 영역에 둡니다.
+- 고정 사용자명 `보드`을 top bar에 표시합니다.
+- policy는 `정책` tab에, 이를 적용하는 guideline/effective rule은 `지침` tab에 first-class item으로 두고 related refs를 양방향으로 연결합니다.
 - proposed rule은 effective rule과 색상/label을 달리합니다.
 - 각 task에 적용되는 policy/rule/check/evidence lineage를 표시합니다.
 - policy conflict, missing decision, expiring exception은 Attention Queue에 올립니다.

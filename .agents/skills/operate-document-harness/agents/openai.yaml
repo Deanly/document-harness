@@ -1,4 +1,4 @@
 interface:
-  display_name: "Operate Document Harness"
-  short_description: "Run this repository's harness workflow safely"
-  default_prompt: "Use $operate-document-harness to initialize or continue this repository's document harness workflow."
+  display_name: "Document Harness 운영"
+  short_description: "저장소 거버넌스·실행·보드를 안전하게 운영"
+  default_prompt: "Use $operate-document-harness to apply this repository's policy, guideline, and initiative governance before planning or execution, help the user author Korean review drafts when needed, and operate the repository-local 보드 without inferring approval."

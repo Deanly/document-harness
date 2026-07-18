@@ -2,90 +2,69 @@
 
 - Type: guide
 - Created: 2026-04-16
-- Updated: 2026-06-14
+- Updated: 2026-07-18
+- Status: compatibility
 
 ## Purpose
 
-이 문서는 human이 인식하는 하나의 initiative를 기본적으로 umbrella project 1개로 유지하고, 하위 실행은 그 umbrella 아래 `task`로 분해하는 규칙을 고정합니다.
+이 문서는 별도 `initiative` 계층 도입 전에 human-facing initiative를 umbrella project가 겸하던 저장소를 안전하게 유지하고 점진적으로 migration하는 compatibility 규칙을 고정합니다.
 
-하네스가 bounded를 잘 강조하더라도, 이 규칙이 약하면 에이전트가 작은 분화마다 새 `project`를 발급해 human-facing lineage를 깨뜨릴 수 있습니다.
+새 authoring의 canonical model은 `docs/design/initiative-governance-plane.md`와 `docs/guide/initiative-governance.md`의 `추진안(I####) → Project(P####) → Task(T####)`입니다.
 
-## Core Rule
+## Legacy Shape
 
-- human이 보는 하나의 product, initiative, workstream은 기본적으로 umbrella project 1개로 유지합니다.
-- 실제 실행 단위는 umbrella project 아래의 bounded `task`로 관리합니다.
-- `task`로 수용 가능한 작업을 새 `project`로 분리하지 않습니다.
+아래 field를 가진 기존 문서는 legacy umbrella shape입니다.
 
-## Human-Issued Project Rule
+- project: `project_role`, `umbrella_initiative`, `parent_umbrella_project`
+- task: `related_umbrella_project`
+- project body: `Umbrella Lineage`
 
-- `project`는 human-facing owner를 잠그는 문서이므로 사람만 발급합니다.
-- 에이전트는 새 `project` 필요성을 제안하고 근거를 정리할 수 있지만, 사람 승인 없이 발급하지 않습니다.
-- 사람 승인이 없다면 기본값은 새 `project`가 아니라 기존 umbrella project 아래의 `task`입니다.
-- 승인된 `project` 번호는 clean, up-to-date `main`에서 발급하고 생성된 `draft`를 즉시 `main`에 commit합니다.
+이 shape는 기존 adopter의 source와 history를 보존하기 위해 계속 읽을 수 있지만, 새 template의 기본값은 아닙니다.
 
-## Task-First Project Issuance Rule
+## Compatibility Rule
 
-새 work가 생기면 아래 순서로 판단합니다.
+- legacy project/task를 initiative 도입만을 이유로 일괄 rewrite하지 않습니다.
+- `umbrella_initiative`의 이름이나 코드 설명을 승인된 추진안으로 해석하지 않습니다.
+- legacy umbrella project는 migration 전까지 human-facing lineage owner로 계속 표시할 수 있습니다.
+- validator는 legacy shape와 modern `related_initiative` shape를 모두 허용합니다.
+- modern field가 추가되면 `related_initiative`가 canonical lineage이고 legacy field는 compatibility metadata입니다.
 
-1. 기존 umbrella project의 새 `task`로 처리 가능한가
-2. 기존 umbrella project WBS와 status history 안에서 설명 가능한가
-3. human이 봤을 때 같은 initiative의 일부로 읽히는가
+## Migration Gate
 
-셋 중 대부분이 `yes`면 새 `project`가 아니라 새 `task`입니다.
+기존 umbrella project를 별도 추진안으로 바꾸려면 아래 순서를 따릅니다.
 
-## Allowed Exceptions
+1. umbrella project의 purpose, scope, WBS, related task와 source refs를 inventory합니다.
+2. 정책과 지침의 exact stable ID, authority, approval state를 확인합니다.
+3. 추진안 candidate의 outcome, success signals, policy relationship, guideline disposition을 proposal로 작성합니다.
+4. 사람이 exact issuance를 승인합니다.
+5. clean, up-to-date `main`에서 `I####` draft를 발급합니다.
+6. activation approval 뒤 project에 `related_initiative`와 `initiative_relation`을 추가합니다.
+7. task에는 `related_project`를 점진적으로 추가해 Project를 통해 추진안 계보를 따르게 합니다.
+8. downstream consumer와 validator가 modern shape를 읽는지 검증한 뒤에만 legacy field 제거를 별도 변경으로 검토합니다.
 
-아래 조건 중 하나가 명확할 때만 새 `project`를 허용합니다.
+## No Self-Approval Rule
 
-- 사용자가 명시적으로 별도 project 분리를 요청한 경우
-- completion mode가 본질적으로 달라 기존 umbrella project 아래 task로 담기 어려운 경우
-- owner, 운영 검증 체계, handoff 대상이 실질적으로 분리되는 경우
+- AI는 legacy source에서 추진안 후보를 추출할 수 있습니다.
+- 기존 project가 active라는 사실은 추진안 발급이나 activation approval이 아닙니다.
+- migration convenience, code existence, View 표시만으로 approval을 만들어내지 않습니다.
+- policy/guideline conflict나 missing authority가 있으면 candidate 상태에서 멈추고 human attention을 만듭니다.
 
-이 셋이 없다면 기본값은 새 `task`입니다.
+## Project And Task Behavior During Migration
 
-## Required Issuance Record
+- legacy project 아래 새 work를 이어가야 하면 기존 `related_umbrella_project` task를 계속 발급할 수 있습니다.
+- human-approved initiative가 생긴 뒤 새 project는 modern `related_initiative` model을 사용하고, 새 task는 `related_project`로 그 Project를 참조합니다.
+- 한 문서에 modern과 legacy field가 함께 있으면 modern ref가 lineage를 결정하고 legacy field는 migration note로만 읽습니다.
+- migration 자체가 원래 project/task의 done criteria를 축소하거나 lifecycle state를 바꾸지 않습니다.
 
-에이전트가 새 `project`가 필요하다고 판단하더라도 먼저 사람에게 발급을 제안합니다. 사람이 발급하기로 결정했다면 아래 두 문장을 남깁니다.
+## View Rule
 
-- 왜 기존 umbrella project의 `task`로 처리하면 안 되는지
-- 왜 human 입장에서 별도 `project`가 더 이해하기 쉬운지
-
-이 기록은 `Project Issuance Check` 섹션에 남깁니다.
-
-## Execution Start Rule
-
-구현을 시작하기 전에 아래 세 문장을 먼저 정렬합니다.
-
-- active umbrella `project`가 무엇인지
-- active `task`가 무엇인지
-- 이번 작업이 왜 새 `project`가 아니라 해당 umbrella 아래 `task`인지
-
-이 세 문장이 없다면 task 경계보다 project 발급이 먼저 튀어나오기 쉽습니다.
-
-## Umbrella Lineage Rule
-
-- umbrella project는 전체 lineage와 현재 위치를 설명하는 human-facing owner입니다.
-- 하위 `task`는 Codex가 실행하고 닫기 쉬운 bounded slice여야 합니다.
-- README, control-plane, 관련 design에서는 항상 umbrella project를 먼저 보이게 유지합니다.
-- 후속 분화가 생겨도 umbrella project의 WBS와 status history 안에서 먼저 설명합니다.
-- single-task 성격의 작은 분화는 새 `project` 대신 새 `task`로 처리합니다.
-
-## Template Rule
-
-- `project`는 `Project Role`, `Umbrella Initiative`, `Parent Umbrella Project`, `Umbrella Lineage`, `Project Issuance Check`를 가집니다.
-- `task`는 `Related Umbrella Project`, `Task Placement Check`를 가집니다.
-- `Project Issuance Check`와 `Task Placement Check`는 해당 번호가 main-issued draft로 예약되었는지 확인합니다.
-- `Project Role`의 기본값은 `umbrella`입니다.
-- 예외 분기 project라면 `Project Role: exception-branch`를 쓰고 parent umbrella를 반드시 적습니다.
-
-## Closeout And Active Surface Rule
-
-- active `projects/README.md`는 umbrella project를 먼저 보여주고, 예외 분기 project는 lineage 안에서 설명합니다.
-- active `tasks/README.md`는 각 task가 어느 umbrella project에 속하는지 함께 보여주는 것이 좋습니다.
-- 후속 분화가 생겨도 human-facing owner는 umbrella project입니다.
+- legacy umbrella project는 `추진안 후보` 또는 `이전 형식`임을 분명히 표시합니다.
+- `I####`가 없는 legacy row를 승인된 추진안과 같은 상태로 표시하지 않습니다.
+- modern initiative의 linked project는 project source의 `related_initiative`를 reverse-index해 보여줍니다.
 
 ## Change Log
 
 - 2026-04-16: umbrella project default, task-first issuance, exception rule 추가.
 - 2026-05-01: project human issuance 규칙 추가.
 - 2026-06-14: main-issued draft 기반 project/task 번호 reservation 규칙 추가.
+- 2026-07-18: 별도 initiative 계층 도입에 따라 기존 umbrella model을 compatibility/migration bridge로 전환.

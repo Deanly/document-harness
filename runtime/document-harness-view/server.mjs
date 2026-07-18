@@ -26,9 +26,10 @@ function markGovernanceItemUnverified(item) {
     authorityState: item.authorityState ?? null,
     approvalState: item.approvalState ?? null,
     enforcement: item.enforcement ?? null,
-    evidenceState: item.evidenceState ?? null
+    evidenceState: item.evidenceState ?? null,
+    lifecycleState: item.lifecycleState ?? null
   };
-  return {
+  const unverified = {
     ...item,
     projectionState: LAST_KNOWN_UNVERIFIED,
     lastKnown,
@@ -42,6 +43,18 @@ function markGovernanceItemUnverified(item) {
       state: "unverified"
     }))
   };
+  if (Object.hasOwn(item, "lifecycleState")) {
+    unverified.lifecycleState = "unverified";
+    unverified.projects = (item.projects ?? []).map((project) => ({
+      ...project,
+      lastKnownStatus: project.lastKnownStatus ?? project.status ?? null,
+      lastKnownLinkState: project.lastKnownLinkState ?? project.linkState ?? null,
+      status: "unverified",
+      linkState: "unverified",
+      state: "unverified"
+    }));
+  }
+  return unverified;
 }
 
 function markSnapshotUnverified(degradedSnapshot) {
@@ -57,13 +70,14 @@ function markSnapshotUnverified(degradedSnapshot) {
     evidenceCurrent: 0,
     evidenceChanged: 0,
     evidenceMissing: 0,
-    evidenceUnverified: [...(degradedSnapshot.policies ?? []), ...(degradedSnapshot.guidelines ?? [])]
+    evidenceUnverified: [...(degradedSnapshot.policies ?? []), ...(degradedSnapshot.guidelines ?? []), ...(degradedSnapshot.initiatives ?? [])]
       .flatMap((item) => item.sourceRefs ?? []).length
   };
 
   degradedSnapshot.policies = (degradedSnapshot.policies ?? []).map(markGovernanceItemUnverified);
   degradedSnapshot.guidelines = (degradedSnapshot.guidelines ?? []).map(markGovernanceItemUnverified);
-  const governanceItemCount = degradedSnapshot.policies.length + degradedSnapshot.guidelines.length;
+  degradedSnapshot.initiatives = (degradedSnapshot.initiatives ?? []).map(markGovernanceItemUnverified);
+  const governanceItemCount = degradedSnapshot.policies.length + degradedSnapshot.guidelines.length + degradedSnapshot.initiatives.length;
   const previousSummary = degradedSnapshot.summary ?? {};
   const lastKnownSummary = previousSummary.lastKnown ?? {
     approvedCount: previousSummary.approvedCount ?? 0,
@@ -379,6 +393,9 @@ async function main() {
     url: `http://127.0.0.1:${boundPort}`,
     startedAt,
     snapshotId: projection.snapshot.snapshot.id,
+    policyCount: projection.snapshot.summary.policyCount,
+    guidelineCount: projection.snapshot.summary.guidelineCount,
+    initiativeCount: projection.snapshot.summary.initiativeCount,
     capabilities: { read: true, write: false, execution: false, approval: false }
   };
   await atomicWrite(leasePath, `${JSON.stringify(lease, null, 2)}\n`);
@@ -400,6 +417,9 @@ async function main() {
         projection = candidate;
         await atomicWrite(snapshotPath, `${JSON.stringify(projection.snapshot, null, 2)}\n`);
         lease.snapshotId = projection.snapshot.snapshot.id;
+        lease.policyCount = projection.snapshot.summary.policyCount;
+        lease.guidelineCount = projection.snapshot.summary.guidelineCount;
+        lease.initiativeCount = projection.snapshot.summary.initiativeCount;
         await atomicWrite(leasePath, `${JSON.stringify(lease, null, 2)}\n`);
       }
     } catch (error) {

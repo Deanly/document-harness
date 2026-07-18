@@ -23,6 +23,7 @@ import {
   ALLOWED_ACTIONS,
   GOVERNANCE_CATALOG_PATH,
   INSTALLATION_LOCK_PATH,
+  VIEW_CONFIG_PATH,
   applyPlan,
   canonicalJson,
   createPlan,
@@ -69,6 +70,18 @@ function applyReceiptPath(target, planHash) {
   return path.join(target, "docs/receipts", `harness-apply-${planHash.slice(0, 16)}.json`);
 }
 
+function writeProjectOwnedInstalledFile(target, filePath, text) {
+  const absolute = path.join(target, ...filePath.split("/"));
+  writeFileSync(absolute, text);
+  const lockFile = path.join(target, INSTALLATION_LOCK_PATH);
+  const lock = JSON.parse(readFileSync(lockFile, "utf8"));
+  const entry = lock.files.find(({ path: installedPath }) => installedPath === filePath);
+  assert.ok(entry, `installed lock entry exists: ${filePath}`);
+  entry.ownership = "project-owned";
+  entry.installedSha256 = sha256(readFileSync(absolute));
+  writeFileSync(lockFile, `${JSON.stringify(lock, null, 2)}\n`);
+}
+
 function walkFiles(root, current = "", output = []) {
   for (const entry of readdirSync(path.join(root, current), { withFileTypes: true })) {
     const relative = current ? `${current}/${entry.name}` : entry.name;
@@ -86,6 +99,8 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
     "governance-catalog.schema.json",
     "harness-installation-lock.schema.json",
     "human-policy-decision-receipt.schema.json",
+    "initiative-activation-receipt.schema.json",
+    "initiative-register.schema.json",
     "migration-evidence-pack.schema.json",
     "release-manifest.schema.json",
     "rollback-receipt.schema.json",
@@ -259,6 +274,11 @@ test("apply is fenced, installs atomically, and a second apply is a zero-write n
   assert.match(adoptionProfile, /repository_id: "target"/);
   assert.match(adoptionProfile, /profiles:\n  - core\n/);
   assert.match(adoptionProfile, /installation_lock: docs\/_indexes\/harness-installation\.yaml/);
+  assert.match(
+    adoptionProfile,
+    /tabs:\n      - 개요\n      - 정책\n      - 지침\n      - 추진안\n      - 검토 대기\n      - 실행 상태\n      - 근거\n/,
+  );
+  assert.equal(adoptionProfile.includes("정책·지침"), false);
   assert.equal(adoptionProfile.includes("{{"), false);
   const firstReceiptBytes = readFileSync(applyReceiptPath(target, plan.planHash));
   const second = applyPlan({ planFile, expectedPlanHash: plan.planHash });
@@ -584,6 +604,106 @@ test("upgrade records, repairs, and can roll back a mode-only managed-file mutat
   assert.equal(lstatSync(managedFile).mode & 0o777, 0o600);
 });
 
+test("upgrade fails closed for approved governance reference byte changes but permits mode-only repair", (t) => {
+  const { base, target, planFile } = fixture(t);
+  const initial = createPlan({
+    target,
+    profiles: ["core", "governance", "view"],
+    output: planFile,
+  });
+  applyPlan({ planFile, expectedPlanHash: initial.planHash });
+
+  const managedPath = "docs/design/policy-to-evidence-governance.md";
+  const managedFile = path.join(target, ...managedPath.split("/"));
+  const currentBytes = readFileSync(managedFile);
+  const olderInstalledBytes = Buffer.from("# 이전 release에서 설치된 거버넌스 근거\n");
+  const olderInstalledSha256 = sha256(olderInstalledBytes);
+  writeFileSync(managedFile, olderInstalledBytes);
+
+  const lockFile = path.join(target, INSTALLATION_LOCK_PATH);
+  const lock = JSON.parse(readFileSync(lockFile, "utf8"));
+  const managedEntry = lock.files.find(({ path: installedPath }) => installedPath === managedPath);
+  assert.ok(managedEntry);
+  managedEntry.upstreamBaselineSha256 = olderInstalledSha256;
+  managedEntry.installedSha256 = olderInstalledSha256;
+  writeFileSync(lockFile, `${JSON.stringify(lock, null, 2)}\n`);
+
+  const catalogFile = path.join(target, GOVERNANCE_CATALOG_PATH);
+  const catalog = JSON.parse(readFileSync(catalogFile, "utf8"));
+  catalog.policies = [{
+    id: "POL-APPROVED-RELEASE-REFERENCE",
+    kind: "policy",
+    title: "승인된 release 근거 보호",
+    humanSummary: "사람이 승인한 정책 근거와 효력 문서의 bytes를 보호합니다.",
+    authorityClass: "current_design",
+    authorityState: "effective",
+    approvalState: "approved",
+    enforcement: "enforced",
+    confidence: "high",
+    effectiveRef: managedPath,
+    decisionReceiptRef: "docs/receipts/POL-APPROVED-RELEASE-REFERENCE.json",
+    sourceRefs: [{
+      path: managedPath,
+      heading: "이전 release에서 설치된 거버넌스 근거",
+      lineStart: 1,
+      lineEnd: 1,
+      capturedSha256: olderInstalledSha256,
+      capturedRepositoryRevision: catalog.migration.capturedRepository.baseCommit,
+    }],
+    conflicts: [],
+  }];
+  writeFileSync(catalogFile, `${JSON.stringify(catalog, null, 2)}\n`);
+
+  const blockedPlanFile = path.join(base, "approved-reference-byte-upgrade.json");
+  const blockedPlan = createPlan({
+    target,
+    profiles: ["core", "governance", "view"],
+    output: blockedPlanFile,
+  });
+  const blockedAction = blockedPlan.actions.find(({ path: actionPath }) => actionPath === managedPath);
+  const mutationAttention = blockedPlan.attention.find(({ code }) => (
+    code === "APPROVED_GOVERNANCE_SOURCE_MUTATION"
+  ));
+  assert.equal(blockedAction.action, "UPDATE_UNMODIFIED");
+  assert.notEqual(blockedAction.beforeSha256, blockedAction.afterSha256);
+  assert.equal(blockedPlan.status, "NEEDS_DECISION");
+  assert.equal(mutationAttention.path, managedPath);
+  assert.deepEqual(mutationAttention.candidateIds, ["POL-APPROVED-RELEASE-REFERENCE"]);
+  assert.deepEqual(mutationAttention.referenceKinds, ["effectiveRef", "sourceRefs[].path"]);
+
+  const refused = applyPlan({ planFile: blockedPlanFile, expectedPlanHash: blockedPlan.planHash });
+  assert.equal(refused.status, "NEEDS_DECISION");
+  assert.equal(refused.writes, 0);
+  assert.ok(refused.attention.some(({ code }) => code === "APPROVED_GOVERNANCE_SOURCE_MUTATION"));
+  assert.deepEqual(readFileSync(managedFile), olderInstalledBytes);
+
+  writeFileSync(managedFile, currentBytes);
+  managedEntry.upstreamBaselineSha256 = sha256(currentBytes);
+  managedEntry.installedSha256 = sha256(currentBytes);
+  writeFileSync(lockFile, `${JSON.stringify(lock, null, 2)}\n`);
+  chmodSync(managedFile, 0o600);
+
+  const modePlanFile = path.join(base, "approved-reference-mode-only-upgrade.json");
+  const modePlan = createPlan({
+    target,
+    profiles: ["core", "governance", "view"],
+    output: modePlanFile,
+  });
+  const modeAction = modePlan.actions.find(({ path: actionPath }) => actionPath === managedPath);
+  assert.equal(modePlan.status, "PLAN_READY");
+  assert.equal(
+    modePlan.attention.some(({ code }) => code === "APPROVED_GOVERNANCE_SOURCE_MUTATION"),
+    false,
+  );
+  assert.equal(modeAction.action, "UPDATE_UNMODIFIED");
+  assert.equal(modeAction.beforeSha256, modeAction.afterSha256);
+  assert.equal(modeAction.beforeMode, 0o600);
+
+  const repaired = applyPlan({ planFile: modePlanFile, expectedPlanHash: modePlan.planHash });
+  assert.equal(repaired.applyResult, "applied");
+  assert.equal(lstatSync(managedFile).mode & 0o777, 0o644);
+});
+
 test("upgrade refuses implicit profile removal with zero writes", (t) => {
   const { base, target } = fixture(t);
   const installFile = path.join(base, "install-full.json");
@@ -789,6 +909,7 @@ test("view profile renders static repository identity and preserves modified con
     name: "target",
     description: "target 저장소 전용 읽기 전용 document-harness 제어 화면입니다.",
   });
+  assert.equal(config.initiativeRegister, "docs/_indexes/initiative-register.json");
   const lock = JSON.parse(readFileSync(path.join(target, INSTALLATION_LOCK_PATH), "utf8"));
   assert.equal(lock.files.find(({ path: filePath }) => filePath === "runtime/document-harness-view/config.json").ownership, "generated");
   config.project.description = "Human-customized description";
@@ -798,6 +919,468 @@ test("view profile renders static repository identity and preserves modified con
   assert.equal(upgrade.status, "PLAN_READY");
   assert.equal(conflict.action, "KEEP_PROJECT_OWNED");
   assert.equal(conflict.ownership, "project-owned");
+});
+
+test("view upgrade adds initiativeRegister without replacing repository-specific config", (t) => {
+  const { base, target, planFile } = fixture(t);
+  const initial = createPlan({ target, profiles: ["view"], output: planFile });
+  applyPlan({ planFile, expectedPlanHash: initial.planHash });
+
+  const configFile = path.join(target, VIEW_CONFIG_PATH);
+  const customized = JSON.parse(readFileSync(configFile, "utf8"));
+  delete customized.initiativeRegister;
+  customized.project.description = "사람이 작성한 프로젝트 설명";
+  customized.probes = [{ id: "custom-probe", type: "file", path: "docs/README.md" }];
+  customized.projectExtension = { owner: "platform-team" };
+  writeFileSync(configFile, `${JSON.stringify(customized, null, 2)}\n`);
+
+  const upgradeFile = path.join(base, "view-additive-upgrade.json");
+  const upgrade = createPlan({ target, profiles: ["view"], output: upgradeFile });
+  const configAction = upgrade.actions.find(({ path: actionPath }) => actionPath === VIEW_CONFIG_PATH);
+  assert.equal(upgrade.status, "PLAN_READY");
+  assert.equal(configAction.action, "UPDATE_UNMODIFIED");
+  assert.equal(configAction.ownership, "project-owned");
+  assert.match(configAction.reason, /initiativeRegister/);
+
+  const result = applyPlan({ planFile: upgradeFile, expectedPlanHash: upgrade.planHash });
+  assert.equal(result.applyResult, "applied");
+  const migrated = JSON.parse(readFileSync(configFile, "utf8"));
+  assert.equal(migrated.initiativeRegister, "docs/_indexes/initiative-register.json");
+  assert.equal(migrated.project.description, "사람이 작성한 프로젝트 설명");
+  assert.deepEqual(migrated.probes, customized.probes);
+  assert.deepEqual(migrated.projectExtension, customized.projectExtension);
+  const lock = JSON.parse(readFileSync(path.join(target, INSTALLATION_LOCK_PATH), "utf8"));
+  assert.equal(lock.files.find(({ path: filePath }) => filePath === VIEW_CONFIG_PATH).ownership, "project-owned");
+
+  const rolledBack = rollbackReceipt({ receiptFile: applyReceiptPath(target, upgrade.planHash) });
+  assert.equal(rolledBack.status, "ROLLED_BACK");
+  const restored = JSON.parse(readFileSync(configFile, "utf8"));
+  assert.equal(Object.hasOwn(restored, "initiativeRegister"), false);
+  assert.equal(restored.project.description, "사람이 작성한 프로젝트 설명");
+  assert.deepEqual(restored.projectExtension, customized.projectExtension);
+});
+
+test("view upgrade stops when a missing initiativeRegister cannot be added safely", (t) => {
+  const { base, target, planFile } = fixture(t);
+  const initial = createPlan({ target, profiles: ["view"], output: planFile });
+  applyPlan({ planFile, expectedPlanHash: initial.planHash });
+
+  const configFile = path.join(target, VIEW_CONFIG_PATH);
+  const customized = JSON.parse(readFileSync(configFile, "utf8"));
+  delete customized.initiativeRegister;
+  customized.bindHost = "0.0.0.0";
+  writeFileSync(configFile, `${JSON.stringify(customized, null, 2)}\n`);
+
+  const upgrade = createPlan({
+    target,
+    profiles: ["view"],
+    output: path.join(base, "view-unsafe-upgrade.json"),
+  });
+  const configAction = upgrade.actions.find(({ path: actionPath }) => actionPath === VIEW_CONFIG_PATH);
+  assert.equal(upgrade.status, "NEEDS_DECISION");
+  assert.equal(configAction.action, "CONFLICT");
+  assert.match(configAction.reason, /cannot be upgraded additively/);
+  assert.equal(JSON.parse(readFileSync(configFile, "utf8")).bindHost, "0.0.0.0");
+});
+
+test("mature governance bootstrap requires a source-backed INIT candidate or paired extraction gap", (t) => {
+  const { target, planFile } = fixture(t, { mature: true });
+  mkdirSync(path.join(target, "docs/projects"), { recursive: true });
+  writeFileSync(
+    path.join(target, "AGENTS.md"),
+    "# Existing project contract\n\nHarness 작업은 `.agents/skills/operate-document-harness/SKILL.md`를 따릅니다. 도입은 `docs/ADOPT.md`, 실행은 `docs/EXECUTE.md`에서 시작합니다. 모든 변경은 사람의 검토 전에 운영 환경에 적용하지 않습니다.\n",
+  );
+  writeFileSync(
+    path.join(target, "docs/projects/P0001-legacy-platform.md"),
+    "---\ntype: project\ndoc_id: P0001\nstatus: active\n---\n\n# P0001 Legacy Platform\n\n## Purpose\n\n기존 제품 업무를 하나의 결과 방향으로 묶습니다.\n",
+  );
+  git(target, "add", "AGENTS.md", "docs/projects/P0001-legacy-platform.md");
+  git(
+    target,
+    "-c", "user.name=Harness Fixture",
+    "-c", "user.email=harness-fixture@example.invalid",
+    "commit", "-qm", "mature governance sources",
+  );
+
+  const plan = createPlan({ target, profiles: ["core", "governance", "view"], output: planFile });
+  applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  const catalogFile = path.join(target, GOVERNANCE_CATALOG_PATH);
+  const registerFile = path.join(target, "docs/_indexes/initiative-register.json");
+  const catalog = JSON.parse(readFileSync(catalogFile, "utf8"));
+  const register = JSON.parse(readFileSync(registerFile, "utf8"));
+  assert.ok(catalog.attention.some(({ id }) => id === "ATTN-INITIATIVE-EXTRACTION"));
+  assert.ok(catalog.gaps.some(({ id }) => id === "GAP-INITIATIVE-EXTRACTION"));
+  assert.deepEqual(register.initiatives, []);
+  assert.deepEqual(verifyTarget({ target }).findings, []);
+
+  catalog.attention = catalog.attention.filter(({ id }) => id !== "ATTN-INITIATIVE-EXTRACTION");
+  catalog.gaps = catalog.gaps.filter(({ id }) => id !== "GAP-INITIATIVE-EXTRACTION");
+  writeFileSync(catalogFile, `${JSON.stringify(catalog, null, 2)}\n`);
+  const unresolved = verifyTarget({ target });
+  assert.equal(unresolved.status, "INSTALLED_NOT_VERIFIED");
+  assert.ok(unresolved.findings.some(({ code }) => code === "INITIATIVE_BOOTSTRAP_UNRESOLVED"));
+
+  const lock = JSON.parse(readFileSync(path.join(target, INSTALLATION_LOCK_PATH), "utf8"));
+  const instructionBytes = readFileSync(path.join(target, "AGENTS.md"));
+  const projectBytes = readFileSync(path.join(target, "docs/projects/P0001-legacy-platform.md"));
+  const instructionSource = {
+    path: "AGENTS.md",
+    heading: "Existing project contract",
+    lineStart: 1,
+    lineEnd: 3,
+    capturedSha256: sha256(instructionBytes),
+    capturedRepositoryRevision: lock.targetSourceRevision,
+  };
+  const projectSource = {
+    path: "docs/projects/P0001-legacy-platform.md",
+    heading: "Purpose",
+    lineStart: 1,
+    lineEnd: 12,
+    capturedSha256: sha256(projectBytes),
+    capturedRepositoryRevision: lock.targetSourceRevision,
+  };
+  catalog.policies = [{
+    id: "POL-HUMAN-REVIEW-BOUNDARY",
+    kind: "policy",
+    title: "운영 적용 전 사람 검토",
+    humanSummary: "운영 변경은 사람의 검토 전에는 적용하지 않습니다.",
+    authorityClass: "repository_instruction",
+    authorityState: "proposed",
+    approvalState: "unreviewed",
+    enforcement: "unknown",
+    confidence: "high",
+    effectiveRef: null,
+    decisionReceiptRef: null,
+    sourceRefs: [instructionSource],
+    conflicts: [],
+  }];
+  writeFileSync(catalogFile, `${JSON.stringify(catalog, null, 2)}\n`);
+  register.initiatives = [{
+    id: "INIT-LEGACY-PLATFORM",
+    kind: "initiative",
+    title: "기존 플랫폼 방향 정리",
+    humanSummary: "기존 프로젝트를 정책 경계 아래 하나의 결과 방향으로 검토합니다.",
+    outcome: "사람이 승인한 경계 안에서 기존 플랫폼 업무의 결과와 성공 기준을 분명히 합니다.",
+    whyNow: "프로젝트는 존재하지만 이를 이끄는 추진안이 명시되어 있지 않습니다.",
+    lifecycleState: "draft",
+    approvalState: "unreviewed",
+    owner: "미지정",
+    currentFocus: "기존 프로젝트의 범위와 결과 근거를 검토합니다.",
+    policyRefs: ["POL-HUMAN-REVIEW-BOUNDARY"],
+    policyRelationships: [{
+      policyId: "POL-HUMAN-REVIEW-BOUNDARY",
+      relation: "constrained-by",
+      rationale: "추진안과 후속 프로젝트는 사람 검토 경계를 약화할 수 없습니다.",
+      exceptionRef: null,
+    }],
+    guidelineRefs: [],
+    guidelineRelationships: [],
+    guidelineDisposition: "no_applicable_guideline",
+    guidelineDispositionReason: "현재 source에서는 별도 실행 지침을 확인하지 못했습니다.",
+    legacyProjectRefs: [{ id: "P0001", path: "docs/projects/P0001-legacy-platform.md" }],
+    successSignals: ["사람이 추진안 경계와 연결 프로젝트를 검토할 수 있습니다."],
+    risks: ["기존 프로젝트의 숨은 범위가 아직 남아 있을 수 있습니다."],
+    documentRef: null,
+    effectiveRef: null,
+    decisionReceiptRef: null,
+    sourceRevision: lock.targetSourceRevision,
+    sourceRefs: [projectSource],
+  }];
+  writeFileSync(registerFile, `${JSON.stringify(register, null, 2)}\n`);
+
+  const candidateBacked = verifyTarget({ target });
+  assert.equal(candidateBacked.status, "INSTALLED_AWAITING_REVIEW");
+  assert.deepEqual(candidateBacked.findings, []);
+
+  register.initiatives[0].approvalState = "approved";
+  writeFileSync(registerFile, `${JSON.stringify(register, null, 2)}\n`);
+  const selfApproved = verifyTarget({ target });
+  assert.equal(selfApproved.status, "INSTALLED_NOT_VERIFIED");
+  assert.ok(selfApproved.findings.some(({ code }) => code === "INVALID_INITIATIVE_MIGRATION_CANDIDATE"));
+
+  register.initiatives[0].approvalState = "rejected";
+  writeFileSync(registerFile, `${JSON.stringify(register, null, 2)}\n`);
+  const rejectedHistoryOnly = verifyTarget({ target });
+  assert.equal(rejectedHistoryOnly.status, "INSTALLED_NOT_VERIFIED");
+  assert.ok(rejectedHistoryOnly.findings.some(({ code }) => code === "INITIATIVE_BOOTSTRAP_UNRESOLVED"));
+});
+
+test("verify audits numbered I#### schema, relationships, document mirrors, approval refs, lifecycle, and source fences", (t) => {
+  const { target, planFile } = fixture(t, { mature: true });
+  mkdirSync(path.join(target, "docs/design"), { recursive: true });
+  writeFileSync(
+    path.join(target, "AGENTS.md"),
+    "# Existing contract\n\nUse `.agents/skills/operate-document-harness/SKILL.md`; adoption starts at `docs/ADOPT.md` and governed execution starts at `docs/EXECUTE.md`.\n",
+  );
+  const sourcePath = "docs/design/initiative-source.md";
+  const sourceBytes = Buffer.from("# Initiative source\n\nHuman-owned direction for the numbered initiative.\n");
+  writeFileSync(path.join(target, sourcePath), sourceBytes);
+  git(target, "add", "AGENTS.md", sourcePath);
+  git(
+    target,
+    "-c", "user.name=Harness Fixture",
+    "-c", "user.email=harness-fixture@example.invalid",
+    "commit", "-qm", "numbered initiative source",
+  );
+
+  const plan = createPlan({ target, profiles: ["core", "governance", "view"], output: planFile });
+  applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  const lock = JSON.parse(readFileSync(path.join(target, INSTALLATION_LOCK_PATH), "utf8"));
+  const catalogFile = path.join(target, GOVERNANCE_CATALOG_PATH);
+  const registerFile = path.join(target, "docs/_indexes/initiative-register.json");
+  const catalog = JSON.parse(readFileSync(catalogFile, "utf8"));
+  const sourceRef = {
+    path: sourcePath,
+    heading: "Initiative source",
+    lineStart: 1,
+    lineEnd: 3,
+    capturedSha256: sha256(sourceBytes),
+    capturedRepositoryRevision: lock.targetSourceRevision,
+  };
+  catalog.policies = [{
+    id: "POL-NUMBERED-BOUNDARY",
+    kind: "policy",
+    title: "번호 추진안 경계",
+    humanSummary: "번호 추진안은 사람 소유 근거를 유지합니다.",
+    authorityClass: "current_design",
+    authorityState: "proposed",
+    approvalState: "unreviewed",
+    enforcement: "unknown",
+    confidence: "high",
+    effectiveRef: null,
+    decisionReceiptRef: null,
+    sourceRefs: [sourceRef],
+    conflicts: [],
+  }];
+  catalog.attention = catalog.attention.filter(({ id }) => id !== "ATTN-INITIATIVE-EXTRACTION");
+  catalog.gaps = catalog.gaps.filter(({ id }) => id !== "GAP-INITIATIVE-EXTRACTION");
+  writeFileSync(catalogFile, `${JSON.stringify(catalog, null, 2)}\n`);
+
+  const initiativePath = "docs/initiatives/I9001-numbered-governance.md";
+  mkdirSync(path.join(target, "docs/initiatives"), { recursive: true });
+  mkdirSync(path.join(target, "docs/receipts"), { recursive: true });
+  const renderDocument = ({ approvalState = "review_requested", approvalRef = "", status = "draft" } = {}) => `---
+type: initiative
+doc_id: I9001
+initiative_contract: v1
+title: Numbered governance
+status: ${status}
+approval_status: ${approvalState}
+issuance_approval_ref: HUMAN-ISSUE-I9001
+approval_ref: ${approvalRef}
+policy_refs:
+  - POL-NUMBERED-BOUNDARY
+guideline_refs: []
+guideline_disposition: no_applicable_guideline
+guideline_disposition_reason: 현재 적용할 승인 지침이 없습니다.
+---
+
+# I9001 Numbered governance
+
+## Policy Alignment
+
+| Policy Ref | Relation | Rationale | Exception Ref |
+| --- | --- | --- | --- |
+| POL-NUMBERED-BOUNDARY | constrained-by | 사람 소유 정책 경계를 유지합니다. | |
+
+## Guideline Disposition
+
+| Guideline Ref | Adoption | Rationale | Verification |
+| --- | --- | --- | --- |
+`;
+  writeFileSync(path.join(target, initiativePath), renderDocument());
+
+  const baseInitiative = {
+    id: "I9001",
+    kind: "initiative",
+    title: "번호 추진안 검증",
+    humanSummary: "번호 추진안 register와 문서의 권한 경계를 검증합니다.",
+    outcome: "검증된 근거와 사람 결정만 추진안 상태를 변경합니다.",
+    whyNow: "adoption verify가 번호 추진안 변조를 놓치지 않아야 합니다.",
+    lifecycleState: "draft",
+    approvalState: "review_requested",
+    owner: "Fixture Owner",
+    currentFocus: "번호 추진안 감사 회귀를 검증합니다.",
+    policyRefs: ["POL-NUMBERED-BOUNDARY"],
+    policyRelationships: [{
+      policyId: "POL-NUMBERED-BOUNDARY",
+      relation: "constrained-by",
+      rationale: "사람 소유 정책 경계를 유지합니다.",
+      exceptionRef: null,
+    }],
+    guidelineRefs: [],
+    guidelineRelationships: [],
+    guidelineDisposition: "no_applicable_guideline",
+    guidelineDispositionReason: "현재 적용할 승인 지침이 없습니다.",
+    legacyProjectRefs: [],
+    successSignals: ["변조된 번호 추진안이 verify를 통과하지 못합니다."],
+    risks: [],
+    documentRef: initiativePath,
+    effectiveRef: null,
+    decisionReceiptRef: null,
+    sourceRevision: lock.targetSourceRevision,
+    sourceRefs: [sourceRef],
+  };
+  const writeRegister = (initiative) => writeFileSync(registerFile, `${JSON.stringify({
+    schemaVersion: 1,
+    initiatives: [initiative],
+  }, null, 2)}\n`);
+  writeRegister(baseInitiative);
+  assert.deepEqual(verifyTarget({ target }).findings, []);
+
+  const brokenRelationship = structuredClone(baseInitiative);
+  brokenRelationship.policyRelationships[0].policyId = "POL-UNKNOWN";
+  writeRegister(brokenRelationship);
+  assert.ok(verifyTarget({ target }).findings.some(({ code }) => code === "INVALID_INITIATIVE_GOVERNANCE_RELATIONSHIPS"));
+
+  const brokenLifecycle = structuredClone(baseInitiative);
+  brokenLifecycle.lifecycleState = "active";
+  writeRegister(brokenLifecycle);
+  assert.ok(verifyTarget({ target }).findings.some(({ code }) => code === "INVALID_INITIATIVE_REGISTER_SCHEMA"));
+
+  writeRegister(baseInitiative);
+  writeFileSync(path.join(target, initiativePath), renderDocument({ status: "blocked" }));
+  assert.ok(verifyTarget({ target }).findings.some(({ code }) => code === "INVALID_NUMBERED_INITIATIVE_DOCUMENT"));
+  writeFileSync(path.join(target, initiativePath), renderDocument());
+
+  const staleSource = structuredClone(baseInitiative);
+  staleSource.sourceRefs[0].capturedSha256 = "0".repeat(64);
+  writeRegister(staleSource);
+  assert.ok(verifyTarget({ target }).findings.some(({ code }) => code === "STALE_OR_INVALID_INITIATIVE_SOURCE_REF"));
+
+  const decisionReceiptRef = "docs/receipts/I9001-activation.json";
+  const approvedDocument = renderDocument({ approvalState: "approved", approvalRef: decisionReceiptRef });
+  writeFileSync(path.join(target, initiativePath), approvedDocument);
+  const approvedInitiative = structuredClone(baseInitiative);
+  approvedInitiative.approvalState = "approved";
+  approvedInitiative.effectiveRef = initiativePath;
+  approvedInitiative.decisionReceiptRef = decisionReceiptRef;
+  const decision = {
+    schemaVersion: 1,
+    decisionId: "DEC-I9001-ACTIVATION",
+    candidateId: "I9001",
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-07-18T00:00:00.000Z",
+    sourceFence: {
+      repositoryRevision: lock.targetSourceRevision,
+      sourceHashes: [sourceRef.capturedSha256],
+    },
+    effectiveRef: initiativePath,
+    effectiveSha256: sha256(Buffer.from(approvedDocument)),
+    reason: "Fixture approval",
+  };
+  writeFileSync(path.join(target, decisionReceiptRef), `${JSON.stringify(decision, null, 2)}\n`);
+  writeRegister(approvedInitiative);
+  assert.deepEqual(verifyTarget({ target }).findings, []);
+
+  decision.decision = "exception_accepted";
+  writeFileSync(path.join(target, decisionReceiptRef), `${JSON.stringify(decision, null, 2)}\n`);
+  assert.ok(verifyTarget({ target }).findings.some(({ code }) => code === "INVALID_NUMBERED_INITIATIVE_APPROVAL_FENCE"));
+
+  decision.decision = "approved";
+  writeFileSync(path.join(target, decisionReceiptRef), `${JSON.stringify(decision, null, 2)}\n`);
+  const wrongEffectiveRef = structuredClone(approvedInitiative);
+  wrongEffectiveRef.effectiveRef = "docs/initiatives/I9001-other.md";
+  writeRegister(wrongEffectiveRef);
+  assert.ok(verifyTarget({ target }).findings.some(({ code }) => code === "INVALID_NUMBERED_INITIATIVE_APPROVAL_FENCE"));
+});
+
+test("verify audits semantic Initiative lineage in project-owned authoring surfaces", (t) => {
+  const { target, planFile } = fixture(t);
+  const plan = createPlan({ target, profiles: ["core", "governance", "view"], output: planFile });
+  applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  const authoringPaths = [
+    "docs/bin/new-doc.sh",
+    "docs/_templates/project.md",
+    "docs/_templates/task.md",
+    "docs/bin/validate-closeout.sh",
+  ];
+
+  for (const filePath of authoringPaths) {
+    const current = readFileSync(path.join(target, filePath), "utf8");
+    writeProjectOwnedInstalledFile(target, filePath, `${current}\n# Repository-specific retained note\n`);
+  }
+  assert.equal(
+    verifyTarget({ target }).findings.some(({ code }) => code === "LEGACY_GOVERNANCE_AUTHORING_CONTRACT"),
+    false,
+    "project-owned customization may preserve the semantic contract without byte equality",
+  );
+
+  const currentNewDoc = readFileSync(path.join(target, "docs/bin/new-doc.sh"), "utf8");
+  const currentCloseout = readFileSync(path.join(target, "docs/bin/validate-closeout.sh"), "utf8");
+  writeProjectOwnedInstalledFile(
+    target,
+    "docs/bin/new-doc.sh",
+    currentNewDoc.replaceAll("initiative-authority.mjs", "legacy-status-only.mjs"),
+  );
+  writeProjectOwnedInstalledFile(
+    target,
+    "docs/bin/validate-closeout.sh",
+    currentCloseout.replaceAll("initiative-authority.mjs", "legacy-status-only.mjs"),
+  );
+  const statusOnlyAuthority = verifyTarget({ target }).findings
+    .filter(({ code }) => code === "LEGACY_GOVERNANCE_AUTHORING_CONTRACT");
+  assert.deepEqual(
+    new Set(statusOnlyAuthority.map(({ path: findingPath }) => findingPath)),
+    new Set(["docs/bin/new-doc.sh", "docs/bin/validate-closeout.sh"]),
+    "status strings without the deterministic activation receipt validator must fail closed",
+  );
+  writeProjectOwnedInstalledFile(target, "docs/bin/new-doc.sh", currentNewDoc);
+  writeProjectOwnedInstalledFile(target, "docs/bin/validate-closeout.sh", currentCloseout);
+
+  const newDoc = readFileSync(path.join(target, "docs/bin/new-doc.sh"), "utf8")
+    .replaceAll("require_task_parent_lineage", "legacy_task_parent_check");
+  writeProjectOwnedInstalledFile(target, "docs/bin/new-doc.sh", newDoc);
+  const projectTemplate = readFileSync(path.join(target, "docs/_templates/project.md"), "utf8")
+    .replace("related_initiative: {{RELATED_INITIATIVE}}", "umbrella_initiative: true");
+  writeProjectOwnedInstalledFile(target, "docs/_templates/project.md", projectTemplate);
+  const taskTemplate = readFileSync(path.join(target, "docs/_templates/task.md"), "utf8")
+    .replace("related_project: {{RELATED_PROJECT}}", "related_umbrella_project: P0001");
+  writeProjectOwnedInstalledFile(target, "docs/_templates/task.md", taskTemplate);
+  const closeout = readFileSync(path.join(target, "docs/bin/validate-closeout.sh"), "utf8")
+    .replaceAll("validate_project_governance_lineage", "validate_legacy_project_lineage");
+  writeProjectOwnedInstalledFile(target, "docs/bin/validate-closeout.sh", closeout);
+
+  const verification = verifyTarget({ target });
+  assert.equal(verification.status, "INSTALLED_NOT_VERIFIED");
+  const legacyFindings = verification.findings
+    .filter(({ code }) => code === "LEGACY_GOVERNANCE_AUTHORING_CONTRACT");
+  assert.deepEqual(new Set(legacyFindings.map(({ path: filePath }) => filePath)), new Set(authoringPaths));
+  assert.ok(legacyFindings.every(({ missingCapabilities, remediation }) => (
+    Array.isArray(missingCapabilities) && missingCapabilities.length > 0 &&
+    /project-owned file/.test(remediation)
+  )));
+});
+
+test("verify preserves RoadCore-style instruction wording but fails closed when project-owned agent entrypoints disappear", (t) => {
+  const { target, planFile } = fixture(t);
+  const plan = createPlan({ target, profiles: ["core", "governance", "view"], output: planFile });
+  applyPlan({ planFile, expectedPlanHash: plan.planHash });
+
+  writeProjectOwnedInstalledFile(target, "AGENTS.md", `# AGENTS.md
+
+For harness adoption or migration, read \`docs/ADOPT.md\` and the repository-local \`.agents/skills/operate-document-harness/SKILL.md\`; for loop-enabled work, read \`docs/EXECUTE.md\` and the linked checkpoint.
+`);
+  writeProjectOwnedInstalledFile(target, "CLAUDE.md", `# CLAUDE.md
+
+\`AGENTS.md\` covers the document harness. Harness adoption starts at \`docs/ADOPT.md\`; loop work starts at \`docs/EXECUTE.md\`. Both delegate to \`.agents/skills/operate-document-harness/SKILL.md\`.
+`);
+  const roadCoreStyle = verifyTarget({ target }).findings
+    .filter(({ code, path: findingPath }) => (
+      code === "LEGACY_GOVERNANCE_AUTHORING_CONTRACT" && ["AGENTS.md", "CLAUDE.md"].includes(findingPath)
+    ));
+  assert.deepEqual(roadCoreStyle, []);
+
+  writeProjectOwnedInstalledFile(target, "AGENTS.md", "# Build notes\n\nRun the project tests before delivery.\n");
+  writeProjectOwnedInstalledFile(target, "CLAUDE.md", "# Build notes\n\nKeep implementation changes narrow.\n");
+  const missing = verifyTarget({ target }).findings
+    .filter(({ code }) => code === "LEGACY_GOVERNANCE_AUTHORING_CONTRACT");
+  assert.deepEqual(
+    new Set(missing.map(({ path: findingPath }) => findingPath)),
+    new Set(["AGENTS.md", "CLAUDE.md"]),
+  );
+  assert.ok(missing.every(({ missingCapabilities }) => missingCapabilities.length === 2));
 });
 
 test("verification is fail-closed until matching evidence and human review exist", (t) => {
@@ -926,6 +1509,66 @@ test("verification is fail-closed until matching evidence and human review exist
   writeFileSync(path.join(evidenceDir, "view-doctor.json"), `${gateEvidence.get("view-doctor")} `);
   const tamperedGate = verifyTarget({ target });
   assert.equal(tamperedGate.status, "INSTALLED_AWAITING_REVIEW");
+
+  writeFileSync(path.join(evidenceDir, "view-doctor.json"), gateEvidence.get("view-doctor"));
+  git(target, "add", "-A");
+  git(
+    target,
+    "-c", "user.name=Harness Fixture",
+    "-c", "user.email=harness-fixture@example.invalid",
+    "commit", "-qm", "commit reviewed governance state",
+  );
+  const upgradeFile = path.join(path.dirname(planFile), "reviewed-governance-upgrade.json");
+  const upgrade = createPlan({ target, profiles: ["core", "governance", "view"], output: upgradeFile });
+  assert.equal(upgrade.mode, "upgrade");
+  assert.notEqual(upgrade.target.revision, lock.targetSourceRevision);
+  applyPlan({ planFile: upgradeFile, expectedPlanHash: upgrade.planHash });
+  const upgradedLock = JSON.parse(readFileSync(path.join(target, INSTALLATION_LOCK_PATH), "utf8"));
+  assert.equal(upgradedLock.targetSourceRevision, upgrade.target.revision);
+  assert.equal(catalog.migration.capturedRepository.baseCommit, lock.targetSourceRevision);
+
+  const afterHeadAdvance = verifyTarget({ target });
+  assert.equal(afterHeadAdvance.status, "INSTALLED_AWAITING_REVIEW");
+  assert.deepEqual(afterHeadAdvance.findings, []);
+
+  const upgradedGateEvidence = new Map([...gateCommands].map(([id, command]) => [id, `${JSON.stringify({
+    schemaVersion: 1,
+    gateId: id,
+    result: "passed",
+    command,
+    exitCode: 0,
+    targetSourceRevision: upgradedLock.targetSourceRevision,
+    releaseSourceRevision: upgradedLock.release.sourceRevision,
+    observedAt: "2026-07-17T00:00:00.000Z",
+  }, null, 2)}\n`]));
+  for (const [id, bytes] of upgradedGateEvidence) writeFileSync(path.join(evidenceDir, `${id}.json`), bytes);
+  writeFileSync(path.join(evidenceDir, "migration-evidence-pack.json"), `${JSON.stringify({
+    schemaVersion: 1,
+    release: upgradedLock.release,
+    targetSourceRevision: upgradedLock.targetSourceRevision,
+    installationReceiptRef: upgradedLock.receiptRef,
+    humanDecisionReceiptRefs: [
+      "docs/receipts/human-policy-decision.json",
+      "docs/receipts/POL-EFFECTIVE-FIXTURE.json",
+    ],
+    gates: [...upgradedGateEvidence].map(([id, bytes]) => ({
+      id,
+      required: true,
+      result: "passed",
+      evidenceRef: `docs/receipts/${id}.json`,
+      evidenceSha256: sha256(bytes),
+    })),
+    allRequiredGatesPassed: true,
+    humanReviewComplete: true,
+    rollbackRef: null,
+  }, null, 2)}\n`);
+  assert.equal(verifyTarget({ target }).status, "MIGRATION_VERIFIED");
+
+  const migrationDecisionFile = path.join(evidenceDir, "human-policy-decision.json");
+  const migrationDecision = JSON.parse(readFileSync(migrationDecisionFile, "utf8"));
+  migrationDecision.sourceFence.repositoryRevision = upgradedLock.targetSourceRevision;
+  writeFileSync(migrationDecisionFile, `${JSON.stringify(migrationDecision, null, 2)}\n`);
+  assert.equal(verifyTarget({ target }).status, "INSTALLED_AWAITING_REVIEW");
 });
 
 test("governance verification rejects promoted observations, private evidence, conflicts, and stale source hashes", (t) => {

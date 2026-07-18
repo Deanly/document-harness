@@ -99,21 +99,23 @@ Markdown / Git authority
 
 ## Single-Repository Presentation Contract
 
-각 View process는 자신을 시작한 repository 하나만 투영하는 독립 서버입니다. top bar에는 `repository_id`와 사람이 읽는 project name을 정적 identity로 표시하며, 사용자가 다른 repository를 고르는 selector를 제공하지 않습니다. 여러 repository를 한 화면에서 aggregate하거나 전환하는 기능은 이 profile의 범위 밖입니다.
+각 View process는 자신을 시작한 repository 하나만 투영하는 독립 서버입니다. 이 사용자 화면의 고정 이름은 **`보드`**입니다. top bar 왼쪽에는 `보드 / <repository>`를 정적 identity로 표시하고, 스크롤 중에도 이 이름과 현재 repository context가 보이도록 상단 chrome을 고정합니다. `보드`는 product/user-facing name이며 repository별로 바꾸지 않습니다. executable, path와 내부 계약은 호환성을 위해 `human-view`와 `Human Control View`를 유지할 수 있습니다.
 
-canonical presentation profile은 `single-repository-top-tabs-v1`입니다.
+사용자가 다른 repository를 고르는 selector를 제공하지 않습니다. 여러 repository를 한 화면에서 aggregate하거나 전환하는 기능은 이 profile의 범위 밖입니다.
+
+canonical presentation profile은 `single-repository-top-tabs-v2`입니다.
 
 ```text
-Static repository identity | freshness | snapshot | READ ONLY | local-only
+보드 / Static repository identity | freshness | snapshot | READ ONLY | local-only
 
-개요 | 정책·지침 | 검토 대기 | 실행 상태 | 근거
+개요 | 정책 | 지침 | 추진안 | 검토 대기 | 실행 상태 | 근거
 ```
 
 - 한 개의 큰 page shell과 상단 horizontal tab list를 사용합니다.
-- canonical tab label과 순서는 정확히 `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거`입니다. URL hash나 내부 tab key는 안정성을 위해 `overview|policies|review|execution|evidence` 같은 기술 식별자를 유지할 수 있지만 사용자에게 보이는 label은 한국어입니다.
+- canonical tab label과 순서는 정확히 `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거`입니다. URL hash나 내부 tab key는 안정성을 위해 `overview|policies|guidelines|initiatives|review|execution|evidence`를 유지하며 사용자에게 보이는 label은 한국어입니다. 기존 `#policies` deep link는 정책 tab을 계속 가리킵니다.
 - left sidebar, collapsible navigation rail, repository selector와 workspace switcher는 제공하지 않습니다.
 - 좁은 화면에서도 tab list를 horizontal scroll 또는 overflow control로 유지하며 sidebar로 변환하지 않습니다.
-- 한 시점에는 선택된 tab panel 하나만 primary content로 표시하되 top bar, repository identity와 freshness는 모든 tab에서 유지합니다.
+- 한 시점에는 선택된 tab panel 하나만 primary content로 표시하되 `보드`, repository identity와 freshness는 모든 tab과 스크롤 위치에서 유지합니다.
 - 모든 tab panel은 같은 immutable `snapshot.id`, `snapshot.seq`와 `read_fence`에서 계산해야 합니다. independently fetched detail의 fence가 다르면 current panel에 섞지 않고 full snapshot refresh 또는 stale/degraded 표시로 처리합니다.
 
 tab별 최소 책임은 다음과 같습니다.
@@ -121,10 +123,21 @@ tab별 최소 책임은 다음과 같습니다.
 | Tab | Human Question | Minimum Surface |
 | --- | --- | --- |
 | `개요` | 이 repository는 어디로 가며 지금 무엇이 중요한가? | plain-language direction, governance/execution summary, attention count, recent verification, freshness |
-| `정책·지침` | AI가 어떤 원칙과 구현 지침을 따르는가? | policy/guideline counts, authority/approval/enforcement, linked guidelines, source provenance, search/filter/expand |
+| `정책` | AI가 어떤 상위 원칙과 사람의 결정을 따라야 하는가? | policy count, authority/approval/enforcement, linked guideline summary, source provenance, policy-specific search/filter/expand |
+| `지침` | 각 정책을 실제 설계·구현에서 어떻게 적용하는가? | guideline count, linked policies, approval/enforcement, source provenance, guideline-specific search/filter/expand |
+| `추진안` | 정책과 선택 지침을 어떤 결과와 프로젝트 경계로 전환하는가? | outcome/current focus, direct policy/guideline refs, approval/lifecycle, reverse-indexed project status/path, source provenance |
 | `검토 대기` | 사람이 지금 무엇을 판단해야 하는가? | severity/order reason, exact request, risk, alternatives, source/checkpoint fence, handoff target |
 | `실행 상태` | 실행 loop는 어디까지 왔고 다음 행동은 무엇인가? | lifecycle and loop state, checkpoint, hypothesis, next actor/action, budget, verification, explicit missing-data state |
 | `근거` | 어떤 근거로 상태·완료·위험을 판단하는가? | source/receipt/validator groups, exact path/revision/hash, result, freshness, residual risk |
+
+정책·지침·추진안은 같은 snapshot을 읽지만 서로 종속된 화면으로 취급하지 않습니다.
+
+- 정책 tab은 정책을 first-class row로 보여주고 각 정책 detail에서 관련 지침을 연결합니다.
+- 지침 tab은 지침을 first-class row로 보여주고 각 지침 detail에서 관련 정책을 역방향으로 연결합니다.
+- 두 tab은 search, filter, pagination과 expanded row state를 독립적으로 보존합니다.
+- 관련 항목이 없어도 다른 종류의 목록을 숨기지 않고 `관련 정책 없음` 또는 `관련 지침 없음`을 명시합니다.
+- 추진안은 별도 `initiative-register.json`과 `I####` 문서에서 읽습니다. 정책은 WHY, 선택 지침은 HOW로 직접 연결하고 Project의 `related_initiative`를 역색인합니다.
+- 추진안은 연결 Project의 상태와 현재 초점까지만 투영하며 Task 진행률을 합산하거나 실행 authority를 상속시키지 않습니다.
 
 ## Korean-First Human Projection Contract
 
@@ -140,7 +153,7 @@ reference profile의 기본 표시 언어는 `ko-KR`입니다. 새 repository의
 
 polling, SSE notification, manual refresh와 snapshot resync는 source state를 갱신하지만 사용자의 reading context를 임의로 초기화하지 않습니다.
 
-- `activeTab`, tab별 filter, `searchQuery`, expanded row/card identity와 pagination position은 browser-local interaction state로 보존합니다.
+- `activeTab`, 정책/지침을 포함한 tab별 filter, `searchQuery`, expanded row/card identity와 pagination position은 browser-local interaction state로 보존합니다.
 - 새 snapshot에 같은 stable item ID가 있으면 expansion과 focus를 유지합니다.
 - item이 삭제되거나 scope 밖으로 이동했을 때만 해당 local selection을 정리하고 이유를 non-blocking status로 알립니다.
 - refresh 중 입력 focus를 빼앗거나 tab을 `개요`로 되돌리지 않습니다.
@@ -212,6 +225,7 @@ root HTML/CSS/JavaScript도 same-origin GET/HEAD로 제공합니다. arbitrary f
     "freshness": "fresh",
     "sourceFence": {
       "governanceCatalog": "docs/_indexes/governance-catalog.json",
+      "initiativeRegister": "docs/_indexes/initiative-register.json",
       "sourceEvidenceState": "fresh",
       "evidenceCurrent": 12,
       "evidenceChanged": 0,
@@ -228,11 +242,12 @@ root HTML/CSS/JavaScript도 same-origin GET/HEAD로 제공합니다. arbitrary f
   "currentRepository": {},
   "policies": [],
   "guidelines": [],
+  "initiatives": [],
   "attention": []
 }
 ```
 
-- UI가 필요로 하는 summary, execution projection과 evidence는 snapshot 내부 stable identity로 연결하고 raw source body/history를 복제하지 않습니다.
+- UI가 필요로 하는 summary, initiative/project reverse index, execution projection과 evidence는 snapshot 내부 stable identity로 연결하고 raw source body/history를 복제하지 않습니다.
 - immutable response는 `ETag`를 제공하고 conditional GET의 unchanged result는 `304 Not Modified`를 사용할 수 있습니다.
 - `GET`, `HEAD`, `OPTIONS` 외 method는 `405 Method Not Allowed`입니다.
 
@@ -333,7 +348,7 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 | HV-11 | read-only | mutation 405, source write capability 없음 |
 | HV-12 | source scope security | traversal, symlink escape, secret, permissive CORS 차단 |
 | HV-13 | repository presentation | static identity가 보이고 repository selector와 left sidebar가 없음 |
-| HV-14 | canonical tabs | `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거`가 순서대로 있고 keyboard navigation 가능 |
+| HV-14 | canonical tabs | `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거`가 순서대로 있고 keyboard navigation 가능 |
 | HV-15 | cross-tab consistency | 모든 tab이 같은 snapshot/read fence를 사용하고 mixed generation이 없음 |
 | HV-16 | refresh continuity | polling/manual refresh 후 tab, filter, search, expansion과 focus가 유지됨 |
 | HV-17 | local asset boundary | external CDN/font/script request가 0이고 local-only/read-only가 유지됨 |
@@ -341,6 +356,9 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 | HV-19 | current HEAD advanced | HEAD movement가 표시되지만 unchanged source evidence는 fresh 유지 |
 | HV-20 | Korean-first projection | chrome과 synthesized human field는 `ko-KR`, technical/source value는 원형 유지 |
 | HV-21 | long metadata | 긴 ID/path/hash가 자기 container 안에서 줄바꿈되고 adjacent content와 겹치지 않음 |
+| HV-22 | fixed user-facing identity | top-left의 `보드 / <repository>`가 모든 tab과 scroll 위치에서 보이고 repository별 rename 대상이 아님 |
+| HV-23 | first-class guideline surface | `지침` tab이 독립 search/filter/pagination/detail을 제공하고 관련 정책을 역방향으로 연결함 |
+| HV-24 | initiative planning trace | `추진안` tab이 정책 WHY, 선택 지침 HOW와 Project의 `related_initiative` 역색인을 보여주며 실행 진척을 추정하지 않음 |
 
 ## Decisions
 
@@ -350,7 +368,7 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - reference v1 transport는 ETag conditional polling이며 SSE는 alternate profile의 optional GET refresh notification입니다.
 - freshness와 connection health를 분리합니다.
 - UI summary는 설명 계층이며 state, authority, receipt, freshness는 machine-readable source에서 계산합니다.
-- v1 presentation은 repository별 독립 server, 정적 identity와 five-tab single-page profile을 사용합니다.
+- v1 presentation은 repository별 독립 server, 고정 사용자명 `보드`, 정적 repository identity와 seven-tab single-page profile을 사용합니다.
 - repository selector와 left sidebar는 이 profile에 포함하지 않습니다.
 - 기본 human projection은 `ko-KR`이며 localization은 authority/approval/evidence를 바꾸지 않습니다.
 - technical ID와 provenance는 보조 metadata로 원형 보존하고 container 밖으로 넘치지 않게 합니다.
@@ -384,3 +402,4 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - 2026-07-16: shipped Node/ETag reference View distribution, exact read endpoints, migration/current/source fence separation과 lease-safe no-DB runtime profile을 current contract로 정렬했다.
 - 2026-07-17: approved/effective projection을 complete source fence와 real decision/effective evidence에 묶고, Execution Status 입력을 canonical `docs/checkpoints/*.md`의 deterministic fail-closed selection으로 정렬했다.
 - 2026-07-17: `ko-KR` human projection, localization authority fence와 긴 technical metadata containment를 고정했다.
+- 2026-07-17: 사용자용 고정 이름을 `보드`로 정하고 정책과 지침을 상호 연결된 독립 최상위 tab으로 분리했다.

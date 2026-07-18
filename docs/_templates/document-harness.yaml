@@ -9,6 +9,7 @@ profiles:
   - view
 installation_lock: docs/_indexes/harness-installation.yaml
 governance_catalog: docs/_indexes/governance-catalog.json
+initiative_register: docs/_indexes/initiative-register.json
 agent_skill:
   name: operate-document-harness
   scope: repository
@@ -20,14 +21,16 @@ view:
   bind_host: 127.0.0.1
   port_mode: auto
   presentation:
-    profile: single-repository-top-tabs-v1
+    profile: single-repository-top-tabs-v2
     locale: ko-KR
     repository_identity: static
     repository_selector: false
     sidebar: false
     tabs:
       - 개요
-      - 정책·지침
+      - 정책
+      - 지침
+      - 추진안
       - 검토 대기
       - 실행 상태
       - 근거

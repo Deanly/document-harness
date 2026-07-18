@@ -48,6 +48,8 @@ loop state/checkpoint/attention canonical fields는 `docs/design/execution-loop-
 
 local view는 cockpit이지 기록 원장이 아닙니다.
 
+사람이 이 화면을 부르는 고정 이름은 **`보드`**입니다. 대화에서는 “보드”, “보드 화면”, “보드를 띄워줘”를 사용하고, executable과 내부 기술 문맥에서는 호환성을 위해 `human-view`와 `Human Control View`를 유지합니다.
+
 - Markdown/Git source가 목표, 상태, checkpoint, evidence, decision/approval receipt의 truth입니다.
 - view는 source를 읽어 만든 immutable snapshot입니다.
 - reference v1의 ETag polling과 optional SSE는 새 snapshot을 읽게 할 뿐 action을 실행하지 않습니다.
@@ -66,23 +68,25 @@ local view는 cockpit이지 기록 원장이 아닙니다.
 
 ```text
 Top Bar
-  static repository identity | freshness | snapshot | Git head/dirty
+  보드 / static repository identity | freshness | snapshot | Git head/dirty
   local-only | READ ONLY | health
 
 Horizontal Tabs
-  개요 | 정책·지침 | 검토 대기 | 실행 상태 | 근거
+  개요 | 정책 | 지침 | 추진안 | 검토 대기 | 실행 상태 | 근거
 
 Selected Tab Panel
   one large reading and operation surface
 ```
 
-이 View는 repository마다 독립적으로 실행되므로 repository selector, workspace switcher와 left sidebar를 두지 않습니다. repository identity는 top bar의 고정 context이고, 5개 tab은 정확히 위 한국어 순서와 label을 사용합니다. 내부 route/hash key는 기존 bookmark와 stable interaction을 위해 영문 기술 식별자를 유지할 수 있습니다. 좁은 화면은 horizontal tab overflow로 대응하며 left navigation으로 변환하지 않습니다.
+이 View는 repository마다 독립적으로 실행되므로 repository selector, workspace switcher와 left sidebar를 두지 않습니다. top bar 왼쪽의 `보드 / <repository>`는 고정 context이며, 스크롤 중에도 계속 보여야 합니다. `보드`는 repository config로 바꾸는 brand field가 아닙니다. 7개 tab은 정확히 위 한국어 순서와 label을 사용합니다. 내부 route/hash key는 `overview|policies|guidelines|initiatives|review|execution|evidence`를 사용하고 기존 `#policies`는 정책 tab을 계속 가리킵니다. 좁은 화면은 horizontal tab overflow로 대응하며 left navigation으로 변환하지 않습니다.
 
 상단 bar의 `connected` 표시는 freshness를 의미하지 않습니다. `fresh`, `updating`, `direct`, `degraded`, `unknown`을 별도 badge로 표시합니다.
 
 ## Reference View Operations
 
 `view` profile은 public release가 byte-pin한 `runtime/document-harness-view/`를 설치합니다. 디자인을 repository마다 다시 생성하지 않고, generated `config.json`의 static identity와 repository-specific source/probe/quality declaration만 바꿉니다.
+
+업그레이드에서 새 필수 field가 생기면 adopter는 확인된 legacy shape에 한해 누락 field만 추가하고 기존 repository-specific 값은 유지합니다. 안전한 additive migration을 증명할 수 없는 config는 자동 교체하지 않고 conflict로 보고하며, 적용된 migration은 apply receipt로 되돌릴 수 있습니다.
 
 ```bash
 ./runtime/document-harness-view/bin/human-view doctor
@@ -93,6 +97,17 @@ Selected Tab Panel
 ./runtime/document-harness-view/bin/human-view stop
 ./runtime/document-harness-view/bin/human-view test
 ```
+
+AI 도구는 사용자의 짧은 한국어 표현을 현재 repository의 위 명령으로 route합니다.
+
+| 사용자 표현 | 수행할 기술 동작 |
+| --- | --- |
+| `보드를 띄워줘`, `보드를 열어줘` | `human-view start` 후 `human-view url`로 현재 repository 주소를 안내 |
+| `보드 상태를 알려줘` | `human-view status` |
+| `보드를 갱신해줘` | `human-view refresh` 후 새 snapshot sequence 확인 |
+| `보드를 꺼줘` | `human-view stop` |
+
+이 표현은 현재 repository의 독립 instance만 가리킵니다. 다른 repository 선택, remote bind, 임의 port 선점 또는 foreign process 종료 권한을 뜻하지 않습니다.
 
 - `doctor`는 config/catalog/source/migration fence와 projection을 read-only 검사합니다.
 - `refresh`는 allowlisted credential-free loopback probes를 읽고 runtime-local sanitized data만 atomic update합니다. quality command를 실행하지 않습니다.
@@ -112,7 +127,9 @@ reference View의 기본 locale은 `ko-KR`입니다.
 - 기존 영어 catalog의 human-facing field를 한국어로 바꾸는 migration은 presentation-only입니다. stable ID, source ref/hash, authority, approval, enforcement, effective ref, receipt와 evidence freshness를 그대로 유지하고, 번역만으로 의미나 승인 상태를 바꾸지 않습니다.
 - source heading이나 exact quote가 영어이면 provenance는 그대로 보여주되 별도의 한국어 summary를 제공합니다. 출처 문구를 번역한 값을 exact source라고 표시하지 않습니다.
 
-## Five-Tab Product Plan
+`보드를 띄워줘`, `보드 화면`은 현재 repository의 View를 뜻합니다. `보드 선택`, `보드 이식`, `target board`처럼 하드웨어 문맥이 함께 있으면 View 명령으로 해석하지 않습니다.
+
+## Seven-Tab Product Plan
 
 ### 개요
 
@@ -127,17 +144,40 @@ reference View의 기본 locale은 `ko-KR`입니다.
 
 metric은 숫자만 표시하지 않고 의미와 기준 snapshot을 함께 표시합니다. 실행 checkpoint가 없으면 진행률을 추정하지 않고 `실행 체크포인트가 구성되지 않았습니다`처럼 source gap을 한국어로 명시합니다.
 
-### 정책·지침
+### 정책
 
-정책과 지침을 사람이 비교·검토하는 primary work surface입니다.
+사람이 정한 상위 방향과 AI가 따라야 하는 경계를 검토하는 first-class work surface입니다.
 
-- 상단에 policy/guideline/candidate/effective/approved/unreviewed count를 독립적으로 표시합니다.
-- search는 title, human summary, related guideline와 exact source path를 대상으로 합니다.
+- 상단에 policy/candidate/effective/approved/unreviewed count를 표시합니다.
+- search는 policy title, human summary, related guideline와 exact source path를 대상으로 합니다.
 - filter chip은 authority, approval, enforcement, severity와 stale/conflict를 사용하고 활성 조건을 text로 보여줍니다.
 - dense table의 기본 column은 `상태`, `정책`, `관련 지침`, `권한·승인`, `집행`, `근거`입니다.
 - row expand는 why, scope, related guideline details, conflict, source heading/line/hash와 freshness를 한 자리에서 보여줍니다.
 - candidate와 effective policy, AI confidence와 human approval은 같은 badge로 합치지 않습니다.
 - 한 page에 읽기 어려운 전체 Markdown을 노출하지 않고 paginated rows와 structured detail을 사용합니다.
+
+### 지침
+
+정책을 설계·구현·운영에 적용하는 방법을 독립적으로 탐색하고 AI 도구와 함께 다듬는 first-class work surface입니다.
+
+- 상단에 guideline/candidate/effective/approved/unreviewed count를 정책과 별도로 표시합니다.
+- search는 guideline title, human summary, linked policy, exact source path를 대상으로 합니다.
+- filter, pagination, expanded row state는 정책 tab과 공유하지 않고 지침 tab 자체에서 유지합니다.
+- dense table의 기본 column은 `상태`, `지침`, `관련 정책`, `권한·승인`, `집행`, `근거`입니다.
+- row expand는 why, scope, linked policy details, conflict, source heading/line/hash와 freshness를 보여줍니다.
+- 정책 detail의 `관련 지침`과 지침 detail의 `관련 정책`은 같은 stable ID 관계를 양방향으로 보여줍니다.
+- 관련 정책이 없으면 빈칸으로 숨기지 않고 `관련 정책 없음`을 표시하며 review 대상 여부를 별도로 판단합니다.
+
+### 추진안
+
+정책과 지침을 프로젝트 실행 경계로 전환하는 전략 단위입니다. 저장 형식의 canonical technical name은 `initiative`, 번호 문서는 `I####`, 사용자 화면 label은 `추진안`입니다.
+
+- 정책은 추진안의 존재 이유와 비가역 경계인 `WHY`로 직접 연결하며 최소 한 개를 요구합니다.
+- 지침은 이번 추진에서 선택한 `HOW`만 직접 연결합니다. 정책에 연결됐다는 이유로 모든 지침을 자동 상속하지 않습니다.
+- 검토 중인 지침은 `적용됨`으로 과장하지 않고 `지침 검토 필요`로 표시합니다.
+- 추진안은 결과, 지금 필요한 이유, 현재 초점, 성공 신호, 위험과 승인 상태를 보여줍니다.
+- 연결 프로젝트는 Project의 `related_initiative`를 역색인해 상태·현재 초점·원문 경로까지만 보여줍니다. 프로젝트 진행률과 Task 상태를 추진안에서 임의 합산하지 않습니다.
+- 추진안 승인과 활성화는 사람의 결정 영수증과 `I####` 문서가 필요하며 View 자체는 이를 수정하지 않습니다.
 
 ### 검토 대기
 
@@ -452,8 +492,10 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] approved write는 별도 broker/executor/validator receipt를 거친다.
 - [ ] path traversal, symlink escape, excluded sensitivity, browser-origin 공격을 차단한다.
 - [ ] cache 삭제 뒤 hidden decision/approval truth가 손실되지 않는다.
-- [ ] top bar가 현재 repository identity를 정적으로 표시하고 selector/workspace switcher가 없다.
-- [ ] left sidebar 없이 `개요`, `정책·지침`, `검토 대기`, `실행 상태`, `근거`를 canonical order의 five horizontal tabs로 제공한다.
+- [ ] top bar 왼쪽의 `보드 / <repository>`가 모든 tab과 scroll 위치에서 보이고 selector/workspace switcher가 없다.
+- [ ] left sidebar 없이 `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거`를 canonical order의 seven horizontal tabs로 제공한다.
+- [ ] `정책`과 `지침` tab이 각각 독립 search/filter/pagination/detail state를 가지며 related guideline/policy를 양방향으로 연결한다.
+- [ ] `추진안` tab이 독립 search/filter/pagination/detail state를 가지며 정책 WHY, 선택 지침 HOW와 역색인된 Project 연결을 보여준다.
 - [ ] 모든 tab이 같은 snapshot/read fence를 사용한다.
 - [ ] polling/manual refresh 뒤 active tab, filter, search, expansion과 focus가 유지된다.
 - [ ] external CDN/font/script request가 없고 same-origin local asset만 사용한다.
@@ -483,3 +525,5 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - 2026-07-16: shipped reference View의 doctor/refresh/start/status/url/stop/test, Node no-DB/ETag/lease-safe runtime과 migration/current/source fence 운영 절차를 추가했다.
 - 2026-07-17: approval badge를 complete source/decision/effective evidence에 묶고 `실행 상태`를 canonical Markdown checkpoint의 deterministic fail-closed projection으로 정렬했다.
 - 2026-07-17: 한국어 우선 표시, 기술 식별자 원형 보존, presentation-only localization과 긴 ID containment 계약을 추가했다.
+- 2026-07-17: 화면의 고정 사용자명을 `보드`로 정하고 정책과 지침을 독립 최상위 tab과 양방향 관계로 분리했다.
+- 2026-07-17: 정책·지침과 프로젝트 사이에 별도 `I####` 추진안 계층과 일곱 번째 top tab을 추가했다.

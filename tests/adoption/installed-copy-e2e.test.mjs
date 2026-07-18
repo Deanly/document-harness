@@ -31,7 +31,14 @@ test("installed full-profile copy operates, preserves project instructions, roll
   const target = path.join(base, "target");
   mkdirSync(target);
   git(target, "init", "-q");
-  const projectInstructions = Buffer.from("# Existing project instructions\n\nKeep these project-owned bytes.\n");
+  const projectInstructions = Buffer.from([
+    "# Existing project instructions",
+    "",
+    "Keep these project-owned bytes and repository-specific safety rules.",
+    "Harness adoption starts at `docs/ADOPT.md`; loop-enabled execution starts at `docs/EXECUTE.md`.",
+    "Both delegate to `.agents/skills/operate-document-harness/SKILL.md`, the canonical repository-local skill.",
+    "",
+  ].join("\n"));
   writeFileSync(path.join(target, "AGENTS.md"), projectInstructions);
   git(target, "add", "AGENTS.md");
   git(

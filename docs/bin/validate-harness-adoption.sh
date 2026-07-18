@@ -67,7 +67,7 @@ done
 
 for schema in \
   adoption-plan apply-receipt governance-catalog harness-installation-lock \
-  human-policy-decision-receipt migration-evidence-pack release-manifest \
+  human-policy-decision-receipt initiative-activation-receipt initiative-register migration-evidence-pack release-manifest \
   rollback-receipt verification-receipt; do
   require_file "$SCHEMA_DIR/${schema}.schema.json"
 done
@@ -78,12 +78,12 @@ require_executable "$REFERENCE_VIEW/bin/human-view"
 
 for value in \
   "Select The Path" "Adoption Sequence" "Executable V1" "Status Contract" \
-  "Non-Negotiable Rules" "Project Skill Bootstrap" "Start Gate" \
+  "Non-Negotiable Rules" "Mature Repository Governance Bootstrap" "Project Skill Bootstrap" "Start Gate" \
   "requestedProfiles" "requiredProfiles" "requiredInstalledPaths"; do
   require_contains "$ADOPT" "$value"
 done
 
-for value in "Korean-First Human Projection" "ko-KR" "presentation-only migration" "긴 ID"; do
+for value in "Korean-First Human Projection" "Mature Repository Governance Bootstrap" "INIT-*" "ko-KR" "presentation-only migration" "긴 ID"; do
   require_contains "$ADOPT_TEMPLATE" "$value"
 done
 
@@ -134,12 +134,12 @@ for value in \
 done
 
 for value in \
-  "Five-Tab Product Plan" "Reference View Operations" \
+  "Seven-Tab Product Plan" "Reference View Operations" \
   "Interaction And Refresh Stability" "Semantic Design System"; do
   require_contains "$HUMAN_VIEW_GUIDE" "$value"
 done
 
-for value in "개요" "정책·지침" "검토 대기" "실행 상태" "근거"; do
+for value in "보드" "개요" "정책" "지침" "추진안" "검토 대기" "실행 상태" "근거"; do
   require_contains "$HUMAN_VIEW_DESIGN" "$value"
   require_contains "$HUMAN_VIEW_GUIDE" "$value"
 done
@@ -156,7 +156,7 @@ for value in \
   "global_install: false" \
   "bind_host: 127.0.0.1" \
   "port_mode: auto" \
-  "profile: single-repository-top-tabs-v1" \
+  "profile: single-repository-top-tabs-v2" \
   "repository_identity: static" \
   "repository_selector: false" \
   "sidebar: false" \
@@ -176,7 +176,7 @@ for value in \
   require_contains "$CODEX_SKILL" "$value"
 done
 
-for value in 'display_name: "Operate Document Harness"' 'default_prompt: "Use $operate-document-harness'; do
+for value in 'display_name: "Document Harness 운영"' 'default_prompt: "Use $operate-document-harness'; do
   require_contains "$CODEX_SKILL_METADATA" "$value"
 done
 
@@ -214,6 +214,8 @@ assert.equal(catalog.schemaVersion, 1);
 assert.deepEqual(Object.keys(catalog.migration.capturedRepository).sort(), ["baseCommit", "workingTreeState"]);
 assert.equal(catalog.migration.status, "awaiting_human_review");
 assert.ok(Array.isArray(catalog.gaps) && catalog.gaps.length > 0);
+assert.ok(catalog.attention.some(({ id, severity }) => id === "ATTN-INITIATIVE-EXTRACTION" && severity === "decision"));
+assert.ok(catalog.gaps.some(({ id }) => id === "GAP-INITIATIVE-EXTRACTION"));
 
 const governance = schema("governance-catalog");
 assert.ok(governance.properties.migration.required.includes("capturedRepository"));
@@ -242,6 +244,15 @@ assert.ok(approvalGuard);
 assert.equal(approvalGuard.then.properties.effectiveRef.type, "string");
 assert.equal(approvalGuard.then.properties.decisionReceiptRef.type, "string");
 
+const initiatives = schema("initiative-register");
+for (const field of [
+  "id", "kind", "title", "humanSummary", "outcome", "whyNow", "lifecycleState",
+  "approvalState", "owner", "currentFocus", "policyRefs", "policyRelationships", "guidelineRefs", "guidelineRelationships",
+  "guidelineDisposition", "guidelineDispositionReason", "legacyProjectRefs", "documentRef", "sourceRevision", "sourceRefs",
+]) assert.ok(initiatives.$defs.initiative.required.includes(field), `initiative requires ${field}`);
+assert.equal(initiatives.$defs.initiative.properties.id.pattern, "^(?:I[0-9]{4}|INIT-[A-Z0-9][A-Z0-9-]*)$");
+assert.equal(initiatives.$defs.initiative.properties.policyRefs.minItems, 1);
+
 const evidencePack = schema("migration-evidence-pack");
 assert.ok(evidencePack.properties.gates.items.required.includes("evidenceSha256"));
 assert.equal(evidencePack.properties.gates.items.properties.evidenceSha256.pattern, "^[a-f0-9]{64}$");
@@ -256,7 +267,8 @@ assert.equal(effectiveDecisionGuard.then.properties.effectiveSha256.type, "strin
 const { ALLOWED_ACTIONS, ALLOWED_STATUSES } = await import(pathToFileURL(adoptLib));
 const adoptSource = readFileSync(adoptLib, "utf8");
 for (const contractMarker of [
-  "GOVERNANCE_CATALOG_PATH", "OBSERVATION_PROMOTED_WITHOUT_POLICY_AUTHORITY",
+  "GOVERNANCE_CATALOG_PATH", "INITIATIVE_REGISTER_PATH", "INITIATIVE_BOOTSTRAP_UNRESOLVED",
+  "INVALID_INITIATIVE_MIGRATION_CANDIDATE", "OBSERVATION_PROMOTED_WITHOUT_POLICY_AUTHORITY",
   "PRIVATE_SOURCE_EXCLUDED", "STALE_OR_INVALID_SOURCE_REF",
   "CONFLICTING_CANDIDATE_AUTO_RESOLVED", "CATALOG-REVIEW", "evidenceSha256", "effectiveSha256",
 ]) assert.ok(adoptSource.includes(contractMarker), `adoption engine enforces ${contractMarker}`);
@@ -281,18 +293,18 @@ assert.equal(schema("rollback-receipt").properties.status.const, "ROLLED_BACK");
 
 const view = readJson(viewFile);
 assert.deepEqual(Object.keys(view).sort(), [
-  "bindHost", "governanceCatalog", "portMode", "probes", "project", "qualityCommands", "schemaVersion",
+  "bindHost", "governanceCatalog", "initiativeRegister", "portMode", "probes", "project", "qualityCommands", "schemaVersion",
 ]);
 assert.equal(view.bindHost, "127.0.0.1");
 assert.equal(view.portMode, "auto");
 assert.deepEqual(Object.keys(view.qualityCommands).sort(), ["continuous", "fast", "full"]);
-for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint", "refreshIntervalMs", "reconcileIntervalMs", "presentation", "consistency"]) {
+for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint", "projectRoot", "refreshIntervalMs", "reconcileIntervalMs", "presentation", "consistency"]) {
   assert.equal(Object.hasOwn(view, fixedRuntimeKey), false, `${fixedRuntimeKey} belongs to the versioned runtime, not project config`);
 }
 
 const release = readJson(releaseFile);
 assert.equal(release.releaseId, "document-harness-public-v1");
-assert.equal(release.version, "1.1.0");
+assert.equal(release.version, "1.3.0");
 assert.deepEqual(release.profileDependencies, {
   core: [],
   governance: ["core"],
@@ -313,6 +325,7 @@ for (const target of [
   "docs/bin/validate-execution-loop.sh", "docs/_indexes/execution-loop-policy.yaml",
   "docs/_templates/execution-checkpoint.md", "docs/design/control-plane.md",
   "docs/schemas/governance-catalog.schema.json", "runtime/document-harness-view/bin/human-view",
+  "docs/schemas/initiative-register.schema.json", "docs/_indexes/initiative-register.json",
   "runtime/document-harness-view/lib/projection.mjs", "runtime/document-harness-view/lib/runtime-state.mjs",
   "runtime/document-harness-view/test/runtime-state.test.mjs", "runtime/document-harness-view/public/index.html",
   "runtime/document-harness-view/server.mjs", "runtime/document-harness-view/config.json",

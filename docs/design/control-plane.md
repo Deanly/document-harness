@@ -5,7 +5,7 @@ status: current
 domain: control-plane
 owner:
 created: 2026-04-14
-updated: 2026-07-16
+updated: 2026-07-18
 retrieval_class:
   - core-start
 context:
@@ -29,7 +29,7 @@ tags:
 - Domain: control-plane
 - Owner:
 - Created: 2026-04-14
-- Updated: 2026-07-16
+- Updated: 2026-07-18
 - Referenced By:
   - `docs/README.md`
 
@@ -37,7 +37,7 @@ tags:
 
 이 문서는 전체 시스템 목표, 표준 pipeline, active control surface, quality axis, validator를 한 곳에 모아 두는 central control surface입니다.
 
-`design`이 전체를 놓치지 않게 만드는 장치라면, 이 문서는 그 `design` 문서들 사이의 상위 정렬면입니다. 새 `project`와 `task`는 이 문서를 whole-system anchor로 참조해야 하며, human-facing initiative의 기본 owner는 umbrella `project`로 유지합니다.
+`design`이 전체를 놓치지 않게 만드는 장치라면, 이 문서는 그 `design` 문서들 사이의 상위 정렬면입니다. 새 `initiative`, `project`, `task`는 이 문서를 whole-system anchor로 참조하며, strategy/portfolio owner는 별도 `initiative`, delivery owner는 `project`, 실행 owner는 `task`로 분리합니다.
 
 ## Whole-System Outcome
 
@@ -56,8 +56,8 @@ tags:
 
 ### Focused Execution
 
-- active umbrella `project`
-- 예외 조건을 만족한 active branch `project`
+- active `initiative`가 선택한 portfolio outcome
+- initiative에 연결된 active bounded `project`
 - active `task`
 - WBS와 gate가 있는 실행 문서
 
@@ -111,36 +111,51 @@ tags:
 | `docs/design/control-plane.md` | 전체 목표, pipeline, validator 정렬 | Active | |
 | `docs/design/retrieval-plane.md` | hybrid 검색, revision, freshness, 복구 계약 | Active | 규모/freshness trigger가 있을 때 선택 |
 | `docs/design/policy-to-evidence-governance.md` | human policy, AI proposal, approval, exception, evidence traceability | Active | governance-sensitive work에서 선택 |
+| `docs/design/initiative-governance-plane.md` | policy/guideline → 추진안 → project/task hierarchy, approval, legacy bridge | Active | initiative authoring, project linkage, umbrella migration에서 선택 |
 | `docs/design/execution-loop-plane.md` | checkpoint, attention, stop/resume, evidence barrier | Active | loop-enabled task 실행에서 선택 |
 | `docs/design/human-control-view-plane.md` | projector, snapshot API/SSE, freshness, read-only security/runtime | Active | human view runtime 설계에서 선택 |
 | `docs/design/harness-adoption-plane.md` | executable ownership-aware initialize/migrate/upgrade/verify/rollback, policy extraction, versioned repo-local View/quality handoff | Active | public v1 CLI/schema/release/status contract; existing repository adoption에서 선택 |
 | `docs/design/ubiquitous-language.md` | canonical term 정렬 | Active | |
 | `docs/design/<domain>.md` | 현재 시스템 경계와 계약 | Add | 필요한 도메인 설계를 추가합니다. |
 
-## Umbrella Initiative Policy
+## Initiative Portfolio Policy
 
-- human이 인식하는 하나의 product, initiative, workstream은 기본적으로 umbrella `project` 1개로 유지합니다.
-- 새 work는 먼저 기존 umbrella `project` 아래의 새 `task`로 수용 가능한지 검토합니다.
-- 새 `project` 발급은 사람만 하며, 에이전트는 발급 필요성과 근거만 제안합니다.
-- 새 `project`는 사용자 명시 요청, 본질적인 completion mode 분리, owner/운영 검증 체계 분리 같은 예외가 명확할 때만 허용합니다.
-- 새 `project`가 필요하다면 `Project Issuance Check`에 왜 task가 안 되는지와 왜 human에게 더 읽기 쉬운지 남깁니다.
-- 번호가 붙는 `project`와 `task` 문서는 clean, up-to-date `main`에서만 발급하고, 생성된 `draft`를 즉시 `main`에 commit합니다.
+- 사용자 화면과 대화에서는 initiative를 `추진안`, source/schema에서는 `initiative`, stable ID에서는 `I####`로 부릅니다.
+- 추진안은 policy와 guideline에 모두 직접 연결하며, policy는 WHY/WHAT, guideline은 HOW/EVIDENCE를 제공합니다.
+- 새 추진안은 사람이 exact issuance를 승인한 뒤에만 clean, up-to-date `main`에서 발급합니다.
+- activation은 issuance와 별도 gate이며 `approval_status: approved`, exact `approval_ref`, `status: active`가 함께 필요합니다.
+- 하나의 추진안은 여러 bounded project를 연결할 수 있고, project는 기본적으로 한 개의 canonical `related_initiative`를 가집니다.
+- 새 work는 먼저 현재 project 아래 새 task로 수용 가능한지 검토하고, 별도 delivery boundary일 때만 사람 승인 아래 새 project를 발급합니다.
 
-## Active Umbrella Projects
+## Active Initiatives
 
-| Umbrella Project | Initiative | Status | Notes |
+| Initiative | Outcome | Approval / Status | Linked Projects | Notes |
+| --- | --- | --- | --- | --- |
+| `docs/initiatives/<I0001-slug>.md` | portfolio outcome | Add | project source에서 reverse-index | active 추진안을 여기에 적습니다. |
+
+## Active Delivery Projects
+
+| Project | Initiative Ref | Status | Notes |
 | --- | --- | --- | --- |
-| `docs/projects/<P0001-slug>.md` | human-facing initiative owner | Add | active umbrella project를 여기에 적습니다. |
+| `docs/projects/<P0001-slug>.md` | `I0001` | Add | bounded delivery project를 여기에 적습니다. |
+
+## Legacy Umbrella Project Bridge
+
+- `related_initiative`가 없는 기존 umbrella project와 `related_project`가 없는 기존 task의 legacy lineage는 migration 전까지 유효합니다.
+- legacy `umbrella_initiative` 문자열을 승인된 `I####`로 자동 승격하지 않습니다.
+- migration은 candidate 작성, policy/guideline 관계 정돈, human issuance/activation approval, ref 보강 순서로 진행합니다.
+- modern ref가 추가되면 `related_initiative`가 canonical lineage이며 legacy field는 compatibility metadata입니다.
 
 ## Active Execution Surfaces
 
 | Surface | Purpose | Status | Notes |
 | --- | --- | --- | --- |
 | `docs/ADOPT.md` | new/mature/versioned repository adoption orchestration | Active | `harness-adopt plan|apply|verify|rollback`; migration은 target 밖 no-write plan과 ownership fence부터 시작 |
-| `.agents/skills/operate-document-harness/SKILL.md` | repository-local adoption/execution/policy/View workflow router | Active | user-global install 없이 durable repository entrypoint로 위임 |
+| `.agents/skills/operate-document-harness/SKILL.md` | repository-local adoption/execution/policy/`보드` workflow router | Active | user-global install 없이 durable repository entrypoint로 위임 |
 | `docs/EXECUTE.md` | loop-enabled task 시작·재개·중단·closeout orchestration | Active | current task/checkpoint와 exact authority refs 앞에서 읽는 실행 진입점 |
-| `docs/projects/README.md` | active umbrella-first project 입구 | Active | lineage가 먼저 보여야 합니다. |
-| `docs/tasks/README.md` | active task 입구 | Active | 각 task의 umbrella owner가 드러나야 합니다. |
+| `docs/initiatives/README.md` | active 추진안 입구 | Active | outcome, approval, owner와 project linkage가 먼저 보여야 합니다. |
+| `docs/projects/README.md` | active delivery project 입구 | Active | 각 project의 initiative ref가 보여야 합니다. |
+| `docs/tasks/README.md` | active task 입구 | Active | 각 task의 project와 그 Project를 통한 initiative 계보가 드러나야 합니다. |
 | `docs/reports/README.md` | active report 입구 | Active | |
 | `docs/qa/README.md` | current QA 입구 | Active | strategy/plan/cases/runbook selection surface |
 | `docs/design/README.md` | design retrieval 입구 | Active | design corpus selection index |
@@ -165,9 +180,10 @@ tags:
 | Codex orientation | Codex가 repo에서 안전하게 작업해야 할 때 | `AGENTS.md`, Codex guide, readiness validator | agent entrypoint와 검증 명령이 일치함 |
 | Source ingest | 새 source, transcript, report, article, dataset을 durable knowledge로 반영할 때 | `source_refs`, source summary, 관련 `design`/`guide`/`report` 갱신 | 원문 위치, 해석 surface, 충돌 여부가 연결됨 |
 | Policy alignment | human policy 또는 조직 지침을 개발 방향으로 구체화할 때 | non-authoritative proposal, human decision, effective normative design, operational guide | proposal/effective가 분리되고 exact approval/rule version이 연결됨 |
+| Initiative issue | 정책·지침을 portfolio outcome과 project 방향으로 연결할 때 | human-approved main-issued `I####` draft와 activation review | policy/guideline direct links, success signals, issuance/activation refs 고정 |
 | Scalable retrieval | corpus 규모, 의미 검색 miss, freshness 병목이 반복될 때 | source registry, hybrid projection, revision receipt, reconciliation | source-authoritative query와 visibility SLO가 검증됨 |
-| Project issue | 사람이 첫 initiative owner를 발급하거나 사람 승인 하에 예외 조건이 명확할 때 | main-issued umbrella `project` 또는 exception branch `project` draft commit | lineage / scope / out-of-scope / WBS / whole-system anchor 고정 |
-| Task issue | 기존 umbrella 아래에서 실제로 닫을 수 있는 execution slice가 생길 때 | main-issued `task` draft commit | goal inventory / task placement / handoff / quality axes 고정 |
+| Project issue | 승인된 추진안 안에 별도 bounded delivery가 필요할 때 | `related_initiative`가 있는 main-issued `project` draft commit | initiative alignment / scope / out-of-scope / WBS / whole-system anchor 고정 |
+| Task issue | project 아래에서 실제로 닫을 수 있는 execution slice가 생길 때 | `related_project`를 통해 추진안 계보를 따르는 main-issued `task` draft commit | goal inventory / task placement / handoff / quality axes 고정 |
 | Execute | 구현, 검증, 운영 정렬이 진행될 때 | current checkpoint, attention/decision/verification receipt, evidence delta, append-only milestone | execution barrier와 closeout gate 통과 |
 | Wiki lint | 큰 ingest 후 또는 주기적으로 stale/drift를 점검할 때 | property 정리, missing cross-reference, stale claim 수정 제안 | active index, properties, current truth가 다시 맞음 |
 | Closeout | 문서를 닫을 수 있을 때 | `done` 상태와 append-only closeout evidence | goal verification 전부 `Done` |
@@ -195,8 +211,9 @@ tags:
 - `AGENTS.md`는 Codex가 즉시 읽는 instruction surface이고, 상세 규칙은 `docs/guide`로 넘깁니다.
 - `operate-document-harness`는 repository-local router이며 user-global skill, human authority 또는 deterministic validator를 대체하지 않습니다.
 - raw source는 불변 입력으로 두고, 생성 문서는 `source_refs`와 본문 참조로 연결합니다.
-- `project`는 delivery boundary를 잠그고, `task`로 분해해 부분 실행을 통제합니다.
-- umbrella `project`는 lineage의 기본 owner를 유지하고, 예외 branch `project`가 생겨도 먼저 설명합니다.
+- `initiative`는 policy/guideline 방향과 portfolio outcome을 잠그고, `project`는 bounded delivery를, `task`는 실행을 통제합니다.
+- View의 initiative→project 연결은 project source의 `related_initiative`를 reverse-index한 projection이며 별도 truth를 만들지 않습니다.
+- legacy umbrella project는 migration 전까지 보존하지만 새 authoring model의 strategy owner로 사용하지 않습니다.
 - `task`는 증빙과 handoff를 남기고 다음 `task`, `project`, downstream 시스템으로 넘깁니다.
 - loop-enabled task는 current checkpoint를 resume surface로 사용하고 `Status`는 append-only milestone history로 유지합니다.
 - local human view는 source path/revision/freshness를 보이는 derived projection이며 task, approval, evidence를 자체 truth로 소유하지 않습니다.
@@ -218,3 +235,4 @@ tags:
 - 2026-07-15: ownership-aware harness adoption, repository policy extraction, repo-local View/quality handoff를 active control surface에 추가.
 - 2026-07-16: repository-local `operate-document-harness` canonical skill과 thin Claude adapter를 Codex/adoption control surface에 추가.
 - 2026-07-16: executable adoption v1 lifecycle, machine-readable schemas/release manifest, fail-closed statuses와 versioned reference View를 active control surface에 정렬.
+- 2026-07-18: 별도 추진안 계층, policy/guideline direct relation, initiative→project→task hierarchy와 legacy umbrella bridge를 active control surface에 정렬.

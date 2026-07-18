@@ -109,6 +109,8 @@ function inventoryGate(adoptionTests, viewTests) {
     "docs/schemas/governance-catalog.schema.json",
     "docs/schemas/harness-installation-lock.schema.json",
     "docs/schemas/human-policy-decision-receipt.schema.json",
+    "docs/schemas/initiative-activation-receipt.schema.json",
+    "docs/schemas/initiative-register.schema.json",
     "docs/schemas/migration-evidence-pack.schema.json",
     "docs/schemas/release-manifest.schema.json",
     "docs/schemas/rollback-receipt.schema.json",

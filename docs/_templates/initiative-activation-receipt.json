@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "{{HUMAN_DECISION_ID}}",
+  "candidateId": "{{INITIATIVE_ID}}",
+  "decision": "approved",
+  "decidedBy": {
+    "actorKind": "human",
+    "identifier": "{{HUMAN_IDENTIFIER}}"
+  },
+  "decidedAt": "{{RFC3339_TIMESTAMP}}",
+  "sourceFence": {
+    "repositoryRevision": "{{INITIATIVE_SOURCE_REVISION}}",
+    "sourceHashes": ["{{INITIATIVE_SOURCE_SHA256}}"]
+  },
+  "effectiveRef": "docs/initiatives/{{INITIATIVE_ID}}-{{SLUG}}.md",
+  "effectiveSha256": "{{CURRENT_INITIATIVE_DOCUMENT_SHA256}}",
+  "reason": "{{HUMAN_ACTIVATION_REASON}}"
+}

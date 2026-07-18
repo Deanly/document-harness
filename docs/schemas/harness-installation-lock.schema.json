@@ -10,7 +10,7 @@
     "release": { "$ref": "#/$defs/releaseFence" },
     "migrationGeneration": { "type": "integer", "minimum": 1 },
     "planHash": { "$ref": "#/$defs/sha256" },
-    "targetSourceRevision": { "type": "string", "minLength": 1 },
+    "targetSourceRevision": { "type": "string", "minLength": 1, "description": "The target HEAD fenced by the current adoption plan and quality-gate evidence; it is independent from a governance catalog's historical migration base." },
     "profiles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
     "installedAt": { "type": "string", "format": "date-time" },
     "receiptRef": { "$ref": "#/$defs/relativePath" },

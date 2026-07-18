@@ -5,7 +5,7 @@ status: current
 domain: ubiquitous-language
 owner:
 created: 2026-04-10
-updated: 2026-07-16
+updated: 2026-07-17
 retrieval_class:
   - term-excerpt
 context:
@@ -30,7 +30,7 @@ tags:
 - Domain: ubiquitous-language
 - Owner:
 - Created: 2026-04-10
-- Updated: 2026-07-16
+- Updated: 2026-07-17
 - Referenced By:
   - `docs/README.md`
   - `docs/design/control-plane.md`
@@ -58,7 +58,7 @@ placeholder 대신 채워진 예시가 필요하면 `docs/examples/README.md`를
   - 새로운 핵심 명사, 상태, 책임, 경계가 생기면 이 문서에 추가합니다.
 - 기존 design 문서가 변경될 때:
   - 용어의 의미나 범위가 바뀌면 이 문서를 함께 수정합니다.
-- `task`, `project`, `guide`는 이 문서의 용어를 우선 사용합니다.
+- `initiative`, `task`, `project`, `guide`는 이 문서의 용어를 우선 사용합니다.
 - 같은 대상을 가리키는 표현이 여러 개 생기면 canonical term 하나를 고정합니다.
 
 ## Core Boundary Terms
@@ -71,7 +71,7 @@ Codex 같은 coding agent가 작업 전에 자동으로 읽는 짧은 repository
 
 ### `repository-local harness skill`
 
-document-harness의 initialize/migrate/upgrade, execution, policy extraction, Human Control View operation 요청을 현재 repository의 durable entrypoint로 route하는 project-scoped workflow입니다.
+document-harness의 initialize/migrate/upgrade, execution, policy extraction, `보드` operation 요청을 현재 repository의 durable entrypoint로 route하는 project-scoped workflow입니다.
 
 canonical path는 `.agents/skills/operate-document-harness/SKILL.md`이고 `.claude/skills/operate-document-harness/SKILL.md`는 그 파일을 읽는 thin adapter입니다. 별도 policy·approval·verification authority를 만들지 않으며 user-global skill로 설치하지 않습니다.
 
@@ -149,6 +149,26 @@ human approver, approval time, policy/standard/exception ID, exact source revisi
 
 base rule을 수정하지 않고 특정 scope/time에만 적용하는 승인된 overlay입니다. human risk acceptor, residual risk, compensating controls, required checks, expiry, exit task가 필요합니다.
 
+### `initiative`
+
+정책과 지침을 하나 이상의 bounded delivery project가 달성할 portfolio outcome으로 연결하는 strategy owner입니다. 사용자 화면과 한국어 대화에서는 `추진안`, 문서 type과 schema에서는 `initiative`, stable ID에서는 `I####`를 사용합니다.
+
+### `initiative ref`
+
+project가 어떤 승인된 추진안의 outcome lineage에 속하는지 가리키는 `I####` stable ID입니다. Project frontmatter에서는 `related_initiative`를 사용하고, Task는 `related_project`를 통해 그 계보를 따릅니다.
+
+### `policy relationship`
+
+추진안이 policy를 `advances`, `constrained-by`, `exception-to` 중 어떤 방식으로 따르는지 설명하는 direct WHY/WHAT 관계입니다. guideline의 policy link만으로 간접 추론하지 않습니다.
+
+### `guideline disposition`
+
+추진안이 guideline을 `required` 또는 `recommended`로 어떻게 적용할지와 rationale/verification을 기록하는 direct HOW/EVIDENCE 관계입니다. 적용할 지침이 없거나 판단이 남으면 개별 관계에 `not-applicable`을 쓰지 않고 `guideline_disposition`과 이유로 표현합니다.
+
+### `legacy umbrella project`
+
+별도 `I####` 계층 도입 전에 `project_role: umbrella`, `umbrella_initiative`, `parent_umbrella_project`로 human-facing lineage를 소유하던 project입니다. migration 전까지 유효하지만 자동으로 승인된 추진안으로 간주하지 않습니다.
+
 ### `loop state`
 
 task lifecycle `status`와 별도로 현재 실행 제어 상태를 나타내는 값입니다. `ready`, `running`, `awaiting_user`, `awaiting_external`, `needs_review`, `stopped`, `succeeded`를 사용합니다.
@@ -173,9 +193,13 @@ loop가 계속되기 위해 사람 또는 외부 actor가 제공해야 하는 �
 
 required check, receipt, goal verification, unresolved attention 여부를 결합해 `succeeded` 또는 closeout을 허용하는 gate입니다.
 
+### `보드`
+
+repository 하나의 policy, guideline, initiative, 연결 project, task checkpoint, attention과 evidence를 사람이 읽기 좋게 투영하는 화면의 고정 사용자명입니다. top bar에는 `보드 / <repository>`로 표시하며 repository별로 rename하지 않습니다. “보드를 띄워줘”는 현재 repository의 View를 시작하고 주소를 안내하라는 뜻입니다.
+
 ### `human control view`
 
-policy, task, checkpoint, attention, evidence를 사람이 빠르게 읽도록 투영한 local-first interface입니다. Markdown/Git source에서 재생성 가능해야 하며 자체적으로 task/approval truth를 소유하지 않습니다.
+`보드`를 구현하는 기술 architecture term입니다. policy, guideline, initiative, 연결 project, task checkpoint, attention, evidence를 사람이 빠르게 읽도록 투영한 local-first interface이며 Markdown/Git source에서 재생성 가능해야 하고 자체적으로 task/approval truth를 소유하지 않습니다. 기술 command/path는 호환성을 위해 `human-view`를 유지합니다.
 
 ### `view snapshot`
 
@@ -271,7 +295,7 @@ Obsidian, Dataview, 검색 도구, LLM agent가 문서를 분류하고 연결할
 
 LLM이 유지하는 persistent markdown artifact를 뜻합니다.
 
-이 하네스에서는 `design`, `guide`, `project`, `task`, `report`가 wiki surface입니다.
+이 하네스에서는 `design`, `guide`, `initiative`, `project`, `task`, `report`가 wiki surface입니다.
 
 ### `ingest`
 
@@ -289,7 +313,7 @@ prompt에서는 `done when`으로 표현할 수 있고, 이 하네스에서는 `
 
 ### `main-issued draft`
 
-`project` 또는 `task` 문서 번호를 `main`의 문서 집합 기준으로 예약하기 위해 clean, up-to-date `main`에서 생성하고 즉시 commit한 `draft` 문서를 뜻합니다.
+`initiative`, `project`, `task` 또는 `qa` 문서 번호를 `main`의 문서 집합 기준으로 예약하기 위해 clean, up-to-date `main`에서 생성하고 즉시 commit한 `draft` 문서를 뜻합니다. Initiative는 exact human issuance-approval ref가 추가로 필요합니다.
 
 main-issued draft는 active truth가 아니라 번호 reservation이며, work branch가 `main`을 merge한 뒤 내용을 채우고 필요할 때 active 전환합니다.
 
@@ -321,6 +345,8 @@ downstream에 전달하거나 이후 단계가 소비하는 구조화 결과를 
 
 ## Change Log
 
+- 2026-07-17: Human Control View의 고정 사용자명을 `보드`로 정하고 기술명·명령과의 경계를 추가했다.
+- 2026-07-18: `추진안`/`initiative`/`I####`, initiative ref, policy relationship, guideline disposition, legacy umbrella project 용어를 추가했다.
 - 2026-07-16: repository-local harness skill, canonical project path, thin Claude adapter와 no-global-install 경계를 추가했다.
 - 2026-07-15: human policy, proposal, normative standard, approval, exception, loop/checkpoint/attention/receipt, human control view vocabulary 추가.
 

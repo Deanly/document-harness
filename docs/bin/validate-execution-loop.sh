@@ -14,6 +14,7 @@ EXECUTION_ENTRY="$DOCS_DIR/EXECUTE.md"
 CHECKPOINT_TEMPLATE="$DOCS_DIR/_templates/execution-checkpoint.md"
 EXECUTION_POLICY="$DOCS_DIR/_indexes/execution-loop-policy.yaml"
 INSTALLATION_LOCK="$DOCS_DIR/_indexes/harness-installation.yaml"
+INITIATIVE_AUTHORITY_VALIDATOR="$DOCS_DIR/lib/initiative-authority.mjs"
 
 error_count=0
 
@@ -28,6 +29,8 @@ Behavior:
   - With --all, validates tasks that opt in with `execution_contract: v1` and all
     `docs/checkpoints/*.md` files.
   - Tasks without `execution_contract` are grandfathered and ignored.
+  - Opted-in modern tasks must resolve Related Project -> receipt-backed active/approved Initiative;
+    complete explicit legacy project lineage remains accepted during migration.
   - A draft task in `ready` may have a blank checkpoint_ref. Active tasks, and
     any task whose loop_state is not ready, require a checkpoint.
 EOF
@@ -178,6 +181,194 @@ frontmatter_section_exists() {
   local file="$1"
   local section="$2"
   grep -Fq "## $section" "$file"
+}
+
+has_meaningful_frontmatter_value() {
+  local value="$1"
+  [[ -n "$value" && "$value" != "null" && "$value" != "~" && "$value" != "[]" ]]
+}
+
+is_explicit_legacy_project_path() {
+  [[ "$1" =~ ^docs/projects/P[0-9]{4}(-[A-Za-z0-9._-]+)?\.md$ ]]
+}
+
+find_canonical_numbered_doc() {
+  local directory="$1"
+  local doc_id="$2"
+  local expected_type="$3"
+  local owner="$4"
+  local candidate
+  local candidate_id
+  local candidate_type
+  local nullglob_was_set=0
+  local -a matches=()
+
+  CANONICAL_DOC_PATH=""
+  shopt -q nullglob && nullglob_was_set=1
+  shopt -s nullglob
+  for candidate in "$directory/$doc_id.md" "$directory/$doc_id-"*.md; do
+    [[ -f "$candidate" ]] || continue
+    candidate_id="$(frontmatter_scalar "$candidate" doc_id)"
+    [[ "$candidate_id" == "$doc_id" ]] && matches+=("$candidate")
+  done
+  (( nullglob_was_set == 1 )) || shopt -u nullglob
+
+  if [[ ${#matches[@]} -eq 0 ]]; then
+    error "$owner references missing canonical $expected_type document: $doc_id"
+    return 1
+  fi
+  if [[ ${#matches[@]} -gt 1 ]]; then
+    error "$owner resolves $doc_id to multiple canonical $expected_type documents"
+    return 1
+  fi
+
+  candidate="${matches[0]}"
+  candidate_type="$(frontmatter_scalar "$candidate" type)"
+  if [[ "$candidate_type" != "$expected_type" ]]; then
+    error "$owner resolves $doc_id to type '${candidate_type:-missing}', expected $expected_type"
+    return 1
+  fi
+  CANONICAL_DOC_PATH="$candidate"
+}
+
+validate_active_approved_initiative_ref() {
+  local initiative_id="$1"
+  local owner="$2"
+  local initiative_path
+  local initiative_contract
+  local status
+  local approval_status
+  local issuance_approval_ref
+  local approval_ref
+
+  if [[ ! "$initiative_id" =~ ^I[0-9]{4}$ ]]; then
+    error "$owner Related Initiative must match I####: ${initiative_id:-<empty>}"
+    return 1
+  fi
+  if ! find_canonical_numbered_doc "$DOCS_DIR/initiatives" "$initiative_id" initiative "$owner"; then
+    return 1
+  fi
+  initiative_path="$CANONICAL_DOC_PATH"
+  initiative_contract="$(frontmatter_scalar "$initiative_path" initiative_contract)"
+  status="$(frontmatter_scalar "$initiative_path" status)"
+  approval_status="$(frontmatter_scalar "$initiative_path" approval_status)"
+  issuance_approval_ref="$(frontmatter_scalar "$initiative_path" issuance_approval_ref)"
+  approval_ref="$(frontmatter_scalar "$initiative_path" approval_ref)"
+
+  if [[ "$initiative_contract" != "v1" ]]; then
+    error "$owner parent initiative $initiative_id must declare initiative_contract: v1"
+    return 1
+  fi
+  if [[ "$status" != "active" || "$approval_status" != "approved" ]]; then
+    error "$owner parent initiative $initiative_id must be active and approved (status='${status:-missing}', approval_status='${approval_status:-missing}')"
+    return 1
+  fi
+  if ! has_meaningful_frontmatter_value "$issuance_approval_ref" || ! has_meaningful_frontmatter_value "$approval_ref"; then
+    error "$owner parent initiative $initiative_id must retain exact issuance_approval_ref and approval_ref values"
+    return 1
+  fi
+
+  if ! node "$INITIATIVE_AUTHORITY_VALIDATOR" \
+    --root "$REPO_ROOT" \
+    --initiative "$initiative_id"; then
+    error "$owner parent initiative $initiative_id has no current source-fenced human activation authority"
+    return 1
+  fi
+}
+
+validate_explicit_legacy_project_lineage() {
+  local project_path="$1"
+  local owner="$2"
+  local project_role
+  local umbrella_initiative
+  local parent_umbrella_project
+
+  project_role="$(frontmatter_scalar "$project_path" project_role)"
+  umbrella_initiative="$(frontmatter_scalar "$project_path" umbrella_initiative)"
+  parent_umbrella_project="$(frontmatter_scalar "$project_path" parent_umbrella_project)"
+
+  if [[ -z "$project_role" || -z "$umbrella_initiative" || -z "$parent_umbrella_project" ]]; then
+    error "$owner has no approved modern initiative lineage or complete explicit legacy lineage"
+    return 1
+  fi
+  if [[ "$project_role" != "umbrella" && "$project_role" != "exception-branch" ]]; then
+    error "$owner has unsupported legacy project_role: $project_role"
+    return 1
+  fi
+  if [[ "$project_role" == "umbrella" && "$parent_umbrella_project" != "self" ]]; then
+    error "$owner legacy umbrella project must use parent_umbrella_project: self"
+    return 1
+  fi
+  if [[ "$project_role" == "exception-branch" && "$parent_umbrella_project" == "self" ]]; then
+    error "$owner legacy exception-branch project must reference its parent umbrella project"
+    return 1
+  fi
+}
+
+validate_project_governance_lineage() {
+  local project_path="$1"
+  local owner="$2"
+  local lineage_contract
+  local related_initiative
+
+  lineage_contract="$(frontmatter_scalar "$project_path" lineage_contract)"
+  related_initiative="$(frontmatter_scalar "$project_path" related_initiative)"
+
+  if [[ -n "$lineage_contract" && "$lineage_contract" != "v2" ]]; then
+    error "$owner has unsupported lineage_contract: $lineage_contract"
+    return 1
+  fi
+
+  if [[ "$lineage_contract" == "v2" || -n "$related_initiative" ]]; then
+    if [[ -z "$related_initiative" ]]; then
+      error "$owner declares modern lineage but has no related_initiative"
+      return 1
+    fi
+    validate_active_approved_initiative_ref "$related_initiative" "$owner"
+    return $?
+  fi
+
+  validate_explicit_legacy_project_lineage "$project_path" "$owner"
+}
+
+validate_execution_task_lineage() {
+  local task_path="$1"
+  local owner="${task_path#$REPO_ROOT/}"
+  local lineage_contract
+  local related_project
+  local related_umbrella_project
+  local project_path
+
+  lineage_contract="$(frontmatter_scalar "$task_path" lineage_contract)"
+  related_project="$(frontmatter_scalar "$task_path" related_project)"
+  related_umbrella_project="$(frontmatter_scalar "$task_path" related_umbrella_project)"
+
+  if [[ -n "$lineage_contract" && "$lineage_contract" != "v2" ]]; then
+    error "$owner has unsupported lineage_contract: $lineage_contract"
+    return 1
+  fi
+
+  if [[ "$lineage_contract" == "v2" || "$related_project" =~ ^P[0-9]{4}$ ]]; then
+    if [[ ! "$related_project" =~ ^P[0-9]{4}$ ]]; then
+      error "$owner modern Related Project must match P####: ${related_project:-<empty>}"
+      return 1
+    fi
+    if ! find_canonical_numbered_doc "$DOCS_DIR/projects" "$related_project" project "$owner"; then
+      return 1
+    fi
+    project_path="$CANONICAL_DOC_PATH"
+    validate_project_governance_lineage "$project_path" "$owner -> $related_project"
+    return $?
+  fi
+
+  if [[ -z "$related_umbrella_project" ]]; then
+    error "$owner requires modern related_project or an explicit legacy related_umbrella_project bridge"
+    return 1
+  fi
+  if [[ -n "$related_project" ]] && ! is_explicit_legacy_project_path "$related_project"; then
+    error "$owner legacy related_project mirror must be empty or match docs/projects/P####[-slug].md: $related_project"
+    return 1
+  fi
 }
 
 sha256_file() {
@@ -335,7 +526,7 @@ validate_public_surfaces() {
     require_contains "$HUMAN_VIEW_DESIGN" 'capabilities'
     require_contains "$HUMAN_VIEW_DESIGN" 'snapshot.published'
     require_contains "$HUMAN_VIEW_DESIGN" 'resync.required'
-    for value in '개요' '정책·지침' '검토 대기' '실행 상태' '근거'; do
+    for value in '보드' '개요' '정책' '지침' '추진안' '검토 대기' '실행 상태' '근거'; do
       require_contains "$HUMAN_VIEW_DESIGN" "$value"
     done
   fi
@@ -364,7 +555,7 @@ validate_public_surfaces() {
 
   if [[ -f "$HUMAN_VIEW_GUIDE" ]]; then
     for section in \
-      Purpose 'Information Architecture' 'Five-Tab Product Plan' \
+      Purpose 'Information Architecture' 'Seven-Tab Product Plan' \
       'Interaction And Refresh Stability' 'Semantic Design System' \
       'Attention Queue' 'Policy To Task Trace View' 'Evidence Review' \
       'Read-Only Interaction Rule' 'Approval Workflow' 'Acceptance Checklist' \
@@ -376,7 +567,7 @@ validate_public_surfaces() {
       require_contains "$HUMAN_VIEW_GUIDE" "$value"
     done
     require_contains "$HUMAN_VIEW_GUIDE" 'proposed / accepted_for_promotion / effective / superseded'
-    for value in '개요' '정책·지침' '검토 대기' '실행 상태' '근거'; do
+    for value in '보드' '개요' '정책' '지침' '추진안' '검토 대기' '실행 상태' '근거'; do
       require_contains "$HUMAN_VIEW_GUIDE" "$value"
     done
   fi
@@ -745,6 +936,8 @@ validate_opt_in_task() {
     error "unsupported execution_contract '$contract' in ${file#$REPO_ROOT/}"
     return
   fi
+
+  validate_execution_task_lineage "$file" || true
 
   [[ "$(frontmatter_scalar "$file" type)" == "task" ]] || \
     error "execution_contract v1 is currently supported only for task docs: ${file#$REPO_ROOT/}"

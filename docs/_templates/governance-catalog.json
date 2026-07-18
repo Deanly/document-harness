@@ -19,6 +19,13 @@
       "title": "저장소 정책 추출 결과를 사람이 검토해야 합니다",
       "humanSummary": "아직 적용 중인 정책은 없습니다. 소스와 연결된 후보를 추출하고 승격 전에 사람이 검토해야 합니다.",
       "relatedRefs": []
+    },
+    {
+      "id": "ATTN-INITIATIVE-EXTRACTION",
+      "severity": "decision",
+      "title": "기존 업무를 어떤 추진안으로 묶을지 확인해 주세요",
+      "humanSummary": "정책과 지침을 실제 업무로 잇는 추진안 후보가 아직 없습니다. 기존 프로젝트와 설계 근거를 분석한 뒤 후보를 검토하거나, 근거가 부족한 이유를 확인해야 합니다.",
+      "relatedRefs": ["docs/_indexes/initiative-register.json"]
     }
   ],
   "gaps": [
@@ -26,6 +33,11 @@
       "id": "GAP-POLICY-EXTRACTION",
       "summary": "소스와 연결된 정책 후보를 아직 사람이 검토하지 않았습니다.",
       "reason": "초기화 도구는 저장소 정책을 임의로 만들거나 스스로 승인하지 않습니다."
+    },
+    {
+      "id": "GAP-INITIATIVE-EXTRACTION",
+      "summary": "기존 프로젝트를 정책·지침과 연결하는 추진안 후보를 아직 만들지 않았습니다.",
+      "reason": "AI는 기존 문서와 코드에서 결과·범위·성공 기준을 근거와 함께 추출할 수 있지만, 추진안을 임의로 발급하거나 승인할 수 없습니다."
     }
   ]
 }

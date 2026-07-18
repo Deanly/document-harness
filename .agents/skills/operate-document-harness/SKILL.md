@@ -1,6 +1,6 @@
 ---
 name: operate-document-harness
-description: Operate the document harness installed in the current repository. Use when initializing, migrating, or upgrading document-harness; starting, resuming, stopping, or closing a loop-enabled task; extracting repository policy candidates; or operating the repository-local Human Control View.
+description: Operate the document harness installed in the current repository. Use when initializing, migrating, or upgrading document-harness; starting, resuming, stopping, or closing loop-enabled work; extracting, authoring, reviewing, or relating policy, guideline, and initiative governance; helping a user turn plain-language direction into reviewable Korean governance drafts; or operating the repository-local Human Control View named “보드”, including requests such as “보드를 띄워줘”, “보드 상태를 알려줘”, “보드를 갱신해줘”, or “보드를 꺼줘”.
 ---
 
 # Operate Document Harness
@@ -14,7 +14,9 @@ Treat this skill as a repository-local router, not a new authority source. Follo
 | initialize, migrate, or upgrade the harness | `docs/ADOPT.md` |
 | start, resume, stop, or close loop-enabled work | `docs/EXECUTE.md`, then the current task and checkpoint |
 | extract or review policy/guideline candidates | `docs/guide/repository-policy-extraction.md` |
-| start, inspect, refresh, or stop the View | `docs/guide/human-control-view.md` |
+| help a user author or revise policy, guideline, or initiative | `docs/guide/governance-authoring-assistance.md` |
+| create, review, activate, or connect an initiative | `docs/guide/initiative-governance.md` |
+| start, inspect, refresh, or stop `보드` / the View | `docs/guide/human-control-view.md` |
 
 Read only the exact policy, design, guide, and validator refs selected by those entrypoints. Direct-read files changed in the current task or whose retrieval freshness is uncertain.
 
@@ -22,14 +24,44 @@ Read only the exact policy, design, guide, and validator refs selected by those 
 
 1. Locate the repository root and read its `AGENTS.md` plus applicable nested instructions.
 2. Identify the goal, repository revision, dirty tracked/untracked state, constraints, risk, and done criteria before writing.
-3. For adoption, classify the target as initialize, migrate, or upgrade and produce the required no-write plan before apply. Preserve project-owned files and existing changes.
-4. For initialization, migration, and policy extraction, write human-facing `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap wording, `approvalRule`, project description, source-reference `note`, and free-text `evidenceKind` labels in clear Korean (`ko-KR`) by default. Preserve technical IDs, enum values, repository-relative paths, hashes, commands, exact source headings, and quoted source wording in their original form.
-5. Treat translation as presentation-only migration: do not change meaning, authority class/state, approval state, enforcement, evidence, source refs, source hashes, or decision receipts while localizing wording.
-6. For execution, keep lifecycle `status` separate from `loop_state`; update the current checkpoint after meaningful actions, evidence, attention, and stop/resume transitions.
-7. Never self-approve policy, standards, exceptions, migration conflicts, risk acceptance, or weakened quality gates.
-8. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
-9. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
-10. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
+3. Before planning, issuing, or executing project/task work, run the governance preflight in `docs/guide/governance-authoring-assistance.md`: direct-read the current lineage, then require the repository-relative JSON Initiative activation receipt and current source/effective bytes to pass `docs/lib/initiative-authority.mjs`; active/approved prose alone is not authority. Also read exact effective policy/guideline refs and freshness. Delivery work may refine but never weaken or reinterpret upper governance.
+4. Stop and request attention rather than write when required governance is missing, stale, unapproved, or conflicting. Treat an explicitly marked legacy bridge separately, but never hide its initiative gap or bypass exact policy/normative refs.
+5. For adoption, classify the target as initialize, migrate, or upgrade and produce the required no-write plan before apply. Preserve project-owned files and existing changes.
+6. For initialization, migration, policy extraction, and governance authoring, write human-facing `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap wording, `approvalRule`, project description, source-reference `note`, and free-text `evidenceKind` labels in clear Korean (`ko-KR`) by default. Preserve technical IDs, enum values, repository-relative paths, hashes, commands, exact source headings, and quoted source wording in their original form.
+7. Treat translation as presentation-only migration: do not change meaning, authority class/state, approval state, enforcement, evidence, source refs, source hashes, or decision receipts while localizing wording.
+8. For execution, keep lifecycle `status` separate from `loop_state`; update the current checkpoint after meaningful actions, evidence, attention, and stop/resume transitions.
+9. Never self-approve policy, standards, guidelines, initiatives, exceptions, migration conflicts, risk acceptance, or weakened quality gates.
+10. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
+11. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
+12. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
+
+## Assist Governance Authoring
+
+Read `docs/guide/governance-authoring-assistance.md` completely before turning a user's plain-language direction into governance documents.
+
+1. Restate the protected result and current problem in the user's language; separate source fact, inference, assumption, and unknown.
+2. Ask the smallest useful question set first. Offer 2–3 explained alternatives when the user cannot choose a target, boundary, method, or success signal.
+3. Draft human-facing content in clear Korean while preserving IDs, enums, paths, commands, headings, quotations, revisions, and hashes.
+4. Keep policy as WHY/non-waivable boundary, guideline as HOW/applicability/verification, and initiative as outcome/portfolio. Do not move implementation detail into policy or project/task state into initiative.
+5. Show provenance, applicability, verification, affected delivery, unknowns, risks, and the exact human decision needed. Keep proposal, approval, effective authority, enforcement, and freshness separate.
+6. Use unnumbered candidates until the relevant human gate is satisfied. Initiative issuance and activation remain separate approvals; no AI wording or View state grants either one.
+
+## Operate 보드
+
+Treat `보드` as the fixed user-facing name and keep `human-view` as the technical command. Apply these phrases only to the current repository:
+
+| User phrase | Action |
+| --- | --- |
+| `보드를 띄워줘`, `보드를 열어줘` | run `./runtime/document-harness-view/bin/human-view start`, then `url`, and return the local address |
+| `보드 상태를 알려줘` | run `./runtime/document-harness-view/bin/human-view status` |
+| `보드를 갱신해줘` | run `./runtime/document-harness-view/bin/human-view refresh`, then confirm a newer snapshot sequence |
+| `보드를 꺼줘` | run `./runtime/document-harness-view/bin/human-view stop` |
+
+Keep `보드 / <repository>` visible as the fixed top-left identity. Expect the top-level tabs in this exact order: `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거`. Treat policy, guideline, and initiative as independent first-class surfaces. Initiative directly links policy WHY and selected guideline HOW, while projects own `related_initiative` and the View reverse-indexes their status/path without inventing progress.
+
+Do not interpret these phrases as authority to choose another repository, bind remotely, claim a fixed port, kill a foreign process, mutate governance, approve a candidate, or execute project work.
+
+The exact phrases `보드를 띄워줘` and `보드 화면` route to the View. Phrases such as `보드 선택`, `보드 이식`, `target board`, or other hardware context continue to mean a physical/target board and must not start the View.
 
 ## Run Adoption V1
 
@@ -44,7 +76,9 @@ Use the installed executable contract; do not simulate these transitions in pros
 
 - Continue from `PLAN_READY`; stop on `NEEDS_DECISION` or `APPLY_FAILED` and report `writes` plus exact attention/rollback evidence.
 - Treat `INSTALLED_NOT_VERIFIED` and `INSTALLED_AWAITING_REVIEW` as incomplete. Only `verify` may return `MIGRATION_VERIFIED`; successful rollback returns `ROLLED_BACK`.
-- A governance install starts with an explicit extraction gap. Direct-read repository authority and write schema-valid source-linked candidates; never invent policy to make the View look populated.
+- A governance install starts with explicit policy and initiative extraction gaps. Direct-read repository authority, extract policy/guideline candidates first, then inspect existing project/design/roadmap/task sources for outcome portfolios.
+- After policy/guideline extraction, leave an explicit, observable initiative bootstrap state: at least one source-backed `INIT-*` migration candidate in `unreviewed|review_requested` with existing `P####`, policy/guideline relationships, success signals and exact source fences, or the paired `ATTN-INITIATIVE-EXTRACTION` + `GAP-INITIATIVE-EXTRACTION`. Rejected, stale, or superseded history alone does not close the gap; never leave an unexplained empty register.
+- Keep `INIT-*` at `draft` with no effective/document/decision receipt. Do not infer `I####` issuance, activation, or approval; ask the user to review the candidate or the missing source/portfolio decision in clear Korean.
 - Use Korean for synthesized human wording even when the source or technical identifiers are English. Keep exact source headings and quotations unchanged, and provide a Korean summary beside them instead of translating provenance.
 - Keep code/config evidence as `kind: observation`, `approvalState: unreviewed`, with no effective or decision receipt. Human review is required before promotion.
 - Never put `.env`, credentials, tokens, private raw source, secret values, personal absolute paths, or user-global skill paths into installed governance/View artifacts.

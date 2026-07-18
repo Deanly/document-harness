@@ -4,14 +4,16 @@ title: execute
 status: current
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-07-18
 related_design:
   - docs/design/control-plane.md
   - docs/design/policy-to-evidence-governance.md
+  - docs/design/initiative-governance-plane.md
   - docs/design/execution-loop-plane.md
   - docs/design/human-control-view-plane.md
 source_refs:
   - docs/_indexes/execution-loop-policy.yaml
+  - docs/guide/governance-authoring-assistance.md
   - docs/guide/execution-loop-operations.md
 tags:
   - docs/guide
@@ -25,8 +27,8 @@ tags:
 - Status: current
 - Owner: Codex
 - Created: 2026-07-15
-- Updated: 2026-07-15
-- Related Design: docs/design/control-plane.md; docs/design/policy-to-evidence-governance.md; docs/design/execution-loop-plane.md; docs/design/human-control-view-plane.md
+- Updated: 2026-07-18
+- Related Design: docs/design/control-plane.md; docs/design/policy-to-evidence-governance.md; docs/design/initiative-governance-plane.md; docs/design/execution-loop-plane.md; docs/design/human-control-view-plane.md
 
 ## Purpose
 
@@ -37,20 +39,38 @@ tags:
 다음 순서만 기본으로 읽고, 관련 없는 문서 전체를 broad-load하지 않습니다.
 
 1. repository `AGENTS.md`
-2. 이 문서
-3. current task와 `task_contract_revision`
-4. current `checkpoint_ref`; `ready` draft의 첫 실행이면 checkpoint template
-5. task/checkpoint가 exact ref로 고정한 effective policy, normative standard, exception, human/repository directive
-6. task가 직접 참조하는 design, guide, QA와 relevant validator
-7. 필요한 receipt/evidence source
+2. 이 문서와 `docs/guide/governance-authoring-assistance.md`의 Mandatory Governance Preflight
+3. current task의 lineage metadata와 `related_project`
+4. current project와 그 source가 소유한 `related_initiative`
+5. active이고 승인된 추진안의 outcome/scope, policy relation, guideline disposition과 exact refs
+6. current task 전체와 `task_contract_revision`
+7. current `checkpoint_ref`; `ready` draft의 첫 실행이면 checkpoint template
+8. 추진안과 task/checkpoint가 exact ref로 고정한 effective policy, required guideline/normative standard, exception, human/repository directive
+9. task가 직접 참조하는 design, guide, QA와 relevant validator
+10. 필요한 approval/decision receipt와 evidence source
 
 proposal report, search hit, browser snapshot, chat history는 effective authority를 대체하지 않습니다. 방금 바뀐 source는 index/RAG가 아니라 직접 읽습니다.
+
+## Governance Gate
+
+정책·지침·추진안은 project/task가 선택적으로 참고하는 배경 문서가 아니라 실행 전에 확인해야 하는 상위 거버넌스입니다.
+
+1. source revision/hash와 approval receipt를 확인해 current/fresh authority인지 판정합니다. modern lineage의 추진안은 `docs/lib/initiative-authority.mjs`가 canonical 문서·register/catalog·repository JSON activation receipt를 함께 검증해야 하며 frontmatter의 `approved` 문자열만으로 통과하지 않습니다.
+2. 정책의 WHY·비가역 경계, 지침의 HOW·적용/검증 수준, 추진안의 outcome·scope를 서로 분리해 적습니다.
+3. task action과 acceptance가 세 surface를 모두 준수하는지 확인합니다.
+4. project/task는 delivery를 구체화할 수 있지만 policy/guideline/initiative를 약화하거나 새 의미로 재해석할 수 없습니다.
+
+필수 source가 없거나, required governance가 미승인·stale이거나, 관계가 충돌하거나, 요청이 추진안 scope/out of scope를 바꾸면 실행하지 않고 human attention을 만듭니다. proposal과 migration candidate는 검토 대상이지 effective 실행 권한이 아닙니다.
+
+명시된 legacy bridge는 exact policy/normative refs와 기존 승인 경계를 유지하는 동안만 실행할 수 있습니다. 추진안 연결 공백은 attention으로 노출하되 migration을 핑계로 기존 authority를 임의 변경하지 않습니다.
 
 ## Start Gate
 
 실행 전에 다음을 답할 수 있어야 합니다.
 
 - 목표와 `Goal ID`, 완료 조건, out of scope는 무엇인가?
+- 적용되는 정책 WHY/경계, required 지침 HOW/검증, 승인된 추진안 outcome/scope와 exact revision은 무엇인가?
+- project/task action이 추진안 lineage와 일치하고, 미승인 후보나 stale source에 기대지 않는가?
 - 누가 다음 actor이고 어떤 authority로 행동하는가?
 - 적용되는 policy/directive exact revision은 무엇인가?
 - baseline 또는 reproduce 방법과 가장 싼 관련 검사는 무엇인가?
@@ -62,7 +82,7 @@ proposal report, search hit, browser snapshot, chat history는 effective authori
 
 ## Execute Loop
 
-1. task contract와 exact authority refs를 pin합니다.
+1. policy/guideline/initiative preflight 결과와 task contract의 exact authority refs를 pin합니다.
 2. baseline 또는 reproduce check를 먼저 실행합니다.
 3. 한 번에 하나의 hypothesis만 둡니다.
 4. 작고 가역적인 bounded action 하나를 수행합니다.
@@ -91,7 +111,7 @@ authority 또는 policy 충돌로 현재 attempt를 실행할 수 없으면 `sto
 
 `succeeded` 전에 다음이 모두 필요합니다.
 
-- task contract/source revision과 연결된 evidence
+- task contract/source revision과 policy/guideline/initiative preflight에 연결된 evidence
 - required fast/full check와 필요한 review receipt
 - unresolved attention 없음
 - goal별 verification evidence
@@ -104,6 +124,7 @@ AI가 `done`, `approved`, `passed`라고 쓴 문자열은 receipt나 human autho
 다음 조건에서는 추측하거나 범위를 넓히지 않습니다.
 
 - goal, acceptance, authority, directive가 불명확하거나 충돌함
+- required policy/guideline/initiative가 missing, stale, unapproved이거나 delivery scope와 충돌함
 - task contract 변경, scope 확대, 비가역 action이 필요함
 - high/critical risk, secret, production, external write가 필요함
 - 동일 실패/no-progress 또는 iteration/time budget 한도 도달
@@ -151,6 +172,8 @@ handoff에는 최소한 goal, task/attempt/checkpoint revision, last valid evide
 ## References
 
 - authority와 policy promotion: `docs/design/policy-to-evidence-governance.md`
+- 거버넌스 역할 분리, 사용자 작성 지원과 mandatory preflight: `docs/guide/governance-authoring-assistance.md`
+- 추진안과 project lineage: `docs/design/initiative-governance-plane.md`
 - machine state/stop/defaults: `docs/_indexes/execution-loop-policy.yaml`
 - state/checkpoint/receipt contract: `docs/design/execution-loop-plane.md`
 - 운영 예외와 failure response: `docs/guide/execution-loop-operations.md`
@@ -159,4 +182,5 @@ handoff에는 최소한 goal, task/attempt/checkpoint revision, last valid evide
 
 ## Change Log
 
+- 2026-07-18: policy/guideline/initiative를 project/task 실행 전 mandatory governance gate로 추가하고 freshness, approval, lineage와 conflict stop을 고정했다.
 - 2026-07-15: loop-enabled task의 load order, start gate, state routing, evidence barrier, closeout과 handoff를 단일 실행 진입점으로 정리했다.

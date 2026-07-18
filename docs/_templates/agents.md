@@ -4,7 +4,7 @@
 
 - `README.md`: human quickstart and project overview.
 - `CLAUDE.md`: thin Claude Code adapter that imports this file instead of duplicating rules.
-- `.agents/skills/operate-document-harness/SKILL.md`: canonical repository-local router for adoption, execution, policy extraction, and View operation.
+- `.agents/skills/operate-document-harness/SKILL.md`: canonical repository-local router for adoption, execution, policy extraction, and `보드` operation.
 - `.claude/skills/operate-document-harness/SKILL.md`: thin Claude project adapter to the canonical skill.
 - `docs/README.md`: document harness schema and commands.
 - `docs/ADOPT.md`: single entrypoint for initialize/migrate/upgrade work.
@@ -13,13 +13,17 @@
 - `docs/design/harness-adoption-plane.md`: ownership-aware migration, policy extraction, repo-local View, and quality handoff.
 - `docs/design/retrieval-plane.md`: scalable search, revision, and freshness contracts.
 - `docs/design/policy-to-evidence-governance.md`: human policy, AI proposal, approval, exception, and traceability authority.
+- `docs/design/initiative-governance-plane.md`: Initiative → Project → Task hierarchy, approval, policy/guideline relationships, and legacy bridge.
 - `docs/design/execution-loop-plane.md`: task checkpoint, attention, stop/resume, and evidence contracts.
 - `docs/design/human-control-view-plane.md`: projector, snapshot API/SSE, freshness, security, and runtime boundaries.
 - `docs/guide/human-control-view.md`: operating guidance for the read-only local human view.
 - `docs/guide/repository-policy-extraction.md`: source-backed candidate extraction with authority/approval/enforcement separation.
+- `docs/guide/initiative-governance.md`: human-approved 추진안 issuance, activation, linkage, and migration workflow.
+- `docs/guide/governance-authoring-assistance.md`: question-led Korean authoring assistance for policy, guideline, and initiative review.
 - `docs/design/ubiquitous-language.md`: canonical project terms.
 - `docs/guide/`: reusable decisions, operating rules, and review criteria.
-- `docs/projects/`: human-facing initiative owners.
+- `docs/initiatives/`: human-facing strategy and portfolio owners (`추진안`, `I####`).
+- `docs/projects/`: bounded delivery projects linked to an initiative.
 - `docs/tasks/`: executable work slices.
 - `docs/reports/`: time-bound reports that may be promoted into durable docs.
 - `docs/qa/`: current QA strategies, plans, case catalogs, and runbooks.
@@ -34,14 +38,17 @@
 - Use `docs/bin/` scripts instead of ad hoc document mutation when a script exists.
 - Keep changes narrow and aligned with the existing document contracts.
 - If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.
+- Treat policy, guideline, and initiative as mandatory upper governance. Before planning, issuing, or executing project/task work, direct-read the current lineage, active approved initiative, exact effective policy/guideline refs, approval receipts, and freshness. Delivery documents may refine but never weaken or reinterpret them; stop with attention on missing, stale, unapproved-required, or conflicting governance.
+- When helping a user author governance, follow `docs/guide/governance-authoring-assistance.md`: ask small decision-focused questions, draft clear Korean, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence/unknowns, and leave approval to the human.
 - Before loop-enabled execution, read effective policy/standard refs, the current task contract, and the current checkpoint; keep lifecycle `status` separate from `loop_state`.
 - AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.
 - Keep extraction confidence, source authority, human approval, and implementation enforcement separate. Never treat code/config observation or retrieval metadata as human approval.
-- Use exact loopback + OS-assigned port for repo-local View by default; never kill a foreign process or bind remotely without separate human authority.
+- Treat `보드` as the fixed user-facing name of the repo-local View. Route “보드를 띄워줘” to `human-view start` followed by `url`, use exact loopback + OS-assigned port, and never kill a foreign process or bind remotely without separate human authority.
 - After meaningful action, validation, checkpoint, or attention changes, refresh sanitized View probes and wait for a new snapshot sequence; browser polling alone is not freshness evidence.
 - Update the current checkpoint after meaningful action, evidence, attention, or stop/resume transitions; keep task `Status` as append-only milestone history.
-- Do not issue a new `project` document without explicit human approval.
-- Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
+- Do not issue a new `initiative` or `project` document without explicit human approval. Initiative issuance additionally requires an exact human issuance-approval ref.
+- Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
+- Pass Initiative issuance a safe exact human approval ref. Issue Project only under an active/approved Initiative, and issue Task only under a Project whose modern Initiative lineage resolves active/approved; never infer default `I0001`/`P0001`. Complete explicit legacy Project lineage is the migration-only Task-parent exception.
 
 ## Documentation Rules
 
@@ -49,7 +56,7 @@
 - Keep `source_refs` attached to source-backed claims.
 - Update folder `README.md` files when active documents change.
 - Update `docs/design/ubiquitous-language.md` when canonical terms change.
-- Promote reusable reports or answers into `guide`, `design`, `project`, or `task`.
+- Promote reusable reports or answers into `guide`, `design`, `initiative`, `project`, or `task`.
 
 ## Verification Commands
 
@@ -68,5 +75,6 @@ git diff --check
 - Relevant docs, templates, and validators agree.
 - Required validators pass, or skipped validators are explained.
 - Human-owned policy and approval state are not inferred from AI-authored prose alone.
+- Applicable governance lineage and freshness are verified before delivery work, and unresolved conflicts stop execution.
 - Existing repository ownership, dirty state, and runtime-local rollback boundaries remain explicit.
 - The final response summarizes changed surfaces and evidence.

@@ -108,7 +108,7 @@ async function approveFixturePolicy(fixture) {
   );
 }
 
-test("server is loopback, read-only, host/origin checked, ETag-aware, and serves the exact five-tab shell", async (t) => {
+test("server is loopback, read-only, host/origin checked, ETag-aware, and serves the exact seven-tab shell", async (t) => {
   const fixture = await createFixture({ projectId: "server-fixture" });
   await approveFixturePolicy(fixture);
   const server = await startFixtureServer(fixture);
@@ -128,7 +128,7 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.equal(health.status, 200, server.errors());
   const healthBody = await health.json();
   assert.equal(healthBody.repoId, "server-fixture");
-  assert.equal(healthBody.runtimeVersion, "1.1.0");
+  assert.equal(healthBody.runtimeVersion, "1.3.0");
 
   const first = await fetch(`${server.lease.url}/api/v1/snapshot`);
   assert.equal(first.status, 200);
@@ -147,7 +147,10 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.match(pageBody, /role="tablist"/);
   const tabLabels = [...pageBody.matchAll(/role="tab"[^>]*>([^<]+)(?:<span[^>]*>[^<]*<\/span>)?<\/button>/g)]
     .map((match) => match[1].trim());
-  assert.deepEqual(tabLabels, ["개요", "정책·지침", "검토 대기", "실행 상태", "근거"]);
+  assert.deepEqual(tabLabels, ["개요", "정책", "지침", "추진안", "검토 대기", "실행 상태", "근거"]);
+  assert.match(pageBody, /<strong>보드<\/strong>/);
+  assert.match(pageBody, /data-tab="initiatives">추진안<\/button>/);
+  assert.match(pageBody, /id="panel-guidelines"/);
   assert.doesNotMatch(pageBody, /repository-selector|repo-selector|workspace-switcher|class="[^"]*sidebar/i);
   assert.doesNotMatch(pageBody, /https?:\/\//i);
   assert.match(pageBody, /execution-gap-copy/);
@@ -161,14 +164,16 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   await writeFile(path.join(fixture.root, "docs", "governance", "catalog.json"), "{ invalid json", "utf8");
   const degraded = await waitForSnapshot(server.lease.url, (snapshot) => snapshot.snapshot.freshness === "degraded" && snapshot.projectionError);
   assert.equal(degraded.summary.policyCount, 1, "previous valid records remain visible");
+  assert.equal(degraded.summary.initiativeCount, 1, "previous valid initiative remains visible");
+  assert.equal(degraded.initiatives[0].projectionState, "last_known_unverified");
   assert.equal(degraded.snapshot.verificationState, "last_known_unverified");
   assert.equal(degraded.snapshot.sourceFence.sourceEvidenceState, "unverified");
   assert.equal(degraded.snapshot.sourceFence.evidenceCurrent, 0);
-  assert.equal(degraded.snapshot.sourceFence.lastKnownEvidenceCurrent, 2);
+  assert.equal(degraded.snapshot.sourceFence.lastKnownEvidenceCurrent, 3);
   assert.equal(degraded.summary.state, "last_known_unverified");
   assert.equal(degraded.summary.approvedCount, 0);
   assert.equal(degraded.summary.reviewCount, 0);
-  assert.equal(degraded.summary.unverifiedCount, 2);
+  assert.equal(degraded.summary.unverifiedCount, 3);
   assert.equal(degraded.summary.lastKnown.approvedCount, 1);
   assert.equal(degraded.summary.lastKnown.reviewCount, 1);
   assert.equal(degraded.summary.attentionCount, degraded.attention.length);
@@ -179,6 +184,12 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.equal(degraded.policies[0].projectionState, "last_known_unverified");
   assert.equal(degraded.policies[0].lastKnown.approvalState, "approved");
   assert.ok(degraded.policies[0].sourceRefs.every(({ state }) => state === "unverified"));
+  assert.equal(degraded.initiatives[0].lifecycleState, "unverified");
+  assert.equal(degraded.initiatives[0].lastKnown.lifecycleState, "draft");
+  assert.equal(degraded.initiatives[0].projects[0].status, "unverified");
+  assert.equal(degraded.initiatives[0].projects[0].lastKnownStatus, "active");
+  assert.equal(degraded.initiatives[0].projects[0].linkState, "unverified");
+  assert.equal(degraded.initiatives[0].projects[0].lastKnownLinkState, "confirmed");
   assert.equal(degraded.execution.status, "unverified");
   assert.ok(degraded.attention.some((item) => item.id === "ATTN-PROJECTION-DEGRADED"));
   assert.doesNotMatch(degraded.projectionError.message, new RegExp(fixture.root));

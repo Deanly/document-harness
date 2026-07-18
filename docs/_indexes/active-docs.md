@@ -4,6 +4,12 @@ This is a semi-generated index maintained with the active README files and valid
 
 It is a context-selection surface for LLM/Codex runs, not a replacement for source documents.
 
+## Active Initiatives
+
+| ID | Title | Status | Approval | Linked Projects | Updated |
+| --- | --- | --- | --- | --- | --- |
+| _none_ | _none_ | _none_ | _none_ | _none_ | _none_ |
+
 ## Active Projects
 
 | ID | Title | Status | Source | Related Tasks | Updated |
@@ -32,3 +38,4 @@ It is a context-selection surface for LLM/Codex runs, not a replacement for sour
 
 - 2026-05-16: active docs index created for reusable harness retrieval-plane baseline.
 - 2026-07-15: validator contract tightened so this index is checked against active source documents.
+- 2026-07-18: active initiative index surface added.

@@ -235,9 +235,9 @@ approve exception
 request more evidence
 ```
 
-Human response becomes durable `human-policy-decision-receipt` fenced to candidate ID, repository revision, source hashes, exact `effectiveRef`, and the effective artifact's `effectiveSha256`. Only then may an effective governance design be created or updated. 승인 상태는 receipt와 현재 effective artifact bytes가 receipt의 digest와 일치하기 전에는 `approved`로 바꾸지 않습니다.
+Human response becomes durable `human-policy-decision-receipt` fenced to candidate ID, catalog `migration.capturedRepository.baseCommit`, source hashes, exact `effectiveRef`, and the effective artifact's `effectiveSha256`. Only then may an effective governance design be created or updated. 승인 상태는 receipt와 현재 effective artifact bytes가 receipt의 digest와 일치하기 전에는 `approved`로 바꾸지 않습니다.
 
-catalog review를 닫으려면 `migration.status: reviewed`와 `migration.receiptRef`를 설정하고, 해당 receipt는 `candidateId: CATALOG-REVIEW`, decision `approved|exception_accepted`, installation lock의 target revision, exact current catalog bytes SHA-256을 포함해야 합니다. code/config observation은 계속 `unreviewed`로 남고, 다른 policy/guideline candidate는 각각 `approved|rejected` 상태와 ID/source-hash가 일치하는 decision receipt를 가져야 합니다.
+catalog review를 닫으려면 `migration.status: reviewed`와 `migration.receiptRef`를 설정하고, 해당 receipt는 `candidateId: CATALOG-REVIEW`, decision `approved|exception_accepted`, catalog migration base, exact current catalog bytes SHA-256을 포함해야 합니다. code/config observation은 계속 `unreviewed`로 남고, 다른 policy/guideline candidate는 각각 `approved|rejected` 상태와 ID/source-hash가 일치하는 decision receipt를 가져야 합니다. 이후 harness upgrade의 quality gate와 migration evidence pack은 별도로 installation lock의 새 `targetSourceRevision`을 사용하며, unchanged catalog decision을 새 HEAD로 위조하거나 재작성하지 않습니다.
 
 required quality gate evidence는 단순 text file이 아니라 schema version, gate ID/result, command/exit code, target/release revision과 observed time을 가진 JSON receipt입니다. migration evidence pack은 각 `evidenceRef`와 `evidenceSha256`을 함께 pin합니다.
 
@@ -274,16 +274,17 @@ The first human screen should show:
 - critical gaps and conflicts
 - repository revision/dirty state and latest verification
 
-이 항목은 repository별 독립 View의 `single-repository-top-tabs-v1` profile에 다음처럼 배치합니다.
+이 항목은 repository별 독립 View의 `single-repository-top-tabs-v2` profile에 다음처럼 배치합니다.
 
-- top bar: static repository identity, revision/dirty, snapshot/freshness, local-only/read-only
+- top bar: 스크롤 중에도 유지되는 `보드 / <repository>`, revision/dirty, snapshot/freshness, local-only/read-only
 - `개요`: product direction, count summary, critical gap와 latest verification
-- `정책·지침`: candidate/effective/approved count, policy row, related guideline, authority/approval/enforcement와 exact provenance
+- `정책`: policy candidate/effective/approved count, policy row, related guideline, authority/approval/enforcement와 exact provenance
+- `지침`: guideline candidate/effective/approved count, guideline row, related policy, authority/approval/enforcement와 exact provenance
 - `검토 대기`: conflict, missing decision, stale review/approval와 exact requested action
 - `실행 상태`: current task/checkpoint/quality receipt 또는 source가 없다는 explicit gap
 - `근거`: source hash, config/code observation, test/validator와 decision/approval receipt
 
-repository selector와 left sidebar는 제공하지 않습니다. 모든 tab은 같은 snapshot/read fence를 사용하며 polling/manual refresh가 active tab, filter, search와 expanded policy를 초기화하지 않습니다.
+repository selector와 left sidebar는 제공하지 않습니다. 정책과 지침은 서로의 stable ID를 양방향으로 연결하지만 각각 독립 search/filter/pagination/detail을 제공합니다. 모든 tab은 같은 snapshot/read fence를 사용하며 polling/manual refresh가 active tab, tab별 filter/search/pagination과 expanded policy/guideline을 초기화하지 않습니다.
 
 policy/guideline/attention ID는 제목보다 낮은 위계의 보조 metadata로 표시합니다. 긴 ID, path와 hash는 자신의 cell 또는 detail 안에서 줄바꿈해 인접 field와 겹치지 않아야 하며 원문 복사 가능성은 유지합니다.
 
@@ -305,8 +306,10 @@ The View must not render arbitrary Markdown HTML, load external CDN/font/script 
 - conflicting statement is visible attention
 - high-availability or other attractive policy is not invented when current scope says otherwise
 - first projection identifies the repository statically and never invites cross-repository selection
-- policy count, review queue, execution gap and evidence use one snapshot/read fence
-- periodic update preserves the human's active tab, filters, search and expanded policy
+- `보드 / <repository>` identity stays visible in every tab and scroll position
+- policy count, guideline count, review queue, execution gap and evidence use one snapshot/read fence
+- policy and guideline tabs expose reciprocal relationships with independent search/filter/pagination/detail state
+- periodic update preserves the human's active tab, filters, search and expanded policy/guideline
 - long ID/path/hash stays contained inside its own cell or detail and never overlaps adjacent content
 
 ## Skill Packaging
@@ -328,3 +331,4 @@ Do not install this workflow as a user-global skill. When it is first added duri
 - 2026-07-16: extracted governance를 static repository identity와 exact five top tabs에 배치하고 cross-tab fence와 reading-state continuity를 고정했다.
 - 2026-07-16: flat candidate example을 executable governance-catalog schema로 교체하고 nested migration fence, observation-only code/config, secret exclusion과 source-hash stale rule을 명시했다.
 - 2026-07-17: `ko-KR` human wording, technical provenance 원형 보존, presentation-only localization과 긴 ID containment 규칙을 추가했다.
+- 2026-07-17: `보드` 고정 이름과 정책/지침 독립 tab 및 양방향 관계 표시를 extraction handoff에 추가했다.

@@ -456,6 +456,9 @@ test("[governance-fixture-matrix] source classes survive lifecycle without AI se
     assert.equal(catalog.guidelines.length, GOVERNANCE_MANIFEST.emptyCase.expectedGuidelines);
     assert.ok(catalog.gaps.length >= GOVERNANCE_MANIFEST.emptyCase.expectedMinimumGaps);
     assert.ok(catalog.attention.some(({ severity }) => severity === "decision"));
+    assert.ok(catalog.attention.some(({ id }) => id === "ATTN-INITIATIVE-EXTRACTION"));
+    assert.ok(catalog.gaps.some(({ id }) => id === "GAP-INITIATIVE-EXTRACTION"));
+    assert.deepEqual(loadJson(path.join(target, "docs/_indexes/initiative-register.json")).initiatives, []);
     assert.equal(existsSync(path.join(target, EVIDENCE_PACK_PATH)), false);
   });
 });
@@ -476,6 +479,8 @@ test("[governance:empty] empty committed repository installs a review gap, not i
   assert.deepEqual(catalog.policies, []);
   assert.deepEqual(catalog.guidelines, []);
   assert.ok(catalog.gaps.length > 0);
+  assert.ok(catalog.attention.some(({ id }) => id === "ATTN-INITIATIVE-EXTRACTION"));
+  assert.ok(catalog.gaps.some(({ id }) => id === "GAP-INITIATIVE-EXTRACTION"));
 });
 
 function governanceSource(id) {

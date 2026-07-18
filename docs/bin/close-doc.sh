@@ -11,7 +11,8 @@ Usage:
   ./docs/bin/close-doc.sh <doc-path> "<status-note>"
 
 Behavior:
-  - Runs validate-closeout first.
+  - Refuses Initiative closeout until coordinated document/register/receipt updates exist.
+  - For Project and Task, runs validate-closeout first.
   - Sets top-level Status to done.
   - Updates Updated date to today.
   - Appends a closeout entry in the Status section.
@@ -82,8 +83,14 @@ fi
 DOC_TYPE="$(metadata_value "$DOC_PATH" "Type")"
 DOC_STATUS="$(metadata_value "$DOC_PATH" "Status")"
 
-if [[ "$DOC_TYPE" != "task" && "$DOC_TYPE" != "project" ]]; then
-  echo "error: only task/project docs can be closed with this script: $DOC_PATH" >&2
+if [[ "$DOC_TYPE" != "initiative" && "$DOC_TYPE" != "task" && "$DOC_TYPE" != "project" ]]; then
+  echo "error: only initiative/task/project docs can be closed with this script: $DOC_PATH" >&2
+  exit 1
+fi
+
+if [[ "$DOC_TYPE" == "initiative" ]]; then
+  echo "error: Initiative closeout is not supported by close-doc.sh until a coordinated document/register/receipt workflow is implemented." >&2
+  echo "action: have a human update the canonical Initiative document, docs/_indexes/initiative-register.json, and the exact terminal decision receipt in one change set, then run ./docs/bin/validate-closeout.sh $DOC_PATH." >&2
   exit 1
 fi
 

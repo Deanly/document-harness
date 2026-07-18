@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.1.0");
+  assert.equal(result.snapshot.runtimeVersion, "1.3.0");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -678,12 +678,180 @@ test("an empty governance catalog remains an explicit unknown gap", async (t) =>
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
   fixture.catalog.policies = [];
   fixture.catalog.guidelines = [];
+  fixture.initiativeRegister.initiatives = [];
   await writeFile(path.join(fixture.root, "docs", "governance", "catalog.json"), JSON.stringify(fixture.catalog), "utf8");
+  await writeFile(path.join(fixture.root, "docs", "governance", "initiatives.json"), JSON.stringify(fixture.initiativeRegister), "utf8");
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
 
   assert.equal(result.snapshot.summary.policyCount, 0);
   assert.equal(result.snapshot.summary.guidelineCount, 0);
+  assert.equal(result.snapshot.summary.initiativeCount, 0);
   assert.equal(result.snapshot.snapshot.sourceFence.sourceEvidenceState, "unknown");
   assert.equal(result.snapshot.snapshot.freshness, "unknown");
   assert.ok(result.snapshot.attention.some((item) => item.id === "ATTN-GOVERNANCE-EMPTY"));
+});
+
+test("initiative Markdown relationship tables must exactly mirror the register", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  fixture.initiativeRegister.initiatives[0].policyRelationships[0].rationale = "A silently changed rationale must fail closed.";
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "initiatives.json"),
+    JSON.stringify(fixture.initiativeRegister),
+    "utf8"
+  );
+
+  await assert.rejects(
+    buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
+    /관계 표가 register relationship mirror와 일치하지 않습니다/
+  );
+});
+
+test("no_applicable_guideline accepts an explicit reason and an empty relationship table", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  const initiative = fixture.initiativeRegister.initiatives[0];
+  initiative.guidelineRefs = [];
+  initiative.guidelineRelationships = [];
+  initiative.guidelineDisposition = "no_applicable_guideline";
+  initiative.guidelineDispositionReason = "현재 범위에는 적용 가능한 지침이 없으며 activation review에서 다시 확인합니다.";
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "initiatives.json"),
+    JSON.stringify(fixture.initiativeRegister),
+    "utf8"
+  );
+  await writeFile(path.join(fixture.root, initiative.documentRef), `---
+type: initiative
+doc_id: I0001
+initiative_contract: v1
+status: draft
+approval_status: review_requested
+issuance_approval_ref: DECISION-FIXTURE
+approval_ref:
+policy_refs:
+  - POL-1
+guideline_refs: []
+guideline_disposition: no_applicable_guideline
+guideline_disposition_reason: 현재 범위에는 적용 가능한 지침이 없으며 activation review에서 다시 확인합니다.
+---
+
+# I0001 Fixture
+
+## Policy Alignment
+
+| Policy Ref | Relation | Rationale | Exception Ref |
+| --- | --- | --- | --- |
+| POL-1 | advances | The initiative turns the policy direction into a bounded outcome. | |
+
+## Guideline Disposition
+
+| Guideline Ref | Adoption | Rationale | Verification |
+| --- | --- | --- | --- |
+`, "utf8");
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.initiatives[0].guidelineDisposition, "no_applicable_guideline");
+  assert.deepEqual(result.snapshot.initiatives[0].guidelineRelationships, []);
+});
+
+test("unknown or relation-less project lineage is surfaced as human attention without inferred links", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await writeFile(path.join(fixture.root, "docs", "projects", "P0002-unknown.md"), `---
+type: project
+doc_id: P0002
+title: Unknown Initiative
+status: draft
+lineage_contract: v2
+related_initiative: I9999
+initiative_relation: delivers
+---
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "projects", "P0003-relation-less.md"), `---
+type: project
+doc_id: P0003
+title: Relation Missing
+status: draft
+lineage_contract: v2
+related_initiative: I0001
+initiative_relation:
+---
+`, "utf8");
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  const attention = result.snapshot.attention.find(({ id }) => id === "ATTN-INITIATIVE-LINEAGE");
+  assert.ok(attention);
+  assert.deepEqual(attention.relatedRefs, ["P0002", "I9999", "P0003", "I0001"]);
+  assert.deepEqual(result.snapshot.initiatives[0].projects.map(({ id }) => id), ["P0001"]);
+});
+
+test("active initiatives fail closed on an unapproved policy", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  const initiative = fixture.initiativeRegister.initiatives[0];
+  initiative.lifecycleState = "active";
+  initiative.approvalState = "approved";
+  initiative.effectiveRef = initiative.documentRef;
+  initiative.decisionReceiptRef = "docs/receipts/I0001.json";
+  initiative.guidelineDisposition = "linked";
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "initiatives.json"),
+    JSON.stringify(fixture.initiativeRegister),
+    "utf8"
+  );
+
+  await assert.rejects(
+    buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
+    /active\/done 추진안은 current effective\/approved policy만 사용할 수 있습니다: POL-1/
+  );
+});
+
+test("active initiatives fail closed on an unapproved required guideline", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await mkdir(path.join(fixture.root, "docs", "design"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "receipts"), { recursive: true });
+  const policy = fixture.catalog.policies[0];
+  policy.authorityState = "effective";
+  policy.approvalState = "approved";
+  policy.effectiveRef = "docs/design/effective-policy.md";
+  policy.decisionReceiptRef = "docs/receipts/POL-1.json";
+  await writeFile(path.join(fixture.root, policy.effectiveRef), "# Effective policy\n", "utf8");
+  await writeFile(path.join(fixture.root, policy.decisionReceiptRef), JSON.stringify({
+    schemaVersion: 1,
+    decisionId: "DEC-POL-1",
+    candidateId: "POL-1",
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-07-18T00:00:00.000Z",
+    sourceFence: {
+      repositoryRevision: fixture.seedCommit,
+      sourceHashes: policy.sourceRefs.map(({ capturedSha256 }) => capturedSha256)
+    },
+    effectiveRef: policy.effectiveRef,
+    effectiveSha256: sha256("# Effective policy\n"),
+    reason: "fixture approval"
+  }), "utf8");
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "catalog.json"),
+    JSON.stringify(fixture.catalog),
+    "utf8"
+  );
+  const initiative = fixture.initiativeRegister.initiatives[0];
+  initiative.lifecycleState = "active";
+  initiative.approvalState = "approved";
+  initiative.effectiveRef = initiative.documentRef;
+  initiative.decisionReceiptRef = "docs/receipts/I0001.json";
+  initiative.guidelineDisposition = "linked";
+  initiative.guidelineRelationships[0].adoption = "required";
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "initiatives.json"),
+    JSON.stringify(fixture.initiativeRegister),
+    "utf8"
+  );
+
+  await assert.rejects(
+    buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
+    /required guideline은 current effective\/approved 상태여야 합니다: GUIDE-1/
+  );
 });

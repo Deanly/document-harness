@@ -1,7 +1,8 @@
 import {
-  attentionMap,
   buildEvidenceGroups,
   filterEvidence,
+  filterGuidelines,
+  filterInitiatives,
   filterPolicies,
   freshnessPresentation,
   governanceStatusPresentation,
@@ -11,9 +12,9 @@ import {
   reviewStats,
   runtimeSummary,
   sortAttention
-} from "/view-model.mjs?v=2";
+} from "/view-model.mjs?v=4";
 
-const tabNames = ["overview", "policies", "review", "execution", "evidence"];
+const tabNames = ["overview", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
 
 const state = {
   snapshot: null,
@@ -23,7 +24,17 @@ const state = {
   policyQuery: "",
   policyPage: 1,
   policyPageSize: 5,
+  guidelineFilter: "all",
+  guidelineQuery: "",
+  guidelinePage: 1,
+  guidelinePageSize: 5,
+  initiativeFilter: "all",
+  initiativeQuery: "",
+  initiativePage: 1,
+  initiativePageSize: 5,
   expandedPolicies: new Set(),
+  expandedGuidelines: new Set(),
+  expandedInitiatives: new Set(),
   reviewFilter: "all",
   evidenceFilter: "all",
   evidenceQuery: "",
@@ -81,6 +92,8 @@ const labels = {
   succeeded: "성공",
   draft: "초안",
   active: "진행 중",
+  paused: "일시 중지",
+  completed: "완료",
   blocked: "막힘",
   done: "완료",
   closed: "종료",
@@ -100,7 +113,19 @@ const labels = {
   decision: "결정 필요",
   warning: "주의",
   info: "정보",
-  none: "일반"
+  none: "일반",
+  linked: "지침 연결",
+  no_applicable_guideline: "적용 지침 없음",
+  advances: "방향을 진전",
+  "constrained-by": "경계를 준수",
+  "exception-to": "승인 예외 적용",
+  required: "필수 적용",
+  recommended: "권장 적용",
+  delivers: "실행 담당",
+  supports: "지원",
+  explores: "탐색",
+  migration_candidate: "전환 후보",
+  confirmed: "연결됨"
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -148,7 +173,7 @@ function number(value) {
 }
 
 function toneFor(value) {
-  if (["effective", "approved", "enforced", "fresh", "current", "clean", "UP"].includes(value)) return "success";
+  if (["effective", "approved", "active", "completed", "enforced", "fresh", "current", "clean", "UP", "confirmed"].includes(value)) return "success";
   if (["not_implemented", "stale", "degraded", "rejected", "missing", "invalid", "changed", "DOWN", "critical"].includes(value)) return "danger";
   if (["partially_enforced", "review_requested", "proposed", "advisory", "dirty", "warning", "unverified", "last_known_unverified"].includes(value)) return "warning";
   if (["decision"].includes(value)) return "info";
@@ -261,6 +286,7 @@ function renderRuntimeStrip(container, snapshot) {
 
 function renderChrome(snapshot) {
   $("#repository-name").textContent = snapshot.project.id;
+  document.title = `보드 · ${snapshot.project.id}`;
   $("#last-updated").textContent = `업데이트 ${formatTime(snapshot.snapshot.generatedAt, true)}`;
   $("#review-tab-count").textContent = snapshot.summary.attentionCount;
   $("#footer-fence").textContent = `스냅샷 ${snapshot.snapshot.id} · 초기 이관 ${localized(snapshot.migrationFence?.state)} · 소스 ${localized(snapshot.snapshot.sourceFence?.sourceEvidenceState)}`;
@@ -290,6 +316,7 @@ function renderOverview(snapshot) {
   renderMetricSet($("#overview-summary"), [
     ["정책 후보", number(snapshot.summary.policyCount), "기존 소스에서 추출"],
     ["실행 지침", number(snapshot.summary.guidelineCount), "정책 구현 방법"],
+    ["추진안", number(snapshot.summary.initiativeCount), `${number(snapshot.summary.linkedProjectCount)}개 프로젝트 연결`],
     [unverified ? "현재 확인된 승인" : "승인 완료", number(snapshot.summary.approvedCount), unverified ? `마지막 확인 ${number(snapshot.summary.lastKnown?.approvedCount)}` : "결정 영수증 기준"],
     [unverified ? "현재 확인된 검토 대기" : "검토 대기", number(snapshot.summary.reviewCount), unverified ? `마지막 확인 ${number(snapshot.summary.lastKnown?.reviewCount)}` : "정책·지침 후보"],
     ...(unverified ? [["현재 미검증", number(snapshot.summary.unverifiedCount), "마지막 정상 스냅샷에서 보존"]] : []),
@@ -318,19 +345,29 @@ function policyFilterCount(snapshot, filter) {
   }).length;
 }
 
+function guidelineFilterCount(snapshot, filter) {
+  return filterGuidelines({
+    guidelines: snapshot.guidelines,
+    policies: snapshot.policies,
+    attention: snapshot.attention,
+    filter
+  }).length;
+}
+
+const governanceFilterDefinitions = [
+  ["all", "전체"],
+  ["critical", "긴급"],
+  ["attention", "검토 연결"],
+  ["unreviewed", "승인 필요"],
+  ["unverified", "현재 미검증"],
+  ["enforced", "강제"],
+  ["stale", "근거 변경"]
+];
+
 function renderPolicyFilters(snapshot) {
   const filters = $("#policy-filters");
   clear(filters);
-  const definitions = [
-    ["all", "전체"],
-    ["critical", "긴급"],
-    ["attention", "검토 연결"],
-    ["unreviewed", "승인 필요"],
-    ["unverified", "현재 미검증"],
-    ["enforced", "강제"],
-    ["stale", "근거 변경"]
-  ];
-  for (const [value, label] of definitions) {
+  for (const [value, label] of governanceFilterDefinitions) {
     const button = element("button", {
       id: `policy-filter-${value}`,
       className: `filter-button${state.policyFilter === value ? " active" : ""}`,
@@ -341,22 +378,89 @@ function renderPolicyFilters(snapshot) {
       state.policyFilter = value;
       state.policyPage = 1;
       renderPolicies(snapshot);
-      const refreshed = [...$("#policy-filters").children][definitions.findIndex(([candidate]) => candidate === value)];
+      const refreshed = [...$("#policy-filters").children][governanceFilterDefinitions.findIndex(([candidate]) => candidate === value)];
       refreshed?.focus();
     });
     filters.append(button);
   }
 }
 
-function policyRiskLabel(policy, snapshot) {
-  const severity = policySeverity(policy.id, snapshot.attention);
+function renderGuidelineFilters(snapshot) {
+  const filters = $("#guideline-filters");
+  clear(filters);
+  for (const [value, label] of governanceFilterDefinitions) {
+    const button = element("button", {
+      id: `guideline-filter-${value}`,
+      className: `filter-button${state.guidelineFilter === value ? " active" : ""}`,
+      text: `${label} ${guidelineFilterCount(snapshot, value)}`,
+      attrs: { type: "button", "aria-pressed": state.guidelineFilter === value ? "true" : "false" }
+    });
+    button.addEventListener("click", () => {
+      state.guidelineFilter = value;
+      state.guidelinePage = 1;
+      renderPolicies(snapshot);
+      const refreshed = [...$("#guideline-filters").children][governanceFilterDefinitions.findIndex(([candidate]) => candidate === value)];
+      refreshed?.focus();
+    });
+    filters.append(button);
+  }
+}
+
+const initiativeFilterDefinitions = [
+  ["all", "전체"],
+  ["active", "진행"],
+  ["draft", "초안"],
+  ["review", "승인 필요"],
+  ["guideline_review", "지침 검토"],
+  ["no_projects", "프로젝트 없음"],
+  ["stale", "근거 변경"]
+];
+
+function initiativeFilterCount(snapshot, filter) {
+  return filterInitiatives({
+    initiatives: snapshot.initiatives,
+    policies: snapshot.policies,
+    guidelines: snapshot.guidelines,
+    attention: snapshot.attention,
+    filter
+  }).length;
+}
+
+function renderInitiativeFilters(snapshot) {
+  const filters = $("#initiative-filters");
+  clear(filters);
+  for (const [value, label] of initiativeFilterDefinitions) {
+    const button = element("button", {
+      id: `initiative-filter-${value}`,
+      className: `filter-button${state.initiativeFilter === value ? " active" : ""}`,
+      text: `${label} ${initiativeFilterCount(snapshot, value)}`,
+      attrs: { type: "button", "aria-pressed": state.initiativeFilter === value ? "true" : "false" }
+    });
+    button.addEventListener("click", () => {
+      state.initiativeFilter = value;
+      state.initiativePage = 1;
+      renderInitiatives(snapshot);
+      const refreshed = [...$("#initiative-filters").children][initiativeFilterDefinitions.findIndex(([candidate]) => candidate === value)];
+      refreshed?.focus();
+    });
+    filters.append(button);
+  }
+}
+
+function governanceRiskLabel(item, snapshot) {
+  const severity = policySeverity(item.id, snapshot.attention);
   if (severity !== "none") return severityLabel(severity);
-  if (policy.risk) return statusLabel("warning", "warning", "주의");
+  if (item.risk) return statusLabel("warning", "warning", "주의");
   return statusLabel("none", "neutral", "일반");
 }
 
 function linkedGuideList(policy, snapshot) {
   return guidelineMap(snapshot.guidelines).get(policy.id) ?? [];
+}
+
+function linkedPolicyList(guideline, snapshot) {
+  const policies = new Map(snapshot.policies.map((policy) => [policy.id, policy]));
+  return (guideline.policyRefs ?? []).map((policyRef) => policies.get(policyRef)).filter(Boolean);
 }
 
 function sourceLocation(ref) {
@@ -418,6 +522,56 @@ function policyDetail(policy, linkedGuides) {
   return element("div", { className: "policy-detail" }, [statement, guides, evidence, review]);
 }
 
+function guidelineDetail(guideline, linkedPolicies) {
+  const statement = element("div", { className: "detail-column" }, [
+    element("span", { className: "detail-label", text: "지침 내용과 적용" }),
+    element("p", { text: guideline.humanSummary }),
+    guideline.why ? element("p", { text: `왜 필요한가 · ${guideline.why}` }) : null,
+    guideline.scope ? element("p", { text: `적용 범위 · ${guideline.scope}` }) : null,
+    guideline.risk ? element("p", { className: "risk-copy", text: `알려진 위험 · ${guideline.risk}` }) : null
+  ]);
+
+  const policies = element("div", { className: "detail-column" }, [
+    element("span", { className: "detail-label", text: `연결된 정책 ${linkedPolicies.length}개` })
+  ]);
+  if (linkedPolicies.length === 0) policies.append(element("p", { text: "연결된 정책이 없습니다. 적용 범위를 사람과 확인해야 합니다." }));
+  else {
+    const list = element("ul");
+    for (const policy of linkedPolicies) {
+      list.append(element("li", {}, [
+        element("code", { text: policy.id }),
+        document.createTextNode(` ${policy.title} · ${policy.humanSummary}`)
+      ]));
+    }
+    policies.append(list);
+  }
+
+  const sourceRefs = guideline.sourceRefs ?? [];
+  const evidence = element("div", { className: "detail-column" }, [
+    element("span", { className: "detail-label", text: `증거와 출처 ${sourceRefs.length}건` })
+  ]);
+  const evidenceList = element("ul");
+  for (const ref of sourceRefs) {
+    evidenceList.append(element("li", {}, [
+      element("code", { text: sourceLocation(ref) }),
+      document.createTextNode(` · ${sourceStateText(ref)}`)
+    ]));
+  }
+  if (sourceRefs.length === 0) evidenceList.append(element("li", { text: "연결된 근거가 없습니다." }));
+  evidence.append(evidenceList);
+
+  const review = element("div", { className: "detail-column" }, [
+    element("span", { className: "detail-label", text: "다음 사람 검토 단계" }),
+    element("ol", {}, [
+      element("li", { text: "지침 문장과 적용 범위를 확인합니다." }),
+      element("li", { text: "연결된 정책을 실제로 구현하는지 검토합니다." }),
+      element("li", { text: "근거 최신성과 강제 수준을 확인합니다." }),
+      element("li", { text: "수정·승인·보류 결정은 AI 도구와 논의한 뒤 별도 결정 영수증으로 남깁니다." })
+    ])
+  ]);
+  return element("div", { className: "policy-detail guideline-detail" }, [statement, policies, evidence, review]);
+}
+
 function renderPolicyTable(snapshot) {
   const body = $("#policy-table-body");
   clear(body);
@@ -430,7 +584,7 @@ function renderPolicyTable(snapshot) {
   });
   const page = paginate(filtered, state.policyPage, state.policyPageSize);
   state.policyPage = page.page;
-  $("#policy-result-count").textContent = `${number(page.total)}개 결과 · ${number(page.start)}–${number(page.end)} 표시`;
+  $("#policy-result-count").textContent = `정책 ${number(page.total)}개 · ${number(page.start)}–${number(page.end)} 표시`;
 
   if (page.items.length === 0) {
     const row = element("tr");
@@ -471,7 +625,7 @@ function renderPolicyTable(snapshot) {
           ? linkedGuides.map((guide) => element("code", { text: guide.id }))
           : [element("span", { text: "연결 없음" })])
       ]),
-      element("td", {}, [policyRiskLabel(policy, snapshot)]),
+      element("td", {}, [governanceRiskLabel(policy, snapshot)]),
       element("td", {}, [governanceStatusLabel(policy, "enforcement")]),
       element("td", {}, [governanceStatusLabel(policy, "approvalState")]),
       element("td", {}, [
@@ -488,6 +642,295 @@ function renderPolicyTable(snapshot) {
   }
 
   renderPagination(page, snapshot);
+}
+
+function renderGuidelineTable(snapshot) {
+  const body = $("#guideline-table-body");
+  clear(body);
+  const filtered = filterGuidelines({
+    guidelines: snapshot.guidelines,
+    policies: snapshot.policies,
+    attention: snapshot.attention,
+    query: state.guidelineQuery,
+    filter: state.guidelineFilter
+  });
+  const page = paginate(filtered, state.guidelinePage, state.guidelinePageSize);
+  state.guidelinePage = page.page;
+  $("#guideline-result-count").textContent = `지침 ${number(page.total)}개 · ${number(page.start)}–${number(page.end)} 표시`;
+
+  if (page.items.length === 0) {
+    const row = element("tr");
+    const empty = element("div", { className: "empty-state governance-empty" }, [
+      element("strong", { text: "표시할 지침이 없습니다." }),
+      element("p", { text: "검색·필터를 초기화하거나 AI 도구와 함께 정책을 구현할 지침 후보를 검토해 주세요." })
+    ]);
+    row.append(element("td", { attrs: { colspan: "8" } }, [empty]));
+    body.append(row);
+  }
+
+  for (const guideline of page.items) {
+    const linkedPolicies = linkedPolicyList(guideline, snapshot);
+    const expanded = state.expandedGuidelines.has(guideline.id);
+    const trigger = element("button", {
+      id: `guideline-toggle-${guideline.id}`,
+      className: "row-toggle",
+      text: expanded ? "닫기" : "열기",
+      attrs: {
+        type: "button",
+        "aria-expanded": expanded ? "true" : "false",
+        "aria-controls": `guideline-details-${guideline.id}`,
+        "aria-label": `${guideline.id} 지침 상세 ${expanded ? "닫기" : "열기"}`
+      }
+    });
+    trigger.addEventListener("click", () => {
+      if (expanded) state.expandedGuidelines.delete(guideline.id);
+      else state.expandedGuidelines.add(guideline.id);
+      renderGuidelineTable(snapshot);
+      $(`#guideline-toggle-${guideline.id}`)?.focus();
+    });
+
+    const sourceRefs = guideline.sourceRefs ?? [];
+    const row = element("tr", { className: "data-row guideline-row" }, [
+      element("td", {}, [trigger]),
+      element("td", {}, [element("span", { className: "item-id", text: guideline.id })]),
+      element("td", {}, [
+        element("span", { className: "policy-title", text: guideline.title }),
+        element("span", { className: "policy-summary", text: guideline.humanSummary })
+      ]),
+      element("td", {}, [
+        element("div", { className: "linked-refs" }, (guideline.policyRefs?.length
+          ? guideline.policyRefs.map((policyRef) => element("code", { text: policyRef }))
+          : [element("span", { text: "연결 없음" })]))
+      ]),
+      element("td", {}, [governanceRiskLabel(guideline, snapshot)]),
+      element("td", {}, [governanceStatusLabel(guideline, "enforcement")]),
+      element("td", {}, [governanceStatusLabel(guideline, "approvalState")]),
+      element("td", {}, [governanceStatusLabel(guideline, "evidenceState", ` · ${sourceRefs.length}`)])
+    ]);
+    body.append(row);
+
+    if (expanded) {
+      const detailsRow = element("tr", { className: "details-row", id: `guideline-details-${guideline.id}` });
+      detailsRow.append(element("td", { attrs: { colspan: "8" } }, [guidelineDetail(guideline, linkedPolicies)]));
+      body.append(detailsRow);
+    }
+  }
+
+  renderGuidelinePagination(page, snapshot);
+}
+
+function initiativeLifecycleLabel(initiative) {
+  if (initiative.projectionState === "last_known_unverified") {
+    return statusLabel("unverified", "warning", `마지막 ${localized(initiative.lastKnown?.lifecycleState, "기록 없음")} · 현재 미검증`);
+  }
+  return statusLabel(initiative.lifecycleState, toneFor(initiative.lifecycleState), localized(initiative.lifecycleState));
+}
+
+function guidelineDispositionText(value) {
+  if (value === "needs_review") return "지침 검토 필요";
+  if (value === "linked") return "지침 연결";
+  if (value === "no_applicable_guideline") return "적용 지침 없음";
+  return localized(value);
+}
+
+function initiativeLinkedItems(initiative, snapshot) {
+  const policies = new Map(snapshot.policies.map((item) => [item.id, item]));
+  const guidelines = new Map(snapshot.guidelines.map((item) => [item.id, item]));
+  const policyRelationships = new Map((initiative.policyRelationships ?? []).map((item) => [item.policyId, item]));
+  const guidelineRelationships = new Map((initiative.guidelineRelationships ?? []).map((item) => [item.guidelineId, item]));
+  return {
+    policies: (initiative.policyRefs ?? []).map((ref) => ({ item: policies.get(ref), relationship: policyRelationships.get(ref) })).filter(({ item }) => Boolean(item)),
+    guidelines: (initiative.guidelineRefs ?? []).map((ref) => ({ item: guidelines.get(ref), relationship: guidelineRelationships.get(ref) })).filter(({ item }) => Boolean(item))
+  };
+}
+
+function initiativeDetail(initiative, snapshot) {
+  const linked = initiativeLinkedItems(initiative, snapshot);
+  const outcome = element("div", { className: "detail-column initiative-outcome" }, [
+    element("span", { className: "detail-label", text: "달성 목표와 현재 초점" }),
+    element("p", { className: "initiative-outcome-copy", text: initiative.outcome }),
+    element("p", { text: `지금 필요한 이유 · ${initiative.whyNow}` }),
+    element("p", { text: `현재 초점 · ${initiative.currentFocus}` }),
+    element("p", { text: `담당 · ${initiative.owner}` })
+  ]);
+
+  const governance = element("div", { className: "detail-column" }, [
+    element("span", { className: "detail-label", text: "직접 연결한 정책과 지침" })
+  ]);
+  const policyList = element("ul", { className: "initiative-link-list" });
+  for (const { item: policy, relationship } of linked.policies) {
+    policyList.append(element("li", {}, [
+      element("code", { text: policy.id }),
+      document.createTextNode(` ${policy.title} · ${localized(relationship?.relation)} · ${relationship?.rationale ?? "관계 근거 확인 필요"}`),
+      relationship?.exceptionRef ? element("small", { text: ` 예외 근거 · ${relationship.exceptionRef}` }) : null
+    ]));
+  }
+  governance.append(policyList);
+  if (linked.guidelines.length === 0) {
+    governance.append(element("p", { text: `${guidelineDispositionText(initiative.guidelineDisposition)} · ${initiative.guidelineDispositionReason}` }));
+  } else {
+    governance.append(element("p", { text: `${guidelineDispositionText(initiative.guidelineDisposition)} · ${initiative.guidelineDispositionReason}` }));
+    const guideList = element("ul", { className: "initiative-link-list" });
+    for (const { item: guideline, relationship } of linked.guidelines) {
+      const pending = initiative.guidelineDisposition === "needs_review"
+        || guideline.approvalState !== "approved"
+        || guideline.authorityState !== "effective";
+      guideList.append(element("li", {}, [
+        element("code", { text: guideline.id }),
+        document.createTextNode(` ${guideline.title} · ${pending ? "검토 중인 지침" : "현재 적용 지침"} · ${localized(relationship?.adoption)}`),
+        element("small", { text: ` 이유 · ${relationship?.rationale ?? "확인 필요"} · 검증 · ${relationship?.verification ?? "확인 필요"}` })
+      ]));
+    }
+    governance.append(guideList);
+  }
+
+  const projects = element("div", { className: "detail-column initiative-projects" }, [
+    element("span", { className: "detail-label", text: `연결 프로젝트 ${initiative.projects.length}개` })
+  ]);
+  if (initiative.projects.length === 0) {
+    projects.append(element("p", { text: "연결된 프로젝트가 없습니다. 추진안을 승인하기 전에 실행 경계를 확인해야 합니다." }));
+  } else {
+    const list = element("div", { className: "initiative-project-list" });
+    for (const project of initiative.projects) {
+      list.append(element("article", { className: "initiative-project-card" }, [
+        element("div", { className: "initiative-project-heading" }, [
+          element("code", { text: project.id }),
+          project.status === "unverified"
+            ? statusLabel("unverified", "warning", `마지막 ${localized(project.lastKnownStatus, "기록 없음")} · 현재 미검증`)
+            : statusLabel(project.status, toneFor(project.status), localized(project.status))
+        ]),
+        element("strong", { text: project.title }),
+        project.currentFocus ? element("p", { text: project.currentFocus }) : null,
+        element("span", { className: "source-path", text: project.path }),
+        element("small", { text: project.linkState === "unverified"
+          ? `관계 · ${localized(project.relation)} · 마지막 연결 · 현재 미검증`
+          : `관계 · ${localized(project.relation)} · ${project.linkState === "legacy_candidate" ? "전환 후보 연결" : project.lineageContract === "v2" ? "새 계보 계약" : "기존 계보 호환"}` })
+      ]));
+    }
+    projects.append(list);
+  }
+
+  const evidence = element("div", { className: "detail-column initiative-evidence" }, [
+    element("span", { className: "detail-label", text: "성공 신호·위험·근거" })
+  ]);
+  const success = element("ul");
+  for (const signal of initiative.successSignals ?? []) success.append(element("li", { text: `성공 신호 · ${signal}` }));
+  for (const risk of initiative.risks ?? []) success.append(element("li", { className: "risk-copy", text: `위험 · ${risk}` }));
+  for (const ref of initiative.sourceRefs ?? []) {
+    success.append(element("li", {}, [
+      element("code", { text: sourceLocation(ref) }),
+      document.createTextNode(` · ${sourceStateText(ref)}`)
+    ]));
+  }
+  evidence.append(success);
+
+  return element("div", { className: "policy-detail initiative-detail" }, [outcome, governance, projects, evidence]);
+}
+
+function renderInitiativeTable(snapshot) {
+  const body = $("#initiative-table-body");
+  clear(body);
+  const filtered = filterInitiatives({
+    initiatives: snapshot.initiatives,
+    policies: snapshot.policies,
+    guidelines: snapshot.guidelines,
+    attention: snapshot.attention,
+    query: state.initiativeQuery,
+    filter: state.initiativeFilter
+  });
+  const page = paginate(filtered, state.initiativePage, state.initiativePageSize);
+  state.initiativePage = page.page;
+  $("#initiative-result-count").textContent = `추진안 ${number(page.total)}개 · ${number(page.start)}–${number(page.end)} 표시`;
+
+  if (page.items.length === 0) {
+    const row = element("tr");
+    row.append(element("td", { attrs: { colspan: "9" } }, [
+      element("div", { className: "empty-state governance-empty" }, [
+        element("strong", { text: "표시할 추진안이 없습니다." }),
+        element("p", { text: "검색·필터를 초기화하거나 AI 도구와 함께 정책과 프로젝트 사이의 추진 경계를 정리해 주세요." })
+      ])
+    ]));
+    body.append(row);
+  }
+
+  for (const initiative of page.items) {
+    const linked = initiativeLinkedItems(initiative, snapshot);
+    const expanded = state.expandedInitiatives.has(initiative.id);
+    const trigger = element("button", {
+      id: `initiative-toggle-${initiative.id}`,
+      className: "row-toggle",
+      text: expanded ? "닫기" : "열기",
+      attrs: {
+        type: "button",
+        "aria-expanded": expanded ? "true" : "false",
+        "aria-controls": `initiative-details-${initiative.id}`,
+        "aria-label": `${initiative.id} 추진안 상세 ${expanded ? "닫기" : "열기"}`
+      }
+    });
+    trigger.addEventListener("click", () => {
+      if (expanded) state.expandedInitiatives.delete(initiative.id);
+      else state.expandedInitiatives.add(initiative.id);
+      renderInitiativeTable(snapshot);
+      $(`#initiative-toggle-${initiative.id}`)?.focus();
+    });
+    const guidelineNeedsReview = initiative.guidelineDisposition === "needs_review"
+      || linked.guidelines.some(({ item }) => item.approvalState !== "approved" || item.authorityState !== "effective");
+    body.append(element("tr", { className: "data-row initiative-row" }, [
+      element("td", {}, [trigger]),
+      element("td", {}, [element("span", { className: "item-id", text: initiative.id })]),
+      element("td", {}, [
+        element("span", { className: "policy-title", text: initiative.title }),
+        element("span", { className: "policy-summary", text: initiative.humanSummary })
+      ]),
+      element("td", {}, [initiativeLifecycleLabel(initiative)]),
+      element("td", {}, [element("div", { className: "linked-refs" }, linked.policies.map(({ item, relationship }) => element("span", { className: "linked-ref-relationship" }, [
+        element("code", { text: item.id }),
+        element("small", { text: localized(relationship?.relation) })
+      ])))]),
+      element("td", {}, [
+        element("div", { className: "linked-refs" }, linked.guidelines.length
+          ? linked.guidelines.map(({ item, relationship }) => element("span", { className: "linked-ref-relationship" }, [
+            element("code", { text: item.id }),
+            element("small", { text: guidelineNeedsReview ? "검토 후보" : localized(relationship?.adoption) })
+          ]))
+          : [element("span", { text: guidelineDispositionText(initiative.guidelineDisposition) })]),
+        guidelineNeedsReview ? statusLabel("review_requested", "warning", "지침 검토 필요") : null
+      ]),
+      element("td", {}, [
+        element("strong", { text: `${number(initiative.projects.length)}개` }),
+        initiative.projects[0] ? element("span", { className: "policy-summary", text: `${initiative.projects[0].id} · ${initiative.projects[0].title}` }) : element("span", { className: "policy-summary", text: "연결 없음" })
+      ]),
+      element("td", {}, [governanceStatusLabel(initiative, "approvalState")]),
+      element("td", {}, [governanceStatusLabel(initiative, "evidenceState", ` · ${initiative.sourceRefs.length}`)])
+    ]));
+    if (expanded) {
+      const detailsRow = element("tr", { className: "details-row", id: `initiative-details-${initiative.id}` });
+      detailsRow.append(element("td", { attrs: { colspan: "9" } }, [initiativeDetail(initiative, snapshot)]));
+      body.append(detailsRow);
+    }
+  }
+  renderInitiativePagination(page, snapshot);
+}
+
+function renderInitiativePagination(page, snapshot) {
+  const container = $("#initiative-pagination");
+  clear(container);
+  const summary = element("span", { text: `추진안 ${number(page.total)}개 중 ${number(page.start)}–${number(page.end)} · ${page.page}/${page.totalPages} 페이지` });
+  const actions = element("div", { className: "pagination-actions" });
+  const previous = element("button", { text: "이전", attrs: { type: "button", "aria-label": "이전 추진안 페이지" } });
+  previous.disabled = page.page <= 1;
+  previous.addEventListener("click", () => {
+    state.initiativePage -= 1;
+    renderInitiativeTable(snapshot);
+  });
+  const next = element("button", { text: "다음", attrs: { type: "button", "aria-label": "다음 추진안 페이지" } });
+  next.disabled = page.page >= page.totalPages;
+  next.addEventListener("click", () => {
+    state.initiativePage += 1;
+    renderInitiativeTable(snapshot);
+  });
+  actions.append(previous, next);
+  container.append(summary, actions);
 }
 
 function renderPagination(page, snapshot) {
@@ -511,10 +954,41 @@ function renderPagination(page, snapshot) {
   container.append(summary, actions);
 }
 
-function renderReviewRail(snapshot) {
-  const container = $("#review-rail-list");
+function renderGuidelinePagination(page, snapshot) {
+  const container = $("#guideline-pagination");
   clear(container);
-  const sorted = sortAttention(snapshot.attention);
+  const summary = element("span", { text: `지침 ${number(page.total)}개 중 ${number(page.start)}–${number(page.end)} · ${page.page}/${page.totalPages} 페이지` });
+  const actions = element("div", { className: "pagination-actions" });
+  const previous = element("button", { text: "이전", attrs: { type: "button", "aria-label": "이전 지침 페이지" } });
+  previous.disabled = page.page <= 1;
+  previous.addEventListener("click", () => {
+    state.guidelinePage -= 1;
+    renderGuidelineTable(snapshot);
+  });
+  const next = element("button", { text: "다음", attrs: { type: "button", "aria-label": "다음 지침 페이지" } });
+  next.disabled = page.page >= page.totalPages;
+  next.addEventListener("click", () => {
+    state.guidelinePage += 1;
+    renderGuidelineTable(snapshot);
+  });
+  actions.append(previous, next);
+  container.append(summary, actions);
+}
+
+function renderReviewRail(snapshot, selector, relatedIds) {
+  const container = $(selector);
+  clear(container);
+  const refs = new Set(relatedIds);
+  const sorted = sortAttention(snapshot.attention).filter((item) =>
+    (item.relatedRefs ?? []).some((ref) => refs.has(ref))
+  );
+  if (sorted.length === 0) {
+    container.append(element("div", { className: "empty-state governance-empty" }, [
+      element("strong", { text: "연결된 검토 항목이 없습니다." }),
+      element("p", { text: "현재 항목과 직접 연결된 주의·결정 요청이 없습니다." })
+    ]));
+    return;
+  }
   for (const severity of ["critical", "decision", "warning"]) {
     const items = sorted.filter((item) => item.severity === severity);
     if (items.length === 0) continue;
@@ -532,20 +1006,54 @@ function renderReviewRail(snapshot) {
   }
 }
 
-function renderPolicies(snapshot) {
+function governanceMetrics(items, snapshot, kindLabel) {
   const unverified = snapshot.summary.state === "last_known_unverified";
-  renderMetricSet($("#policy-summary"), [
-    ["정책", number(snapshot.summary.policyCount)],
-    ["지침", number(snapshot.summary.guidelineCount)],
-    [unverified ? "현재 확인된 승인" : "승인", number(snapshot.summary.approvedCount), unverified ? `마지막 ${number(snapshot.summary.lastKnown?.approvedCount)}` : null],
-    ...(unverified ? [["현재 미검증", number(snapshot.summary.unverifiedCount)]] : []),
-    ["주의", number(snapshot.summary.attentionCount)],
-    [unverified ? "현재 확인된 검토 대기" : "검토 대기", number(snapshot.summary.reviewCount), unverified ? `마지막 ${number(snapshot.summary.lastKnown?.reviewCount)}` : null]
-  ], "compact-metric");
+  const verified = items.filter((item) => item.projectionState !== "last_known_unverified");
+  const approved = verified.filter((item) => item.approvalState === "approved").length;
+  const review = verified.filter((item) => item.approvalState !== "approved").length;
+  const enforced = verified.filter((item) => item.enforcement === "enforced").length;
+  const lastApproved = items.filter((item) => item.lastKnown?.approvalState === "approved").length;
+  const lastReview = items.filter((item) => item.lastKnown && item.lastKnown.approvalState !== "approved").length;
+  const lastEnforced = items.filter((item) => item.lastKnown?.enforcement === "enforced").length;
+  const evidenceIssues = verified.filter((item) => item.evidenceState !== "current").length;
+  const unverifiedCount = items.length - verified.length;
+  return [
+    [kindLabel, number(items.length)],
+    [unverified ? "현재 확인된 승인" : "승인", number(approved), unverified ? `마지막 ${number(lastApproved)}` : null],
+    [unverified ? "현재 확인된 검토" : "검토 필요", number(review), unverified ? `마지막 ${number(lastReview)}` : null],
+    [unverified ? "현재 확인된 강제" : "코드로 강제", number(enforced), unverified ? `마지막 ${number(lastEnforced)}` : null],
+    [unverified ? "현재 미검증" : "근거 변경", number(unverified ? unverifiedCount : evidenceIssues)]
+  ];
+}
+
+function renderPolicies(snapshot) {
+  renderMetricSet($("#policy-summary"), governanceMetrics(snapshot.policies, snapshot, "정책"), "compact-metric");
+  renderMetricSet($("#guideline-summary"), governanceMetrics(snapshot.guidelines, snapshot, "지침"), "compact-metric");
   renderPolicyFilters(snapshot);
+  renderGuidelineFilters(snapshot);
   renderPolicyTable(snapshot);
-  renderReviewRail(snapshot);
+  renderGuidelineTable(snapshot);
+  renderReviewRail(snapshot, "#policy-review-rail-list", snapshot.policies.map((item) => item.id));
+  renderReviewRail(snapshot, "#guideline-review-rail-list", snapshot.guidelines.map((item) => item.id));
   renderRuntimeStrip($("#policy-runtime-strip"), snapshot);
+  renderRuntimeStrip($("#guideline-runtime-strip"), snapshot);
+}
+
+function renderInitiatives(snapshot) {
+  const initiatives = snapshot.initiatives ?? [];
+  const unverified = snapshot.summary.state === "last_known_unverified";
+  const verified = initiatives.filter((item) => item.projectionState !== "last_known_unverified");
+  renderMetricSet($("#initiative-summary"), [
+    ["추진안", number(initiatives.length)],
+    [unverified ? "현재 확인된 진행" : "진행 중", number(verified.filter((item) => item.lifecycleState === "active").length)],
+    [unverified ? "현재 확인된 검토" : "검토 필요", number(verified.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState)).length)],
+    [unverified ? "마지막 연결 프로젝트" : "연결 프로젝트", number(new Set(initiatives.flatMap((item) => item.projects.map((project) => project.id))).size)],
+    [unverified ? "현재 미검증" : "근거 변경", number(unverified ? initiatives.length - verified.length : verified.filter((item) => item.evidenceState !== "current").length)]
+  ], "compact-metric");
+  renderInitiativeFilters(snapshot);
+  renderInitiativeTable(snapshot);
+  renderReviewRail(snapshot, "#initiative-review-rail-list", initiatives.map((item) => item.id));
+  renderRuntimeStrip($("#initiative-runtime-strip"), snapshot);
 }
 
 function renderReviewFilters(snapshot) {
@@ -746,7 +1254,7 @@ function renderEvidenceFilters(groups) {
 }
 
 function renderEvidence(snapshot) {
-  const groups = buildEvidenceGroups(snapshot.policies, snapshot.guidelines);
+  const groups = buildEvidenceGroups(snapshot.policies, snapshot.guidelines, snapshot.initiatives);
   const allRefs = [...snapshot.policies, ...snapshot.guidelines].flatMap((item) => item.sourceRefs ?? []);
   const issueCount = allRefs.filter((ref) => ref.state !== "current").length;
   renderMetricSet($("#evidence-summary"), [
@@ -790,6 +1298,7 @@ function renderEvidence(snapshot) {
   const currentRepository = snapshot.currentRepository ?? {};
   const values = [
     ["거버넌스 카탈로그", fence.governanceCatalog ?? "-"],
+    ["추진안 레지스터", fence.initiativeRegister ?? "-"],
     ["초기 이관 기준", shortHash(migrationFence.capturedRepository?.baseCommit)],
     ["초기 이관 경계", `${localized(migrationFence.state)} · ${localized(migrationFence.reason, "관찰되지 않음")}`],
     ["현재 HEAD", shortHash(currentRepository.head)],
@@ -815,6 +1324,7 @@ function render(snapshot) {
   renderChrome(snapshot);
   renderOverview(snapshot);
   renderPolicies(snapshot);
+  renderInitiatives(snapshot);
   renderReview(snapshot);
   renderExecution(snapshot);
   renderEvidence(snapshot);
@@ -862,7 +1372,7 @@ function setupControls() {
   $("#policy-search").addEventListener("input", (event) => {
     state.policyQuery = event.target.value.trim();
     state.policyPage = 1;
-    if (state.snapshot) renderPolicyTable(state.snapshot);
+    if (state.snapshot) renderPolicies(state.snapshot);
   });
   $("#clear-policy-filters").addEventListener("click", () => {
     state.policyFilter = "all";
@@ -875,7 +1385,43 @@ function setupControls() {
   $("#policy-page-size").addEventListener("change", (event) => {
     state.policyPageSize = Number(event.target.value);
     state.policyPage = 1;
-    if (state.snapshot) renderPolicyTable(state.snapshot);
+    if (state.snapshot) renderPolicies(state.snapshot);
+  });
+  $("#guideline-search").addEventListener("input", (event) => {
+    state.guidelineQuery = event.target.value.trim();
+    state.guidelinePage = 1;
+    if (state.snapshot) renderPolicies(state.snapshot);
+  });
+  $("#clear-guideline-filters").addEventListener("click", () => {
+    state.guidelineFilter = "all";
+    state.guidelineQuery = "";
+    state.guidelinePage = 1;
+    $("#guideline-search").value = "";
+    if (state.snapshot) renderPolicies(state.snapshot);
+    $("#guideline-search").focus();
+  });
+  $("#guideline-page-size").addEventListener("change", (event) => {
+    state.guidelinePageSize = Number(event.target.value);
+    state.guidelinePage = 1;
+    if (state.snapshot) renderPolicies(state.snapshot);
+  });
+  $("#initiative-search").addEventListener("input", (event) => {
+    state.initiativeQuery = event.target.value.trim();
+    state.initiativePage = 1;
+    if (state.snapshot) renderInitiatives(state.snapshot);
+  });
+  $("#clear-initiative-filters").addEventListener("click", () => {
+    state.initiativeFilter = "all";
+    state.initiativeQuery = "";
+    state.initiativePage = 1;
+    $("#initiative-search").value = "";
+    if (state.snapshot) renderInitiatives(state.snapshot);
+    $("#initiative-search").focus();
+  });
+  $("#initiative-page-size").addEventListener("change", (event) => {
+    state.initiativePageSize = Number(event.target.value);
+    state.initiativePage = 1;
+    if (state.snapshot) renderInitiatives(state.snapshot);
   });
   $("#evidence-search").addEventListener("input", (event) => {
     state.evidenceQuery = event.target.value.trim();

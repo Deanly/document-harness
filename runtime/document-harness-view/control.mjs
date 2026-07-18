@@ -303,6 +303,7 @@ async function doctor(ctx, options) {
     bindPolicy: "127.0.0.1 + OS-assigned port",
     policyCount: projection.snapshot.summary.policyCount,
     guidelineCount: projection.snapshot.summary.guidelineCount,
+    initiativeCount: projection.snapshot.summary.initiativeCount,
     freshness: projection.snapshot.snapshot.freshness,
     migrationFence: projection.snapshot.migrationFence.state,
     sourceEvidence: projection.snapshot.snapshot.sourceFence.sourceEvidenceState,

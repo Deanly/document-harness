@@ -4,11 +4,12 @@ title: codex-agent-guidance
 status: current
 owner:
 created: 2026-05-09
-updated: 2026-07-16
+updated: 2026-07-17
 related_project: []
 related_task: []
 related_design:
   - docs/design/control-plane.md
+  - docs/design/initiative-governance-plane.md
   - docs/design/retrieval-plane.md
   - docs/design/harness-adoption-plane.md
 source_refs:
@@ -26,7 +27,7 @@ tags:
 
 - Type: guide
 - Created: 2026-05-09
-- Updated: 2026-07-16
+- Updated: 2026-07-17
 - Related Project:
 - Related Task:
 - Related Design: docs/design/control-plane.md; docs/design/retrieval-plane.md
@@ -58,10 +59,11 @@ Codex 공식 문서는 `AGENTS.md`를 자동으로 읽는 project guidance로 �
 | domain vocabulary | `docs/design/ubiquitous-language.md` |
 | scalable retrieval and freshness | `docs/design/retrieval-plane.md`, `docs/_indexes/retrieval-policy.yaml` |
 | policy authority and approval | `docs/design/policy-to-evidence-governance.md`, `docs/guide/policy-proposal-and-approval.md` |
+| policy/guideline to delivery portfolio | `docs/design/initiative-governance-plane.md`, `docs/guide/initiative-governance.md`, `docs/initiatives/` |
 | resumable execution state | current task, current checkpoint, `docs/design/execution-loop-plane.md` |
-| human-readable status | `docs/guide/human-control-view.md` derived projection |
+| human-readable status (`보드`) | `docs/guide/human-control-view.md` derived projection |
 | repository policy extraction | `docs/guide/repository-policy-extraction.md` candidate workflow |
-| work decomposition | `docs/projects/` and `docs/tasks/` |
+| work decomposition | `docs/initiatives/`, `docs/projects/`, and `docs/tasks/` |
 | verification | `docs/bin/validate-codex-readiness.sh` and related validators |
 
 ## Prompt Shape
@@ -98,6 +100,8 @@ When a source file changed during the current task, or an index cannot prove it 
 
 Root guidance also states that AI-authored policy/standard/exception proposals cannot self-approve, lifecycle `status` remains separate from `loop_state`, and meaningful execution transitions update the current checkpoint. Detailed schema stays in the governance and execution guides rather than expanding `AGENTS.md` into a manual.
 
+It also states that a new `I####` requires explicit human issuance authority and an exact approval ref. AI may draft an unnumbered initiative proposal, but it must not infer issuance or activation approval from an existing umbrella project, code, or chat context.
+
 For Claude Code, keep a short root `CLAUDE.md` that imports `AGENTS.md` with `@AGENTS.md` and adds only Claude-specific routing. It must point adoption work to `docs/ADOPT.md` and execution work to `docs/EXECUTE.md`; it must not copy the policy, ownership, stop, or verification rules into a competing instruction set.
 
 During mature repository adoption, the agent reads project-owned instructions and current designs first, generates a no-write ownership/conflict plan, and keeps extraction confidence, authority, approval, and enforcement independent. Repo-local View operation remains exact-loopback/read-only and must not obtain a port by terminating another process.
@@ -111,7 +115,9 @@ The skill is an intent router:
 - initialize, migrate, upgrade -> `docs/ADOPT.md`
 - start, resume, stop, close -> `docs/EXECUTE.md` plus the current task/checkpoint
 - policy/guideline extraction -> `docs/guide/repository-policy-extraction.md`
-- Human Control View operation -> `docs/guide/human-control-view.md`
+- `보드` / Human Control View operation -> `docs/guide/human-control-view.md`
+
+“보드를 띄워줘” 또는 “보드를 열어줘”는 현재 repository에서 `human-view start` 후 `human-view url`을 수행하라는 뜻입니다. `보드 상태를 알려줘`, `보드를 갱신해줘`, `보드를 꺼줘`는 각각 `status`, `refresh`, `stop`으로 route합니다. 이 별칭은 remote bind, 다른 repository 선택 또는 foreign process 종료 권한을 만들지 않습니다.
 
 It does not own policy, approval, migration decisions, quality verdicts, execution truth, or View truth. `AGENTS.md`, human-owned governance sources, effective designs, source files, checkpoints, receipts and deterministic validators keep those responsibilities.
 
@@ -121,7 +127,7 @@ When an adoption apply first installs the skill during an active agent session, 
 
 ## Numbered Document Issuance Rule
 
-When Codex needs to issue a numbered `project`, `task`, or `qa` document, it must not run `docs/bin/new-doc.sh` from a feature branch. The document number is allocated from clean, up-to-date `main`; `new-doc.sh` commits the generated `draft` file on `main` immediately, and the work branch then merges `main` before continuing.
+When Codex needs to issue a numbered `initiative`, `project`, `task`, or `qa` document, it must not run `docs/bin/new-doc.sh` from a feature branch. The document number is allocated from clean, up-to-date `main`; `new-doc.sh` commits the generated `draft` file on `main` immediately, and the work branch then merges `main` before continuing. Initiative uses `new-doc.sh initiative <slug> <issuance-approval-ref>` and must not be issued without the exact human approval ref. The ref must use the script's safe token/path/URL character set. Project uses `new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]`, and the parent Initiative must be active/approved. Task uses `new-doc.sh task <slug> <project-id>`; the Project must exist and its modern Initiative lineage must resolve active/approved. Only an existing Project with complete explicit legacy `project_role`, `umbrella_initiative`, and `parent_umbrella_project` fields may use the migration grandfathering path. Codex must not infer `I0001` or `P0001` as a default.
 
 If the current work branch is dirty, stash the work with untracked files before switching. After the main-issued draft commit is merged back into the work branch, pop the stash and resolve any conflicts. Incoming changes already deployed through `main` are accepted as the current baseline.
 
@@ -167,3 +173,5 @@ Codex can run multiple threads, but two concurrent tasks should not modify the s
 - 2026-07-15: human policy authority, resumable execution checkpoint, and human-view projection mapping added.
 - 2026-07-15: mature adoption routing and a thin Claude Code `@AGENTS.md` adapter were added so both tools share one authority surface.
 - 2026-07-16: repository-local `operate-document-harness` canonical skill, thin Claude project adapter, no-global-install and bootstrap reload contract added.
+- 2026-07-17: `보드` 사용자명과 한국어 View operation phrase routing을 repository-local skill contract에 추가했다.
+- 2026-07-18: explicit human-approved `I####` issuance, initiative→project→task hierarchy와 legacy umbrella non-promotion rule을 추가했다.

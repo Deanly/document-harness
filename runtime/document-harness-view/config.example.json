@@ -6,6 +6,7 @@
     "description": "저장소의 정책, 실행 상태와 근거를 한곳에서 확인하는 읽기 전용 화면입니다."
   },
   "governanceCatalog": "docs/_indexes/governance-catalog.json",
+  "initiativeRegister": "docs/_indexes/initiative-register.json",
   "bindHost": "127.0.0.1",
   "portMode": "auto",
   "qualityCommands": {

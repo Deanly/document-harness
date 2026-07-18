@@ -2,7 +2,7 @@
   "$schema": "../schemas/release-manifest.schema.json",
   "schemaVersion": 1,
   "releaseId": "document-harness-public-v1",
-  "version": "1.1.0",
+  "version": "1.3.0",
   "profiles": [
     "core",
     "governance",
@@ -104,6 +104,12 @@
       "artifactType": "template"
     },
     {
+      "sourcePath": "docs/_templates/initiative.md",
+      "targetPath": "docs/_templates/initiative.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
       "sourcePath": "docs/_templates/task.md",
       "targetPath": "docs/_templates/task.md",
       "profiles": ["core"],
@@ -160,9 +166,28 @@
       "artifactType": "generated"
     },
     {
+      "sourcePath": "docs/_templates/initiative-register.json",
+      "targetPath": "docs/_templates/initiative-register.json",
+      "profiles": ["governance", "view"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/initiative-register.json",
+      "targetPath": "docs/_indexes/initiative-register.json",
+      "profiles": ["governance", "view"],
+      "ownership": "project-owned",
+      "artifactType": "generated"
+    },
+    {
       "sourcePath": "docs/_templates/adoption/human-policy-decision-receipt.json",
       "targetPath": "docs/_templates/adoption/human-policy-decision-receipt.json",
       "profiles": ["governance"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/initiative-activation-receipt.json",
+      "targetPath": "docs/_templates/initiative-activation-receipt.json",
+      "profiles": ["core"],
       "artifactType": "template"
     },
     {
@@ -242,6 +267,11 @@
       "profiles": ["view"]
     },
     {
+      "sourcePath": "docs/design/initiative-governance-plane.md",
+      "targetPath": "docs/design/initiative-governance-plane.md",
+      "profiles": ["core"]
+    },
+    {
       "sourcePath": "docs/design/policy-to-evidence-governance.md",
       "targetPath": "docs/design/policy-to-evidence-governance.md",
       "profiles": ["governance"]
@@ -259,6 +289,21 @@
     {
       "sourcePath": "docs/guide/project-cutting-and-execution.md",
       "targetPath": "docs/guide/project-cutting-and-execution.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/initiative-governance.md",
+      "targetPath": "docs/guide/initiative-governance.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/governance-authoring-assistance.md",
+      "targetPath": "docs/guide/governance-authoring-assistance.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/policy-proposal-and-approval.md",
+      "targetPath": "docs/guide/policy-proposal-and-approval.md",
       "profiles": ["core"]
     },
     {
@@ -287,6 +332,12 @@
       "profiles": ["governance"]
     },
     {
+      "sourcePath": "docs/initiatives/README.md",
+      "targetPath": "docs/initiatives/README.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
       "sourcePath": "docs/lib/harness-adopt.mjs",
       "targetPath": "docs/lib/harness-adopt.mjs",
       "profiles": ["core"]
@@ -294,6 +345,11 @@
     {
       "sourcePath": "docs/lib/harness-adopt-cli.mjs",
       "targetPath": "docs/lib/harness-adopt-cli.mjs",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/lib/initiative-authority.mjs",
+      "targetPath": "docs/lib/initiative-authority.mjs",
       "profiles": ["core"]
     },
     {
@@ -315,6 +371,16 @@
       "sourcePath": "docs/schemas/governance-catalog.schema.json",
       "targetPath": "docs/schemas/governance-catalog.schema.json",
       "profiles": ["governance"]
+    },
+    {
+      "sourcePath": "docs/schemas/initiative-register.schema.json",
+      "targetPath": "docs/schemas/initiative-register.schema.json",
+      "profiles": ["governance", "view"]
+    },
+    {
+      "sourcePath": "docs/schemas/initiative-activation-receipt.schema.json",
+      "targetPath": "docs/schemas/initiative-activation-receipt.schema.json",
+      "profiles": ["core"]
     },
     {
       "sourcePath": "docs/schemas/harness-installation-lock.schema.json",
@@ -458,6 +524,9 @@
       "docs/ADOPT.md",
       "docs/EXECUTE.md",
       "docs/_indexes/execution-loop-policy.yaml",
+      "docs/_indexes/initiative-register.json",
+      "docs/_templates/initiative-activation-receipt.json",
+      "docs/_templates/initiative.md",
       "docs/_templates/project.md",
       "docs/_templates/task.md",
       "docs/_templates/design.md",
@@ -475,8 +544,12 @@
       "docs/design/execution-loop-plane.md",
       "docs/design/harness-adoption-plane.md",
       "docs/design/human-control-view-plane.md",
+      "docs/design/initiative-governance-plane.md",
       "docs/design/policy-to-evidence-governance.md",
       "docs/guide/execution-loop-operations.md",
+      "docs/guide/governance-authoring-assistance.md",
+      "docs/guide/initiative-governance.md",
+      "docs/guide/policy-proposal-and-approval.md",
       "docs/guide/goal-locked-completion.md",
       "docs/guide/project-cutting-and-execution.md",
       "docs/guide/umbrella-project-governance.md",
@@ -484,6 +557,10 @@
       "docs/guide/qa-document-system.md",
       "docs/guide/human-control-view.md",
       "docs/guide/repository-policy-extraction.md",
+      "docs/initiatives/README.md",
+      "docs/lib/initiative-authority.mjs",
+      "docs/schemas/initiative-activation-receipt.schema.json",
+      "docs/schemas/initiative-register.schema.json",
       "runtime/document-harness-view/bin/human-view",
       "runtime/document-harness-view/lib/runtime-state.mjs",
       "runtime/document-harness-view/server.mjs"

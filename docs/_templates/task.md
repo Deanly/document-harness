@@ -3,6 +3,7 @@ type: task
 doc_id: {{DOC_ID}}
 title: {{TITLE}}
 status: draft
+lineage_contract: v2
 owner:
 created: {{DATE}}
 updated: {{DATE}}
@@ -17,8 +18,7 @@ policy_refs: []
 normative_refs: []
 exception_refs: []
 related_control_plane: docs/design/control-plane.md
-related_umbrella_project: P0001-umbrella-project
-related_project:
+related_project: {{RELATED_PROJECT}}
 related_design: []
 source_refs: []
 quality_axes:
@@ -45,8 +45,7 @@ tags:
 - Updated: {{DATE}}
 - Current Focus:
 - Related Control Plane: docs/design/control-plane.md
-- Related Umbrella Project: P0001-umbrella-project
-- Related Project:
+- Related Project: {{RELATED_PROJECT}}
 - Related Design:
 
 ## Purpose
@@ -56,7 +55,7 @@ tags:
 ## Task Placement Check
 
 - 이 문서 번호가 clean, up-to-date `main`에서 main-issued draft로 발급되고 즉시 commit되었는지 확인합니다.
-- 왜 이 작업이 기존 umbrella project 아래의 `task`여야 하는지 적습니다.
+- 왜 이 작업이 연결 project 아래의 `task`여야 하는지 적습니다.
 - 왜 별도 `project`를 발급하지 않아도 되는지 적습니다.
 
 ## Whole-System Anchor
@@ -191,7 +190,7 @@ tags:
 - `execution_contract: v1` task는 unresolved attention 없이 `loop_state: succeeded`이고 required execution/verification receipt가 연결되어야 닫습니다.
 - AI proposal, stale approval, expired exception은 completion evidence가 될 수 없습니다.
 - `Related Control Plane`, `Whole-System Anchor`, `Outputs / Handoff`, `Quality Axes In Scope` 없이 부분 작업을 고립된 local task처럼 닫지 않습니다.
-- 새 `project`를 만들 수 있는지 먼저 묻지 말고, 왜 이 작업이 기존 umbrella 아래 `task`인지 먼저 정렬합니다.
+- 새 `project`를 만들 수 있는지 먼저 묻지 말고, 왜 이 작업이 현재 project 아래 `task`인지 먼저 정렬합니다.
 - `Completion Mode`는 terminal condition이어야 하며 `implementation-only`, `test-only`, `documentation-only`, `analysis-only` 같은 phase 이름을 쓰지 않습니다.
 
 ## Risks / Open Questions

@@ -438,6 +438,10 @@ validate_context_packets() {
       push_error("default context packet includes all project docs")
     }
 
+    in_default && /docs\/initiatives\/\*\.md/ {
+      push_error("default context packet includes all initiative docs")
+    }
+
     in_default && /docs\/design\/ubiquitous-language\.md/ {
       push_error("default context packet includes full ubiquitous-language.md")
     }
@@ -816,10 +820,12 @@ validate_source_ref_symmetry() {
   done < <(find "$DOCS_DIR" -type f -name '*.md' | sort)
 }
 
+validate_active_folder "$DOCS_DIR/initiatives" 'I*.md'
 validate_active_folder "$DOCS_DIR/projects" 'P*.md'
 validate_active_folder "$DOCS_DIR/tasks" 'T*.md'
 validate_active_folder "$DOCS_DIR/reports" '*.md'
 validate_active_folder "$DOCS_DIR/qa" 'QA*.md'
+validate_active_docs_section "$DOCS_DIR/initiatives" 'I*.md' "## Active Initiatives"
 validate_active_docs_section "$DOCS_DIR/projects" 'P*.md' "## Active Projects"
 validate_active_docs_section "$DOCS_DIR/tasks" 'T*.md' "## Active Tasks"
 validate_active_docs_section "$DOCS_DIR/reports" '*.md' "## Active Reports"

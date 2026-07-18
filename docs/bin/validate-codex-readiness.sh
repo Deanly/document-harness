@@ -123,8 +123,10 @@ do
   require_section "$CODEX_GUIDE" "$header"
 done
 
-require_contains "$AGENTS_FILE" 'Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`'
-require_contains "$AGENTS_TEMPLATE" 'Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$AGENTS_FILE" 'Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$AGENTS_TEMPLATE" 'Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$AGENTS_FILE" 'Issue Project only under an active/approved Initiative'
+require_contains "$AGENTS_TEMPLATE" 'Issue Project only under an active/approved Initiative'
 require_contains "$AGENTS_FILE" 'If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.'
 require_contains "$AGENTS_TEMPLATE" 'If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.'
 require_contains "$AGENTS_FILE" 'AI may draft policy/standard/exception proposals but must not self-approve them.'
@@ -155,10 +157,14 @@ require_contains "$CODEX_HARNESS_SKILL_METADATA" 'Use $operate-document-harness'
 require_contains "$CLAUDE_HARNESS_SKILL" '../../../.agents/skills/operate-document-harness/SKILL.md'
 require_contains "$NEW_DOC_SCRIPT" "require_numbered_doc_issue_context"
 require_contains "$NEW_DOC_SCRIPT" "commit_numbered_doc_draft"
+require_contains "$NEW_DOC_SCRIPT" "validate_issuance_approval_ref"
+require_contains "$NEW_DOC_SCRIPT" "require_active_approved_initiative"
+require_contains "$NEW_DOC_SCRIPT" "require_task_parent_lineage"
 
 for template in \
   "$DOCS_DIR/_templates/design.md" \
   "$DOCS_DIR/_templates/guide.md" \
+  "$DOCS_DIR/_templates/initiative.md" \
   "$DOCS_DIR/_templates/project.md" \
   "$DOCS_DIR/_templates/qa.md" \
   "$DOCS_DIR/_templates/report.md" \

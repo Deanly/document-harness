@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   buildEvidenceGroups,
   filterEvidence,
+  filterGuidelines,
+  filterInitiatives,
   filterPolicies,
   freshnessPresentation,
   governanceStatusPresentation,
@@ -59,6 +61,29 @@ const attention = [
   { id: "ATTN-1", severity: "critical", title: "Critical", relatedRefs: ["POL-1"] }
 ];
 
+const initiative = {
+  id: "I0001",
+  title: "근거 기반 전달 경계",
+  humanSummary: "정책과 지침을 프로젝트 실행으로 잇습니다.",
+  outcome: "연결 프로젝트가 정책 경계 안에서 결과를 냅니다.",
+  whyNow: "실행 방향을 분명히 해야 합니다.",
+  owner: "Fixture Owner",
+  currentFocus: "연결 관계 검토",
+  lifecycleState: "draft",
+  approvalState: "review_requested",
+  policyRefs: ["POL-1"],
+  policyRelationships: [{ policyId: "POL-1", relation: "advances", rationale: "결과 방향을 구체화합니다.", exceptionRef: null }],
+  guidelineRefs: ["GUIDE-1"],
+  guidelineRelationships: [{ guidelineId: "GUIDE-1", adoption: "recommended", rationale: "근거 수집 방식을 제안합니다.", verification: "프로젝트 근거를 검토합니다." }],
+  guidelineDisposition: "needs_review",
+  guidelineDispositionReason: "지침이 아직 검토 후보입니다.",
+  projects: [{ id: "P0001", title: "Fixture Delivery", status: "active", path: "docs/projects/P0001.md" }],
+  successSignals: ["연결 관계가 보입니다."],
+  risks: ["아직 승인되지 않았습니다."],
+  evidenceState: "current",
+  sourceRefs: policy.sourceRefs
+};
+
 test("policy search includes linked guideline content and attention severity", () => {
   const linked = filterPolicies({
     policies: [policy],
@@ -78,6 +103,70 @@ test("policy search includes linked guideline content and attention severity", (
   assert.deepEqual(critical.map((item) => item.id), ["POL-1"]);
 });
 
+test("guideline search includes its own content, linked policy content, and attention severity", () => {
+  const ownContent = filterGuidelines({
+    guidelines: [guideline],
+    policies: [policy],
+    attention,
+    query: "local-only",
+    filter: "all"
+  });
+  assert.deepEqual(ownContent.map((item) => item.id), ["GUIDE-1"]);
+
+  const linkedPolicy = filterGuidelines({
+    guidelines: [guideline],
+    policies: [policy],
+    attention,
+    query: "등록된 source",
+    filter: "all"
+  });
+  assert.deepEqual(linkedPolicy.map((item) => item.id), ["GUIDE-1"]);
+
+  const needsAttention = filterGuidelines({
+    guidelines: [guideline],
+    policies: [policy],
+    attention,
+    filter: "attention"
+  });
+  assert.deepEqual(needsAttention.map((item) => item.id), ["GUIDE-1"]);
+  assert.deepEqual(filterGuidelines({ guidelines: [guideline], policies: [policy], attention, filter: "critical" }), []);
+});
+
+test("guideline filters distinguish unreviewed, stale, and last-known unverified records", () => {
+  assert.deepEqual(filterGuidelines({ guidelines: [guideline], filter: "unreviewed" }), [guideline]);
+  assert.deepEqual(filterGuidelines({ guidelines: [guideline], filter: "stale" }), [guideline]);
+
+  const degradedGuideline = {
+    ...guideline,
+    projectionState: "last_known_unverified",
+    approvalState: "unverified",
+    enforcement: "unverified",
+    evidenceState: "unverified",
+    lastKnown: {
+      approvalState: "approved",
+      enforcement: "enforced",
+      evidenceState: "current"
+    }
+  };
+  assert.deepEqual(filterGuidelines({ guidelines: [degradedGuideline], filter: "unverified" }), [degradedGuideline]);
+  assert.deepEqual(filterGuidelines({ guidelines: [degradedGuideline], filter: "unreviewed" }), []);
+});
+
+test("initiative search and filters use direct policy, guideline, and project links", () => {
+  assert.deepEqual(filterInitiatives({
+    initiatives: [initiative], policies: [policy], guidelines: [guideline], attention, query: "Fixture Delivery"
+  }), [initiative]);
+  assert.deepEqual(filterInitiatives({
+    initiatives: [initiative], policies: [policy], guidelines: [guideline], attention, filter: "review"
+  }), [initiative]);
+  assert.deepEqual(filterInitiatives({
+    initiatives: [initiative], policies: [policy], guidelines: [guideline], attention, filter: "guideline_review"
+  }), [initiative]);
+  assert.deepEqual(filterInitiatives({
+    initiatives: [{ ...initiative, projects: [] }], policies: [policy], guidelines: [guideline], attention, filter: "no_projects"
+  }).map((item) => item.id), ["I0001"]);
+});
+
 test("review queue sorts critical, decision, then warning without changing totals", () => {
   assert.deepEqual(sortAttention(attention).map((item) => item.severity), ["critical", "decision", "warning"]);
   assert.deepEqual(reviewStats(attention), {
@@ -90,11 +179,11 @@ test("review queue sorts critical, decision, then warning without changing total
 });
 
 test("evidence groups deduplicate paths and retain the least fresh state", () => {
-  const groups = buildEvidenceGroups([policy], [guideline]);
+  const groups = buildEvidenceGroups([policy], [guideline], [initiative]);
   assert.equal(groups.length, 1);
   assert.equal(groups[0].path, "docs/design/source.md");
   assert.equal(groups[0].state, "changed");
-  assert.deepEqual(groups[0].relatedItems, ["GUIDE-1", "POL-1"]);
+  assert.deepEqual(groups[0].relatedItems, ["GUIDE-1", "I0001", "POL-1"]);
   assert.deepEqual(groups[0].capturedRevisions, ["1111111111111111111111111111111111111111"]);
   assert.equal(filterEvidence(groups, "POL-1", "changed").length, 1);
 });

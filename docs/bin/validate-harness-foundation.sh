@@ -42,11 +42,13 @@ ARTIFACT_CONTRACTS="$ROOT_DIR/guide/artifact-contracts.md"
 UBIQUITOUS_LANGUAGE="$ROOT_DIR/design/ubiquitous-language.md"
 RETRIEVAL_PLANE="$ROOT_DIR/design/retrieval-plane.md"
 POLICY_GOVERNANCE="$ROOT_DIR/design/policy-to-evidence-governance.md"
+INITIATIVE_GOVERNANCE="$ROOT_DIR/design/initiative-governance-plane.md"
 EXECUTION_LOOP="$ROOT_DIR/design/execution-loop-plane.md"
 HUMAN_VIEW_DESIGN="$ROOT_DIR/design/human-control-view-plane.md"
 LLM_WIKI_OPERATIONS="$ROOT_DIR/guide/llm-wiki-operations.md"
 HYBRID_RETRIEVAL="$ROOT_DIR/guide/hybrid-retrieval-and-freshness.md"
 POLICY_GUIDE="$ROOT_DIR/guide/policy-proposal-and-approval.md"
+INITIATIVE_GUIDE="$ROOT_DIR/guide/initiative-governance.md"
 EXECUTION_GUIDE="$ROOT_DIR/guide/execution-loop-operations.md"
 HUMAN_VIEW="$ROOT_DIR/guide/human-control-view.md"
 CODEX_AGENT_GUIDANCE="$ROOT_DIR/guide/codex-agent-guidance.md"
@@ -62,6 +64,9 @@ EXECUTION_POLICY="$ROOT_DIR/_indexes/execution-loop-policy.yaml"
 EXECUTION_CHECKPOINT_TEMPLATE="$ROOT_DIR/_templates/execution-checkpoint.md"
 EXECUTION_VALIDATOR="$ROOT_DIR/bin/validate-execution-loop.sh"
 TASK_TEMPLATE="$ROOT_DIR/_templates/task.md"
+PROJECT_TEMPLATE="$ROOT_DIR/_templates/project.md"
+INITIATIVE_TEMPLATE="$ROOT_DIR/_templates/initiative.md"
+INITIATIVE_README="$ROOT_DIR/initiatives/README.md"
 REPORT_TEMPLATE="$ROOT_DIR/_templates/report.md"
 QA_TEMPLATE="$ROOT_DIR/_templates/qa.md"
 
@@ -75,11 +80,13 @@ require_file "$ARTIFACT_CONTRACTS"
 require_file "$UBIQUITOUS_LANGUAGE"
 require_file "$RETRIEVAL_PLANE"
 require_file "$POLICY_GOVERNANCE"
+require_file "$INITIATIVE_GOVERNANCE"
 require_file "$EXECUTION_LOOP"
 require_file "$HUMAN_VIEW_DESIGN"
 require_file "$LLM_WIKI_OPERATIONS"
 require_file "$HYBRID_RETRIEVAL"
 require_file "$POLICY_GUIDE"
+require_file "$INITIATIVE_GUIDE"
 require_file "$EXECUTION_GUIDE"
 require_file "$HUMAN_VIEW"
 require_file "$CODEX_AGENT_GUIDANCE"
@@ -93,6 +100,9 @@ require_file "$EXECUTION_POLICY"
 require_file "$EXECUTION_CHECKPOINT_TEMPLATE"
 require_file "$EXECUTION_VALIDATOR"
 require_file "$TASK_TEMPLATE"
+require_file "$PROJECT_TEMPLATE"
+require_file "$INITIATIVE_TEMPLATE"
+require_file "$INITIATIVE_README"
 require_file "$REPORT_TEMPLATE"
 require_file "$QA_TEMPLATE"
 
@@ -102,6 +112,39 @@ for header in \
   '## Closeout' '## Verification' '## Human Handoff'
 do
   require_section "$EXECUTION_ENTRY" "$header"
+done
+
+for header in \
+  "## Purpose" \
+  "## Authority Boundary" \
+  "## Canonical Hierarchy" \
+  "## Relationship Contract" \
+  "## Artifact Contract" \
+  "## Issuance And Approval Contract" \
+  "## Lifecycle Contract" \
+  "## Human View Projection Contract" \
+  "## Legacy Umbrella Project Bridge" \
+  "## Invariants" \
+  "## Failure Boundaries" \
+  "## Change Log"
+do
+  require_section "$INITIATIVE_GOVERNANCE" "$header"
+done
+
+for header in \
+  "## Purpose" \
+  "## Operating Principle" \
+  "## Before Drafting" \
+  "## Candidate Workflow" \
+  "## Human Issuance Gate" \
+  "## Relationship Authoring" \
+  "## Activation Review" \
+  "## Project And Task Issuance" \
+  "## Human View Presentation" \
+  "## Legacy Migration" \
+  "## Change Log"
+do
+  require_section "$INITIATIVE_GUIDE" "$header"
 done
 
 for header in \
@@ -151,8 +194,10 @@ for header in \
   "## Whole-System Outcome" \
   "## Control Surfaces" \
   "## Active Design Surfaces" \
-  "## Umbrella Initiative Policy" \
-  "## Active Umbrella Projects" \
+  "## Initiative Portfolio Policy" \
+  "## Active Initiatives" \
+  "## Active Delivery Projects" \
+  "## Legacy Umbrella Project Bridge" \
   "## Active Execution Surfaces" \
   "## Standard Pipeline" \
   "## Quality Axes" \
@@ -256,9 +301,11 @@ done
 
 require_section "$PROJECT_CUTTING" "## Main-Issued Numbered Document Rule"
 require_section "$DOCUMENT_LIFECYCLE" "## Lifecycle Rules"
-require_contains "$DOCS_README" '`task`, `project`, `qa` 번호 발급 기준 브랜치는 항상 `main`입니다.'
-require_contains "$AGENTS_FILE" 'Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`'
-require_contains "$AGENTS_TEMPLATE" 'Issue numbered `project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$DOCS_README" '`initiative`, `task`, `project`, `qa` 번호 발급 기준 브랜치는 항상 `main`입니다.'
+require_contains "$AGENTS_FILE" 'Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$AGENTS_TEMPLATE" 'Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$AGENTS_FILE" 'Issue Project only under an active/approved Initiative'
+require_contains "$AGENTS_TEMPLATE" 'Issue Project only under an active/approved Initiative'
 require_contains "$RETRIEVAL_POLICY" 'source_of_truth: filesystem'
 require_contains "$RETRIEVAL_POLICY" 'profile_after_activation: hybrid'
 require_contains "$RETRIEVAL_POLICY" 'exact: keyword_or_direct_source'
@@ -269,10 +316,25 @@ require_contains "$TASK_TEMPLATE" 'execution_contract: v1'
 require_contains "$TASK_TEMPLATE" 'loop_state: ready'
 require_contains "$TASK_TEMPLATE" '## Execution Readiness'
 require_contains "$TASK_TEMPLATE" '## Execution Loop'
+require_contains "$TASK_TEMPLATE" 'lineage_contract: v2'
+require_contains "$TASK_TEMPLATE" 'related_project: {{RELATED_PROJECT}}'
+require_contains "$PROJECT_TEMPLATE" 'related_initiative: {{RELATED_INITIATIVE}}'
+require_contains "$PROJECT_TEMPLATE" 'initiative_relation: {{INITIATIVE_RELATION}}'
+require_contains "$INITIATIVE_TEMPLATE" 'issuance_approval_ref: {{ISSUANCE_APPROVAL_REF}}'
+require_contains "$INITIATIVE_TEMPLATE" '## Policy Alignment'
+require_contains "$INITIATIVE_TEMPLATE" '## Guideline Disposition'
+require_contains "$INITIATIVE_TEMPLATE" '## Success Signals'
 require_contains "$REPORT_TEMPLATE" 'proposal_status:'
 require_contains "$QA_TEMPLATE" 'Policy Clause'
 require_contains "$NEW_DOC_SCRIPT" "require_numbered_doc_issue_context"
 require_contains "$NEW_DOC_SCRIPT" "commit_numbered_doc_draft"
+require_contains "$NEW_DOC_SCRIPT" "validate_issuance_approval_ref"
+require_contains "$NEW_DOC_SCRIPT" "require_active_approved_initiative"
+require_contains "$NEW_DOC_SCRIPT" "require_task_parent_lineage"
+require_contains "$NEW_DOC_SCRIPT" 'initiative)'
+require_contains "$NEW_DOC_SCRIPT" 'initiative issuance requires an exact human approval ref'
+require_contains "$DOCS_README" './docs/bin/new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]'
+require_contains "$DOCS_README" './docs/bin/new-doc.sh task <slug> <project-id>'
 
 "$DOC_RETRIEVAL"
 "$EXECUTION_VALIDATOR" --all

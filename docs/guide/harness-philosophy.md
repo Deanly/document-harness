@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-04-16
+- Updated: 2026-07-18
 - Source: reference docs lineage
 
 ## Purpose
@@ -18,6 +18,7 @@
 원본 문서군은 단순히 정리가 잘 된 것이 아니라, 각 문서 타입의 책임이 명확합니다.
 
 - `design`은 현재 기준의 truth를 고정합니다.
+- `initiative`는 정책과 지침을 portfolio outcome으로 연결합니다.
 - `project`는 큰 delivery boundary와 task 맵을 고정합니다.
 - `task`는 실제 실행 단위를 닫을 수 있게 만듭니다.
 - `guide`는 반복 질문과 운영 판단을 재사용 가능한 규칙으로 압축합니다.
@@ -40,13 +41,13 @@
 ### 2. Current Truth And History Must Be Separated
 
 - `design`은 현재 truth가 우선입니다.
-- `task`와 `project`는 append-only 이력이 우선입니다.
+- `initiative`, `task`, `project`는 append-only 상태 이력이 우선입니다.
 
 이 둘을 섞으면 설계도 읽기 어려워지고 이력도 신뢰하기 어렵습니다.
 
 ### 3. Issued Goals Must Stay Locked
 
-한 번 발급한 `project`와 `task`의 `Purpose`, `Scope`, `Completion Criteria`는 종료 기준 계약입니다.
+한 번 발급한 `initiative`, `project`, `task`의 outcome/purpose, scope, completion criteria는 종료 기준 계약입니다.
 
 - WBS를 더 잘게 나눌 수는 있습니다.
 - 후속 `task`나 `project`를 발급할 수는 있습니다.
@@ -70,20 +71,21 @@
 
 - `control-plane`은 전체 목표, pipeline, validator, active surface를 한 곳에 묶습니다.
 - 개별 `design`은 각 boundary의 truth를 붙잡습니다.
-- `project`와 `task`는 이 whole-system surface를 anchor로 읽어야 합니다.
+- `initiative`, `project`, `task`는 이 whole-system surface를 anchor로 읽어야 합니다.
 
 즉 설계 문서는 여러 개일 수 있어도, 전체 정렬면은 하나가 필요합니다.
 
-### 6. Human-Facing Lineage Needs A Default Owner
+### 6. Strategy, Delivery, Execution Need Separate Owners
 
-bounded를 잘 자르는 것만으로는 충분하지 않습니다. human이 보는 initiative가 여러 `project`로 쉽게 갈라지면, 전체는 다시 읽기 어려워집니다.
+bounded를 잘 자르는 것만으로는 충분하지 않습니다. 정책 방향, 여러 project의 portfolio outcome, 개별 delivery, 실행 slice가 같은 surface에 섞이면 사람이 전체 방향을 읽기 어렵습니다.
 
-- human-facing initiative는 기본적으로 umbrella `project` 1개로 유지합니다.
-- 실제 실행은 그 umbrella 아래 `task`로 분해합니다.
-- task로 담길 수 있는 분화를 새 `project`로 올리면 lineage가 불필요하게 찢어집니다.
-- 새 `project`는 explicit split, 본질적 completion mode 분리, owner/운영 검증 체계 분리 같은 예외일 때만 허용합니다.
+- `initiative`는 policy/guideline에서 파생된 strategy와 portfolio outcome을 소유합니다.
+- `project`는 그 outcome에 기여하는 bounded delivery를 소유합니다.
+- `task`는 project가 닫을 executable slice를 소유합니다.
+- project source가 `related_initiative`를 소유하고 View/index가 reverse-index해 여러 delivery를 한 추진안 아래 보여줍니다.
+- 기존 umbrella project는 compatibility bridge로 유지하지만 새 authoring 기본값으로 사용하지 않습니다.
 
-즉 좋은 bounded slicing은 "작게 나눈다"가 아니라 "human-facing owner는 유지한 채 실행만 잘게 나눈다"에 가깝습니다.
+즉 좋은 bounded slicing은 "작게 나눈다"가 아니라 "strategy, delivery, execution의 owner를 분리하면서 lineage는 끊지 않는다"에 가깝습니다.
 
 ### 7. Scope Is Stronger When Out Of Scope Is Explicit
 
@@ -130,7 +132,7 @@ bounded를 잘 자르는 것만으로는 충분하지 않습니다. human이 보
 좋은 이유:
 
 - 지금 당장 필요한 truth만 잠글 수 있습니다.
-- 후속 경계가 생겨도 먼저 같은 umbrella 아래 `task`로 수용할 수 있고, 정말 필요할 때만 예외 `project`로 분리할 수 있습니다.
+- 후속 경계가 생겨도 먼저 현재 project 아래 `task`로 수용하고, 별도 delivery boundary일 때만 새 `project`로 분리할 수 있습니다.
 - 문서가 미래 희망사항을 현재 책임처럼 말하지 않게 됩니다.
 
 ### 12. Quality Axes Make Review Repeatable
@@ -175,7 +177,7 @@ bounded를 잘 자르는 것만으로는 충분하지 않습니다. human이 보
 - whole-system anchor 없는 task/project를 local memo처럼 닫지 않습니다.
 - 발급 시점의 목표를 더 작은 하위 조각으로 줄여 `done` 처리하지 않습니다.
 - 아직 잠기지 않은 후속 시스템을 현재 프로젝트 범위로 끌어오지 않습니다.
-- task로 담길 수 있는 작은 분화를 새 `project`로 올려 umbrella lineage를 깨지 않습니다.
+- task로 담길 수 있는 작은 분화를 새 `project`로 올려 initiative lineage를 불필요하게 확장하지 않습니다.
 - 같은 대상을 문서마다 다른 이름으로 부르지 않습니다.
 
 ## Adoption Rule
@@ -183,11 +185,12 @@ bounded를 잘 자르는 것만으로는 충분하지 않습니다. human이 보
 이 하네스를 새 프로젝트에 복사한 뒤에는 아래를 가장 먼저 합니다.
 
 1. `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 실제 기준으로 채웁니다.
-2. 첫 umbrella `project` 문서에서 목적, 범위, 비범위, whole-system anchor를 고정합니다.
-3. 설계 기준이 생기면 `design` 문서를 만들고 같은 변경 셋에서 control-plane과 용어 문서를 갱신합니다.
-4. 실제 작업은 먼저 기존 umbrella 아래의 `task`로 쪼개고, project WBS와 1:1 대응시킵니다. 대부분의 경우 기본값은 `functional`입니다.
-5. 새 `project`가 필요하다면 왜 task가 안 되는지와 왜 human에게 별도 project가 더 명확한지를 먼저 남깁니다.
-6. 자주 흔들리는 판단이 생기면 `guide`로 승격합니다.
+2. 정책과 지침을 정돈하고 사람의 exact approval 뒤 첫 `I####` 추진안의 outcome, 범위, 성공 신호를 고정합니다.
+3. 첫 bounded `project`를 initiative에 연결하고 목적, 범위, 비범위, whole-system anchor를 고정합니다.
+4. 설계 기준이 생기면 `design` 문서를 만들고 같은 변경 셋에서 control-plane과 용어 문서를 갱신합니다.
+5. 실제 작업은 현재 project 아래의 `task`로 쪼개고, project WBS와 1:1 대응시킵니다. 대부분의 경우 기본값은 `functional`입니다.
+6. 새 `project`가 필요하다면 왜 task가 안 되는지와 왜 별도 delivery boundary가 필요한지를 먼저 남깁니다.
+7. 자주 흔들리는 판단이 생기면 `guide`로 승격합니다.
 
 ## Change Log
 
@@ -195,3 +198,4 @@ bounded를 잘 자르는 것만으로는 충분하지 않습니다. human이 보
 - 2026-04-13: goal lock, completion mode catalog, terminal-condition 원칙 반영.
 - 2026-04-14: control-plane, whole-system anchor, quality axes 원칙 반영.
 - 2026-04-16: umbrella-first lineage와 task-first issuance 원칙 반영.
+- 2026-07-18: umbrella project가 겸하던 strategy owner를 별도 추진안으로 분리하고 initiative→project→task lineage와 legacy bridge를 반영.

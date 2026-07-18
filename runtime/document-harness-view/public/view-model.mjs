@@ -115,6 +115,94 @@ export function filterPolicies({ policies = [], guidelines = [], attention = [],
   });
 }
 
+export function filterGuidelines({ guidelines = [], policies = [], attention = [], query = "", filter = "all" }) {
+  const policiesById = new Map(policies.map((policy) => [policy.id, policy]));
+  const attentionByRef = attentionMap(attention);
+  const needle = normalized(query);
+
+  return guidelines.filter((guideline) => {
+    const relatedPolicies = (guideline.policyRefs ?? [])
+      .map((policyRef) => policiesById.get(policyRef))
+      .filter(Boolean);
+    const relatedAttention = attentionByRef.get(guideline.id) ?? [];
+    const severity = relatedAttention[0]?.severity ?? "none";
+    const matchesFilter = filter === "all"
+      || (filter === "attention" && severity !== "none")
+      || (filter === "critical" && severity === "critical")
+      || (filter === "unreviewed" && guideline.approvalState === "unreviewed")
+      || (filter === "unverified" && guideline.projectionState === LAST_KNOWN_UNVERIFIED)
+      || (filter === "enforced" && guideline.enforcement === "enforced")
+      || (filter === "stale" && guideline.evidenceState !== "current");
+    if (!matchesFilter) return false;
+    if (!needle) return true;
+
+    const haystack = [
+      guideline.id,
+      guideline.title,
+      guideline.humanSummary,
+      guideline.why,
+      guideline.scope,
+      guideline.risk,
+      guideline.authorityClass,
+      guideline.authorityState,
+      guideline.approvalState,
+      guideline.enforcement,
+      ...(guideline.policyRefs ?? []),
+      ...relatedPolicies.flatMap((policy) => [policy.id, policy.title, policy.humanSummary, policy.risk]),
+      ...relatedAttention.flatMap((item) => [item.id, item.title, item.humanSummary]),
+      ...(guideline.sourceRefs ?? []).flatMap((ref) => [ref.path, ref.heading, ref.evidenceKind])
+    ].filter(Boolean).join(" ").toLocaleLowerCase("ko");
+    return haystack.includes(needle);
+  });
+}
+
+export function filterInitiatives({ initiatives = [], policies = [], guidelines = [], attention = [], query = "", filter = "all" }) {
+  const policiesById = new Map(policies.map((policy) => [policy.id, policy]));
+  const guidelinesById = new Map(guidelines.map((guideline) => [guideline.id, guideline]));
+  const attentionByRef = attentionMap(attention);
+  const needle = normalized(query);
+
+  return initiatives.filter((initiative) => {
+    const linkedPolicies = (initiative.policyRefs ?? []).map((ref) => policiesById.get(ref)).filter(Boolean);
+    const linkedGuidelines = (initiative.guidelineRefs ?? []).map((ref) => guidelinesById.get(ref)).filter(Boolean);
+    const guidelineNeedsReview = initiative.guidelineDisposition === "needs_review"
+      || linkedGuidelines.some((item) => item.approvalState !== "approved" || item.authorityState !== "effective");
+    const matchesFilter = filter === "all"
+      || (filter === "active" && initiative.lifecycleState === "active")
+      || (filter === "draft" && initiative.lifecycleState === "draft")
+      || (filter === "review" && ["unreviewed", "review_requested"].includes(initiative.approvalState))
+      || (filter === "guideline_review" && guidelineNeedsReview)
+      || (filter === "no_projects" && (initiative.projects ?? []).length === 0)
+      || (filter === "stale" && initiative.evidenceState !== "current");
+    if (!matchesFilter) return false;
+    if (!needle) return true;
+
+    const relatedAttention = attentionByRef.get(initiative.id) ?? [];
+    const haystack = [
+      initiative.id,
+      initiative.title,
+      initiative.humanSummary,
+      initiative.outcome,
+      initiative.whyNow,
+      initiative.owner,
+      initiative.currentFocus,
+      initiative.lifecycleState,
+      initiative.approvalState,
+      initiative.guidelineDispositionReason,
+      ...(initiative.policyRelationships ?? []).flatMap((item) => [item.policyId, item.relation, item.rationale, item.exceptionRef]),
+      ...(initiative.guidelineRelationships ?? []).flatMap((item) => [item.guidelineId, item.adoption, item.rationale, item.verification]),
+      ...(initiative.successSignals ?? []),
+      ...(initiative.risks ?? []),
+      ...linkedPolicies.flatMap((item) => [item.id, item.title, item.humanSummary]),
+      ...linkedGuidelines.flatMap((item) => [item.id, item.title, item.humanSummary]),
+      ...(initiative.projects ?? []).flatMap((item) => [item.id, item.title, item.status, item.currentFocus, item.path]),
+      ...relatedAttention.flatMap((item) => [item.id, item.title, item.humanSummary]),
+      ...(initiative.sourceRefs ?? []).flatMap((ref) => [ref.path, ref.heading, ref.evidenceKind])
+    ].filter(Boolean).join(" ").toLocaleLowerCase("ko");
+    return haystack.includes(needle);
+  });
+}
+
 export function governanceStatusPresentation(item = {}, field) {
   const value = item[field] ?? "unknown";
   const unverified = item.projectionState === LAST_KNOWN_UNVERIFIED || value === "unverified";
@@ -175,9 +263,9 @@ function mergeEvidenceState(current, candidate) {
   return candidateRank < currentRank ? candidate : current;
 }
 
-export function buildEvidenceGroups(policies = [], guidelines = []) {
+export function buildEvidenceGroups(policies = [], guidelines = [], initiatives = []) {
   const groups = new Map();
-  for (const item of [...policies, ...guidelines]) {
+  for (const item of [...policies, ...guidelines, ...initiatives]) {
     for (const ref of item.sourceRefs ?? []) {
       const path = ref.path ?? "unknown";
       const existing = groups.get(path) ?? {

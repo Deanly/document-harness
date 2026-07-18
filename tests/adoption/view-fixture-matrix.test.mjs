@@ -93,7 +93,13 @@ test("view fixture: empty governance source creates an explicit gap", async (t) 
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
   fixture.catalog.policies = [];
   fixture.catalog.guidelines = [];
+  fixture.initiativeRegister.initiatives = [];
   await writeCatalog(fixture);
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "initiatives.json"),
+    `${JSON.stringify(fixture.initiativeRegister, null, 2)}\n`,
+    "utf8"
+  );
   const { snapshot } = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
   assert.equal(snapshot.summary.policyCount, 0);
   assert.equal(snapshot.summary.guidelineCount, 0);
