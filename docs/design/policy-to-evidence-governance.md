@@ -202,7 +202,7 @@ AI는 먼저 다음 missing decision을 attention request로 만듭니다.
 
 projector, snapshot API/SSE, freshness와 security의 canonical contract는 `docs/design/human-control-view-plane.md`가 소유합니다. 이 문서는 governance node/edge와 authority label만 소유합니다.
 
-사용자 화면 `보드`(human control view)은 정책과 지침을 서로 연결하되 독립 최상위 tab으로 구분하고 다음을 표시합니다.
+사용자 화면 `Board`(human control view)은 정책과 지침을 서로 연결하되 독립 최상위 tab으로 구분하고 다음을 표시합니다.
 
 - human policy와 effective normative rule
 - proposed/accepted/effective/superseded 상태

@@ -263,7 +263,7 @@ test("degraded freshness copy explicitly identifies last-known records as unveri
   assert.doesNotMatch(presentation.message, /approved|effective/i);
 });
 
-test("fresh and review-required freshness copy is Korean-first while preserving machine tokens", () => {
+test("fresh and review-required freshness copy is locale-configured while preserving machine tokens", () => {
   assert.deepEqual(freshnessPresentation({
     snapshot: {
       freshness: "fresh",

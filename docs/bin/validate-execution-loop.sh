@@ -526,7 +526,7 @@ validate_public_surfaces() {
     require_contains "$HUMAN_VIEW_DESIGN" 'capabilities'
     require_contains "$HUMAN_VIEW_DESIGN" 'snapshot.published'
     require_contains "$HUMAN_VIEW_DESIGN" 'resync.required'
-    for value in '보드' '개요' '정책' '지침' '추진안' '검토 대기' '실행 상태' '근거'; do
+    for value in 'displayName' 'locale' 'tabLabels' 'overview' 'policies' 'guidelines' 'initiatives' 'review' 'execution' 'evidence'; do
       require_contains "$HUMAN_VIEW_DESIGN" "$value"
     done
   fi
@@ -567,7 +567,7 @@ validate_public_surfaces() {
       require_contains "$HUMAN_VIEW_GUIDE" "$value"
     done
     require_contains "$HUMAN_VIEW_GUIDE" 'proposed / accepted_for_promotion / effective / superseded'
-    for value in '보드' '개요' '정책' '지침' '추진안' '검토 대기' '실행 상태' '근거'; do
+    for value in 'displayName' 'locale' 'tabLabels' 'overview' 'policies' 'guidelines' 'initiatives' 'review' 'execution' 'evidence'; do
       require_contains "$HUMAN_VIEW_GUIDE" "$value"
     done
   fi

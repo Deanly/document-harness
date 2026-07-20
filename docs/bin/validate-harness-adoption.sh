@@ -83,7 +83,7 @@ for value in \
   require_contains "$ADOPT" "$value"
 done
 
-for value in "Korean-First Human Projection" "Mature Repository Governance Bootstrap" "INIT-*" "ko-KR" "presentation-only migration" "긴 ID"; do
+for value in "Locale-Configured Human Projection" "Mature Repository Governance Bootstrap" "INIT-*" "presentation.locale" "presentation-only localization" "long ID"; do
   require_contains "$ADOPT_TEMPLATE" "$value"
 done
 
@@ -139,7 +139,7 @@ for value in \
   require_contains "$HUMAN_VIEW_GUIDE" "$value"
 done
 
-for value in "보드" "개요" "정책" "지침" "추진안" "검토 대기" "실행 상태" "근거"; do
+for value in "displayName" "locale" "tabLabels" "overview" "policies" "guidelines" "initiatives" "review" "execution" "evidence"; do
   require_contains "$HUMAN_VIEW_DESIGN" "$value"
   require_contains "$HUMAN_VIEW_GUIDE" "$value"
 done
@@ -293,18 +293,20 @@ assert.equal(schema("rollback-receipt").properties.status.const, "ROLLED_BACK");
 
 const view = readJson(viewFile);
 assert.deepEqual(Object.keys(view).sort(), [
-  "bindHost", "governanceCatalog", "initiativeRegister", "portMode", "probes", "project", "qualityCommands", "schemaVersion",
+  "bindHost", "governanceCatalog", "initiativeRegister", "portMode", "presentation", "probes", "project", "qualityCommands", "schemaVersion",
 ]);
 assert.equal(view.bindHost, "127.0.0.1");
 assert.equal(view.portMode, "auto");
+assert.equal(view.presentation.displayName, "Board");
+assert.equal(view.presentation.locale, "en-US");
 assert.deepEqual(Object.keys(view.qualityCommands).sort(), ["continuous", "fast", "full"]);
-for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint", "projectRoot", "refreshIntervalMs", "reconcileIntervalMs", "presentation", "consistency"]) {
+for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint", "projectRoot", "refreshIntervalMs", "reconcileIntervalMs", "consistency"]) {
   assert.equal(Object.hasOwn(view, fixedRuntimeKey), false, `${fixedRuntimeKey} belongs to the versioned runtime, not project config`);
 }
 
 const release = readJson(releaseFile);
 assert.equal(release.releaseId, "document-harness-public-v1");
-assert.equal(release.version, "1.3.0");
+assert.equal(release.version, "1.3.1");
 assert.deepEqual(release.profileDependencies, {
   core: [],
   governance: ["core"],

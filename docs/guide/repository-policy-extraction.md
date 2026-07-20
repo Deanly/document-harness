@@ -128,7 +128,7 @@ For each candidate write:
 - current enforcement: enforced, partially enforced, advisory, not implemented, unknown
 - risk/conflict: mismatch or missing decision
 
-기본 표시 언어는 `ko-KR`입니다. `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap 문구, `approvalRule`, source-reference `note`와 자유 서술 `evidenceKind` label은 비전문가가 바로 판단할 수 있는 한국어로 합성합니다. 영어 source를 요약해도 technical ID, enum, repository-relative path, revision/hash, command, exact source heading과 quote는 원형을 보존합니다. exact source와 한국어 설명을 같은 값인 것처럼 섞지 않습니다.
+기본 표시 언어는 configured `presentation.locale`입니다. `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap 문구, `approvalRule`, source-reference `note`와 자유 서술 `evidenceKind` label은 비전문가가 바로 판단할 수 있는 사용자 표시 언어로 합성합니다. 영어 source를 요약해도 technical ID, enum, repository-relative path, revision/hash, command, exact source heading과 quote는 원형을 보존합니다. exact source와 user-language 설명을 같은 값인 것처럼 섞지 않습니다.
 
 Do not hide technical gaps behind softened wording. 번역은 표현만 바꾸는 derived projection이며 source 의미, authority, approval, enforcement 또는 evidence를 바꾸는 수단이 아닙니다.
 
@@ -220,7 +220,7 @@ Minimum candidate shape:
 - current source SHA-256이 captured value와 다르면 관련 candidate review/approval은 stale입니다.
 - missing/escaped source나 invalid/contradictory migration fence는 degraded attention이며 fresh로 표시하지 않습니다.
 
-기존 catalog의 영어 human-facing field를 한국어로 바꿀 때는 stable candidate/attention/gap ID, kind/enum, source ref와 hash, authority/approval/enforcement, effective ref와 decision receipt를 그대로 유지합니다. 번역 전후 의미가 다르거나 정책 범위를 넓히는 경우에는 단순 localization으로 처리하지 않고 새 candidate 또는 human review attention으로 분리합니다.
+기존 catalog의 영어 human-facing field를 사용자 표시 언어로 바꿀 때는 stable candidate/attention/gap ID, kind/enum, source ref와 hash, authority/approval/enforcement, effective ref와 decision receipt를 그대로 유지합니다. 번역 전후 의미가 다르거나 정책 범위를 넓히는 경우에는 단순 localization으로 처리하지 않고 새 candidate 또는 human review attention으로 분리합니다.
 
 ### 9. Human Review And Promotion
 
@@ -276,7 +276,7 @@ The first human screen should show:
 
 이 항목은 repository별 독립 View의 `single-repository-top-tabs-v2` profile에 다음처럼 배치합니다.
 
-- top bar: 스크롤 중에도 유지되는 `보드 / <repository>`, revision/dirty, snapshot/freshness, local-only/read-only
+- top bar: 스크롤 중에도 유지되는 `<displayName> / <repository>`, revision/dirty, snapshot/freshness, local-only/read-only
 - `개요`: product direction, count summary, critical gap와 latest verification
 - `정책`: policy candidate/effective/approved count, policy row, related guideline, authority/approval/enforcement와 exact provenance
 - `지침`: guideline candidate/effective/approved count, guideline row, related policy, authority/approval/enforcement와 exact provenance
@@ -293,7 +293,7 @@ The View must not render arbitrary Markdown HTML, load external CDN/font/script 
 ## Quality Checks
 
 - every candidate has exact provenance
-- synthesized human-facing field와 project description은 기본 `ko-KR`이고 exact technical/source value는 원형이다
+- synthesized human-facing field와 project description은 기본 configured `presentation.locale`이고 exact technical/source value는 원형이다
 - localization은 stable ID, authority, approval, enforcement와 evidence/source fence를 변경하지 않는다
 - every migration has nested `capturedRepository` and a resolvable base commit
 - dirty source is not presented as committed clean evidence
@@ -306,7 +306,7 @@ The View must not render arbitrary Markdown HTML, load external CDN/font/script 
 - conflicting statement is visible attention
 - high-availability or other attractive policy is not invented when current scope says otherwise
 - first projection identifies the repository statically and never invites cross-repository selection
-- `보드 / <repository>` identity stays visible in every tab and scroll position
+- `<displayName> / <repository>` identity stays visible in every tab and scroll position
 - policy count, guideline count, review queue, execution gap and evidence use one snapshot/read fence
 - policy and guideline tabs expose reciprocal relationships with independent search/filter/pagination/detail state
 - periodic update preserves the human's active tab, filters, search and expanded policy/guideline
@@ -330,5 +330,5 @@ Do not install this workflow as a user-global skill. When it is first added duri
 - 2026-07-16: policy extraction을 repository-local canonical skill과 thin Claude adapter로 route하고 user-global install을 금지했다.
 - 2026-07-16: extracted governance를 static repository identity와 exact five top tabs에 배치하고 cross-tab fence와 reading-state continuity를 고정했다.
 - 2026-07-16: flat candidate example을 executable governance-catalog schema로 교체하고 nested migration fence, observation-only code/config, secret exclusion과 source-hash stale rule을 명시했다.
-- 2026-07-17: `ko-KR` human wording, technical provenance 원형 보존, presentation-only localization과 긴 ID containment 규칙을 추가했다.
-- 2026-07-17: `보드` 고정 이름과 정책/지침 독립 tab 및 양방향 관계 표시를 extraction handoff에 추가했다.
+- 2026-07-17: configured `presentation.locale` human wording, technical provenance 원형 보존, presentation-only localization과 긴 ID containment 규칙을 추가했다.
+- 2026-07-17: `Board` displayName 기반 이름과 정책/지침 독립 tab 및 양방향 관계 표시를 extraction handoff에 추가했다.

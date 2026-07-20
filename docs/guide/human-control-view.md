@@ -48,7 +48,7 @@ loop state/checkpoint/attention canonical fields는 `docs/design/execution-loop-
 
 local view는 cockpit이지 기록 원장이 아닙니다.
 
-사람이 이 화면을 부르는 고정 이름은 **`보드`**입니다. 대화에서는 “보드”, “보드 화면”, “보드를 띄워줘”를 사용하고, executable과 내부 기술 문맥에서는 호환성을 위해 `human-view`와 `Human Control View`를 유지합니다.
+사람이 이 화면을 부르는 이름은 `presentation.displayName`에서 읽으며 reference 기본값은 **`Board`**입니다. 대화에서는 “Board”, “View screen”, “View start”를 사용하고, executable과 내부 기술 문맥에서는 호환성을 위해 `human-view`와 `Human Control View`를 유지합니다.
 
 - Markdown/Git source가 목표, 상태, checkpoint, evidence, decision/approval receipt의 truth입니다.
 - view는 source를 읽어 만든 immutable snapshot입니다.
@@ -68,17 +68,17 @@ local view는 cockpit이지 기록 원장이 아닙니다.
 
 ```text
 Top Bar
-  보드 / static repository identity | freshness | snapshot | Git head/dirty
+  <displayName> / static repository identity | freshness | snapshot | Git head/dirty
   local-only | READ ONLY | health
 
 Horizontal Tabs
-  개요 | 정책 | 지침 | 추진안 | 검토 대기 | 실행 상태 | 근거
+  Overview | Policies | Guidelines | Initiatives | Review | Execution | Evidence
 
 Selected Tab Panel
   one large reading and operation surface
 ```
 
-이 View는 repository마다 독립적으로 실행되므로 repository selector, workspace switcher와 left sidebar를 두지 않습니다. top bar 왼쪽의 `보드 / <repository>`는 고정 context이며, 스크롤 중에도 계속 보여야 합니다. `보드`는 repository config로 바꾸는 brand field가 아닙니다. 7개 tab은 정확히 위 한국어 순서와 label을 사용합니다. 내부 route/hash key는 `overview|policies|guidelines|initiatives|review|execution|evidence`를 사용하고 기존 `#policies`는 정책 tab을 계속 가리킵니다. 좁은 화면은 horizontal tab overflow로 대응하며 left navigation으로 변환하지 않습니다.
+이 View는 repository마다 독립적으로 실행되므로 repository selector, workspace switcher와 left sidebar를 두지 않습니다. top bar 왼쪽의 `<displayName> / <repository>`는 고정 context이며, 스크롤 중에도 계속 보여야 합니다. `Board`는 reference 기본 displayName이고, 배포 profile은 사용자 표시 언어에 맞게 `presentation.displayName`과 `presentation.tabLabels`를 설정할 수 있습니다. 내부 route/hash key는 `overview|policies|guidelines|initiatives|review|execution|evidence`를 사용하고 기존 `#policies`는 policies tab을 계속 가리킵니다. 좁은 화면은 horizontal tab overflow로 대응하며 left navigation으로 변환하지 않습니다.
 
 상단 bar의 `connected` 표시는 freshness를 의미하지 않습니다. `fresh`, `updating`, `direct`, `degraded`, `unknown`을 별도 badge로 표시합니다.
 
@@ -98,14 +98,14 @@ Selected Tab Panel
 ./runtime/document-harness-view/bin/human-view test
 ```
 
-AI 도구는 사용자의 짧은 한국어 표현을 현재 repository의 위 명령으로 route합니다.
+AI 도구는 사용자의 짧은 사용자 표시 언어 표현을 현재 repository의 위 명령으로 route합니다.
 
 | 사용자 표현 | 수행할 기술 동작 |
 | --- | --- |
-| `보드를 띄워줘`, `보드를 열어줘` | `human-view start` 후 `human-view url`로 현재 repository 주소를 안내 |
-| `보드 상태를 알려줘` | `human-view status` |
-| `보드를 갱신해줘` | `human-view refresh` 후 새 snapshot sequence 확인 |
-| `보드를 꺼줘` | `human-view stop` |
+| `View start`, `View open` | `human-view start` 후 `human-view url`로 현재 repository 주소를 안내 |
+| `View status` | `human-view status` |
+| `View refresh` | `human-view refresh` 후 새 snapshot sequence 확인 |
+| `View stop` | `human-view stop` |
 
 이 표현은 현재 repository의 독립 instance만 가리킵니다. 다른 repository 선택, remote bind, 임의 port 선점 또는 foreign process 종료 권한을 뜻하지 않습니다.
 
@@ -117,17 +117,17 @@ AI 도구는 사용자의 짧은 한국어 표현을 현재 repository의 위 �
 
 runtime-local state는 `.document-harness/runtime/view/` 아래에만 둡니다. runtime은 lease/snapshot/log/probe를 쓰기 전에 해당 디렉터리에 exact self-ignoring `.gitignore` marker를 만들고 검증하므로 root ignore rule이 없는 repository도 dirty하게 만들지 않습니다. marker가 foreign bytes 또는 symlink이면 덮어쓰지 않고 fail-closed합니다. View가 실패해도 project application runtime을 restart, deploy, scan 또는 mutate하지 않습니다.
 
-## 한국어 우선 표시 규칙
+## Locale-configured 표시 규칙
 
-reference View의 기본 locale은 `ko-KR`입니다.
+reference View의 기본 locale은 configured `presentation.locale`입니다.
 
-- navigation, section title, helper/empty/error text와 AI가 작성하는 project description, `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap 문구, `approvalRule`, source-reference `note`, 자유 서술 `evidenceKind` label은 자연스럽고 짧은 한국어를 사용합니다.
-- policy/guideline/attention ID, enum 저장 값, repository path, revision/hash, command, exact source heading과 quote는 원형을 유지합니다. 화면에서는 한국어 label 또는 summary와 분리해 기술 metadata로 표시합니다.
+- navigation, section title, helper/empty/error text와 AI가 작성하는 project description, `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap 문구, `approvalRule`, source-reference `note`, 자유 서술 `evidenceKind` label은 자연스럽고 짧은 사용자 표시 언어를 사용합니다.
+- policy/guideline/attention ID, enum 저장 값, repository path, revision/hash, command, exact source heading과 quote는 원형을 유지합니다. 화면에서는 사용자 표시 언어 label 또는 summary와 분리해 기술 metadata로 표시합니다.
 - ID는 정책 제목보다 낮은 위계의 보조 정보입니다. 긴 ID와 source ref는 자기 cell/card 안에서 줄바꿈하고 인접 제목, badge 또는 column 위로 겹치지 않아야 합니다. 작은 화면에서는 ID를 detail 영역으로 이동할 수 있지만 복사 가능한 원문을 잃지 않습니다.
-- 기존 영어 catalog의 human-facing field를 한국어로 바꾸는 migration은 presentation-only입니다. stable ID, source ref/hash, authority, approval, enforcement, effective ref, receipt와 evidence freshness를 그대로 유지하고, 번역만으로 의미나 승인 상태를 바꾸지 않습니다.
-- source heading이나 exact quote가 영어이면 provenance는 그대로 보여주되 별도의 한국어 summary를 제공합니다. 출처 문구를 번역한 값을 exact source라고 표시하지 않습니다.
+- 기존 영어 catalog의 human-facing field를 다른 표시 언어로 바꾸는 migration은 presentation-only입니다. stable ID, source ref/hash, authority, approval, enforcement, effective ref, receipt와 evidence freshness를 그대로 유지하고, 번역만으로 의미나 승인 상태를 바꾸지 않습니다.
+- source heading이나 exact quote가 영어이면 provenance는 그대로 보여주되 별도의 사용자 표시 언어 summary를 제공합니다. 출처 문구를 번역한 값을 exact source라고 표시하지 않습니다.
 
-`보드를 띄워줘`, `보드 화면`은 현재 repository의 View를 뜻합니다. `보드 선택`, `보드 이식`, `target board`처럼 하드웨어 문맥이 함께 있으면 View 명령으로 해석하지 않습니다.
+`View start`, `View screen`은 현재 repository의 View를 뜻합니다. `target board`, hardware board selection, board-porting처럼 하드웨어 문맥이 함께 있으면 View 명령으로 해석하지 않습니다.
 
 ## Seven-Tab Product Plan
 
@@ -142,7 +142,7 @@ reference View의 기본 locale은 `ko-KR`입니다.
 3. 왼쪽의 governance/execution summary와 오른쪽의 `지금 확인할 항목` panel
 4. recent source/verification 변화와 snapshot freshness를 보여주는 runtime strip
 
-metric은 숫자만 표시하지 않고 의미와 기준 snapshot을 함께 표시합니다. 실행 checkpoint가 없으면 진행률을 추정하지 않고 `실행 체크포인트가 구성되지 않았습니다`처럼 source gap을 한국어로 명시합니다.
+metric은 숫자만 표시하지 않고 의미와 기준 snapshot을 함께 표시합니다. 실행 checkpoint가 없으면 진행률을 추정하지 않고 `실행 체크포인트가 구성되지 않았습니다`처럼 source gap을 사용자 표시 언어로 명시합니다.
 
 ### 정책
 
@@ -492,15 +492,15 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] approved write는 별도 broker/executor/validator receipt를 거친다.
 - [ ] path traversal, symlink escape, excluded sensitivity, browser-origin 공격을 차단한다.
 - [ ] cache 삭제 뒤 hidden decision/approval truth가 손실되지 않는다.
-- [ ] top bar 왼쪽의 `보드 / <repository>`가 모든 tab과 scroll 위치에서 보이고 selector/workspace switcher가 없다.
-- [ ] left sidebar 없이 `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거`를 canonical order의 seven horizontal tabs로 제공한다.
+- [ ] top bar 왼쪽의 `<displayName> / <repository>`가 모든 tab과 scroll 위치에서 보이고 selector/workspace switcher가 없다.
+- [ ] left sidebar 없이 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`를 canonical order의 seven horizontal tabs로 제공하고 사용자 label은 `presentation.tabLabels`에서 읽는다.
 - [ ] `정책`과 `지침` tab이 각각 독립 search/filter/pagination/detail state를 가지며 related guideline/policy를 양방향으로 연결한다.
 - [ ] `추진안` tab이 독립 search/filter/pagination/detail state를 가지며 정책 WHY, 선택 지침 HOW와 역색인된 Project 연결을 보여준다.
 - [ ] 모든 tab이 같은 snapshot/read fence를 사용한다.
 - [ ] polling/manual refresh 뒤 active tab, filter, search, expansion과 focus가 유지된다.
 - [ ] external CDN/font/script request가 없고 same-origin local asset만 사용한다.
 - [ ] keyboard와 screen reader로 tab, filter, table expansion과 live freshness를 조작·이해할 수 있다.
-- [ ] 사용자용 chrome과 synthesized governance/project wording이 `ko-KR`이고 기술 ID·enum·path·hash·command·source heading은 원형을 유지한다.
+- [ ] 사용자용 chrome과 synthesized governance/project wording이 configured `presentation.locale`이고 기술 ID·enum·path·hash·command·source heading은 원형을 유지한다.
 - [ ] 긴 ID와 source ref가 자기 cell/card 안에서 줄바꿈되며 인접 content와 겹치지 않는다.
 - [ ] migration fence, current repository와 source evidence freshness가 독립 상태다.
 - [ ] View runtime/controller byte set이 release manifest와 installation lock에 pin되어 있다.
@@ -524,6 +524,6 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - 2026-07-16: repository 정적 identity, five top tabs, tab별 product plan, refresh-stable interaction과 PatternFly-inspired local semantic design 기준을 추가했다.
 - 2026-07-16: shipped reference View의 doctor/refresh/start/status/url/stop/test, Node no-DB/ETag/lease-safe runtime과 migration/current/source fence 운영 절차를 추가했다.
 - 2026-07-17: approval badge를 complete source/decision/effective evidence에 묶고 `실행 상태`를 canonical Markdown checkpoint의 deterministic fail-closed projection으로 정렬했다.
-- 2026-07-17: 한국어 우선 표시, 기술 식별자 원형 보존, presentation-only localization과 긴 ID containment 계약을 추가했다.
-- 2026-07-17: 화면의 고정 사용자명을 `보드`로 정하고 정책과 지침을 독립 최상위 tab과 양방향 관계로 분리했다.
+- 2026-07-17: locale-configured 표시, 기술 식별자 원형 보존, presentation-only localization과 긴 ID containment 계약을 추가했다.
+- 2026-07-17: 화면의 displayName 기반 사용자명을 `Board`로 정하고 정책과 지침을 독립 최상위 tab과 양방향 관계로 분리했다.
 - 2026-07-17: 정책·지침과 프로젝트 사이에 별도 `I####` 추진안 계층과 일곱 번째 top tab을 추가했다.

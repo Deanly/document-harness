@@ -22,18 +22,20 @@ view:
   port_mode: auto
   presentation:
     profile: single-repository-top-tabs-v2
-    locale: ko-KR
+    display_name: Board
+    locale: en-US
+    sort_locale: en
     repository_identity: static
     repository_selector: false
     sidebar: false
     tabs:
-      - 개요
-      - 정책
-      - 지침
-      - 추진안
-      - 검토 대기
-      - 실행 상태
-      - 근거
+      overview: Overview
+      policies: Policies
+      guidelines: Guidelines
+      initiatives: Initiatives
+      review: Review
+      execution: Execution
+      evidence: Evidence
     external_assets: false
   consistency:
     cross_tab_snapshot_fence: single

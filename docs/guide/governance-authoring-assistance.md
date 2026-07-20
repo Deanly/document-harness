@@ -35,7 +35,7 @@ tags:
 
 ## Purpose
 
-거버넌스를 직접 작성해 본 경험이 없는 사용자가 정책·지침·추진안을 구분해 결정할 수 있도록 AI 도구가 질문하고, 근거가 보이는 한국어 초안을 만들고, 검토와 승인을 안전하게 요청하는 절차를 고정합니다.
+거버넌스를 직접 작성해 본 경험이 없는 사용자가 정책·지침·추진안을 구분해 결정할 수 있도록 AI 도구가 질문하고, 근거가 보이는 사용자 표시 언어 초안을 만들고, 검토와 승인을 안전하게 요청하는 절차를 고정합니다.
 
 이 guide는 작성 지원 절차이지 새 권한이 아닙니다. AI는 초안 작성과 대안 비교를 도울 수 있지만 정책, 지침, 예외, 추진안 발급·활성화 또는 위험 수용을 스스로 승인할 수 없습니다.
 
@@ -123,9 +123,9 @@ proposal, 검색 결과, View badge, code/config observation, AI가 쓴 `approve
 
 사용자가 답을 모르면 AI는 2~3개의 대안과 각각의 비용·위험·검증 차이를 제시할 수 있습니다. 추천 이유를 밝히되 선택을 승인으로 간주하지 않습니다.
 
-### 3. 한국어 검토 초안을 만듭니다
+### 3. 사용자 표시 언어 검토 초안을 만듭니다
 
-기본 human-facing 문구는 비전문가도 한 번에 판단할 수 있는 `ko-KR`로 씁니다. technical ID, enum, repository-relative path, command, exact source heading/quote, revision과 hash는 원형을 보존합니다.
+기본 human-facing 문구는 비전문가도 한 번에 판단할 수 있는 configured `presentation.locale`로 씁니다. technical ID, enum, repository-relative path, command, exact source heading/quote, revision과 hash는 원형을 보존합니다.
 
 초안은 최소 다음 순서로 보여줍니다.
 
@@ -171,10 +171,10 @@ proposal, 검색 결과, View badge, code/config observation, AI가 쓴 `approve
 
 - 정책에 특정 구현 제품과 작업 순서를 박아 넣기
 - 지침이 source policy에 없는 새 MUST나 risk acceptance를 만들기
-- 추진안을 project WBS 또는 task 대시보드처럼 쓰기
+- 추진안을 project WBS 또는 task dashboard처럼 쓰기
 - `문서 수`, `배포 횟수`, `코드 줄 수`만으로 outcome 성공을 선언하기
 - code/config의 현재 동작을 human-approved 정책으로 승격하기
-- 영어를 한국어로 바꾸면서 범위, authority, approval 또는 evidence를 바꾸기
+- 영어를 다른 표시 언어로 바꾸면서 범위, authority, approval 또는 evidence를 바꾸기
 - 질문을 한꺼번에 쏟아 사용자가 알 수 없는 결정을 강요하기
 - AI 초안, 채팅 동의, View 표시만으로 `approved` 또는 `effective`라고 쓰기
 - policy/guideline/initiative 충돌을 project/task에서 임의로 해석해 우회하기
@@ -214,4 +214,4 @@ AI가 제안한 부분:
 
 ## Change Log
 
-- 2026-07-18: 정책·지침·추진안의 역할 분리, 초보 사용자를 위한 질문·한국어 초안·품질 rubric·승인 handoff와 AI 실행 preflight를 정의했다.
+- 2026-07-18: 정책·지침·추진안의 역할 분리, 초보 사용자를 위한 질문·사용자 표시 언어 초안·품질 rubric·승인 handoff와 AI 실행 preflight를 정의했다.

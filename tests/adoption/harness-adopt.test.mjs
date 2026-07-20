@@ -276,7 +276,7 @@ test("apply is fenced, installs atomically, and a second apply is a zero-write n
   assert.match(adoptionProfile, /installation_lock: docs\/_indexes\/harness-installation\.yaml/);
   assert.match(
     adoptionProfile,
-    /tabs:\n      - 개요\n      - 정책\n      - 지침\n      - 추진안\n      - 검토 대기\n      - 실행 상태\n      - 근거\n/,
+    /tabs:\n      overview: Overview\n      policies: Policies\n      guidelines: Guidelines\n      initiatives: Initiatives\n      review: Review\n      execution: Execution\n      evidence: Evidence\n/,
   );
   assert.equal(adoptionProfile.includes("정책·지침"), false);
   assert.equal(adoptionProfile.includes("{{"), false);
@@ -907,7 +907,7 @@ test("view profile renders static repository identity and preserves modified con
   assert.deepEqual(config.project, {
     id: "target",
     name: "target",
-    description: "target 저장소 전용 읽기 전용 document-harness 제어 화면입니다.",
+    description: "Read-only document-harness control view for target.",
   });
   assert.equal(config.initiativeRegister, "docs/_indexes/initiative-register.json");
   const lock = JSON.parse(readFileSync(path.join(target, INSTALLATION_LOCK_PATH), "utf8"));

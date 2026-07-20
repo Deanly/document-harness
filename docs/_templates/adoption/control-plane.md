@@ -26,7 +26,7 @@ Not established by the initializer. The AI may summarize source-linked policy an
 
 - Existing project-owned files and dirty tracked or untracked work remain preserved.
 - AI-authored policy candidates, observations, and View rows are not human approval.
-- `보드` is the fixed user-facing name of the Human Control View, a read-only projection of repository source and receipts. Policy and guideline are separate top-level reading surfaces.
+- `Board` is the configurable user-facing name of the Human Control View, a read-only projection of repository source and receipts. Policy and guideline are separate top-level reading surfaces.
 - A migration is incomplete until the installed release fence, required gates, and human review evidence pass verification.
 
 ## Project Quality Gates

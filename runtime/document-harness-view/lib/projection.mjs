@@ -69,6 +69,22 @@ const ALLOWED_INITIATIVE_LIFECYCLE = new Set([
   "superseded"
 ]);
 
+const TAB_KEYS = ["overview", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
+const DEFAULT_PRESENTATION = Object.freeze({
+  displayName: "Board",
+  locale: "en-US",
+  sortLocale: "en",
+  tabLabels: Object.freeze({
+    overview: "Overview",
+    policies: "Policies",
+    guidelines: "Guidelines",
+    initiatives: "Initiatives",
+    review: "Review",
+    execution: "Execution",
+    evidence: "Evidence"
+  })
+});
+
 export function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -125,6 +141,11 @@ function requireArray(value, label) {
   return value;
 }
 
+function optionalNonEmptyString(value, fallback, label) {
+  if (value === undefined || value === null || value === "") return fallback;
+  return requireString(value, label);
+}
+
 function assertAllowedKeys(value, allowed, label) {
   if (!value || Array.isArray(value) || typeof value !== "object") {
     throw new Error(`${label}은 object여야 합니다.`);
@@ -145,6 +166,32 @@ function assertPublicEvidencePath(relativePath, label) {
   if (PRIVATE_EVIDENCE_PATH.test(normalized)) {
     throw new Error(`${label}는 private/credential 경로를 참조할 수 없습니다: ${relativePath}`);
   }
+}
+
+function normalizePresentation(value = {}) {
+  if (value === undefined || value === null) value = {};
+  assertAllowedKeys(value, new Set(["displayName", "locale", "sortLocale", "tabs", "tabLabels"]), "config.presentation");
+  const rawTabs = value.tabLabels ?? value.tabs ?? {};
+  if (Array.isArray(rawTabs)) {
+    if (rawTabs.length !== TAB_KEYS.length) {
+      throw new Error(`config.presentation.tabs는 ${TAB_KEYS.length}개 tab label을 가져야 합니다.`);
+    }
+  } else {
+    assertAllowedKeys(rawTabs, new Set(TAB_KEYS), "config.presentation.tabs");
+  }
+
+  const tabLabels = {};
+  for (const [index, key] of TAB_KEYS.entries()) {
+    const candidate = Array.isArray(rawTabs) ? rawTabs[index] : rawTabs[key];
+    tabLabels[key] = optionalNonEmptyString(candidate, DEFAULT_PRESENTATION.tabLabels[key], `config.presentation.tabs.${key}`);
+  }
+
+  return {
+    displayName: optionalNonEmptyString(value.displayName, DEFAULT_PRESENTATION.displayName, "config.presentation.displayName"),
+    locale: optionalNonEmptyString(value.locale, DEFAULT_PRESENTATION.locale, "config.presentation.locale"),
+    sortLocale: optionalNonEmptyString(value.sortLocale, value.locale ?? DEFAULT_PRESENTATION.sortLocale, "config.presentation.sortLocale"),
+    tabLabels
+  };
 }
 
 async function resolveExistingInsideRoot(repoRoot, relativePath, label) {
@@ -325,7 +372,7 @@ export async function loadViewConfig(repoRoot, configPath) {
 
   const allowedConfigKeys = new Set([
     "schemaVersion", "project", "governanceCatalog", "initiativeRegister", "bindHost", "portMode", "qualityCommands", "probes",
-    "stateDir", "runtimeProbes", "refreshIntervalMs", "reconcileIntervalMs"
+    "presentation", "stateDir", "runtimeProbes", "refreshIntervalMs", "reconcileIntervalMs"
   ]);
   for (const key of Object.keys(config)) {
     if (!allowedConfigKeys.has(key)) throw new Error(`지원하지 않는 View config key입니다: ${key}`);
@@ -400,6 +447,7 @@ export async function loadViewConfig(repoRoot, configPath) {
   return {
     ...config,
     ...VIEW_RUNTIME_CONTRACT,
+    presentation: normalizePresentation(config.presentation),
     resolvedRoot,
     resolvedConfig
   };
@@ -1705,7 +1753,8 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     execution,
     qualityCommands: config.qualityCommands ?? {},
     client: {
-      refreshIntervalMs: config.refreshIntervalMs
+      refreshIntervalMs: config.refreshIntervalMs,
+      presentation: config.presentation
     }
   };
 

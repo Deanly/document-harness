@@ -99,14 +99,14 @@ tags:
 ## Artifact Contract
 
 - canonical path: `docs/initiatives/I####-<slug>.md`
-- 초기 이관 중 보드 검토용 `INIT-*` record는 번호 문서가 아닌 `draft` migration candidate이며, 사람 승인 전에는 active initiative authority가 아닙니다.
+- 초기 이관 중 Board 검토용 `INIT-*` record는 번호 문서가 아닌 `draft` migration candidate이며, 사람 승인 전에는 active initiative authority가 아닙니다.
 - canonical template: `docs/_templates/initiative.md`
 - active entry: `docs/initiatives/README.md`
 - `policy_refs`, `guideline_refs`는 빠른 검색을 위한 stable ID 목록입니다.
 - 본문의 `Policy Alignment`, `Guideline Disposition` 표는 각 관계의 의미와 근거를 보존하는 human-readable contract이며 register와 1:1로 일치해야 합니다.
 - project source가 `related_initiative`를 소유하고 View와 index가 이를 reverse-index합니다. Initiative source에 project 목록을 중복 저장하지 않습니다.
 - `Success Signals`와 `Outcome Review`는 추진안을 활동 목록이 아니라 결과 계약으로 유지합니다.
-- 번호 발급 commit은 canonical draft ID를 확보하는 단계입니다. 보드에 published record를 만들거나 lifecycle/approval/relationship을 바꿀 때는 initiative 문서와 `initiative-register.json` mirror를 같은 변경 셋에서 정렬합니다.
+- 번호 발급 commit은 canonical draft ID를 확보하는 단계입니다. Board에 published record를 만들거나 lifecycle/approval/relationship을 바꿀 때는 initiative 문서와 `initiative-register.json` mirror를 같은 변경 셋에서 정렬합니다.
 - terminal initiative도 register에서 삭제하지 않고 outcome evidence와 마지막 project lineage를 보존합니다.
 
 ## Issuance And Approval Contract

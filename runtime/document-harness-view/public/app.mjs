@@ -15,10 +15,25 @@ import {
 } from "/view-model.mjs?v=4";
 
 const tabNames = ["overview", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
+const defaultPresentation = {
+  displayName: "Board",
+  locale: "en-US",
+  sortLocale: "en",
+  tabLabels: {
+    overview: "Overview",
+    policies: "Policies",
+    guidelines: "Guidelines",
+    initiatives: "Initiatives",
+    review: "Review",
+    execution: "Execution",
+    evidence: "Evidence"
+  }
+};
 
 const state = {
   snapshot: null,
   etag: null,
+  presentation: defaultPresentation,
   activeTab: "policies",
   policyFilter: "all",
   policyQuery: "",
@@ -149,10 +164,22 @@ function clear(node) {
   node.replaceChildren();
 }
 
+function presentation() {
+  return state.presentation ?? defaultPresentation;
+}
+
+function presentationLocale() {
+  return presentation().locale || navigator.language || defaultPresentation.locale;
+}
+
+function tabLabel(tabName) {
+  return presentation().tabLabels?.[tabName] ?? defaultPresentation.tabLabels[tabName] ?? tabName;
+}
+
 function formatTime(value, includeDate = false) {
   if (!value) return "기록 없음";
   try {
-    return new Intl.DateTimeFormat("ko-KR", {
+    return new Intl.DateTimeFormat(presentationLocale(), {
       ...(includeDate ? { year: "numeric", month: "2-digit", day: "2-digit" } : { month: "short", day: "numeric" }),
       hour: "2-digit",
       minute: "2-digit",
@@ -169,7 +196,7 @@ function shortHash(value) {
 }
 
 function number(value) {
-  return value === null || value === undefined ? "-" : new Intl.NumberFormat("ko-KR").format(value);
+  return value === null || value === undefined ? "-" : new Intl.NumberFormat(presentationLocale()).format(value);
 }
 
 function toneFor(value) {
@@ -285,8 +312,20 @@ function renderRuntimeStrip(container, snapshot) {
 }
 
 function renderChrome(snapshot) {
+  state.presentation = snapshot.client?.presentation ?? defaultPresentation;
+  document.documentElement.lang = presentationLocale();
+  const displayName = presentation().displayName || defaultPresentation.displayName;
+  $(".repository-identity strong").textContent = displayName;
+  $(".repository-identity").setAttribute("aria-label", `${displayName}, current repository`);
+  for (const name of tabNames) {
+    const tab = $(`#tab-${name}`);
+    const textNode = [...tab.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+    if (textNode) textNode.nodeValue = name === "review" ? `${tabLabel(name)} ` : tabLabel(name);
+    else tab.prepend(document.createTextNode(name === "review" ? `${tabLabel(name)} ` : tabLabel(name)));
+  }
+  $(".tab-bar").setAttribute("aria-label", `${displayName} main navigation`);
   $("#repository-name").textContent = snapshot.project.id;
-  document.title = `보드 · ${snapshot.project.id}`;
+  document.title = `${displayName} · ${snapshot.project.id}`;
   $("#last-updated").textContent = `업데이트 ${formatTime(snapshot.snapshot.generatedAt, true)}`;
   $("#review-tab-count").textContent = snapshot.summary.attentionCount;
   $("#footer-fence").textContent = `스냅샷 ${snapshot.snapshot.id} · 초기 이관 ${localized(snapshot.migrationFence?.state)} · 소스 ${localized(snapshot.snapshot.sourceFence?.sourceEvidenceState)}`;

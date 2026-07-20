@@ -71,7 +71,7 @@ Codex 같은 coding agent가 작업 전에 자동으로 읽는 짧은 repository
 
 ### `repository-local harness skill`
 
-document-harness의 initialize/migrate/upgrade, execution, policy extraction, `보드` operation 요청을 현재 repository의 durable entrypoint로 route하는 project-scoped workflow입니다.
+document-harness의 initialize/migrate/upgrade, execution, policy extraction, `Board` operation 요청을 현재 repository의 durable entrypoint로 route하는 project-scoped workflow입니다.
 
 canonical path는 `.agents/skills/operate-document-harness/SKILL.md`이고 `.claude/skills/operate-document-harness/SKILL.md`는 그 파일을 읽는 thin adapter입니다. 별도 policy·approval·verification authority를 만들지 않으며 user-global skill로 설치하지 않습니다.
 
@@ -151,7 +151,7 @@ base rule을 수정하지 않고 특정 scope/time에만 적용하는 승인된 
 
 ### `initiative`
 
-정책과 지침을 하나 이상의 bounded delivery project가 달성할 portfolio outcome으로 연결하는 strategy owner입니다. 사용자 화면과 한국어 대화에서는 `추진안`, 문서 type과 schema에서는 `initiative`, stable ID에서는 `I####`를 사용합니다.
+정책과 지침을 하나 이상의 bounded delivery project가 달성할 portfolio outcome으로 연결하는 strategy owner입니다. 사용자 화면과 사용자 표시 언어 conversation에서는 `추진안`, 문서 type과 schema에서는 `initiative`, stable ID에서는 `I####`를 사용합니다.
 
 ### `initiative ref`
 
@@ -193,13 +193,13 @@ loop가 계속되기 위해 사람 또는 외부 actor가 제공해야 하는 �
 
 required check, receipt, goal verification, unresolved attention 여부를 결합해 `succeeded` 또는 closeout을 허용하는 gate입니다.
 
-### `보드`
+### `view displayName`
 
-repository 하나의 policy, guideline, initiative, 연결 project, task checkpoint, attention과 evidence를 사람이 읽기 좋게 투영하는 화면의 고정 사용자명입니다. top bar에는 `보드 / <repository>`로 표시하며 repository별로 rename하지 않습니다. “보드를 띄워줘”는 현재 repository의 View를 시작하고 주소를 안내하라는 뜻입니다.
+repository 하나의 policy, guideline, initiative, 연결 project, task checkpoint, attention과 evidence를 사람이 읽기 좋게 투영하는 화면의 사용자 표시명입니다. `presentation.displayName`에서 읽고 reference 기본값은 `Board`입니다. top bar에는 `<displayName> / <repository>`로 표시합니다. “View start”는 현재 repository의 View를 시작하고 주소를 안내하라는 뜻입니다.
 
 ### `human control view`
 
-`보드`를 구현하는 기술 architecture term입니다. policy, guideline, initiative, 연결 project, task checkpoint, attention, evidence를 사람이 빠르게 읽도록 투영한 local-first interface이며 Markdown/Git source에서 재생성 가능해야 하고 자체적으로 task/approval truth를 소유하지 않습니다. 기술 command/path는 호환성을 위해 `human-view`를 유지합니다.
+configured displayName 화면을 구현하는 기술 architecture term입니다. policy, guideline, initiative, 연결 project, task checkpoint, attention, evidence를 사람이 빠르게 읽도록 투영한 local-first interface이며 Markdown/Git source에서 재생성 가능해야 하고 자체적으로 task/approval truth를 소유하지 않습니다. 기술 command/path는 호환성을 위해 `human-view`를 유지합니다.
 
 ### `view snapshot`
 
@@ -345,7 +345,7 @@ downstream에 전달하거나 이후 단계가 소비하는 구조화 결과를 
 
 ## Change Log
 
-- 2026-07-17: Human Control View의 고정 사용자명을 `보드`로 정하고 기술명·명령과의 경계를 추가했다.
+- 2026-07-17: Human Control View의 displayName 기반 사용자명을 `Board`로 정하고 기술명·명령과의 경계를 추가했다.
 - 2026-07-18: `추진안`/`initiative`/`I####`, initiative ref, policy relationship, guideline disposition, legacy umbrella project 용어를 추가했다.
 - 2026-07-16: repository-local harness skill, canonical project path, thin Claude adapter와 no-global-install 경계를 추가했다.
 - 2026-07-15: human policy, proposal, normative standard, approval, exception, loop/checkpoint/attention/receipt, human control view vocabulary 추가.

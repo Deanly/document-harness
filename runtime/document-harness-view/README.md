@@ -1,8 +1,8 @@
-# 보드 — Document Harness Reference View
+# Board — Document Harness Reference View
 
-This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. Its fixed user-facing name is `보드`; the technical executable remains `human-view` for compatibility. It is copied as a unit; an adopter does not regenerate its design.
+This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. Its configurable user-facing name is `Board`; the technical executable remains `human-view` for compatibility. It is copied as a unit; an adopter does not regenerate its design.
 
-Reference View distribution version: `1.3.0`. The public release manifest pins the byte hashes for this complete tree.
+Reference View distribution version: `1.3.1`. The public release manifest pins the byte hashes for this complete tree.
 
 ## Installed surfaces
 
@@ -38,7 +38,7 @@ Runtime-local state is written only below `.document-harness/runtime/view/` by d
 
 Only these values vary by repository:
 
-- static project identity and Korean (`ko-KR`) human-facing description
+- static project identity and locale-configured (configured `presentation.locale`) human-facing description
 - repository-relative governance catalog and its source refs
 - allowlisted credential-free loopback HTTP probes
 - declared fast/full/continuous quality commands
@@ -71,10 +71,10 @@ The governance catalog records the historical capture independently from current
 ## Presentation and capability contract
 
 - one independent server and static repository identity
-- fixed top-left identity `보드 / <repository>`, visible across every tab and scroll position; `보드` is not repository-configurable
-- exact horizontal tabs: `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거` (internal route/hash keys remain stable English identifiers)
+- fixed top-left identity `<displayName> / <repository>`, visible across every tab and scroll position; `displayName` is repository-configurable
+- exact horizontal tab keys: `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` (labels come from `presentation.tabLabels`, defaulting to English)
 - policy and guideline are independent first-class surfaces with reciprocal related-item links and separate search/filter/pagination/expanded state
-- Korean (`ko-KR`) UI chrome and synthesized project/governance wording by default; technical IDs, enum values, paths, hashes, commands, exact source headings, and exact quotes remain unchanged
+- locale-configured (configured `presentation.locale`) UI chrome and synthesized project/governance wording by default; technical IDs, enum values, paths, hashes, commands, exact source headings, and exact quotes remain unchanged
 - translation is presentation-only and never changes meaning, authority, approval, enforcement, evidence freshness, source refs/hashes, effective refs, or decision receipts
 - IDs and source refs are secondary metadata; long unbroken values wrap inside their own cell/card and never overlap adjacent titles or status content
 - no repository selector, workspace switcher, or persistent left sidebar

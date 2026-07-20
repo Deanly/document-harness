@@ -61,7 +61,7 @@ Codex 공식 문서는 `AGENTS.md`를 자동으로 읽는 project guidance로 �
 | policy authority and approval | `docs/design/policy-to-evidence-governance.md`, `docs/guide/policy-proposal-and-approval.md` |
 | policy/guideline to delivery portfolio | `docs/design/initiative-governance-plane.md`, `docs/guide/initiative-governance.md`, `docs/initiatives/` |
 | resumable execution state | current task, current checkpoint, `docs/design/execution-loop-plane.md` |
-| human-readable status (`보드`) | `docs/guide/human-control-view.md` derived projection |
+| human-readable status (`Board`) | `docs/guide/human-control-view.md` derived projection |
 | repository policy extraction | `docs/guide/repository-policy-extraction.md` candidate workflow |
 | work decomposition | `docs/initiatives/`, `docs/projects/`, and `docs/tasks/` |
 | verification | `docs/bin/validate-codex-readiness.sh` and related validators |
@@ -115,9 +115,9 @@ The skill is an intent router:
 - initialize, migrate, upgrade -> `docs/ADOPT.md`
 - start, resume, stop, close -> `docs/EXECUTE.md` plus the current task/checkpoint
 - policy/guideline extraction -> `docs/guide/repository-policy-extraction.md`
-- `보드` / Human Control View operation -> `docs/guide/human-control-view.md`
+- `Board` / Human Control View operation -> `docs/guide/human-control-view.md`
 
-“보드를 띄워줘” 또는 “보드를 열어줘”는 현재 repository에서 `human-view start` 후 `human-view url`을 수행하라는 뜻입니다. `보드 상태를 알려줘`, `보드를 갱신해줘`, `보드를 꺼줘`는 각각 `status`, `refresh`, `stop`으로 route합니다. 이 별칭은 remote bind, 다른 repository 선택 또는 foreign process 종료 권한을 만들지 않습니다.
+“View start” 또는 “View open”는 현재 repository에서 `human-view start` 후 `human-view url`을 수행하라는 뜻입니다. `View status`, `View refresh`, `View stop`는 각각 `status`, `refresh`, `stop`으로 route합니다. 이 별칭은 remote bind, 다른 repository 선택 또는 foreign process 종료 권한을 만들지 않습니다.
 
 It does not own policy, approval, migration decisions, quality verdicts, execution truth, or View truth. `AGENTS.md`, human-owned governance sources, effective designs, source files, checkpoints, receipts and deterministic validators keep those responsibilities.
 
@@ -173,5 +173,5 @@ Codex can run multiple threads, but two concurrent tasks should not modify the s
 - 2026-07-15: human policy authority, resumable execution checkpoint, and human-view projection mapping added.
 - 2026-07-15: mature adoption routing and a thin Claude Code `@AGENTS.md` adapter were added so both tools share one authority surface.
 - 2026-07-16: repository-local `operate-document-harness` canonical skill, thin Claude project adapter, no-global-install and bootstrap reload contract added.
-- 2026-07-17: `보드` 사용자명과 한국어 View operation phrase routing을 repository-local skill contract에 추가했다.
+- 2026-07-17: `Board` 사용자명과 사용자 표시 언어 View operation phrase routing을 repository-local skill contract에 추가했다.
 - 2026-07-18: explicit human-approved `I####` issuance, initiative→project→task hierarchy와 legacy umbrella non-promotion rule을 추가했다.

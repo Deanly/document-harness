@@ -25,18 +25,18 @@ const migrationFenceLabels = new Map([
 ]);
 
 function normalized(value) {
-  return String(value ?? "").trim().toLocaleLowerCase("ko");
+  return String(value ?? "").trim().toLocaleLowerCase();
 }
 
 function uniqueSorted(values) {
-  return [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right, "ko"));
+  return [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right));
 }
 
 export function sortAttention(attention = []) {
   return [...attention].sort((left, right) => {
     const rank = (severityOrder.get(left.severity) ?? 99) - (severityOrder.get(right.severity) ?? 99);
     if (rank !== 0) return rank;
-    return String(left.id).localeCompare(String(right.id), "ko");
+    return String(left.id).localeCompare(String(right.id));
   });
 }
 
@@ -110,7 +110,7 @@ export function filterPolicies({ policies = [], guidelines = [], attention = [],
       ...relatedGuides.flatMap((guide) => [guide.id, guide.title, guide.humanSummary, guide.risk, ...(guide.sourceRefs ?? []).map((ref) => ref.path)]),
       ...relatedAttention.flatMap((item) => [item.id, item.title, item.humanSummary]),
       ...(policy.sourceRefs ?? []).flatMap((ref) => [ref.path, ref.heading, ref.evidenceKind])
-    ].filter(Boolean).join(" ").toLocaleLowerCase("ko");
+    ].filter(Boolean).join(" ").toLocaleLowerCase();
     return haystack.includes(needle);
   });
 }
@@ -151,7 +151,7 @@ export function filterGuidelines({ guidelines = [], policies = [], attention = [
       ...relatedPolicies.flatMap((policy) => [policy.id, policy.title, policy.humanSummary, policy.risk]),
       ...relatedAttention.flatMap((item) => [item.id, item.title, item.humanSummary]),
       ...(guideline.sourceRefs ?? []).flatMap((ref) => [ref.path, ref.heading, ref.evidenceKind])
-    ].filter(Boolean).join(" ").toLocaleLowerCase("ko");
+    ].filter(Boolean).join(" ").toLocaleLowerCase();
     return haystack.includes(needle);
   });
 }
@@ -198,7 +198,7 @@ export function filterInitiatives({ initiatives = [], policies = [], guidelines 
       ...(initiative.projects ?? []).flatMap((item) => [item.id, item.title, item.status, item.currentFocus, item.path]),
       ...relatedAttention.flatMap((item) => [item.id, item.title, item.humanSummary]),
       ...(initiative.sourceRefs ?? []).flatMap((ref) => [ref.path, ref.heading, ref.evidenceKind])
-    ].filter(Boolean).join(" ").toLocaleLowerCase("ko");
+    ].filter(Boolean).join(" ").toLocaleLowerCase();
     return haystack.includes(needle);
   });
 }
@@ -302,7 +302,7 @@ export function buildEvidenceGroups(policies = [], guidelines = [], initiatives 
     capturedRevisions: uniqueSorted(group.capturedRevisions)
   })).sort((left, right) => {
     const rank = (evidenceOrder.get(left.state) ?? 99) - (evidenceOrder.get(right.state) ?? 99);
-    return rank !== 0 ? rank : left.path.localeCompare(right.path, "ko");
+    return rank !== 0 ? rank : left.path.localeCompare(right.path);
   });
 }
 
@@ -316,7 +316,7 @@ export function filterEvidence(groups = [], query = "", filter = "all") {
       ...group.evidenceKinds,
       ...group.locations,
       ...group.relatedItems
-    ].join(" ").toLocaleLowerCase("ko").includes(needle);
+    ].join(" ").toLocaleLowerCase().includes(needle);
   });
 }
 

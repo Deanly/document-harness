@@ -528,7 +528,7 @@ function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
     config.project = {
       id: repositoryName,
       name: repositoryName,
-      description: `${repositoryName} 저장소 전용 읽기 전용 document-harness 제어 화면입니다.`,
+      description: `Read-only document-harness control view for ${repositoryName}.`,
     };
     const bytes = Buffer.from(prettyJson(config));
     return { bytes, sha256: sha256(bytes) };
@@ -561,7 +561,7 @@ function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
         workingTreeState: context.workingTreeState,
       },
       capturedAt: context.capturedAt,
-      approvalRule: "AI가 추출한 후보는 소스 해시로 고정된 사람의 결정 영수증이 존재하기 전까지 승인되지 않은 상태로 유지합니다.",
+      approvalRule: "AI-extracted candidates remain unapproved until a human decision receipt pins the source hashes.",
     };
     catalog.direction = [];
     catalog.policies = [];
@@ -570,28 +570,28 @@ function materializeReleaseEntry(root, releaseEntry, generationContext = null) {
       {
         id: "ATTN-POLICY-EXTRACTION",
         severity: "decision",
-        title: "저장소 정책 추출 결과를 사람이 검토해야 합니다",
-        humanSummary: "아직 적용 중인 정책은 없습니다. 소스와 연결된 후보를 추출하고 승격 전에 사람이 검토해야 합니다.",
+        title: "Human review is required for repository policy extraction",
+        humanSummary: "No effective policies are installed yet. Extract source-linked candidates and have a human review them before promotion.",
         relatedRefs: [],
       },
       {
         id: "ATTN-INITIATIVE-EXTRACTION",
         severity: "decision",
-        title: "기존 업무를 어떤 추진안으로 묶을지 확인해 주세요",
-        humanSummary: "정책과 지침을 실제 업무로 잇는 추진안 후보가 아직 없습니다. 기존 프로젝트와 설계 근거를 분석한 뒤 후보를 검토하거나, 근거가 부족한 이유를 확인해야 합니다.",
+        title: "Confirm which initiative should group existing work",
+        humanSummary: "No initiative candidate connects policy and guideline direction to delivery work yet. Review source-backed candidates after existing projects and design evidence are analyzed, or confirm why the evidence is insufficient.",
         relatedRefs: [INITIATIVE_REGISTER_PATH],
       },
     ];
     catalog.gaps = [
       {
         id: "GAP-POLICY-EXTRACTION",
-        summary: "소스와 연결된 정책 후보를 아직 사람이 검토하지 않았습니다.",
-        reason: "초기화 도구는 저장소 정책을 임의로 만들거나 스스로 승인하지 않습니다.",
+        summary: "Source-linked policy candidates have not yet been reviewed by a human.",
+        reason: "The initializer does not invent repository policy or approve it on its own.",
       },
       {
         id: "GAP-INITIATIVE-EXTRACTION",
-        summary: "기존 프로젝트를 정책·지침과 연결하는 추진안 후보를 아직 만들지 않았습니다.",
-        reason: "AI는 기존 문서와 코드에서 결과·범위·성공 기준을 근거와 함께 추출할 수 있지만, 추진안을 임의로 발급하거나 승인할 수 없습니다.",
+        summary: "No initiative candidate has been created to connect existing projects with policies and guidelines.",
+        reason: "AI may extract outcomes, scope, and success criteria from existing documents and code, but it cannot issue or approve an initiative on its own.",
       },
     ];
     const bytes = Buffer.from(prettyJson(catalog));

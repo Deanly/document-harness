@@ -163,15 +163,15 @@ async function buildBrowserFixture() {
 }
 
 async function assertTabs(page) {
-  const expected = ["개요", "정책", "지침", "추진안", "검토 대기", "실행 상태", "근거"];
+  const expected = ["Overview", "Policies", "Guidelines", "Initiatives", "Review", "Execution", "Evidence"];
   const tabs = page.getByRole("tab");
   assert.equal(await tabs.count(), expected.length);
   const labels = await tabs.allTextContents();
   assert.deepEqual(labels.map((value) => value.replace(/\s+\d+$/, "").trim()), expected);
   assert.equal(await page.locator("[class*='sidebar'], [id*='repository-selector'], [class*='repository-selector'], [id*='workspace-switcher']").count(), 0);
-  assert.match(await page.getByLabel("보드, 현재 저장소").innerText(), /^보드\s*\/\s*browser-fixture/i);
+  assert.match(await page.getByLabel("Board, current repository").innerText(), /^Board\s*\/\s*browser-fixture/i);
   const visibleCopy = await page.locator("body").innerText();
-  assert.doesNotMatch(visibleCopy, /Overview|Policies & Guidelines|Review Queue|Execution Status|Refresh now|Source evidence is current|not observed/);
+  assert.doesNotMatch(visibleCopy, /보드/);
   assert.match(visibleCopy, /읽기 전용/);
   assert.match(visibleCopy, /소스 근거가 최신입니다/);
 
@@ -186,27 +186,27 @@ async function assertTabs(page) {
   assert.ok(relations.every((item) => item.panelExists));
   assert.ok(relations.every((item) => item.selected === "true" ? item.panelHidden === false : item.panelHidden === true));
 
-  await page.getByRole("tab", { name: /^정책$/ }).press("Home");
+  await page.getByRole("tab", { name: /^Policies$/ }).press("Home");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-overview");
-  await page.getByRole("tab", { name: /^개요$/ }).press("End");
+  await page.getByRole("tab", { name: /^Overview$/ }).press("End");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-evidence");
-  await page.getByRole("tab", { name: /^근거$/ }).press("ArrowLeft");
+  await page.getByRole("tab", { name: /^Evidence$/ }).press("ArrowLeft");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-execution");
-  await page.getByRole("tab", { name: /^실행 상태$/ }).press("ArrowRight");
+  await page.getByRole("tab", { name: /^Execution$/ }).press("ArrowRight");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-evidence");
-  await page.getByRole("tab", { name: /^개요$/ }).focus();
-  await page.getByRole("tab", { name: /^개요$/ }).press("Enter");
-  assert.equal(await page.getByRole("tab", { name: /^개요$/ }).getAttribute("aria-selected"), "true");
-  await page.getByRole("tab", { name: /^정책$/ }).focus();
-  await page.getByRole("tab", { name: /^정책$/ }).press("Space");
-  assert.equal(await page.getByRole("tab", { name: /^정책$/ }).getAttribute("aria-selected"), "true");
-  await page.getByRole("tab", { name: /^정책$/ }).press("ArrowRight");
+  await page.getByRole("tab", { name: /^Overview$/ }).focus();
+  await page.getByRole("tab", { name: /^Overview$/ }).press("Enter");
+  assert.equal(await page.getByRole("tab", { name: /^Overview$/ }).getAttribute("aria-selected"), "true");
+  await page.getByRole("tab", { name: /^Policies$/ }).focus();
+  await page.getByRole("tab", { name: /^Policies$/ }).press("Space");
+  assert.equal(await page.getByRole("tab", { name: /^Policies$/ }).getAttribute("aria-selected"), "true");
+  await page.getByRole("tab", { name: /^Policies$/ }).press("ArrowRight");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-guidelines");
-  assert.equal(await page.getByRole("tab", { name: /^지침$/ }).getAttribute("aria-selected"), "true");
-  await page.getByRole("tab", { name: /^지침$/ }).press("ArrowRight");
+  assert.equal(await page.getByRole("tab", { name: /^Guidelines$/ }).getAttribute("aria-selected"), "true");
+  await page.getByRole("tab", { name: /^Guidelines$/ }).press("ArrowRight");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "tab-initiatives");
-  assert.equal(await page.getByRole("tab", { name: /^추진안$/ }).getAttribute("aria-selected"), "true");
-  await page.getByRole("tab", { name: /^정책$/ }).click();
+  assert.equal(await page.getByRole("tab", { name: /^Initiatives$/ }).getAttribute("aria-selected"), "true");
+  await page.getByRole("tab", { name: /^Policies$/ }).click();
 }
 
 async function assertStateContinuity(page, fixture) {
@@ -232,13 +232,13 @@ async function assertStateContinuity(page, fixture) {
   await page.getByRole("button", { name: `${LONG_POLICY_ID} 상세 열기` }).click();
   await page.locator("#refresh-button").click();
   await page.waitForTimeout(150);
-  assert.equal(await page.getByRole("tab", { name: /^정책$/ }).getAttribute("aria-selected"), "true");
+  assert.equal(await page.getByRole("tab", { name: /^Policies$/ }).getAttribute("aria-selected"), "true");
   assert.equal(await page.getByRole("button", { name: `${LONG_POLICY_ID} 상세 닫기` }).getAttribute("aria-expanded"), "true");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "refresh-button");
 }
 
 async function assertGuidelineSurface(page) {
-  await page.getByRole("tab", { name: /^지침$/ }).click();
+  await page.getByRole("tab", { name: /^Guidelines$/ }).click();
   await page.locator("#clear-guideline-filters").click();
   assert.equal(await page.locator("#guideline-table-body .item-id").filter({ hasText: LONG_GUIDELINE_ID }).count(), 1);
 
@@ -259,13 +259,13 @@ async function assertGuidelineSurface(page) {
 
   await page.locator("#refresh-button").click();
   await page.waitForTimeout(150);
-  assert.equal(await page.getByRole("tab", { name: /^지침$/ }).getAttribute("aria-selected"), "true");
+  assert.equal(await page.getByRole("tab", { name: /^Guidelines$/ }).getAttribute("aria-selected"), "true");
   assert.equal(await page.locator("#guideline-filter-attention").getAttribute("aria-pressed"), "true");
   assert.equal(await page.getByRole("button", { name: `${LONG_GUIDELINE_ID} 지침 상세 닫기` }).getAttribute("aria-expanded"), "true");
 }
 
 async function assertInitiativeSurface(page) {
-  await page.getByRole("tab", { name: /^추진안$/ }).click();
+  await page.getByRole("tab", { name: /^Initiatives$/ }).click();
   await page.locator("#clear-initiative-filters").click();
   assert.match(await page.locator("#initiative-result-count").innerText(), /추진안 1개/);
   await page.locator("#initiative-search").fill("Fixture Delivery");
@@ -279,21 +279,21 @@ async function assertInitiativeSurface(page) {
   assert.match(await details.innerText(), /연결 프로젝트 1개/);
   assert.match(await details.innerText(), /P0001/);
   assert.match(await details.innerText(), /기존 계보 호환|새 계보 계약/);
-  assert.match(await details.innerText(), /constrained-by/);
+  assert.match(await details.innerText(), /경계를 준수/);
   assert.match(await details.innerText(), /읽기 전용 차량 제어 경계를 추진안의 비가역 제약으로 유지합니다/);
-  assert.match(await details.innerText(), /recommended/);
+  assert.match(await details.innerText(), /권장 적용/);
   assert.match(await details.innerText(), /재현 가능한 하드웨어 근거 수집 방식을 검토 후보로 연결합니다/);
   assert.match(await details.innerText(), /연결 프로젝트가 제출한 점검 결과와 source hash를 사람이 검토합니다/);
   await page.locator("#refresh-button").click();
   await page.waitForTimeout(150);
-  assert.equal(await page.getByRole("tab", { name: /^추진안$/ }).getAttribute("aria-selected"), "true");
+  assert.equal(await page.getByRole("tab", { name: /^Initiatives$/ }).getAttribute("aria-selected"), "true");
   assert.equal(await page.getByRole("button", { name: "I0001 추진안 상세 닫기" }).getAttribute("aria-expanded"), "true");
 }
 
 async function assertResponsive(page) {
   for (const size of [{ width: 1440, height: 1024 }, { width: 949, height: 1021 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(size);
-    await page.getByRole("tab", { name: /^정책$/ }).click();
+    await page.getByRole("tab", { name: /^Policies$/ }).click();
     await page.locator("#clear-policy-filters").click();
     const layout = await page.evaluate(() => ({
       innerWidth,
@@ -377,13 +377,13 @@ async function assertResponsive(page) {
         text: brand.textContent.replace(/\s+/g, " ").trim()
       };
     });
-    assert.ok(["sticky", "fixed"].includes(stickyBrand.position), `보드 chrome is not sticky at ${size.width}px`);
-    assert.ok(stickyBrand.chromeTop >= -1 && stickyBrand.chromeTop <= 1, `보드 chrome left the viewport at ${size.width}px`);
-    assert.ok(stickyBrand.brandTop >= -1 && stickyBrand.brandBottom > 0, `보드 brand is not visible at ${size.width}px`);
-    assert.match(stickyBrand.text, /^보드\s*\/\s*browser-fixture/i);
+    assert.ok(["sticky", "fixed"].includes(stickyBrand.position), `Board chrome is not sticky at ${size.width}px`);
+    assert.ok(stickyBrand.chromeTop >= -1 && stickyBrand.chromeTop <= 1, `Board chrome left the viewport at ${size.width}px`);
+    assert.ok(stickyBrand.brandTop >= -1 && stickyBrand.brandBottom > 0, `Board brand is not visible at ${size.width}px`);
+    assert.match(stickyBrand.text, /^Board\s*\/\s*browser-fixture/i);
     await page.evaluate(() => window.scrollTo(0, 0));
 
-    await page.getByRole("tab", { name: /^지침$/ }).click();
+    await page.getByRole("tab", { name: /^Guidelines$/ }).click();
     await page.locator("#clear-guideline-filters").click();
     const guidelineGeometry = await page.evaluate(({ guidelineId, policyId }) => {
       const rect = (node) => {
@@ -420,7 +420,7 @@ async function assertResponsive(page) {
     assert.equal(guidelineGeometry.policyContained, true, `linked policy ID escaped the guideline table at ${size.width}px`);
     assert.equal(guidelineGeometry.policyBeforeRisk, true, `linked policy ID overlapped guideline risk at ${size.width}px`);
 
-    await page.getByRole("tab", { name: /^추진안$/ }).click();
+    await page.getByRole("tab", { name: /^Initiatives$/ }).click();
     await page.locator("#clear-initiative-filters").click();
     const initiativeGeometry = await page.evaluate(({ policyId, guidelineId }) => {
       const rect = (node) => {
@@ -452,7 +452,7 @@ async function assertResponsive(page) {
     assert.equal(initiativeGeometry.guidelineContained, true, `initiative guideline ID escaped its container at ${size.width}px`);
     assert.equal(initiativeGeometry.bodyOverflow, false, `initiative tab caused body overflow at ${size.width}px`);
 
-    await page.getByRole("tab", { name: /^검토 대기/ }).click();
+    await page.getByRole("tab", { name: /^Review/ }).click();
     const reviewGeometry = await page.evaluate(({ attentionId, relatedRef }) => {
       const rect = (node) => {
         const value = node.getBoundingClientRect();
@@ -485,7 +485,7 @@ async function assertResponsive(page) {
 
 async function compareScreenshot(page, PNG, pixelmatch) {
   await page.setViewportSize({ width: 1440, height: 1024 });
-  await page.getByRole("tab", { name: /^정책$/ }).click();
+  await page.getByRole("tab", { name: /^Policies$/ }).click();
   await page.locator("#clear-policy-filters").click();
   const opener = page.getByRole("button", { name: `${LONG_POLICY_ID} 상세 열기` });
   if (await opener.count()) await opener.click();

@@ -128,7 +128,7 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.equal(health.status, 200, server.errors());
   const healthBody = await health.json();
   assert.equal(healthBody.repoId, "server-fixture");
-  assert.equal(healthBody.runtimeVersion, "1.3.0");
+  assert.equal(healthBody.runtimeVersion, "1.3.1");
 
   const first = await fetch(`${server.lease.url}/api/v1/snapshot`);
   assert.equal(first.status, 200);
@@ -143,13 +143,13 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.equal((await requestWithHost(`${server.lease.url}/healthz`, `127.0.0.1:${server.lease.port}`, "GET", `http://example.com:${server.lease.port}`)).statusCode, 403);
 
   const pageBody = await (await fetch(server.lease.url)).text();
-  assert.match(pageBody, /<html lang="ko">/);
+  assert.match(pageBody, /<html lang="en">/);
   assert.match(pageBody, /role="tablist"/);
   const tabLabels = [...pageBody.matchAll(/role="tab"[^>]*>([^<]+)(?:<span[^>]*>[^<]*<\/span>)?<\/button>/g)]
     .map((match) => match[1].trim());
-  assert.deepEqual(tabLabels, ["개요", "정책", "지침", "추진안", "검토 대기", "실행 상태", "근거"]);
-  assert.match(pageBody, /<strong>보드<\/strong>/);
-  assert.match(pageBody, /data-tab="initiatives">추진안<\/button>/);
+  assert.deepEqual(tabLabels, ["Overview", "Policies", "Guidelines", "Initiatives", "Review", "Execution", "Evidence"]);
+  assert.match(pageBody, /<strong>Board<\/strong>/);
+  assert.match(pageBody, /data-tab="initiatives">Initiatives<\/button>/);
   assert.match(pageBody, /id="panel-guidelines"/);
   assert.doesNotMatch(pageBody, /repository-selector|repo-selector|workspace-switcher|class="[^"]*sidebar/i);
   assert.doesNotMatch(pageBody, /https?:\/\//i);

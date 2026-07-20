@@ -4,7 +4,7 @@
 
 - `README.md`: human quickstart and project overview.
 - `CLAUDE.md`: thin Claude Code adapter that imports this file instead of duplicating rules.
-- `.agents/skills/operate-document-harness/SKILL.md`: canonical repository-local router for adoption, execution, policy extraction, and `보드` operation.
+- `.agents/skills/operate-document-harness/SKILL.md`: canonical repository-local router for adoption, execution, policy extraction, and `Board` operation.
 - `.claude/skills/operate-document-harness/SKILL.md`: thin Claude project adapter to the canonical skill.
 - `docs/README.md`: document harness schema and commands.
 - `docs/ADOPT.md`: single entrypoint for initialize/migrate/upgrade work.
@@ -19,7 +19,7 @@
 - `docs/guide/human-control-view.md`: operating guidance for the read-only local human view.
 - `docs/guide/repository-policy-extraction.md`: source-backed candidate extraction with authority/approval/enforcement separation.
 - `docs/guide/initiative-governance.md`: human-approved 추진안 issuance, activation, linkage, and migration workflow.
-- `docs/guide/governance-authoring-assistance.md`: question-led Korean authoring assistance for policy, guideline, and initiative review.
+- `docs/guide/governance-authoring-assistance.md`: question-led locale-appropriate authoring assistance for policy, guideline, and initiative review.
 - `docs/design/ubiquitous-language.md`: canonical project terms.
 - `docs/guide/`: reusable decisions, operating rules, and review criteria.
 - `docs/initiatives/`: human-facing strategy and portfolio owners (`추진안`, `I####`).
@@ -39,11 +39,11 @@
 - Keep changes narrow and aligned with the existing document contracts.
 - If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.
 - Treat policy, guideline, and initiative as mandatory upper governance. Before planning, issuing, or executing project/task work, direct-read the current lineage, active approved initiative, exact effective policy/guideline refs, approval receipts, and freshness. Delivery documents may refine but never weaken or reinterpret them; stop with attention on missing, stale, unapproved-required, or conflicting governance.
-- When helping a user author governance, follow `docs/guide/governance-authoring-assistance.md`: ask small decision-focused questions, draft clear Korean, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence/unknowns, and leave approval to the human.
+- When helping a user author governance, follow `docs/guide/governance-authoring-assistance.md`: ask small decision-focused questions, draft clear user-language, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence/unknowns, and leave approval to the human.
 - Before loop-enabled execution, read effective policy/standard refs, the current task contract, and the current checkpoint; keep lifecycle `status` separate from `loop_state`.
 - AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.
 - Keep extraction confidence, source authority, human approval, and implementation enforcement separate. Never treat code/config observation or retrieval metadata as human approval.
-- Treat `보드` as the fixed user-facing name of the repo-local View. Route “보드를 띄워줘” to `human-view start` followed by `url`, use exact loopback + OS-assigned port, and never kill a foreign process or bind remotely without separate human authority.
+- Treat `Board` as the configurable user-facing name of the repo-local View. Route “View start” to `human-view start` followed by `url`, use exact loopback + OS-assigned port, and never kill a foreign process or bind remotely without separate human authority.
 - After meaningful action, validation, checkpoint, or attention changes, refresh sanitized View probes and wait for a new snapshot sequence; browser polling alone is not freshness evidence.
 - Update the current checkpoint after meaningful action, evidence, attention, or stop/resume transitions; keep task `Status` as append-only milestone history.
 - Do not issue a new `initiative` or `project` document without explicit human approval. Initiative issuance additionally requires an exact human issuance-approval ref.

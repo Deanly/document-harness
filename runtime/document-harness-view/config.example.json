@@ -3,7 +3,21 @@
   "project": {
     "id": "document-harness",
     "name": "Document Harness",
-    "description": "저장소의 정책, 실행 상태와 근거를 한곳에서 확인하는 읽기 전용 화면입니다."
+    "description": "Read-only view for repository policy, execution state, and evidence."
+  },
+  "presentation": {
+    "displayName": "Board",
+    "locale": "en-US",
+    "sortLocale": "en",
+    "tabs": {
+      "overview": "Overview",
+      "policies": "Policies",
+      "guidelines": "Guidelines",
+      "initiatives": "Initiatives",
+      "review": "Review",
+      "execution": "Execution",
+      "evidence": "Evidence"
+    }
   },
   "governanceCatalog": "docs/_indexes/governance-catalog.json",
   "initiativeRegister": "docs/_indexes/initiative-register.json",

@@ -115,7 +115,7 @@
 
 ### `human control view`
 
-- User-facing name: `보드`
+- User-facing name: `Board`
 - Holds: source에서 재생성 가능한 immutable snapshot과 presentation-only preference
 - Reads: Markdown/Git source, checkpoint, policy/standard, task/QA/evidence, freshness metadata
 - Feeds: human understanding와 attention routing

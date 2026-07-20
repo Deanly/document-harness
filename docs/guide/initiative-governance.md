@@ -38,7 +38,7 @@ AI는 먼저 unnumbered proposal report로 아래를 준비할 수 있습니다.
 
 이 proposal은 numbered initiative나 active portfolio truth가 아닙니다.
 
-기존 umbrella project를 보드에서 먼저 검토해야 할 때는 initiative register에 `INIT-*` ID의 `draft` migration candidate를 둘 수 있습니다. 이 후보는 `documentRef: null`, 승인되지 않은 상태와 `legacyProjectRefs`만 사용하며 `I####` 문서나 확정 Project lineage를 대신하지 않습니다.
+기존 umbrella project를 Board에서 먼저 검토해야 할 때는 initiative register에 `INIT-*` ID의 `draft` migration candidate를 둘 수 있습니다. 이 후보는 `documentRef: null`, 승인되지 않은 상태와 `legacyProjectRefs`만 사용하며 `I####` 문서나 확정 Project lineage를 대신하지 않습니다.
 
 ## Human Issuance Gate
 
@@ -54,7 +54,7 @@ AI는 먼저 unnumbered proposal report로 아래를 준비할 수 있습니다.
 - 대화 맥락을 임의로 승인으로 해석하지 않습니다.
 - 번호 발급 승인과 `status: active` activation approval은 서로 다른 gate입니다.
 
-번호 발급 commit은 stable ID와 draft 문서만 확보합니다. 관계와 근거 작성을 마친 뒤 보드에 노출할 때 canonical 문서와 `docs/_indexes/initiative-register.json` entry를 같은 변경 셋에서 추가합니다. 이후 lifecycle, approval, policy/guideline ref, disposition, 관계 rationale·verification을 바꿀 때도 두 mirror를 함께 갱신하고 `human-view test|snapshot`으로 불일치를 차단합니다.
+번호 발급 commit은 stable ID와 draft 문서만 확보합니다. 관계와 근거 작성을 마친 뒤 Board에 노출할 때 canonical 문서와 `docs/_indexes/initiative-register.json` entry를 같은 변경 셋에서 추가합니다. 이후 lifecycle, approval, policy/guideline ref, disposition, 관계 rationale·verification을 바꿀 때도 두 mirror를 함께 갱신하고 `human-view test|snapshot`으로 불일치를 차단합니다.
 
 ## Relationship Authoring
 

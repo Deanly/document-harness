@@ -217,7 +217,7 @@
 
 - canonical path: `.agents/skills/operate-document-harness/SKILL.md`
 - Claude adapter path: `.claude/skills/operate-document-harness/SKILL.md`
-- 의미: adoption, loop execution, policy/initiative extraction와 `보드` operation 요청을 repository의 durable entrypoint로 route하는 project skill. “보드를 띄워줘”는 현재 repository의 `human-view start` + `url`을 뜻합니다.
+- 의미: adoption, loop execution, policy/initiative extraction와 `Board` operation 요청을 repository의 durable entrypoint로 route하는 project skill. “View start”는 현재 repository의 `human-view start` + `url`을 뜻합니다.
 - authority: 별도 policy·approval·verification authority를 만들지 않으며 `AGENTS.md`, human-owned policy, effective design과 validator를 따릅니다.
 - 설치 범위: 각 target repository 안에 document-harness와 함께 설치하며 user-global location에는 설치하지 않습니다.
 - bootstrap: 현재 session 중 처음 설치되면 canonical file을 direct-read하고, 자동 discovery는 새 session 또는 repository reload 뒤 기대합니다.

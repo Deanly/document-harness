@@ -19,7 +19,7 @@
 - `docs/guide/human-control-view.md` defines how a person operates the read-only local human view.
 - `docs/guide/repository-policy-extraction.md` defines how existing repository rules become reviewable policy/guideline candidates without AI self-approval.
 - `docs/guide/initiative-governance.md` defines how approved policy/guideline direction becomes a human-approved `I####` 추진안 and linked delivery projects.
-- `docs/guide/governance-authoring-assistance.md` defines how AI tools help non-specialists author reviewable Korean policy, guideline, and initiative drafts without taking approval authority.
+- `docs/guide/governance-authoring-assistance.md` defines how AI tools help non-specialists author reviewable locale-appropriate policy, guideline, and initiative drafts without taking approval authority.
 - `docs/design/ubiquitous-language.md` holds canonical terms.
 - `docs/guide/` holds reusable operating rules, including Codex guidance and artifact contracts.
 - `docs/_templates/` holds templates used by `docs/bin/new-doc.sh`.
@@ -36,7 +36,7 @@
 - Prefer `rg` and the scripts in `docs/bin/` for navigation and verification.
 - If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.
 - Treat policy, guideline, and initiative as mandatory upper governance for project/task work. Before planning, issuing, or executing delivery, direct-read the current project lineage, active approved initiative, exact effective policy/guideline refs, approval receipts, and freshness. Project/task text may refine delivery but must not weaken or reinterpret them; stop with attention on missing, stale, unapproved-required, or conflicting governance.
-- When a user needs help expressing governance, follow `docs/guide/governance-authoring-assistance.md`: ask the smallest useful questions, draft human-facing wording in clear Korean, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence and unknowns, and request exact human review. Never turn assistance into self-approval.
+- When a user needs help expressing governance, follow `docs/guide/governance-authoring-assistance.md`: ask the smallest useful questions, draft human-facing wording in clear user-language, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence and unknowns, and request exact human review. Never turn assistance into self-approval.
 - Before loop-enabled execution, read the effective policy/standard refs, current task contract, and current checkpoint; keep lifecycle `status` separate from `loop_state`.
 - AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.
 - Keep extraction confidence, source authority, human approval, and implementation enforcement as separate fields. Code/config observations and retrieval metadata are not human policy approval.

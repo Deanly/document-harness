@@ -59,21 +59,21 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다.
 - `.env`, credential, private source와 개인 절대경로를 governance/View artifact에 넣지 않습니다.
 - View는 exact loopback과 OS-assigned port만 사용하고 foreign process를 종료하지 않습니다.
 
-## Korean-First Human Projection
+## Locale-Configured Human Projection
 
-- 사용자에게 보이는 고정 이름은 `보드`입니다. top bar 왼쪽에는 `보드 / <repository>`를 모든 tab과 scroll 위치에서 표시하고, 기술 executable/path는 `human-view` 호환성을 유지합니다.
-- 사용자용 View chrome과 AI가 합성하는 project description, direction, policy/guideline title·summary·why·scope·risk, attention/gap, approval rule, source note와 자유 서술 evidence kind label은 `ko-KR`를 기본으로 합니다.
-- stable technical ID, enum, repository-relative path, hash, command와 exact source heading/quote는 원형을 보존하고 한국어 설명 옆의 보조 metadata로 표시합니다.
-- 기존 영어 사용자 문구의 번역은 presentation-only migration입니다. 의미·범위·authority·approval·enforcement·effective ref·receipt·evidence freshness를 바꾸지 않으며, 의미 보존이 불확실하면 review attention을 남깁니다.
-- 긴 ID, path와 hash는 자기 cell/card 안에서 줄바꿈하고 인접 제목·badge·column과 겹치지 않게 desktop과 narrow viewport에서 검증합니다.
-- canonical tab은 `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거` 순서입니다. 정책/지침/추진안은 각각 독립 search/filter/pagination/detail을 가지며 추진안은 Project의 `related_initiative`를 역색인합니다.
+- 사용자에게 보이는 이름은 `presentation.displayName`입니다. top bar 왼쪽에는 `<displayName> / <repository>`를 모든 tab과 scroll 위치에서 표시하고, 기술 executable/path는 `human-view` 호환성을 유지합니다.
+- 사용자용 View chrome과 AI가 합성하는 project description, direction, policy/guideline title·summary·why·scope·risk, attention/gap, approval rule, source note와 자유 서술 evidence kind label은 configured `presentation.locale`를 기본으로 합니다.
+- stable technical ID, enum, repository-relative path, hash, command와 exact source heading/quote는 원형을 보존하고 사용자 표시 언어 설명 옆의 보조 metadata로 표시합니다.
+- 기존 영어 사용자 문구의 번역은 presentation-only localization입니다. 의미·범위·authority·approval·enforcement·effective ref·receipt·evidence freshness를 바꾸지 않으며, 의미 보존이 불확실하면 review attention을 남깁니다.
+- long ID, path와 hash는 자기 cell/card 안에서 줄바꿈하고 인접 제목·badge·column과 겹치지 않게 desktop과 narrow viewport에서 검증합니다.
+- canonical tab key는 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` 순서입니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 정책/지침/추진안은 각각 독립 search/filter/pagination/detail을 가지며 추진안은 Project의 `related_initiative`를 역색인합니다.
 
 ## Mature Repository Governance Bootstrap
 
 정책과 지침 후보를 먼저 source-backed catalog로 정리한 다음 기존 project/design/roadmap/task에서 outcome portfolio를 찾습니다.
 
 - 근거가 충분하면 `docs/_indexes/initiative-register.json`에 `INIT-*` migration candidate를 씁니다. `draft`, `unreviewed|review_requested`, null document/effective/decision refs를 유지하고 existing `P####`, policy/guideline 관계, success signal, risk와 exact source hash/revision을 포함합니다.
-- 근거가 부족하거나 서로 충돌하면 빈 register를 숨기지 말고 governance catalog에 `ATTN-INITIATIVE-EXTRACTION`과 `GAP-INITIATIVE-EXTRACTION`을 함께 유지합니다. 부족한 source와 사용자가 내려야 할 결정을 한국어로 적습니다.
+- 근거가 부족하거나 서로 충돌하면 빈 register를 숨기지 말고 governance catalog에 `ATTN-INITIATIVE-EXTRACTION`과 `GAP-INITIATIVE-EXTRACTION`을 함께 유지합니다. 부족한 source와 사용자가 내려야 할 결정을 사용자 표시 언어로 적습니다.
 - AI는 `INIT-*`를 numbered `I####`로 발급하거나 activate/approve하지 않습니다. 후보 작성, initiative issuance와 activation approval은 서로 다른 단계입니다.
 
 ## Installed Authoring Workflow

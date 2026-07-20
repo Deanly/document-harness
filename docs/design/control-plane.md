@@ -151,7 +151,7 @@ tags:
 | Surface | Purpose | Status | Notes |
 | --- | --- | --- | --- |
 | `docs/ADOPT.md` | new/mature/versioned repository adoption orchestration | Active | `harness-adopt plan|apply|verify|rollback`; migration은 target 밖 no-write plan과 ownership fence부터 시작 |
-| `.agents/skills/operate-document-harness/SKILL.md` | repository-local adoption/execution/policy/`보드` workflow router | Active | user-global install 없이 durable repository entrypoint로 위임 |
+| `.agents/skills/operate-document-harness/SKILL.md` | repository-local adoption/execution/policy/`Board` workflow router | Active | user-global install 없이 durable repository entrypoint로 위임 |
 | `docs/EXECUTE.md` | loop-enabled task 시작·재개·중단·closeout orchestration | Active | current task/checkpoint와 exact authority refs 앞에서 읽는 실행 진입점 |
 | `docs/initiatives/README.md` | active 추진안 입구 | Active | outcome, approval, owner와 project linkage가 먼저 보여야 합니다. |
 | `docs/projects/README.md` | active delivery project 입구 | Active | 각 project의 initiative ref가 보여야 합니다. |

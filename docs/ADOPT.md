@@ -68,11 +68,11 @@ protect live system and capture rollback fence
 정책·지침 후보 정리 뒤에는 반드시 다음 두 결과 중 하나를 남깁니다.
 
 1. source-backed `INIT-*` 후보: 기존 `P####` umbrella/project를 하나 이상 `legacyProjectRefs`로 연결하고, `policyRelationships`, `guidelineRelationships`, outcome, scope, success signal, risk와 exact source hash/revision을 기록합니다. 검토 가능한 후보는 `lifecycleState: draft`, `approvalState: unreviewed|review_requested`, `documentRef/effectiveRef/decisionReceiptRef: null`을 유지합니다.
-2. explicit gap: 후보를 만들 근거가 없거나 여러 방향이 충돌하면 빈 register와 `ATTN-INITIATIVE-EXTRACTION` + `GAP-INITIATIVE-EXTRACTION`을 함께 유지하고, 사용자에게 부족한 결정과 source를 한국어로 설명합니다.
+2. explicit gap: 후보를 만들 근거가 없거나 여러 방향이 충돌하면 빈 register와 `ATTN-INITIATIVE-EXTRACTION` + `GAP-INITIATIVE-EXTRACTION`을 함께 유지하고, 사용자에게 부족한 결정과 source를 사용자 표시 언어로 설명합니다.
 
 `INIT-*`는 기존 업무를 사람이 검토할 수 있게 묶은 migration 후보일 뿐 numbered `I####`가 아닙니다. AI는 candidate를 생성할 수 있지만 추진안 발급, activation 또는 승인으로 승격할 수 없습니다. 후보가 하나 생겨도 아직 분류하지 못한 portfolio가 있으면 gap을 함께 둘 수 있으며, 그 이유를 숨기지 않습니다.
 
-초기 View와 policy extraction의 기본 표시 언어는 `ko-KR`입니다. 사용자에게 보이는 고정 이름은 `보드`이며 top bar 왼쪽에 `보드 / <repository>`로 계속 표시합니다. AI가 생성하는 project description, direction, title, human summary, why, scope, risk, attention/gap 문구, approval rule, source note와 자유 서술 evidence kind label은 한국어로 작성하고, 기술 ID·enum·path·hash·command·exact source heading/quote는 원형을 보존합니다.
+초기 View와 policy extraction의 기본 표시 언어는 configured `presentation.locale`입니다. 사용자에게 보이는 이름은 `presentation.displayName`이며 top bar 왼쪽에 `<displayName> / <repository>`로 계속 표시합니다. AI가 생성하는 project description, direction, title, human summary, why, scope, risk, attention/gap 문구, approval rule, source note와 자유 서술 evidence kind label은 사용자 표시 언어로 작성하고, 기술 ID·enum·path·hash·command·exact source heading/quote는 원형을 보존합니다.
 
 ## Executable V1
 
@@ -123,8 +123,8 @@ post-apply file byte 또는 mode가 바뀌면 rollback은 강행하지 않고 `N
 - candidate는 인간 결정 전 `approvalState: unreviewed`, `effectiveRef: null`, `decisionReceiptRef: null`을 유지합니다. 승인 receipt는 exact `effectiveRef`와 현재 artifact bytes의 `effectiveSha256`을 함께 고정합니다.
 - initializer가 만든 empty governance catalog는 첫 extraction/review 변경 뒤 project-owned state로 보존합니다. 이후 upgrade는 그 bytes를 덮어쓰지 않고 `KEEP_PROJECT_OWNED`로 이관하며 schema/source/evidence 검증은 계속 적용합니다.
 - governance profile upgrade가 승인·효력 상태인 정책 또는 지침의 `effectiveRef`나 `sourceRefs[].path` bytes를 바꾸려 하면 `APPROVED_GOVERNANCE_SOURCE_MUTATION`과 `NEEDS_DECISION`으로 write 전에 중단합니다. 현재 근거를 보존하거나 새 인간 결정으로 승인 경계를 갱신한 뒤 다시 plan 해야 하며, bytes가 같은 mode-only repair와 project-owned governance catalog 보존은 이 차단 대상이 아닙니다.
-- initialize/migrate actor는 사용자용 View chrome과 synthesized governance/project wording을 `ko-KR`로 준비합니다. 기술 식별자와 provenance는 번역하지 않고 한국어 설명 옆의 보조 metadata로 표시합니다.
-- 기존 영어 catalog를 한국어로 바꾸는 작업은 presentation-only migration입니다. stable ID, source ref/hash, authority, approval, enforcement, effective ref, receipt와 evidence freshness를 유지하며, 번역만으로 의미·범위·승인 상태를 바꾸지 않습니다. 의미 보존이 불확실하면 review attention을 남깁니다.
+- initialize/migrate actor는 사용자용 View chrome과 synthesized governance/project wording을 configured `presentation.locale`로 준비합니다. 기술 식별자와 provenance는 번역하지 않고 사용자 표시 언어 설명 옆의 보조 metadata로 표시합니다.
+- 기존 영어 catalog를 다른 표시 언어로 바꾸는 작업은 presentation-only migration입니다. stable ID, source ref/hash, authority, approval, enforcement, effective ref, receipt와 evidence freshness를 유지하며, 번역만으로 의미·범위·승인 상태를 바꾸지 않습니다. 의미 보존이 불확실하면 review attention을 남깁니다.
 - 긴 ID, path와 hash는 자기 cell/card 안에서 줄바꿈되어야 하며 인접 제목·badge·column과 겹치지 않아야 합니다.
 - `.env`, credential, token, private raw source와 secret value는 governance catalog/source body에 수집하지 않습니다. 안전한 authority source가 없으면 policy를 만들지 않고 gap/attention을 남깁니다.
 - 모든 candidate source ref는 repository-relative path, heading/line, captured file SHA-256과 captured repository commit을 갖습니다.
@@ -134,7 +134,7 @@ post-apply file byte 또는 mode가 바뀌면 rollback은 강행하지 않고 `N
 - apply는 plan의 `status`나 `attention`을 신뢰하지 않고 current target, installation lock, requested profile closure, release action으로 decision state를 다시 계산합니다.
 - View runtime state는 cache 삭제 뒤 source에서 rebuild 가능해야 합니다. runtime은 state directory 안의 exact self-ignoring marker를 검증해 root `.gitignore`를 수정하지 않고도 Git working tree에 노출되지 않게 합니다.
 - repo별 View는 독립 process이며 기본 `127.0.0.1` + OS-assigned port입니다.
-- 사용자용 이름은 `보드`로 고정하고 기술 executable/path의 `human-view` 호환성을 유지합니다. `보드 / <repository>`는 모든 tab과 scroll 위치에서 보여야 합니다.
+- 사용자용 이름은 `presentation.displayName`이며 기본값은 `Board`입니다. 기술 executable/path의 `human-view` 호환성을 유지합니다. `<displayName> / <repository>`는 모든 tab과 scroll 위치에서 보여야 합니다.
 - AI는 approved port envelope 안에서 exact port를 선택할 수 있지만 remote bind나 foreign process kill은 할 수 없습니다.
 - document-harness workflow skill은 target repository 안에 설치합니다. user-global skill/config에 설치하거나 의존하지 않습니다.
 
@@ -164,15 +164,15 @@ docs/receipts/migration-evidence-pack.json      # gate/human-review completion e
 
 위 경로는 public v1 executable contract입니다. 다른 경로/runtime을 쓰는 downstream extension은 v1 installation lock과 release verification을 그대로 통과한다고 가정할 수 없으며 별도 profile과 acceptance가 필요합니다.
 
-## Korean-First Initialization And Migration
+## Locale-Configured Initialization And Migration
 
 새 repository와 mature repository에 동일한 human projection 품질을 적용합니다.
 
 1. target의 exact source를 읽고 stable technical ID와 provenance fence를 먼저 고정합니다.
-2. source-backed policy/guideline 후보를 작성하되 사람이 읽는 field만 한국어로 합성합니다.
+2. source-backed policy/guideline 후보를 작성하되 사람이 읽는 field만 사용자 표시 언어로 합성합니다.
 3. 기존 project/design/roadmap/task를 읽고 outcome portfolio를 식별합니다. `INIT-*` 후보를 작성하거나 initiative extraction gap/attention을 유지하며, 둘 다 없게 두지 않습니다.
-4. View project description과 empty/gap/attention 문구를 한국어로 준비하고 top bar의 `보드 / <repository>`가 scroll 중에도 유지되는지 확인합니다.
-5. canonical tab을 `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거` 순서로 표시합니다. 정책·지침·추진안은 각각 독립 search/filter/pagination/detail을 제공하며 추진안은 Project의 `related_initiative`를 역색인합니다.
+4. View project description과 empty/gap/attention 문구를 사용자 표시 언어로 준비하고 top bar의 `<displayName> / <repository>`가 scroll 중에도 유지되는지 확인합니다.
+5. canonical tab key를 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` 순서로 표시합니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 정책·지침·추진안은 각각 독립 search/filter/pagination/detail을 제공하며 추진안은 Project의 `related_initiative`를 역색인합니다.
 6. 기존 영어 human-facing field는 stable ID와 모든 governance/evidence fence를 유지한 채 번역합니다. authority나 approval이 달라지는 변경은 localization과 분리합니다.
 7. 긴 technical ID/source ref가 자기 container 안에서 줄바꿈되고 adjacent content와 겹치지 않는지 desktop와 narrow viewport에서 확인합니다.
 8. 새 snapshot을 생성한 뒤 source freshness, project-owned catalog/register 보존과 human review barrier를 다시 검증합니다.
@@ -198,8 +198,8 @@ Before writing, answer:
 - Which policy candidates need human review before they can become effective?
 - Which existing projects form one outcome portfolio, and is there a source-backed `INIT-*` candidate or an explicit initiative extraction gap/attention?
 - Are both repository-local skill paths included without a user-global install action?
-- Are synthesized human-facing fields Korean while IDs, enums, paths, hashes, commands, and exact source headings remain unchanged?
-- Does `보드 / <repository>` remain visible and do `정책`/`지침` expose independent first-class surfaces with reciprocal links?
+- Are synthesized human-facing fields locale-configured while IDs, enums, paths, hashes, commands, and exact source headings remain unchanged?
+- Does `<displayName> / <repository>` remain visible and do the `policies`/`guidelines` tabs expose independent first-class surfaces with reciprocal links?
 - Do long IDs and source refs stay inside their own View cell/card without overlapping adjacent content?
 - What commands prove the target application is unchanged or recoverable?
 
@@ -247,8 +247,8 @@ upgrade에서 project-owned로 보존한 `AGENTS.md`, `CLAUDE.md`, `new-doc.sh`,
 - 2026-07-16: canonical project skill과 thin Claude adapter를 repository별 initialize/migrate output으로 추가하고 global install을 금지했다.
 - 2026-07-16: executable `plan|apply|verify|rollback`, exact status model, versioned reference View, nested governance migration fence와 fail-closed verification 절차를 v1 entrypoint에 정렬했다.
 - 2026-07-17: fresh full-profile target가 public 개발 tree에 의존하지 않고 문서를 발급·검증·종료할 수 있도록 reusable authoring core와 실제 실행 E2E를 release closure에 추가했다.
-- 2026-07-17: 한국어 우선 initialization/migration, technical provenance 원형 보존과 긴 ID containment gate를 추가했다.
-- 2026-07-17: `보드` 고정 이름과 정책/지침 독립 최상위 tab을 initialization/migration gate에 추가했다.
+- 2026-07-17: locale-configured initialization/migration, technical provenance 원형 보존과 긴 ID containment gate를 추가했다.
+- 2026-07-17: `Board` displayName 기반 이름과 정책/지침 독립 최상위 tab을 initialization/migration gate에 추가했다.
 - 2026-07-18: mature repository에서 정책·지침 뒤 source-backed `INIT-*` migration candidate 또는 explicit initiative extraction gap/attention을 반드시 남기는 fail-closed bootstrap을 추가했다.
 - 2026-07-18: upgrade가 보존한 project-owned authoring 파일도 modern Initiative/Project/Task lineage semantic contract를 충족하는지 verify하는 fail-closed audit를 추가했다.
 - 2026-07-18: numbered `I####`의 schema/document/approval/source fence와 project-owned agent governance entrypoint까지 adoption verify가 fail closed하도록 확장했다.

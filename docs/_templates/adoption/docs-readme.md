@@ -14,9 +14,9 @@ Initiative terminal transitions are intentionally not automated by `close-doc.sh
 - `_indexes/harness-installation.yaml`: release, plan, ownership, hash, and mode lock.
 - `_indexes/governance-catalog.json`: source-linked policy/guideline candidates and human-review state.
 - `receipts/`: apply, rollback, human-decision, gate, and migration evidence.
-- `../runtime/document-harness-view/`: repository-local read-only Human Control View, 사용자명 `보드`.
+- `../runtime/document-harness-view/`: repository-local read-only Human Control View, 사용자명 `presentation.displayName` (기본값 `Board`).
 
-`보드`는 top bar에 `보드 / <repository>`로 표시하고 `개요`, `정책`, `지침`, `추진안`, `검토 대기`, `실행 상태`, `근거`의 일곱 최상위 tab을 사용합니다. 정책/지침은 각각 독립 surface이며, 추진안은 정책·지침을 연결 프로젝트의 방향으로 전환합니다.
+View는 top bar에 `<displayName> / <repository>`로 표시하고 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`의 일곱 canonical tab key를 사용합니다. 사용자 label은 `presentation.tabLabels`에서 읽습니다. 정책/지침은 각각 독립 surface이며, 추진안은 정책·지침을 연결 프로젝트의 방향으로 전환합니다.
 
 The View is a rebuildable projection, not an authority store. Human policy approval and required gate results must remain source-fenced receipts.
 

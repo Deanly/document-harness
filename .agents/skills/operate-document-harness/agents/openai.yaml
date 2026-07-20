@@ -1,4 +1,4 @@
 interface:
   display_name: "Document Harness 운영"
-  short_description: "저장소 거버넌스·실행·보드를 안전하게 운영"
-  default_prompt: "Use $operate-document-harness to apply this repository's policy, guideline, and initiative governance before planning or execution, help the user author Korean review drafts when needed, and operate the repository-local 보드 without inferring approval."
+  short_description: "저장소 거버넌스·실행·Board를 안전하게 운영"
+  default_prompt: "Use $operate-document-harness to apply this repository's policy, guideline, and initiative governance before planning or execution, help the user author locale-appropriate review drafts when needed, and operate the repository-local Board without inferring approval."
