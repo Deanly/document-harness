@@ -160,6 +160,15 @@ polling, SSE notification, manual refresh와 snapshot resync는 source state를 
 - URL hash를 active tab deep-link로 사용할 수 있지만 authority 또는 unread truth로 취급하지 않습니다.
 - initial load 또는 unrecoverable schema change만 safe default로 reset할 수 있으며 reset 사실을 표시합니다.
 
+정책·지침·추진안의 작성 도움말은 snapshot과 분리된 versioned reference UI contract입니다.
+
+- 각 tab heading은 시각 크기 24 CSS px의 원형 `?` button 하나를 제공하고 accessible name, `aria-controls`, `aria-expanded`를 가집니다.
+- hover는 non-modal full-viewport overlay를 열되 hit test를 가로채지 않으며 pointer가 trigger에서 나가면 닫힙니다.
+- hover/focus 안내는 전체 읽기를 위해 click 또는 `Enter`로 고정해야 함을 명시합니다. focus preview가 viewport를 넘으면 방향키, Page key, Home/End로 dialog scroll을 제어합니다.
+- click/touch/`Enter`는 pinned fallback입니다. pinned state만 pointer interaction과 내부 scroll을 허용하고 `aria-modal=true`, background `inert`, dialog focus containment를 적용합니다. open 시 닫기 control로, close 시 원 trigger로 focus를 이동합니다.
+- `Escape`, blur, tab 전환과 명시적 닫기 동작에서 overlay와 `aria-expanded`가 함께 정리됩니다. 닫힌 overlay는 accessibility tree와 pointer hit test에서 제거합니다.
+- 표시 내용은 canonical governance authoring contract의 역할·질문·승인 경계를 압축한 설명이며 repository data나 승인 상태를 생성하지 않습니다.
+
 ## Semantic Visual Contract
 
 PatternFly의 enterprise information-density, semantic status, tab accessibility와 token model을 참고하되 public contract는 특정 UI library runtime을 요구하지 않습니다.
@@ -186,7 +195,7 @@ PatternFly의 enterprise information-density, semantic status, tab accessibility
 
 projector는 missing reference를 추론해 source에 write-back하지 않습니다.
 
-reference projector는 governance catalog의 `approved`/`effective` 문자열을 그대로 신뢰하지 않습니다. 모든 source ref의 path, heading, line range, captured SHA-256과 captured repository revision이 완전하고 현재 bytes와 일치해야 하며, `effectiveRef`와 `decisionReceiptRef`는 private/credential 또는 symlink 경로가 아닌 repository regular file이어야 합니다. human decision receipt의 candidate ID, actor kind/identifier, decision time, repository revision, source hashes, exact effective ref와 `effectiveSha256`이 현재 effective artifact bytes와 모두 일치한 경우에만 승인 상태를 publish합니다. 하나라도 없거나 stale이면 false-fresh/false-approved snapshot 대신 generation을 fail closed 처리합니다.
+reference projector는 governance catalog의 `approved`/`effective` 문자열을 그대로 신뢰하지 않습니다. 모든 source ref의 path, heading, line range, captured SHA-256과 captured repository revision이 완전해야 합니다. captured SHA-256은 과거 revision의 파일 전체 bytes와 일치해야 하며 decision receipt의 불변 provenance fence로 계속 사용합니다. 현재 freshness는 과거 revision에서 `lineStart..lineEnd`가 걸친 Markdown 제목 묶음을 다음 동급·상위 제목 직전까지 확장한 **인용 구간 hash**와 현재의 같은 제목 경계 구간을 비교해 판정합니다. 따라서 인용 구간 내부의 제목·내용·구조 변경은 stale이고, 같은 파일의 인용 구간 밖 변경은 `fileState: changed` 진단만 남기며 freshness를 낮추지 않습니다. 과거 제목 anchor를 만들 수 없는 legacy/non-Markdown source ref는 보수적으로 파일 전체를 비교합니다. 현재 anchor/boundary가 사라지거나 과거 파일 전체 hash가 revision bytes와 맞지 않으면 fail closed합니다. `effectiveRef`와 `decisionReceiptRef`는 private/credential 또는 symlink 경로가 아닌 repository regular file이어야 합니다. human decision receipt의 candidate ID, actor kind/identifier, decision time, repository revision, source hashes, exact effective ref와 `effectiveSha256`이 현재 effective artifact bytes와 모두 일치한 경우에만 승인 상태를 publish합니다. 하나라도 없거나 stale이면 false-fresh/false-approved snapshot 대신 generation을 fail closed 처리합니다.
 
 execution source는 별도 JSON mirror가 아니라 canonical task→checkpoint link입니다. reference projector는 loop-enabled `docs/tasks/T*.md`의 `checkpoint_ref`로만 `docs/checkpoints/*.md` candidate를 찾으므로 더 최신인 orphan file이 화면을 hijack할 수 없습니다. task status vocabulary와 status↔loop compatibility, task/checkpoint ID·revision·loop mirror, checkpoint ID identity, linked task source hash/revision, state↔next actor/stop reason, budget exhaustion, succeeded evidence/receipt/attention barrier를 모두 확인합니다. `succeeded` evidence/receipt ref는 실제 safe non-empty repository regular file이어야 하며 receipt identity/task/checkpoint/source fence가 checkpoint evidence를 연결해야 합니다. 모든 support bytes는 snapshot generation 중 다시 확인합니다. checkpoint root 밖의 경로와 symlink를 거부합니다. 선택은 active/blocked non-succeeded work, active succeeded closeout, draft, historical terminal task 순으로 우선한 뒤 같은 group에서 `recorded_at`, `attempt_seq`, `checkpoint_seq` 내림차순과 repository-relative path 오름차순을 적용합니다. 따라서 더 최신인 completed task가 아직 진행 중인 task를 숨기지 않습니다. malformed linked candidate를 조용히 건너뛰거나 filesystem mtime으로 진행 상태를 추론하지 않습니다.
 
@@ -198,7 +207,7 @@ reference profile은 세 상태를 독립적으로 projection합니다.
 - `currentRepository`: 현재 HEAD, working-tree state/dirty count와 captured base 이후 HEAD 이동 여부
 - `snapshot.sourceFence.sourceEvidenceState`: 각 source ref의 captured/current SHA-256이 `fresh|stale|degraded|unknown` 중 무엇인가
 
-unresolvable captured base와 catalog digest/effective bytes에 묶이지 않은 migration human-decision receipt는 View 전체를 degraded로 만들고 review attention을 생성합니다. migration receipt도 snapshot publish 직전 다시 읽어 torn generation을 차단합니다. current HEAD가 나중에 이동한 사실만으로 unchanged source evidence를 stale 처리하지 않습니다. file hash가 바뀌거나 source가 missing/escaped일 때만 해당 evidence freshness가 stale/degraded가 됩니다.
+unresolvable captured base와 catalog digest/effective bytes에 묶이지 않은 migration human-decision receipt는 View 전체를 degraded로 만들고 review attention을 생성합니다. migration receipt도 snapshot publish 직전 다시 읽어 torn generation을 차단합니다. current HEAD가 나중에 이동한 사실이나 인용 구간 밖의 file 변경만으로 source evidence를 stale 처리하지 않습니다. 인용 구간 hash가 바뀌거나 Markdown anchor/boundary가 사라지거나 source가 missing/escaped일 때 해당 evidence freshness가 stale/degraded가 됩니다. View detail은 `capturedSha256/currentSha256`의 파일 상태와 `capturedEvidenceSha256/currentEvidenceSha256`의 인용 구간 상태를 분리해 사람이 왜 attention이 생겼는지 확인할 수 있게 합니다.
 
 ## Snapshot API Contract
 
@@ -359,6 +368,7 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 | HV-22 | fixed user-facing identity | top-left의 `보드 / <repository>`가 모든 tab과 scroll 위치에서 보이고 repository별 rename 대상이 아님 |
 | HV-23 | first-class guideline surface | `지침` tab이 독립 search/filter/pagination/detail을 제공하고 관련 정책을 역방향으로 연결함 |
 | HV-24 | initiative planning trace | `추진안` tab이 정책 WHY, 선택 지침 HOW와 Project의 `related_initiative` 역색인을 보여주며 실행 진척을 추정하지 않음 |
+| HV-25 | governance authoring help | 정책·지침·추진안에 24px 원형 도움말 trigger가 있고 hover 이탈, focus preview scroll, click/touch/Enter 고정, background inert, dialog focus containment, Escape와 tab 전환에서 한글 역할·작성·AI 요청 안내가 접근 가능하고 안정적으로 열고 닫힘 |
 
 ## Decisions
 
@@ -375,6 +385,7 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - PatternFly-inspired semantics는 local semantic tokens와 accessible interaction으로 구현하며 external asset dependency를 만들지 않습니다.
 - `runtime/document-harness-view/`는 release manifest가 byte set을 pin하는 public versioned reference distribution이고 adopter가 design을 재생성하지 않습니다.
 - reference v1은 Node built-ins, no persistent DB, OS auto-port, lease-safe controller와 exact read-only endpoints를 사용합니다.
+- 거버넌스 작성 도움말은 승인이나 source mutation이 없는 versioned presentation contract이며 정책 WHY, 지침 HOW, 추진안 outcome의 역할 경계를 유지합니다.
 
 ## Open Questions
 
@@ -403,3 +414,4 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - 2026-07-17: approved/effective projection을 complete source fence와 real decision/effective evidence에 묶고, Execution Status 입력을 canonical `docs/checkpoints/*.md`의 deterministic fail-closed selection으로 정렬했다.
 - 2026-07-17: `ko-KR` human projection, localization authority fence와 긴 technical metadata containment를 고정했다.
 - 2026-07-17: 사용자용 고정 이름을 `보드`로 정하고 정책과 지침을 상호 연결된 독립 최상위 tab으로 분리했다.
+- 2026-07-18: 정책·지침·추진안의 canonical 작성 가이드를 24px trigger, full-viewport hover/focus/click 도움말, background inert와 focus containment를 포함한 HV-25 acceptance로 고정했다.

@@ -209,6 +209,92 @@ async function assertTabs(page) {
   await page.getByRole("tab", { name: /^정책$/ }).click();
 }
 
+async function assertGovernanceHelp(page) {
+  const cases = [
+    { tab: "정책", label: "정책", topic: "policy", marker: "WHY와 경계" },
+    { tab: "지침", label: "지침", topic: "guideline", marker: "HOW와 검증" },
+    { tab: "추진안", label: "추진안", topic: "initiative", marker: "성과 포트폴리오" }
+  ];
+  const overlay = page.locator("#governance-help-overlay");
+
+  for (const item of cases) {
+    await page.getByRole("tab", { name: new RegExp(`^${item.tab}$`) }).click();
+    const trigger = page.getByRole("button", { name: `${item.label} 도움말 보기` });
+    assert.equal(await trigger.count(), 1);
+    assert.equal(await trigger.getAttribute("data-help-topic"), item.topic);
+    assert.equal(await trigger.getAttribute("aria-expanded"), "false");
+    assert.equal(await overlay.isHidden(), true);
+
+    await trigger.hover();
+    await overlay.waitFor({ state: "visible" });
+    assert.equal(await trigger.getAttribute("aria-expanded"), "true");
+    assert.match(await overlay.innerText(), new RegExp(item.marker));
+    assert.match(await overlay.innerText(), /AI 도구와 이렇게 빌드업하세요/);
+
+    const geometry = await page.evaluate(() => {
+      const trigger = document.querySelector('[data-help-topic][aria-expanded="true"]');
+      const overlay = document.querySelector("#governance-help-overlay");
+      const triggerRect = trigger.getBoundingClientRect();
+      const overlayRect = overlay.getBoundingClientRect();
+      const style = getComputedStyle(trigger);
+      return {
+        triggerWidth: triggerRect.width,
+        triggerHeight: triggerRect.height,
+        triggerRadius: style.borderRadius,
+        triggerFontSize: style.fontSize,
+        overlayWidthRatio: overlayRect.width / innerWidth,
+        overlayHeightRatio: overlayRect.height / innerHeight,
+        overlayPosition: getComputedStyle(overlay).position,
+        overlayPointerEvents: getComputedStyle(overlay).pointerEvents
+      };
+    });
+    assert.ok(geometry.triggerWidth >= 24 && geometry.triggerWidth <= 25);
+    assert.ok(geometry.triggerHeight >= 24 && geometry.triggerHeight <= 25);
+    assert.ok(Math.abs(geometry.triggerWidth - geometry.triggerHeight) <= 1);
+    assert.equal(geometry.triggerRadius, "50%");
+    assert.equal(geometry.triggerFontSize, "12px");
+    assert.equal(geometry.overlayPosition, "fixed");
+    assert.ok(geometry.overlayWidthRatio >= 0.99);
+    assert.ok(geometry.overlayHeightRatio >= 0.99);
+    assert.equal(geometry.overlayPointerEvents, "none");
+
+    await page.mouse.move(1, 1);
+    await overlay.waitFor({ state: "hidden" });
+    assert.equal(await trigger.getAttribute("aria-expanded"), "false");
+
+    await trigger.focus();
+    await overlay.waitFor({ state: "visible" });
+    const previewScroll = await page.evaluate(() => {
+      const dialog = document.querySelector(".governance-help-dialog");
+      dialog.scrollTop = 0;
+      return { before: dialog.scrollTop, canScroll: dialog.scrollHeight > dialog.clientHeight };
+    });
+    if (previewScroll.canScroll) {
+      await page.keyboard.press("PageDown");
+      await page.waitForFunction(() => document.querySelector(".governance-help-dialog").scrollTop > 0);
+    }
+    await page.keyboard.press("Escape");
+    await overlay.waitFor({ state: "hidden" });
+    assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("data-help-topic")), item.topic);
+
+    await trigger.click();
+    await overlay.waitFor({ state: "visible" });
+    assert.equal(await overlay.evaluate((node) => node.classList.contains("is-pinned")), true);
+    assert.equal(await overlay.getAttribute("aria-modal"), "true");
+    await page.waitForFunction(() => document.activeElement?.id === "governance-help-close");
+    assert.equal(await page.locator("#main").getAttribute("inert"), "");
+    await page.keyboard.press("Tab");
+    assert.equal(await page.evaluate(() => document.activeElement?.id), "governance-help-close");
+    await page.getByRole("button", { name: "도움말 닫기" }).click();
+    await overlay.waitFor({ state: "hidden" });
+    assert.equal(await overlay.getAttribute("aria-modal"), "false");
+    assert.equal(await page.locator("#main").getAttribute("inert"), null);
+    assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("data-help-topic")), item.topic);
+  }
+
+  await page.getByRole("tab", { name: /^정책$/ }).click();
+}
+
 async function assertStateContinuity(page, fixture) {
   await page.getByRole("button", { name: "다음 정책 페이지" }).click();
   assert.match(await page.locator("#policy-pagination").innerText(), /6–10/);
@@ -279,9 +365,9 @@ async function assertInitiativeSurface(page) {
   assert.match(await details.innerText(), /연결 프로젝트 1개/);
   assert.match(await details.innerText(), /P0001/);
   assert.match(await details.innerText(), /기존 계보 호환|새 계보 계약/);
-  assert.match(await details.innerText(), /constrained-by/);
+  assert.match(await details.innerText(), /경계를 준수/);
   assert.match(await details.innerText(), /읽기 전용 차량 제어 경계를 추진안의 비가역 제약으로 유지합니다/);
-  assert.match(await details.innerText(), /recommended/);
+  assert.match(await details.innerText(), /권장 적용/);
   assert.match(await details.innerText(), /재현 가능한 하드웨어 근거 수집 방식을 검토 후보로 연결합니다/);
   assert.match(await details.innerText(), /연결 프로젝트가 제출한 점검 결과와 source hash를 사람이 검토합니다/);
   await page.locator("#refresh-button").click();
@@ -561,6 +647,7 @@ async function main() {
       throw new Error(`${error.message}\nconsole=${consoleProblems.join(" | ")}\nbody=${body}`);
     }
     await assertTabs(page);
+    await assertGovernanceHelp(page);
     await assertStateContinuity(page, fixture);
     await assertGuidelineSurface(page);
     await assertInitiativeSurface(page);

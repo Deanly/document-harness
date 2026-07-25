@@ -128,7 +128,7 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.equal(health.status, 200, server.errors());
   const healthBody = await health.json();
   assert.equal(healthBody.repoId, "server-fixture");
-  assert.equal(healthBody.runtimeVersion, "1.3.0");
+  assert.equal(healthBody.runtimeVersion, "1.3.1");
 
   const first = await fetch(`${server.lease.url}/api/v1/snapshot`);
   assert.equal(first.status, 200);
@@ -151,11 +151,24 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.match(pageBody, /<strong>보드<\/strong>/);
   assert.match(pageBody, /data-tab="initiatives">추진안<\/button>/);
   assert.match(pageBody, /id="panel-guidelines"/);
+  assert.equal([...pageBody.matchAll(/data-help-topic="(?:policy|guideline|initiative)"/g)].length, 3);
+  assert.equal([...pageBody.matchAll(/data-help-content="(?:policy|guideline|initiative)"/g)].length, 3);
+  for (const [topic, label] of [["policy", "정책"], ["guideline", "지침"], ["initiative", "추진안"]]) {
+    assert.match(pageBody, new RegExp(`<button class="governance-help-trigger" type="button" data-help-topic="${topic}" aria-label="${label} 도움말 보기" aria-controls="governance-help-overlay" aria-expanded="false">`));
+  }
+  assert.match(pageBody, /id="governance-help-overlay"[^>]*role="dialog"[^>]*aria-modal="false"[^>]*hidden/);
+  assert.match(pageBody, /class="governance-help-dialog" tabindex="-1"/);
+  assert.match(pageBody, /아이콘을 클릭하거나 Enter로 고정하세요/);
+  assert.match(pageBody, /무엇을 의미하나요\?/);
+  assert.match(pageBody, /어떤 관점에서 작성하나요\?/);
+  assert.match(pageBody, /AI 도구와 이렇게 빌드업하세요/);
+  assert.match(pageBody, /AI는 질문·근거 조사·초안·대안 비교를 돕지만/);
+  assert.doesNotMatch(pageBody, /AI가 (?:자동으로 )?승인/);
   assert.doesNotMatch(pageBody, /repository-selector|repo-selector|workspace-switcher|class="[^"]*sidebar/i);
   assert.doesNotMatch(pageBody, /https?:\/\//i);
   assert.match(pageBody, /execution-gap-copy/);
 
-  for (const asset of ["/app.mjs?v=1", "/view-model.mjs?v=1", "/styles.css?v=1"]) {
+  for (const asset of ["/app.mjs?v=6", "/view-model.mjs?v=6", "/styles.css?v=6"]) {
     const response = await fetch(`${server.lease.url}${asset}`);
     assert.equal(response.status, 200);
   }

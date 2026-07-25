@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { inspectSourceEvidence } from "./source-evidence-freshness.mjs";
 
 const SHA256_RE = /^[a-f0-9]{64}$/;
 const REVISION_RE = /^[a-f0-9]{40}$/;
@@ -183,9 +184,6 @@ function verifySourceRefs(repoRoot, sourceRevision, sourceRefs, label) {
       fail(`${label}.sourceRefs[${index}] does not match its source revision/hash fence`);
     }
     const source = captureRepositoryFile(repoRoot, sourceRef.path, `${label}.sourceRefs[${index}].path`);
-    if (source.digest !== sourceRef.capturedSha256) {
-      fail(`${label}.sourceRefs[${index}] is stale: ${sourceRef.path}`);
-    }
     let committedBytes;
     try {
       committedBytes = execFileSync("git", ["-C", repoRoot, "show", `${sourceRevision}:${sourceRef.path}`], {
@@ -195,8 +193,16 @@ function verifySourceRefs(repoRoot, sourceRevision, sourceRefs, label) {
     } catch {
       fail(`${label}.sourceRefs[${index}] is not readable at sourceRevision: ${sourceRef.path}`);
     }
-    if (sha256(committedBytes) !== sourceRef.capturedSha256) {
+    const evidence = inspectSourceEvidence({
+      sourceRef,
+      capturedBytes: committedBytes,
+      currentBytes: source.bytes,
+    });
+    if (evidence.state === "invalid") {
       fail(`${label}.sourceRefs[${index}] captured hash does not match sourceRevision bytes: ${sourceRef.path}`);
+    }
+    if (evidence.state !== "current") {
+      fail(`${label}.sourceRefs[${index}] evidence scope is stale: ${sourceRef.path}`);
     }
     hashes.push(sourceRef.capturedSha256);
   }

@@ -229,7 +229,7 @@ export function freshnessPresentation(snapshot = {}) {
     return {
       state: "fresh",
       tone: "fresh",
-      message: `소스 근거가 최신입니다 · 참조 ${snapshot.snapshot?.sourceFence?.evidenceCurrent ?? "확인 불가"}건이 캡처된 해시와 일치합니다.`
+      message: `소스 근거가 최신입니다 · 참조 ${snapshot.snapshot?.sourceFence?.evidenceCurrent ?? "확인 불가"}건의 인용 구간이 승인 당시 근거와 일치합니다.`
     };
   }
   const migration = snapshot.migrationFence ?? {};

@@ -179,6 +179,18 @@ metric은 숫자만 표시하지 않고 의미와 기준 snapshot을 함께 표�
 - 연결 프로젝트는 Project의 `related_initiative`를 역색인해 상태·현재 초점·원문 경로까지만 보여줍니다. 프로젝트 진행률과 Task 상태를 추진안에서 임의 합산하지 않습니다.
 - 추진안 승인과 활성화는 사람의 결정 영수증과 `I####` 문서가 필요하며 View 자체는 이를 수정하지 않습니다.
 
+### 정책·지침·추진안 작성 도움말
+
+세 거버넌스 tab의 제목 옆 24 CSS px 원형 `?` 버튼은 처음 작성하는 사용자와 AI 도구의 대화를 돕는 읽기 전용 안내 surface입니다.
+
+- 도움말은 화면 대부분을 덮는 한글 안내에서 `의미`, `작성 관점`, `포함할 내용`, `주의할 점`, `AI 요청 예시`, `검토 체크리스트`를 항목별로 보여줍니다.
+- 정책은 `WHY/경계`, 지침은 `HOW/검증`, 추진안은 `outcome/portfolio` 역할을 유지하며 `docs/guide/governance-authoring-assistance.md`를 압축해 표시합니다.
+- mouse hover로 연 도움말은 overlay가 pointer를 가로채지 않으며 아이콘에서 pointer가 나가면 즉시 닫힙니다. 화면에는 전체를 읽으려면 click 또는 `Enter`로 고정하라는 안내를 명시합니다.
+- keyboard focus로도 열리고, 내용이 viewport를 넘으면 `ArrowUp`/`ArrowDown`, `PageUp`/`PageDown`, `Home`/`End`로 미리보기를 scroll하며 `Escape`로 닫을 수 있습니다.
+- click/touch/`Enter`는 도움말을 고정해 내부 scroll과 명시적 `도움말 닫기`를 사용할 수 있게 합니다. 고정 시 focus는 닫기 control로 이동하고, 배경은 `inert`가 되며 focus는 dialog 안에 유지됩니다. 닫으면 배경과 trigger focus를 복원합니다. 이 고정 상태는 source authority나 승인 상태가 아닙니다.
+- 한 번에 하나의 도움말만 보이며 tab 전환 시 닫힙니다. polling과 snapshot refresh는 열린 항목의 거버넌스 의미를 바꾸지 않습니다.
+- 도움말, AI 질문과 초안은 사람의 승인, 원본 문서, source revision/hash 또는 결정 영수증을 대체하지 않습니다.
+
 ### 검토 대기
 
 사람이 지금 판단해야 할 항목만 severity와 이유가 보이는 순서로 제공합니다.
@@ -212,7 +224,7 @@ AI execute loop의 내부 상태를 관찰 가능한 contract로 풀어냅니다
 - 각 row는 human summary, exact path 또는 stable artifact ID, revision/hash, captured time, verdict와 stale/incomplete state를 보여줍니다.
 - raw log 전체는 복제하지 않고 중요한 결과와 stable reference만 노출합니다.
 - evidence가 없거나 fence가 맞지 않으면 빈칸 대신 `missing`, `stale`, `incomplete`를 명시합니다.
-- migration captured base validity, current HEAD/dirty state와 per-source hash freshness를 별도 row/state로 보여줍니다. HEAD가 advanced인 것만으로 unchanged source evidence를 stale로 바꾸지 않습니다.
+- migration captured base validity, current HEAD/dirty state, 파일 전체 변경 상태와 per-source 인용 구간 freshness를 별도 row/state로 보여줍니다. HEAD가 advanced이거나 같은 파일의 무관한 제목 구간만 바뀐 것으로 unchanged source evidence를 stale로 바꾸지 않습니다.
 
 ## Interaction And Refresh Stability
 
@@ -378,6 +390,8 @@ reference v1 Health/상단 status의 최소 정보:
 - snapshot ID/sequence와 source read fence
 - current repository HEAD/dirty state와 migration captured base relation
 - migration fence validity와 per-source evidence freshness
+- source ref의 과거 파일 전체 hash는 승인 provenance로 유지하고, 현재 freshness는 `lineStart..lineEnd`가 걸친 Markdown 제목 묶음의 구간 hash로 판정합니다. 구간 밖 변경은 `인용 구간 일치 · 파일의 다른 구간 변경`으로 설명하고 review attention을 만들지 않습니다.
+- 인용 구간의 제목·내용·구조가 바뀌거나 current anchor/boundary를 찾을 수 없으면 stale입니다. Markdown anchor가 없는 legacy source는 안전을 위해 파일 전체 hash 비교를 유지합니다.
 - projection published/reconciled timestamp
 - parse/reconciliation error
 - trace broken/stale count
@@ -527,3 +541,4 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - 2026-07-17: 한국어 우선 표시, 기술 식별자 원형 보존, presentation-only localization과 긴 ID containment 계약을 추가했다.
 - 2026-07-17: 화면의 고정 사용자명을 `보드`로 정하고 정책과 지침을 독립 최상위 tab과 양방향 관계로 분리했다.
 - 2026-07-17: 정책·지침과 프로젝트 사이에 별도 `I####` 추진안 계층과 일곱 번째 top tab을 추가했다.
+- 2026-07-18: 정책·지침·추진안에 역할·작성 관점·AI 요청 예시를 설명하는 화면 전체 도움말, 24px trigger, preview scroll과 pinned focus containment 계약을 추가했다.

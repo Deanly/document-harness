@@ -147,7 +147,7 @@ Expose:
 - current design and active index disagree
 - policy requires behavior code does not enforce
 - code enforces a restriction no source owns
-- source hash changed after review/approval
+- 승인 provenance의 과거 파일 hash가 깨지거나 인용한 Markdown 구간이 review/approval 이후 변경됨
 - retrieval authority label is mistaken for governance approval
 - operational rollback or verification is absent
 
@@ -215,9 +215,10 @@ Minimum candidate shape:
 
 - `migration.capturedRepository.baseCommit`은 exact 40-character commit이고 target Git object로 resolve되어야 합니다.
 - optional `migration.receiptRef`가 있으면 receipt captured revision이 migration base와 일치해야 합니다.
-- 각 source ref의 `capturedRepositoryRevision`은 extraction 당시 commit을, `capturedSha256`은 exact source bytes를 고정합니다.
-- current HEAD가 나중에 이동했다는 사실은 별도 current-repository observation입니다. unchanged source hash를 stale로 만들지 않습니다.
-- current source SHA-256이 captured value와 다르면 관련 candidate review/approval은 stale입니다.
+- 각 source ref의 `capturedRepositoryRevision`은 extraction 당시 commit을, `capturedSha256`은 그 revision의 파일 전체 bytes를 고정합니다. 이 전체 hash는 decision receipt provenance에서 바꾸지 않습니다.
+- freshness projector는 과거 revision의 `lineStart..lineEnd`가 걸친 Markdown 제목 묶음을 다음 동급·상위 제목 직전까지 확장해 인용 구간 hash를 만들고, 현재의 같은 anchor/boundary 구간과 비교합니다.
+- current HEAD가 나중에 이동했거나 같은 파일의 인용 구간 밖만 바뀐 사실은 별도 current-repository/file observation입니다. unchanged evidence scope를 stale로 만들지 않습니다.
+- 현재 인용 구간의 내용·제목·구조가 바뀌거나 anchor/boundary가 사라지면 관련 candidate review/approval은 stale입니다. Markdown anchor가 없는 legacy source는 파일 전체 비교를 유지합니다.
 - missing/escaped source나 invalid/contradictory migration fence는 degraded attention이며 fresh로 표시하지 않습니다.
 
 기존 catalog의 영어 human-facing field를 한국어로 바꿀 때는 stable candidate/attention/gap ID, kind/enum, source ref와 hash, authority/approval/enforcement, effective ref와 decision receipt를 그대로 유지합니다. 번역 전후 의미가 다르거나 정책 범위를 넓히는 경우에는 단순 localization으로 처리하지 않고 새 candidate 또는 human review attention으로 분리합니다.
@@ -256,7 +257,7 @@ discovered
 candidate/proposed
   -> rejected | deferred
 
-any reviewed state + source hash change
+any reviewed state + captured provenance break or cited evidence-scope change
   -> stale
 ```
 
@@ -301,7 +302,8 @@ The View must not render arbitrary Markdown HTML, load external CDN/font/script 
 - code/config behavior is observation unless promoted
 - secret/private source content, credential, token and personal absolute path are absent
 - AI candidate has no effective ref before approval
-- source change makes review/approval stale
+- captured provenance break 또는 인용한 evidence-scope 변경은 review/approval을 stale로 만든다
+- 인용 구간 밖의 동일 파일 변경은 별도 file-state 진단이며 review/approval을 stale로 만들지 않는다
 - current HEAD movement without source hash movement does not make evidence stale
 - conflicting statement is visible attention
 - high-availability or other attractive policy is not invented when current scope says otherwise

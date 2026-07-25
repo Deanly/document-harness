@@ -172,7 +172,7 @@ catalog migration fence는 `migration.capturedRepository.baseCommit`과 `working
 
 catalog의 `baseCommit`은 정책·지침을 추출한 역사적 기준이고 installation lock의 `targetSourceRevision`은 현재 설치·업그레이드와 quality gate의 기준입니다. 이후 HEAD에서 harness를 upgrade해도 두 revision을 같다고 강제하지 않습니다. human policy decision은 catalog base와 source hash에, gate evidence와 migration evidence pack은 installation lock의 현재 target revision에 각각 묶습니다. 이 분리는 unchanged source evidence를 단순 HEAD 이동만으로 stale 처리하지 않으면서 새 release gate의 provenance를 유지합니다.
 
-code/config observation과 retrieval authority metadata는 human policy approval이 아닙니다. schema는 `code_observation|config_observation`을 `kind: observation`, `approvalState: unreviewed`, `effectiveRef: null`, `decisionReceiptRef: null`로 제한합니다. 승인 receipt는 exact `effectiveRef`와 `effectiveSha256`을 함께 고정하며 adoption verification은 현재 effective artifact bytes가 그 digest와 일치하는지 확인합니다. source hash나 effective bytes가 바뀌면 candidate review/approval은 stale입니다. 현재 HEAD가 captured base보다 이동했다는 사실만으로 unchanged per-source evidence를 stale 처리하지 않습니다.
+code/config observation과 retrieval authority metadata는 human policy approval이 아닙니다. schema는 `code_observation|config_observation`을 `kind: observation`, `approvalState: unreviewed`, `effectiveRef: null`, `decisionReceiptRef: null`로 제한합니다. 승인 receipt는 exact `effectiveRef`와 `effectiveSha256`을 함께 고정하며 adoption verification은 현재 effective artifact bytes가 그 digest와 일치하는지 확인합니다. `capturedSha256`은 과거 revision의 파일 전체 provenance를 고정하고, freshness는 `lineStart..lineEnd`가 걸친 Markdown 제목 묶음의 현재 구간과 비교합니다. 이 인용 구간이나 effective bytes가 바뀌면 candidate review/approval은 stale입니다. 현재 HEAD가 이동했거나 같은 파일의 인용 구간 밖만 바뀐 사실로 unchanged evidence를 stale 처리하지 않습니다. Markdown anchor가 없는 legacy source는 파일 전체 비교를 유지합니다.
 
 `.env`, credential, token, private raw source와 secret value는 candidate catalog에 수집하지 않습니다. 안전한 source-backed statement가 없으면 `gaps`와 attention을 생성하며 policy를 추측하지 않습니다.
 
@@ -321,7 +321,7 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 | MIG-08 | self-rehashed status/attention bypass | recomputed decision mismatch, write 0 |
 | MIG-09 | subset apply receipt rollback | lock anchor mismatch, write 0 |
 | GOV-01 | code observation | policy approval로 표시하지 않음 |
-| GOV-02 | source change | candidate/approval stale |
+| GOV-02 | cited Markdown scope change | candidate/approval stale; unrelated section change stays fresh with file-drift diagnosis |
 | GOV-03 | no safe authority source | invented policy 0, explicit gap/attention |
 | GOV-04 | captured migration base invalid | View degraded attention; source hash freshness와 별도 표시 |
 | GOV-05 | current HEAD moved only | migration fence relation 표시, unchanged source evidence fresh |

@@ -2,7 +2,7 @@
 
 This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. Its fixed user-facing name is `보드`; the technical executable remains `human-view` for compatibility. It is copied as a unit; an adopter does not regenerate its design.
 
-Reference View distribution version: `1.3.0`. The public release manifest pins the byte hashes for this complete tree.
+Reference View distribution version: `1.3.1`. The public release manifest pins the byte hashes for this complete tree.
 
 ## Installed surfaces
 
@@ -16,6 +16,8 @@ Reference View distribution version: `1.3.0`. The public release manifest pins t
 - `test/`: focused projection, server, control, and view-model regression tests
 
 The initializer renders `runtime/document-harness-view/config.json` as a project-specific generated file. Do not copy `config.example.json` over an existing generated config. The example documents the schema; it is not an installation identity or a runnable placeholder.
+
+정책·지침·추진안 제목의 원형 `?` 버튼은 항목별 작성 관점, 포함/제외 기준, 검토 질문과 AI 요청 예시를 화면 대부분을 쓰는 읽기 전용 도움말로 보여줍니다. 마우스를 아이콘에서 떼면 즉시 닫히며, 키보드 focus와 click/touch 고정 모드, `Escape`, 명시적 닫기 버튼도 지원합니다. 도움말과 AI 초안은 승인 권한이 아니며 원본 문서와 사람의 결정 영수증이 최종 기준입니다.
 
 Runtime-local state is written only below `.document-harness/runtime/view/` by default. Before lease, snapshot, log, or probe bytes are written, the runtime creates and verifies an exact self-ignoring `.gitignore` marker there. Rebuildable View state therefore does not dirty a repository whose root has no ignore rule. A foreign, changed, or symlinked marker fails closed instead of being overwritten, and a marker is not created over unknown pre-existing directory entries. Only named legacy View state may be adopted.
 

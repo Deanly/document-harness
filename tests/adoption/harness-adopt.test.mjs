@@ -1385,6 +1385,15 @@ For harness adoption or migration, read \`docs/ADOPT.md\` and the repository-loc
 
 test("verification is fail-closed until matching evidence and human review exist", (t) => {
   const { target, planFile } = fixture(t);
+  const candidateSourceRef = "fixture-governance-source.md";
+  writeFileSync(path.join(target, candidateSourceRef), "# Fixture governance source\n", "utf8");
+  git(target, "add", candidateSourceRef);
+  git(
+    target,
+    "-c", "user.name=Harness Fixture",
+    "-c", "user.email=harness-fixture@example.invalid",
+    "commit", "-qm", "add fixture governance source",
+  );
   const plan = createPlan({ target, profiles: ["core", "governance", "view"], output: planFile });
   const applied = applyPlan({ planFile, expectedPlanHash: plan.planHash });
   assert.equal(applied.status, "INSTALLED_AWAITING_REVIEW");
@@ -1398,7 +1407,6 @@ test("verification is fail-closed until matching evidence and human review exist
   catalog.migration.receiptRef = "docs/receipts/human-policy-decision.json";
   const effectivePolicyRef = "docs/design/fixture-effective-policy.md";
   const effectivePolicyBytes = "# Fixture effective policy\n";
-  const candidateSourceRef = "docs/ADOPT.md";
   const candidateSourceBytes = readFileSync(path.join(target, candidateSourceRef));
   writeFileSync(path.join(target, effectivePolicyRef), effectivePolicyBytes);
   catalog.policies = [{
@@ -1415,7 +1423,7 @@ test("verification is fail-closed until matching evidence and human review exist
     decisionReceiptRef: "docs/receipts/POL-EFFECTIVE-FIXTURE.json",
     sourceRefs: [{
       path: candidateSourceRef,
-      heading: "Document Harness Adoption",
+      heading: "Fixture governance source",
       lineStart: 1,
       lineEnd: 1,
       capturedSha256: sha256(candidateSourceBytes),

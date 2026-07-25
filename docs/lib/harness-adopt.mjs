@@ -17,6 +17,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyInitiativeAuthority } from "./initiative-authority.mjs";
+import { inspectSourceEvidence } from "./source-evidence-freshness.mjs";
 
 export const SCHEMA_VERSION = 1;
 export const INSTALLATION_LOCK_PATH = "docs/_indexes/harness-installation.yaml";
@@ -2273,8 +2274,19 @@ function auditGovernanceCatalog(root) {
         sourceFile = safeAbsolute(root, normalizeRelativePath(source.path, "governance source ref"));
         if (!existsSync(sourceFile) || !lstatSync(sourceFile).isFile() || lstatSync(sourceFile).isSymbolicLink()) throw new Error("unsafe source file");
         const sourceBytes = readFileSync(sourceFile);
-        const lineCount = sourceBytes.toString("utf8").split(/\r?\n/).length;
-        if (sha256(sourceBytes) !== source.capturedSha256 || source.lineEnd > lineCount) throw new Error("stale source fence");
+        const committedBytes = execFileSync("git", ["-C", root, "show", `${baseCommit}:${source.path}`], {
+          encoding: null,
+          maxBuffer: 32 * 1024 * 1024,
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+        const evidence = inspectSourceEvidence({
+          sourceRef: source,
+          capturedBytes: committedBytes,
+          currentBytes: sourceBytes,
+        });
+        if (evidence.state !== "current") {
+          throw new Error(evidence.state === "invalid" ? "invalid captured source fence" : "stale source evidence scope");
+        }
       } catch (error) {
         findings.push({ code: SECRET_SOURCE_PATH.test(source?.path ?? "") ? "PRIVATE_SOURCE_EXCLUDED" : "STALE_OR_INVALID_SOURCE_REF", path: candidatePath, source: source?.path ?? null, message: error.message });
       }
@@ -2370,17 +2382,20 @@ function auditInitiativeSourceFence(root, initiative, initiativePath, findings) 
       const sourceStat = lstatIfPresent(sourceFile);
       if (!sourceStat || !sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error("unsafe initiative source file");
       const sourceBytes = readFileSync(sourceFile);
-      const lineCount = sourceBytes.toString("utf8").split(/\r?\n/).length;
-      if (sha256(sourceBytes) !== source.capturedSha256 || source.lineEnd > lineCount) {
-        throw new Error("stale initiative source fence");
-      }
       const committedBytes = execFileSync("git", ["-C", root, "show", `${initiative.sourceRevision}:${source.path}`], {
         encoding: null,
         maxBuffer: 32 * 1024 * 1024,
         stdio: ["ignore", "pipe", "pipe"],
       });
-      if (sha256(committedBytes) !== source.capturedSha256) {
-        throw new Error("initiative source fence does not match sourceRevision bytes");
+      const evidence = inspectSourceEvidence({
+        sourceRef: source,
+        capturedBytes: committedBytes,
+        currentBytes: sourceBytes,
+      });
+      if (evidence.state !== "current") {
+        throw new Error(evidence.state === "invalid"
+          ? "initiative source fence does not match sourceRevision bytes"
+          : "stale initiative source evidence scope");
       }
     } catch (error) {
       findings.push({

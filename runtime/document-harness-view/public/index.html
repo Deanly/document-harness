@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <title>보드 · 문서 하네스</title>
-    <link rel="stylesheet" href="/styles.css?v=4">
+    <link rel="stylesheet" href="/styles.css?v=6">
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 바로가기</a>
@@ -91,7 +91,10 @@
         <div class="page-heading policy-heading">
           <div>
             <p class="eyebrow">정책 운영</p>
-            <h1>정책</h1>
+            <div class="title-with-help">
+              <h1>정책</h1>
+              <button class="governance-help-trigger" type="button" data-help-topic="policy" aria-label="정책 도움말 보기" aria-controls="governance-help-overlay" aria-expanded="false"><span aria-hidden="true">?</span></button>
+            </div>
             <p class="page-description">프로젝트가 지켜야 할 원칙과 경계를 사람이 읽고 결정할 수 있도록 근거와 연결 지침을 함께 보여줍니다.</p>
           </div>
           <div id="policy-summary" class="compact-metrics" aria-label="정책 현황"></div>
@@ -163,7 +166,10 @@
         <div class="page-heading policy-heading">
           <div>
             <p class="eyebrow">구현 지침</p>
-            <h1>지침</h1>
+            <div class="title-with-help">
+              <h1>지침</h1>
+              <button class="governance-help-trigger" type="button" data-help-topic="guideline" aria-label="지침 도움말 보기" aria-controls="governance-help-overlay" aria-expanded="false"><span aria-hidden="true">?</span></button>
+            </div>
             <p class="page-description">정책을 설계·개발·검증에 적용하는 구체적인 방법을 독립적으로 살펴보고 연결 정책과 근거를 확인합니다.</p>
           </div>
           <div id="guideline-summary" class="compact-metrics" aria-label="지침 현황"></div>
@@ -235,7 +241,10 @@
         <div class="page-heading policy-heading">
           <div>
             <p class="eyebrow">방향에서 실행으로</p>
-            <h1>추진안</h1>
+            <div class="title-with-help">
+              <h1>추진안</h1>
+              <button class="governance-help-trigger" type="button" data-help-topic="initiative" aria-label="추진안 도움말 보기" aria-controls="governance-help-overlay" aria-expanded="false"><span aria-hidden="true">?</span></button>
+            </div>
             <p class="page-description">정책의 목적과 경계, 선택한 지침의 실행 방식을 실제 프로젝트 묶음으로 전환합니다. 프로젝트는 연결 상태만 보여주며 상세 실행은 각 프로젝트 문서가 소유합니다.</p>
           </div>
           <div id="initiative-summary" class="compact-metrics" aria-label="추진안 현황"></div>
@@ -387,6 +396,171 @@
       </section>
     </main>
 
+    <div id="governance-help-overlay" class="governance-help-overlay" role="dialog" aria-modal="false" aria-labelledby="governance-help-title" aria-describedby="governance-help-summary" hidden>
+      <section class="governance-help-dialog" tabindex="-1">
+        <header class="governance-help-header">
+          <div>
+            <p class="eyebrow">거버넌스 작성 도움말</p>
+            <h2 id="governance-help-title">정책·지침·추진안 작성 안내</h2>
+            <p id="governance-help-summary">항목의 의미와 작성 관점, AI 도구와 안전하게 초안을 발전시키는 방법을 안내합니다.</p>
+          </div>
+          <div class="governance-help-header-actions">
+            <span class="governance-help-hover-note">전체를 읽으려면 아이콘을 클릭하거나 Enter로 고정하세요 · 마우스를 떼면 닫힙니다.</span>
+            <button id="governance-help-close" class="button secondary governance-help-close" type="button">도움말 닫기</button>
+          </div>
+        </header>
+
+        <article class="governance-help-content" data-help-content="policy" hidden>
+          <div class="governance-help-hero">
+            <span class="governance-help-kind">정책 · WHY와 경계</span>
+            <h3>왜 지켜야 하며 어디까지가 경계인지 정합니다</h3>
+            <p>정책은 조직과 서비스가 보호할 결과와 허용하지 않을 실패를 정하는 장기 기준입니다. 프로젝트와 작업이 임의로 약화하거나 재해석할 수 없는 방향과 경계입니다.</p>
+          </div>
+          <div class="governance-help-grid">
+            <section class="governance-help-card">
+              <h4>무엇을 의미하나요?</h4>
+              <p>정책은 구현 방법보다 먼저 보호 대상, 적용 범위와 양보할 수 없는 경계를 선언합니다. 예외와 위험을 누가 결정할지도 함께 정합니다.</p>
+            </section>
+            <section class="governance-help-card">
+              <h4>어떤 관점에서 작성하나요?</h4>
+              <ul>
+                <li>누구와 무엇을 보호해야 하나요?</li>
+                <li>어떤 실패는 허용할 수 없나요?</li>
+                <li>어디까지 적용되며 누가 예외를 결정하나요?</li>
+              </ul>
+            </section>
+            <section class="governance-help-card include">
+              <h4>반드시 포함할 내용</h4>
+              <p>보호할 결과 · 적용/비적용 범위 · 양보할 수 없는 경계 · 소유자/결정권자 · 예외 권한 · 재검토 주기</p>
+            </section>
+            <section class="governance-help-card avoid">
+              <h4>주의할 점</h4>
+              <p>특정 제품·프레임워크, 구현 순서나 WBS, 세부 테스트 명령, 근거 없이 만든 수치 목표를 정책으로 확정하지 마세요. AI는 정책을 스스로 승인할 수 없습니다.</p>
+            </section>
+            <section class="governance-help-card governance-help-prompts">
+              <h4>AI 도구와 이렇게 빌드업하세요</h4>
+              <ol>
+                <li>“현재 코드와 문서를 근거로 반드시 보호해야 할 결과와 허용할 수 없는 실패를 찾아 정책 후보로 정리해줘. 사실·추론·미확정을 구분하고 승인하지는 마.”</li>
+                <li>“서비스는 고가용성이어야 한다를 구현 방식 없이 정책의 이유와 경계로 다듬어줘. 적용 범위, 예외 결정권, 사람이 결정할 항목도 보여줘.”</li>
+                <li>“이 정책 초안이 특정 기술이나 지침 내용을 섞고 있는지 점검하고, 사람이 결정해야 할 쟁점과 대안 2~3개를 비교해줘.”</li>
+              </ol>
+            </section>
+            <section class="governance-help-card governance-help-checklist">
+              <h4>검토 체크리스트</h4>
+              <ul>
+                <li>보호 대상과 이유가 첫 문단에 보이나요?</li>
+                <li>허용하지 않을 실패와 적용 범위가 분명한가요?</li>
+                <li>소유자·예외 결정권·재검토 시점이 있나요?</li>
+                <li>구현 방법이나 작업 목록이 섞이지 않았나요?</li>
+                <li>근거, AI 제안, 미정 결정과 승인 상태가 구분되나요?</li>
+              </ul>
+            </section>
+          </div>
+        </article>
+
+        <article class="governance-help-content" data-help-content="guideline" hidden>
+          <div class="governance-help-hero">
+            <span class="governance-help-kind">지침 · HOW와 검증</span>
+            <h3>정책을 어떻게 적용하고 무엇으로 증명할지 정합니다</h3>
+            <p>지침은 연결된 정책을 실제 상황에서 구현하고 확인하는 방법과 검증 계약입니다. 반드시 지킬 방식과 권장 방식을 구분하고 허용 가능한 대안과 근거 형태를 설명합니다.</p>
+          </div>
+          <div class="governance-help-grid">
+            <section class="governance-help-card">
+              <h4>무엇을 의미하나요?</h4>
+              <p>지침은 정책 ID를 실제 설계·개발·운영 선택과 연결합니다. 준수 여부를 재현 가능한 검사와 증거로 판단할 수 있어야 합니다.</p>
+            </section>
+            <section class="governance-help-card">
+              <h4>어떤 관점에서 작성하나요?</h4>
+              <ul>
+                <li>어떤 정책을 어느 환경과 변경에 적용하나요?</li>
+                <li>필수와 권장, 허용 대안은 무엇인가요?</li>
+                <li>어떤 검사·근거와 롤백이 준수를 증명하나요?</li>
+              </ul>
+            </section>
+            <section class="governance-help-card include">
+              <h4>반드시 포함할 내용</h4>
+              <p>연결 정책 ID · 적용/비적용 조건 · 필수/권장 수준 · 권장 패턴과 허용 대안 · 검증 방법 · 필요한 근거 · 운영/롤백 고려</p>
+            </section>
+            <section class="governance-help-card avoid">
+              <h4>주의할 점</h4>
+              <p>원 정책에 없는 새 금지 경계나 위험 수용을 만들지 마세요. 모든 서비스에 같은 구현을 강제하거나 추진안 성과·프로젝트 진행률을 지침에 섞지 않습니다.</p>
+            </section>
+            <section class="governance-help-card governance-help-prompts">
+              <h4>AI 도구와 이렇게 빌드업하세요</h4>
+              <ol>
+                <li>“POL-… 정책을 구현할 지침 후보를 만들어줘. 필수와 권장, 적용 조건, 허용 대안, 검증 방법과 근거 형태를 각각 구분해줘.”</li>
+                <li>“상태 외부화·다중 인스턴스·장애 전환 시험 중 이 서비스에 맞는 선택지를 비용·위험·검증 차이로 비교해줘. 하나를 임의로 승인하지 마.”</li>
+                <li>“이 지침이 원 정책에 없는 새 필수 경계나 위험 수용을 만들었는지 검토하고, 빠진 롤백·검증·비적용 조건을 제안해줘.”</li>
+              </ol>
+            </section>
+            <section class="governance-help-card governance-help-checklist">
+              <h4>검토 체크리스트</h4>
+              <ul>
+                <li>연결 정책이 stable ID로 표시되나요?</li>
+                <li>적용 조건과 비적용 조건이 분명한가요?</li>
+                <li>필수·권장·대안·예외가 구분되나요?</li>
+                <li>검사와 근거로 준수 여부를 재현할 수 있나요?</li>
+                <li>운영·장애·롤백을 고려했나요?</li>
+              </ul>
+            </section>
+          </div>
+        </article>
+
+        <article class="governance-help-content" data-help-content="initiative" hidden>
+          <div class="governance-help-hero">
+            <span class="governance-help-kind">추진안 · 성과 포트폴리오</span>
+            <h3>정책과 지침을 실제 성과와 프로젝트 묶음으로 연결합니다</h3>
+            <p>추진안은 정책의 방향과 선택한 지침을 여러 프로젝트가 달성할 하나의 결과로 연결합니다. 화면에서는 추진안, 문서와 코드에서는 initiative, 정식 ID는 I####를 사용합니다.</p>
+          </div>
+          <div class="governance-help-grid">
+            <section class="governance-help-card">
+              <h4>무엇을 의미하나요?</h4>
+              <p>추진안은 지금 필요한 달성 결과와 경계를 정의하고, 이를 진전시키는 정책·채택할 지침·실행을 맡을 프로젝트의 관계를 설명합니다.</p>
+            </section>
+            <section class="governance-help-card">
+              <h4>어떤 관점에서 작성하나요?</h4>
+              <ul>
+                <li>지금 어떤 결과가 왜 필요한가요?</li>
+                <li>어디까지 하고 무엇은 하지 않나요?</li>
+                <li>활동량이 아닌 어떤 신호가 성공을 증명하나요?</li>
+              </ul>
+            </section>
+            <section class="governance-help-card include">
+              <h4>반드시 포함할 내용</h4>
+              <p>달성 결과 · 왜 지금인지 · 범위/비범위 · 정책 관계 · 지침 채택 수준과 검증 · 성공 신호 · 담당/검토 주기 · 위험 · 연결 프로젝트</p>
+            </section>
+            <section class="governance-help-card avoid">
+              <h4>주의할 점</h4>
+              <p>개별 프로젝트 설계나 task 목록·진행률을 복제하지 마세요. 문서 수·배포 횟수만으로 성공을 정의하지 않고 후보 검토, I#### 발급, 활성화 승인을 한 번에 묶지 않습니다.</p>
+            </section>
+            <section class="governance-help-card governance-help-prompts">
+              <h4>AI 도구와 이렇게 빌드업하세요</h4>
+              <ol>
+                <li>“현재 정책·지침과 기존 프로젝트를 읽고 이 목표를 추진안 후보로 구성해줘. 달성 결과, 왜 지금인지, 범위/비범위, 성공 신호, 위험과 프로젝트 연결 근거를 보여줘.”</li>
+                <li>“이 추진안이 각 정책을 진전시키는지 제약받는지 설명하고, 각 지침을 필수/권장으로 둘 이유와 프로젝트에서의 검증 방법을 제안해줘.”</li>
+                <li>“이 후보를 활동 목록이 아닌 측정 가능한 결과 계약으로 다듬고, 후보 검토·I#### 발급·활성화 승인을 서로 다른 사람 결정으로 나눠 요청해줘.”</li>
+              </ol>
+            </section>
+            <section class="governance-help-card governance-help-checklist">
+              <h4>검토 체크리스트</h4>
+              <ul>
+                <li>달성 결과와 왜 지금인지 바로 이해되나요?</li>
+                <li>범위·비범위와 중단 경계가 구체적인가요?</li>
+                <li>정책과 지침에 직접 연결되고 이유가 있나요?</li>
+                <li>성공 신호가 작업량이 아닌 결과 근거인가요?</li>
+                <li>담당·검토 시점·위험·연결 프로젝트가 보이나요?</li>
+              </ul>
+            </section>
+          </div>
+        </article>
+
+        <aside class="governance-help-boundary">
+          <strong>사람의 결정이 최종 기준입니다.</strong>
+          <span>AI는 질문·근거 조사·초안·대안 비교를 돕지만 정책·지침·추진안, 예외와 위험을 스스로 승인할 수 없습니다. 보드 표시도 원본 문서와 사람의 결정 영수증을 대신하지 않습니다.</span>
+        </aside>
+      </section>
+    </div>
+
     <footer>
       <p>보드는 문서 하네스의 읽기 전용 투영 화면입니다 · 정책 승인, 코드 변경, 실행 명령은 이 화면에서 수행되지 않습니다.</p>
       <p id="footer-fence"></p>
@@ -396,6 +570,6 @@
       <div class="empty-state">표시할 항목이 없습니다.</div>
     </template>
 
-    <script type="module" src="/app.mjs?v=4"></script>
+    <script type="module" src="/app.mjs?v=6"></script>
   </body>
 </html>

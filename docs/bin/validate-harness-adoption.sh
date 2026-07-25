@@ -304,7 +304,7 @@ for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint
 
 const release = readJson(releaseFile);
 assert.equal(release.releaseId, "document-harness-public-v1");
-assert.equal(release.version, "1.3.0");
+assert.equal(release.version, "1.3.1");
 assert.deepEqual(release.profileDependencies, {
   core: [],
   governance: ["core"],
@@ -322,6 +322,7 @@ for (const requiredPath of release.verification.requiredInstalledPaths) {
 }
 for (const target of [
   "docs/bin/harness-adopt", "docs/lib/harness-adopt.mjs", "docs/lib/harness-adopt-cli.mjs",
+  "docs/lib/source-evidence-freshness.mjs",
   "docs/bin/validate-execution-loop.sh", "docs/_indexes/execution-loop-policy.yaml",
   "docs/_templates/execution-checkpoint.md", "docs/design/control-plane.md",
   "docs/schemas/governance-catalog.schema.json", "runtime/document-harness-view/bin/human-view",

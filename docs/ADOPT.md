@@ -97,7 +97,7 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다. 그래�
 
 지원 profile은 `core`, `governance`, `view`입니다. `core`는 adoption/Execute entrypoint뿐 아니라 reusable initiative/project/task/design/guide/report/QA template, terminology surface, `new-doc.sh`, execution/closeout validator와 `close-doc.sh`를 함께 설치합니다. `governance`는 `core`를, `view`는 `core`와 `governance`를 자동으로 포함합니다. plan은 사용자가 고른 `requestedProfiles`와 dependency를 해석한 실제 설치 집합 `profiles`를 별도로 기록합니다. 따라서 `--profile view`는 읽을 수 있는 단독 View에 필요한 세 profile 전체를 설치합니다.
 
-부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.3.0`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
+부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.3.1`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
 
 ### Status Contract
 
@@ -128,7 +128,7 @@ post-apply file byte 또는 mode가 바뀌면 rollback은 강행하지 않고 `N
 - 긴 ID, path와 hash는 자기 cell/card 안에서 줄바꿈되어야 하며 인접 제목·badge·column과 겹치지 않아야 합니다.
 - `.env`, credential, token, private raw source와 secret value는 governance catalog/source body에 수집하지 않습니다. 안전한 authority source가 없으면 policy를 만들지 않고 gap/attention을 남깁니다.
 - 모든 candidate source ref는 repository-relative path, heading/line, captured file SHA-256과 captured repository commit을 갖습니다.
-- migration captured base는 실제 Git commit object로 resolve되어야 하며, source hash 변화는 candidate review/approval을 stale로 만듭니다. 현재 HEAD 이동만으로 unchanged source evidence를 stale 처리하지 않습니다.
+- migration captured base는 실제 Git commit object로 resolve되어야 합니다. `capturedSha256`은 해당 revision의 파일 전체 provenance를 고정하고, freshness는 `lineStart..lineEnd`가 걸친 Markdown 제목 묶음을 현재 같은 anchor/boundary 구간과 비교합니다. 인용 구간의 변경이나 anchor 소실은 candidate review/approval을 stale로 만들지만, 현재 HEAD 이동이나 같은 파일의 인용 구간 밖 변경만으로 unchanged evidence를 stale 처리하지 않습니다. Markdown anchor가 없는 legacy source는 파일 전체 비교를 유지합니다.
 - public harness와 같은 이름의 customized file은 baseline hash가 없으면 conflict입니다.
 - dangling leaf symlink와 ancestor symlink는 missing path가 아니라 conflict입니다. plan/apply/rollback은 이를 따라가거나 atomic replace로 덮어쓰지 않습니다.
 - apply는 plan의 `status`나 `attention`을 신뢰하지 않고 current target, installation lock, requested profile closure, release action으로 decision state를 다시 계산합니다.

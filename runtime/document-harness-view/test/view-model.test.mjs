@@ -272,7 +272,7 @@ test("fresh and review-required freshness copy is Korean-first while preserving 
   }), {
     state: "fresh",
     tone: "fresh",
-    message: "소스 근거가 최신입니다 · 참조 2건이 캡처된 해시와 일치합니다."
+    message: "소스 근거가 최신입니다 · 참조 2건의 인용 구간이 승인 당시 근거와 일치합니다."
   });
 
   assert.deepEqual(freshnessPresentation({

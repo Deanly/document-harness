@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.3.0");
+  assert.equal(result.snapshot.runtimeVersion, "1.3.1");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -61,11 +61,29 @@ test("later HEAD movement does not stale unchanged source evidence", async (t) =
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
 });
 
+test("an unrelated Markdown section change preserves cited evidence freshness", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await writeFile(
+    path.join(fixture.root, "source.md"),
+    "# Unrelated notes\n\nChanged later.\n\n# Current policy\n",
+    "utf8"
+  );
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  const sourceRef = result.snapshot.policies[0].sourceRefs[0];
+
+  assert.equal(sourceRef.state, "current");
+  assert.equal(sourceRef.fileState, "changed");
+  assert.equal(sourceRef.freshnessScope, "markdown_section");
+  assert.equal(sourceRef.freshnessReason, "unrelated_file_content_changed");
+  assert.equal(result.snapshot.snapshot.sourceFence.sourceEvidenceState, "fresh");
+  assert.ok(!result.snapshot.attention.some(({ id }) => id === "ATTN-SOURCE-FRESHNESS"));
+});
+
 test("changed and escaped evidence are stale or degraded independently of migration validity", async (t) => {
   const fixture = await createFixture();
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
-  fixture.catalog.policies[0].sourceRefs[0].capturedSha256 = sha256("old");
-  await writeFile(path.join(fixture.root, "docs", "governance", "catalog.json"), JSON.stringify(fixture.catalog), "utf8");
+  await writeFile(path.join(fixture.root, "source.md"), "# Changed policy meaning\n", "utf8");
   const stale = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
   assert.equal(stale.snapshot.migrationFence.state, "valid");
   assert.equal(stale.snapshot.snapshot.sourceFence.sourceEvidenceState, "stale");

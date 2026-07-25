@@ -2,7 +2,7 @@
   "$schema": "../schemas/release-manifest.schema.json",
   "schemaVersion": 1,
   "releaseId": "document-harness-public-v1",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "profiles": [
     "core",
     "governance",
@@ -353,6 +353,11 @@
       "profiles": ["core"]
     },
     {
+      "sourcePath": "docs/lib/source-evidence-freshness.mjs",
+      "targetPath": "docs/lib/source-evidence-freshness.mjs",
+      "profiles": ["core"]
+    },
+    {
       "sourcePath": "docs/releases/document-harness-v1.json",
       "targetPath": "docs/releases/document-harness-v1.json",
       "profiles": ["core"]
@@ -559,6 +564,7 @@
       "docs/guide/repository-policy-extraction.md",
       "docs/initiatives/README.md",
       "docs/lib/initiative-authority.mjs",
+      "docs/lib/source-evidence-freshness.mjs",
       "docs/schemas/initiative-activation-receipt.schema.json",
       "docs/schemas/initiative-register.schema.json",
       "runtime/document-harness-view/bin/human-view",

@@ -12,7 +12,7 @@ import {
   reviewStats,
   runtimeSummary,
   sortAttention
-} from "/view-model.mjs?v=4";
+} from "/view-model.mjs?v=6";
 
 const tabNames = ["overview", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
 
@@ -41,6 +41,17 @@ const state = {
   pollTimer: null,
   pollIntervalMs: 2000
 };
+
+let activeGovernanceHelp = null;
+let suppressGovernanceHelpFocus = false;
+
+const governanceHelpLabels = {
+  policy: "정책",
+  guideline: "지침",
+  initiative: "추진안"
+};
+
+const governanceHelpBackgroundSelector = ".skip-link, .app-chrome, #freshness-banner, #main, body > footer";
 
 const labels = {
   proposed: "추출 후보",
@@ -206,7 +217,134 @@ function renderMetricSet(container, values, className = "metric") {
   for (const value of values) container.append(metric(value[0], value[1], value[2], className));
 }
 
+function closeGovernanceHelp({ restoreFocus = false } = {}) {
+  const overlay = $("#governance-help-overlay");
+  if (!overlay) return;
+  const trigger = activeGovernanceHelp?.trigger ?? null;
+  overlay.hidden = true;
+  overlay.classList.remove("is-pinned");
+  overlay.setAttribute("aria-modal", "false");
+  for (const content of $$('[data-help-content]')) content.hidden = true;
+  for (const button of $$('[data-help-topic]')) button.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("governance-help-pinned");
+  for (const element of $$(governanceHelpBackgroundSelector)) element.removeAttribute("inert");
+  activeGovernanceHelp = null;
+
+  if (restoreFocus && trigger) {
+    suppressGovernanceHelpFocus = true;
+    trigger.focus();
+    queueMicrotask(() => { suppressGovernanceHelpFocus = false; });
+  }
+}
+
+function openGovernanceHelp(trigger, mode) {
+  const topic = trigger.dataset.helpTopic;
+  const overlay = $("#governance-help-overlay");
+  const content = $(`[data-help-content="${topic}"]`);
+  if (!overlay || !content || !governanceHelpLabels[topic]) return;
+
+  for (const panel of $$('[data-help-content]')) panel.hidden = panel !== content;
+  for (const button of $$('[data-help-topic]')) button.setAttribute("aria-expanded", button === trigger ? "true" : "false");
+  $("#governance-help-title").textContent = `${governanceHelpLabels[topic]} 작성 도움말`;
+  $("#governance-help-summary").textContent = `${governanceHelpLabels[topic]}의 의미, 작성 관점과 AI 도구에 요청하는 방법을 한 화면에서 확인합니다.`;
+  const pinned = mode === "pinned";
+  overlay.hidden = false;
+  overlay.classList.toggle("is-pinned", pinned);
+  overlay.setAttribute("aria-modal", pinned ? "true" : "false");
+  document.body.classList.toggle("governance-help-pinned", pinned);
+  for (const element of $$(governanceHelpBackgroundSelector)) {
+    if (pinned) element.setAttribute("inert", "");
+    else element.removeAttribute("inert");
+  }
+  activeGovernanceHelp = { trigger, topic, mode };
+
+  if (pinned) {
+    const closeButton = $("#governance-help-close");
+    requestAnimationFrame(() => {
+      if (activeGovernanceHelp?.trigger === trigger && activeGovernanceHelp.mode === "pinned") {
+        closeButton?.focus({ preventScroll: true });
+      }
+    });
+  }
+}
+
+function scrollGovernanceHelpPreview(event) {
+  if (activeGovernanceHelp?.mode !== "focus") return false;
+  const dialog = $(".governance-help-dialog");
+  if (!dialog || dialog.scrollHeight <= dialog.clientHeight) return false;
+  const distance = Math.max(120, Math.round(dialog.clientHeight * 0.72));
+  const scrollByKey = {
+    ArrowDown: 64,
+    ArrowUp: -64,
+    PageDown: distance,
+    PageUp: -distance
+  };
+  if (!(event.key in scrollByKey) && event.key !== "Home" && event.key !== "End") return false;
+  event.preventDefault();
+  if (event.key === "Home") dialog.scrollTo({ top: 0, behavior: "smooth" });
+  else if (event.key === "End") dialog.scrollTo({ top: dialog.scrollHeight, behavior: "smooth" });
+  else dialog.scrollBy({ top: scrollByKey[event.key], behavior: "smooth" });
+  return true;
+}
+
+function keepGovernanceHelpFocusInside(event, overlay) {
+  if (event.key !== "Tab" || activeGovernanceHelp?.mode !== "pinned") return false;
+  const focusable = [...overlay.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')]
+    .filter((element) => !element.hidden && element.getClientRects().length > 0);
+  const target = event.shiftKey ? focusable.at(-1) : focusable[0];
+  if (!target) return false;
+  event.preventDefault();
+  target.focus({ preventScroll: true });
+  return true;
+}
+
+function setupGovernanceHelp() {
+  const overlay = $("#governance-help-overlay");
+  const closeButton = $("#governance-help-close");
+  if (!overlay || !closeButton) return;
+
+  for (const trigger of $$('[data-help-topic]')) {
+    trigger.addEventListener("mouseenter", () => {
+      if (activeGovernanceHelp?.mode === "pinned") return;
+      if (activeGovernanceHelp?.trigger === trigger && activeGovernanceHelp.mode === "focus") return;
+      openGovernanceHelp(trigger, "hover");
+    });
+    trigger.addEventListener("mouseleave", () => {
+      if (activeGovernanceHelp?.trigger === trigger && activeGovernanceHelp.mode === "hover") closeGovernanceHelp();
+    });
+    trigger.addEventListener("focus", () => {
+      if (suppressGovernanceHelpFocus || activeGovernanceHelp?.mode === "pinned") return;
+      openGovernanceHelp(trigger, "focus");
+    });
+    trigger.addEventListener("blur", () => {
+      if (activeGovernanceHelp?.trigger === trigger && activeGovernanceHelp.mode === "focus") closeGovernanceHelp();
+    });
+    trigger.addEventListener("keydown", scrollGovernanceHelpPreview);
+    trigger.addEventListener("click", () => {
+      if (activeGovernanceHelp?.trigger === trigger && activeGovernanceHelp.mode === "pinned") {
+        closeGovernanceHelp({ restoreFocus: true });
+      } else {
+        openGovernanceHelp(trigger, "pinned");
+      }
+    });
+  }
+
+  closeButton.addEventListener("click", () => closeGovernanceHelp({ restoreFocus: true }));
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay && activeGovernanceHelp?.mode === "pinned") closeGovernanceHelp({ restoreFocus: true });
+  });
+  document.addEventListener("keydown", (event) => {
+    if (!activeGovernanceHelp) return;
+    if (keepGovernanceHelpFocusInside(event, overlay)) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeGovernanceHelp({ restoreFocus: true });
+    }
+  });
+}
+
 function activateTab(tabName, { focus = false, updateHash = true } = {}) {
+  closeGovernanceHelp();
   const resolved = tabNames.includes(tabName) ? tabName : "policies";
   state.activeTab = resolved;
   for (const name of tabNames) {
@@ -270,7 +408,7 @@ function runtimeMetricSet(snapshot) {
     ["실행 점검", `${number(summary.healthyProbes)} / ${number(summary.probeCount)}`, summary.probeCount === 0 ? "설정되지 않음" : "정상 / 전체"],
     ["점검 실패", number(summary.failedProbes), summary.failedProbes === 0 ? "관찰된 실패 없음" : "검토 필요"],
     ["초기 이관 경계", localized(snapshot.migrationFence?.state), localized(snapshot.migrationFence?.reason, "관찰되지 않음")],
-    ["소스 근거", localized(snapshot.snapshot.sourceFence?.sourceEvidenceState), `${number(snapshot.snapshot.sourceFence?.evidenceCurrent)}건 일치`]
+    ["소스 근거", localized(snapshot.snapshot.sourceFence?.sourceEvidenceState), `${number(snapshot.snapshot.sourceFence?.evidenceCurrent)}건 인용 구간 일치`]
   ];
 }
 
@@ -471,6 +609,12 @@ function sourceStateText(ref) {
   if (ref.state === "unverified") {
     const previous = labels[ref.lastKnownState] ?? ref.lastKnownState ?? "기록 없음";
     return `마지막 ${previous} · 현재 미검증`;
+  }
+  if (ref.state === "current" && ref.fileState === "changed" && ref.freshnessScope === "markdown_section") {
+    return "인용 구간 일치 · 파일의 다른 구간 변경";
+  }
+  if (ref.state === "changed" && ref.freshnessScope === "markdown_section") {
+    return "인용 구간 변경";
   }
   return labels[ref.state] ?? ref.state;
 }
@@ -1432,6 +1576,7 @@ function setupControls() {
 }
 
 setupTabs();
+setupGovernanceHelp();
 setupControls();
 schedulePolling(2000);
 void loadSnapshot(true);

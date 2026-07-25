@@ -3,7 +3,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
-import { buildProjection, sha256 } from "../../runtime/document-harness-view/lib/projection.mjs";
+import { buildProjection } from "../../runtime/document-harness-view/lib/projection.mjs";
 import { runtimeSummary } from "../../runtime/document-harness-view/public/view-model.mjs";
 import { createFixture } from "../../runtime/document-harness-view/test/helpers.mjs";
 
@@ -53,8 +53,7 @@ test("view fixture: execution checkpoint is explicitly not configured", async (t
 test("view fixture: stale source evidence remains distinct from migration validity", async (t) => {
   const fixture = await createFixture();
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
-  fixture.catalog.policies[0].sourceRefs[0].capturedSha256 = sha256("previous source bytes\n");
-  await writeCatalog(fixture);
+  await writeFile(path.join(fixture.root, "source.md"), "# Changed policy meaning\n", "utf8");
   const { snapshot } = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
   assert.equal(snapshot.migrationFence.state, "valid");
   assert.equal(snapshot.policies[0].evidenceState, "stale");

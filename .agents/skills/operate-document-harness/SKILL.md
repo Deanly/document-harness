@@ -82,7 +82,7 @@ Use the installed executable contract; do not simulate these transitions in pros
 - Use Korean for synthesized human wording even when the source or technical identifiers are English. Keep exact source headings and quotations unchanged, and provide a Korean summary beside them instead of translating provenance.
 - Keep code/config evidence as `kind: observation`, `approvalState: unreviewed`, with no effective or decision receipt. Human review is required before promotion.
 - Never put `.env`, credentials, tokens, private raw source, secret values, personal absolute paths, or user-global skill paths into installed governance/View artifacts.
-- Preserve the nested `migration.capturedRepository` fence, per-source `capturedSha256` and `capturedRepositoryRevision`. A source hash change is stale; later HEAD movement alone is not.
+- Preserve the nested `migration.capturedRepository` fence, per-source full-file `capturedSha256` and `capturedRepositoryRevision`. Freshness is stale when the cited Markdown heading scope changes or its anchor/boundary disappears; a later HEAD or a change outside that cited scope is diagnostic file drift, not stale evidence. Legacy refs without a Markdown anchor remain full-file fenced.
 
 ## Keep Scope Repository-Local
 

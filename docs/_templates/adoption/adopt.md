@@ -116,7 +116,7 @@ git diff --check
 ./runtime/document-harness-view/bin/human-view snapshot
 ```
 
-View freshness나 apply success만으로 migration을 verified 처리하지 않습니다. `verify`는 source-backed `INIT-*` candidate 또는 paired initiative gap/attention이 없으면 fail closed 합니다. required gate evidence와 source-fenced human decisions도 완성돼야 합니다.
+View freshness나 apply success만으로 migration을 verified 처리하지 않습니다. source provenance의 `capturedSha256`은 과거 revision 파일 전체를 고정하고, 현재 freshness는 `lineStart..lineEnd`가 걸친 Markdown 제목 묶음을 비교합니다. 인용 구간 밖의 변경은 file drift로만 표시하지만, 인용 구간 변경·anchor 소실·legacy non-Markdown 전체 파일 변경은 stale입니다. `verify`는 source-backed `INIT-*` candidate 또는 paired initiative gap/attention이 없으면 fail closed 합니다. required gate evidence와 source-fenced human decisions도 완성돼야 합니다.
 
 ## References
 

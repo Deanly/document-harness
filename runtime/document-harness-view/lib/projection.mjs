@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { lstat, readFile, readdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
+import { inspectSourceEvidence } from "../../../docs/lib/source-evidence-freshness.mjs";
 import { REFERENCE_VIEW_VERSION } from "../version.mjs";
 
 export const VIEW_RUNTIME_CONTRACT = Object.freeze({
@@ -429,6 +430,12 @@ async function inspectSourceRef(repoRoot, sourceRef, capturedRepositoryRevision)
     capturedSha256: sourceRef.capturedSha256 ?? null,
     capturedRepositoryRevision: sourceRef.capturedRepositoryRevision,
     currentSha256: null,
+    capturedEvidenceSha256: null,
+    currentEvidenceSha256: null,
+    freshnessScope: null,
+    fileState: "missing",
+    capturedScope: null,
+    currentScope: null,
     state: "missing"
   };
 
@@ -443,16 +450,45 @@ async function inspectSourceRef(repoRoot, sourceRef, capturedRepositoryRevision)
         : `source ref가 파일이 아닙니다: ${sourceRef.path}`;
       return result;
     }
-    result.currentSha256 = captured.digest;
-    const lineCount = captured.bytes.toString("utf8").split(/\r?\n/).length;
-    if (sourceRef.lineEnd > lineCount) {
+    const committed = spawnSync("git", [
+      "-C",
+      repoRoot,
+      "show",
+      `${capturedRepositoryRevision}:${sourceRef.path}`
+    ], {
+      encoding: null,
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 32 * 1024 * 1024
+    });
+    const capturedBytes = committed.status === 0
+      ? committed.stdout
+      : captured.digest === sourceRef.capturedSha256
+        ? captured.bytes
+        : null;
+    if (!capturedBytes) {
       result.state = "invalid";
-      result.error = `source ref lineEnd가 현재 파일 범위를 벗어납니다: ${sourceRef.path}`;
+      result.error = `source ref를 captured revision에서 읽을 수 없고 현재 bytes도 captured hash와 다릅니다: ${sourceRef.path}`;
       return result;
     }
-    result.state = sourceRef.capturedSha256 && sourceRef.capturedSha256 !== result.currentSha256
-      ? "changed"
-      : "current";
+    const evidence = inspectSourceEvidence({
+      sourceRef,
+      capturedBytes,
+      currentBytes: captured.bytes
+    });
+    Object.assign(result, {
+      currentSha256: evidence.currentSha256,
+      capturedEvidenceSha256: evidence.capturedEvidenceSha256,
+      currentEvidenceSha256: evidence.currentEvidenceSha256,
+      freshnessScope: evidence.freshnessScope,
+      fileState: evidence.fileState,
+      capturedScope: evidence.capturedScope,
+      currentScope: evidence.currentScope,
+      state: evidence.state,
+      freshnessReason: evidence.reason
+    });
+    if (evidence.state === "invalid") {
+      result.error = `captured source fence가 revision bytes와 일치하지 않습니다: ${sourceRef.path}`;
+    }
     return result;
   } catch (error) {
     if (error.code === "ENOENT") {
@@ -1471,6 +1507,9 @@ async function readExecutionCheckpoint(repoRoot, checkpointRoot) {
 function createGeneratedAttention(register, policies, guidelines, initiatives, orphanedProjects, migrationFence, execution) {
   const attention = [...(register.attention ?? [])];
   const staleItems = [...policies, ...guidelines, ...initiatives].filter((item) => item.evidenceState !== "current");
+  const staleSourceRefs = staleItems.flatMap((item) => (
+    item.sourceRefs.filter((sourceRef) => sourceRef.state !== "current")
+  ));
   const initiativeReviews = initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState));
 
   if (register.migration?.status === "awaiting_human_review") {
@@ -1487,8 +1526,8 @@ function createGeneratedAttention(register, policies, guidelines, initiatives, o
     attention.unshift({
       id: "ATTN-SOURCE-FRESHNESS",
       severity: "warning",
-      title: "정책 근거가 변경되었거나 사라졌습니다",
-      humanSummary: `${staleItems.length}개 항목의 근거를 다시 읽고 후보를 재검토해야 합니다.`,
+      title: "정책 근거의 인용 구간이 변경되었거나 사라졌습니다",
+      humanSummary: `${staleItems.length}개 항목의 인용 근거 ${staleSourceRefs.length}건을 다시 읽고 재검토해야 합니다. 같은 파일의 인용 구간 밖 변경은 이 경고에 포함하지 않습니다.`,
       relatedRefs: staleItems.map((item) => item.id)
     });
   }

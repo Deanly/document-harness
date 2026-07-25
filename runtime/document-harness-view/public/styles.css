@@ -301,6 +301,308 @@ h3 {
   line-height: 1.35;
 }
 
+h4 {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.title-with-help {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.title-with-help h1 {
+  margin: 0;
+}
+
+.governance-help-trigger {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--pf-t--global--color--brand--default);
+  background: #edf7ff;
+  border: 1px solid #9ecbec;
+  border-radius: 50%;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.governance-help-trigger:hover,
+.governance-help-trigger:focus-visible,
+.governance-help-trigger[aria-expanded="true"] {
+  color: #fff;
+  background: var(--pf-t--global--color--brand--default);
+  border-color: var(--pf-t--global--color--brand--default);
+}
+
+body.governance-help-pinned {
+  overflow: hidden;
+}
+
+.governance-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  padding: clamp(10px, 2vw, 28px);
+  background: rgb(10 24 39 / 68%);
+  backdrop-filter: blur(2px);
+}
+
+.governance-help-overlay[hidden] {
+  display: none;
+}
+
+.governance-help-overlay:not(.is-pinned),
+.governance-help-overlay:not(.is-pinned) * {
+  pointer-events: none;
+}
+
+.governance-help-dialog {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: var(--pf-t--global--text--color--regular);
+  background: #f8fafc;
+  border: 1px solid #9bb9d3;
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 38%);
+}
+
+.governance-help-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px clamp(18px, 2.4vw, 34px) 14px;
+  background: rgb(255 255 255 / 96%);
+  border-bottom: 1px solid var(--pf-t--global--border--color--default);
+}
+
+.governance-help-header h2 {
+  font-size: clamp(19px, 1.8vw, 26px);
+}
+
+.governance-help-header p:last-child {
+  max-width: 850px;
+  margin: 4px 0 0;
+  color: var(--pf-t--global--text--color--subtle);
+  font-size: 12px;
+}
+
+.governance-help-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.governance-help-hover-note {
+  color: var(--pf-t--global--text--color--subtle);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.governance-help-close {
+  display: none;
+}
+
+.governance-help-overlay.is-pinned .governance-help-close {
+  display: inline-flex;
+}
+
+.governance-help-overlay.is-pinned .governance-help-hover-note {
+  display: none;
+}
+
+.governance-help-content {
+  padding: clamp(16px, 2.2vw, 30px) clamp(18px, 2.8vw, 42px) 18px;
+}
+
+.governance-help-content[hidden] {
+  display: none;
+}
+
+.governance-help-hero {
+  display: grid;
+  grid-template-columns: minmax(180px, .32fr) minmax(260px, .68fr);
+  column-gap: clamp(20px, 3vw, 48px);
+  align-items: end;
+  padding-bottom: 18px;
+}
+
+.governance-help-kind {
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  color: #004b82;
+  background: var(--pf-t--global--color--status--info--subtle);
+  border-left: 4px solid var(--pf-t--global--color--brand--default);
+  border-radius: var(--pf-t--global--radius--medium);
+  font-size: clamp(15px, 1.45vw, 20px);
+  font-weight: 750;
+}
+
+.governance-help-hero h3 {
+  margin: 0 0 5px;
+  font-size: clamp(18px, 1.65vw, 24px);
+  line-height: 1.3;
+}
+
+.governance-help-hero p {
+  max-width: 940px;
+  margin: 0;
+  color: var(--pf-t--global--text--color--subtle);
+  font-size: 13px;
+}
+
+.governance-help-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.governance-help-card {
+  grid-column: span 6;
+  min-width: 0;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--pf-t--global--border--color--default);
+  border-radius: 8px;
+  box-shadow: var(--pf-t--global--shadow--sm);
+}
+
+.governance-help-card.include {
+  background: var(--pf-t--global--color--status--success--subtle);
+  border-color: #b7d7b2;
+}
+
+.governance-help-card.avoid {
+  background: var(--pf-t--global--color--status--warning--subtle);
+  border-color: #e4c675;
+}
+
+.governance-help-card h4 {
+  margin-bottom: 7px;
+  color: #24384a;
+  font-size: 13px;
+}
+
+.governance-help-card p,
+.governance-help-card ul,
+.governance-help-card ol {
+  margin: 0;
+  color: var(--pf-t--global--text--color--subtle);
+  font-size: 12px;
+}
+
+.governance-help-card ul,
+.governance-help-card ol {
+  padding-left: 19px;
+}
+
+.governance-help-card li + li {
+  margin-top: 4px;
+}
+
+.governance-help-prompts {
+  grid-column: span 7;
+  border-color: #9bc7eb;
+}
+
+.governance-help-prompts li {
+  padding-left: 2px;
+  color: #253746;
+}
+
+.governance-help-checklist {
+  grid-column: span 5;
+}
+
+.governance-help-boundary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 clamp(18px, 2.8vw, 42px) 22px;
+  padding: 12px 15px;
+  color: #5d4300;
+  background: var(--pf-t--global--color--status--warning--subtle);
+  border: 1px solid #e4c675;
+  border-radius: var(--pf-t--global--radius--medium);
+  font-size: 11px;
+}
+
+.governance-help-boundary strong {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 760px) {
+  .governance-help-overlay {
+    padding: 8px;
+  }
+
+  .governance-help-dialog {
+    border-radius: 8px;
+  }
+
+  .governance-help-header {
+    gap: 10px;
+    padding: 14px 16px 12px;
+  }
+
+  .governance-help-hover-note {
+    display: none;
+  }
+
+  .governance-help-content {
+    padding: 15px 16px;
+  }
+
+  .governance-help-hero {
+    display: block;
+  }
+
+  .governance-help-kind {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+  }
+
+  .governance-help-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .governance-help-card,
+  .governance-help-prompts,
+  .governance-help-checklist {
+    grid-column: 1;
+  }
+
+  .governance-help-boundary {
+    display: block;
+    margin: 0 16px 16px;
+  }
+
+  .governance-help-boundary strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+}
+
 .page-description {
   max-width: 760px;
   margin-bottom: 0;
