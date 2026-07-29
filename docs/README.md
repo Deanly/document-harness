@@ -4,7 +4,7 @@
 
 좋은 문서의 기준은 아래와 같습니다.
 
-- 설계 문서는 지금 기준의 진실값을 담습니다.
+- DDD design 문서는 domain expert가 검토한 현재 도메인 진실값을 담습니다.
 - `task`와 `project`는 append-only 상태 이력을 남깁니다.
 - `guide`는 반복되는 판단을 재사용 가능한 규칙으로 압축합니다.
 - 모든 문서는 서로를 명시적으로 참조합니다.
@@ -15,7 +15,9 @@
 - `docs/tasks/`: 작업 단위 문서
 - `docs/projects/`: 프로젝트 단위 문서
 - `docs/initiatives/`: 정책·지침을 delivery portfolio로 잇는 추진안 문서
-- `docs/design/`: 도메인, 경계, 계약, 정책 설계 문서
+- `docs/design/`: DDD 전용 domain landscape, context map, bounded-context model, ubiquitous language, executable examples
+- `docs/architecture/`: 기술 구조, runtime, control plane, retrieval, execution mechanism
+- `docs/governance/`: policy, approval, initiative authority와 traceability 체계
 - `docs/guide/`: 반복적으로 참조하는 운영/구현/판단 가이드
 - `docs/reports/`: 요청성 보고 문서
 - `docs/qa/`: 기획·설계에서 파생된 QA 전략, 계획, 케이스, 런북 문서
@@ -33,7 +35,8 @@
 ## Harness Philosophy
 
 - boundary-first: 구현보다 먼저 책임 경계와 비범위를 고정합니다.
-- whole-system control: `design`은 전체 시스템 목표, pipeline, invariant, handoff를 붙잡는 control surface여야 합니다.
+- domain-model authority: `design`은 DDD 도메인 모델만 담고, domain expert가 승인한 exact bytes만 current authority가 됩니다.
+- whole-system control: 기술 목표, pipeline, runtime invariant, handoff는 `architecture` control surface가 붙잡습니다.
 - strategy-to-delivery lineage: `initiative`는 정책·지침을 portfolio outcome으로, `project`는 bounded delivery로, `task`는 실행 slice로 연결합니다.
 - focused execution: `project`와 `task`는 승인된 추진안의 방향을 잃지 않은 채 delivery와 실행에 집중하게 만드는 focus surface여야 합니다.
 - human-issued initiative: `I####`는 exact human issuance approval 뒤에만 발급하고, activation approval과 lifecycle을 별도로 관리합니다.
@@ -44,7 +47,7 @@
 - ownership-aware adoption: mature repository는 파일 복사가 아니라 project-owned surface와 dirty state를 보존하는 plan/apply migration으로 도입합니다.
 - evidence-backed: 완료, 위험, 운영 판단은 실제 관찰 결과와 연결합니다.
 - goal-locked completion: 발급 시점의 목적과 완료 기준은 나중에 더 작은 조각으로 쪼개도 약해지지 않습니다.
-- current-truth design: 설계 문서는 append-only 이력보다 현재 기준의 정확성을 우선합니다.
+- current-truth design: DDD 설계 문서는 append-only 이력보다 현재 도메인 모델의 정확성을 우선하고, stable model ID로 역할 간 추적성을 유지합니다.
 - append-only execution history: `task`와 `project`의 `Status`는 실행 이력을 시간순으로 누적합니다.
 - source-backed synthesis: 원문 source는 불변으로 두고, 생성 문서는 `source_refs`와 본문 참조로 근거를 연결합니다.
 - compounding answers: 재사용 가치가 생긴 답변, 비교, 판단은 대화에만 두지 않고 `report`, `guide`, `design`, `project`, `task` 중 맞는 surface로 파일링합니다.
@@ -87,6 +90,8 @@
   - 목적
   - related control plane
   - related project (추진안은 Project의 `related_initiative`를 통해 추적)
+  - affected bounded context와 approved/current domain model ref
+  - actor role과 domain change 영향
   - whole-system anchor
   - completion mode
   - execution contract, task contract revision, lifecycle과 분리된 loop state
@@ -120,6 +125,8 @@
 - 필수 내용:
   - 목적
   - initiative ref와 initiative alignment
+  - affected bounded context와 approved/current domain model ref
+  - domain change 영향과 domain expert review ref
   - related control plane
   - whole-system anchor
   - completion mode
@@ -141,15 +148,29 @@
 
 ### Design
 
-- 파일명 규칙: `domain-boundary.md`
-- 의미: 시스템 설계, 모델, 계약, 정책의 기준 문서
+- 파일명 규칙: `docs/design/domain-landscape.md`, `docs/design/context-map.md`, `docs/design/contexts/<bounded-context>/{domain-model,ubiquitous-language,examples}.md`
+- 의미: DDD에 입각한 현재 도메인 모델과 조직의 공통 업무 언어
 - 특징:
-  - 현재 truth를 우선합니다.
-  - 필요 시 지속 수정합니다.
-  - 설계가 바뀌면 관련 `task`, `project`, `guide`보다 먼저 갱신합니다.
-  - whole-system role, artifact contract, failure boundary, quality axis를 함께 잠급니다.
-  - `governance_role: human-policy`는 인간 소유 policy clause를, `governance_role: normative-standard`는 승인되어 effective인 rule을 담습니다.
-  - AI proposal은 design에 바로 effective로 쓰지 않고 `report`에서 검토·승인한 뒤 승격합니다.
+  - `docs/design/`에는 기술 architecture나 governance mechanism을 두지 않습니다.
+  - landscape와 context map이 bounded-context 경계와 관계를 고정합니다.
+  - 각 context set은 model, ubiquitous language, executable examples를 함께 가집니다.
+  - aggregate, entity, value object, command, event, policy, business rule, scenario에 stable ID를 부여합니다.
+  - 고객·기획자·설계자·개발자·QA는 동일한 stable ID를 role-specific packet으로 읽습니다.
+  - AI는 `draft`/`review_requested` 모델을 제안할 수 있지만 domain expert를 대신해 승인할 수 없습니다.
+  - `current` 모델은 repository-relative JSON approval receipt가 human actor와 exact source bytes를 고정하고 freshness 검증을 통과해야 합니다.
+  - 자세한 계약은 `docs/guide/ddd-domain-design.md`를 따릅니다.
+
+### Architecture
+
+- 위치: `docs/architecture/`
+- 의미: control plane, runtime, retrieval, execution loop, Human View 같은 기술 구조와 운영 메커니즘
+- 특징: 도메인 의미를 재정의하지 않고 approved DDD model을 구현·투영합니다.
+
+### Governance
+
+- 위치: `docs/governance/`
+- 의미: policy, guideline, approval, initiative authority, exception, evidence traceability 체계
+- 특징: DDD model과 독립된 human authority 경계를 유지하며 AI self-approval을 허용하지 않습니다.
 
 ### Guide
 
@@ -181,21 +202,22 @@
 - 특징:
   - `qa_type`은 `strategy`, `plan`, `cases`, `runbook` 중 하나입니다.
   - source documents와 traceability를 유지합니다.
+  - affected context의 approved/current model과 covered business rule/scenario ID를 추적합니다.
   - 번호는 clean, up-to-date `main`에서 발급하고 draft를 즉시 commit합니다.
   - current 문서는 `docs/qa/README.md`와 `docs/_indexes/active-docs.md`에 함께 표시합니다.
-  - governance 적용 시 Policy Clause → Standard Rule → Task/Goal → Check → Evidence → Exception/Verdict를 exact version/ID로 추적합니다.
+  - Domain Scenario → Business Rule → Task/Goal → Check → Evidence → Verdict와 Policy Clause → Standard Rule lineage를 모두 exact version/ID로 추적합니다.
 
-### Ubiquitous Language
+### Harness Language
 
-- 권장 파일: `docs/design/ubiquitous-language.md`
-- 의미: 프로젝트 전체에서 쓰는 canonical term 사전
+- 권장 파일: `docs/architecture/harness-language.md`
+- 의미: document harness 자체의 canonical technical term 사전
 - 특징:
-  - 설계 변경과 같은 변경 셋에서 갱신합니다.
-  - 같은 대상을 가리키는 복수 표현이 생기면 하나의 term으로 고정합니다.
+  - 비즈니스 ubiquitous language를 대신하지 않습니다.
+  - 비즈니스 용어는 각 `docs/design/contexts/<bounded-context>/ubiquitous-language.md`에서 관리합니다.
 
 ### Control Plane
 
-- 권장 파일: `docs/design/control-plane.md`
+- 권장 파일: `docs/architecture/control-plane.md`
 - 의미: 전체 시스템 목표, 표준 pipeline, active control surface, quality axis, validator를 한 곳에 묶는 central control surface
 - 특징:
   - 새 프로젝트에서 가장 먼저 채웁니다.
@@ -272,7 +294,8 @@
 - `initiative`, `task`, `project`의 `Status` 섹션은 append-only로 운영합니다.
 - 새 이력은 문서 하단에 계속 추가합니다.
 - WBS와 진행률은 현재 상태를 반영하도록 갱신합니다.
-- `task`와 `project`는 관련 `design` 문서를 명시적으로 참조합니다.
+- `task`와 `project`는 `domain_impact`, affected bounded context, actor role, approved/current domain model ref를 명시합니다. `domain_impact: none`도 사유와 human review ref 없이는 허용하지 않습니다.
+- QA는 source model뿐 아니라 covered business rule ID와 scenario ID를 명시합니다.
 - `task`와 `project`는 `Related Control Plane`을 통해 whole-system 기준 문서를 명시적으로 참조합니다.
 - human-facing strategy/portfolio owner는 별도 `initiative`로 유지하고 project는 bounded delivery만 소유합니다.
 - 추진안은 policy와 guideline을 모두 직접 연결하되 WHY/WHAT과 HOW/EVIDENCE 역할을 구분합니다.
@@ -280,7 +303,7 @@
 - 새 `project`는 별도 delivery boundary가 명확하고 사람이 요청하거나 승인할 때만 발급합니다.
 - `project`는 `Initiative Ref`, `Initiative Alignment`, `Project Issuance Check`를 통해 추진안 lineage와 분리 이유를 남깁니다.
 - `task`는 `Related Project`, `Task Placement Check`를 통해 왜 task가 맞고 왜 project가 아닌지 남기며, 해당 Project의 `related_initiative`를 통해 추진안 계보를 따릅니다.
-- 기존 umbrella field는 `docs/design/initiative-governance-plane.md`의 legacy bridge에 따라 점진적으로 migration하며 일괄 rewrite하지 않습니다.
+- 기존 umbrella field는 `docs/governance/initiative-governance.md`의 legacy bridge에 따라 점진적으로 migration하며 일괄 rewrite하지 않습니다.
 - `Goal Inventory`는 발급 시점에 잠그는 목표 목록입니다. `Goal ID`는 후속 분해가 생겨도 유지합니다.
 - `Goal Verification`은 `Goal Inventory`의 각 `Goal ID`를 1:1로 다시 적고 현재 상태와 evidence를 기록합니다.
 - `Whole-System Anchor`에는 이 문서가 전체 시스템에서 무엇을 보존해야 하는지, 어떤 invariant와 design surface를 깨면 안 되는지를 적습니다.
@@ -296,6 +319,8 @@
 - whole-system control surface의 기본 구조는 `./docs/bin/validate-harness-foundation.sh`를 통과해야 합니다.
 - Codex-facing surface의 기본 구조는 `./docs/bin/validate-codex-readiness.sh`를 통과해야 합니다.
 - retrieval-plane surface의 기본 구조는 `./docs/bin/validate-doc-retrieval.sh`를 통과해야 합니다.
+- DDD structure와 exact-byte approval/freshness는 `./docs/bin/validate-domain-design.sh --all`을 통과해야 합니다.
+- project/task/QA domain traceability는 `./docs/bin/validate-domain-lineage.sh --all`을 통과해야 합니다.
 - hybrid runtime을 쓰더라도 filesystem source가 authoritative하며, 현재 작업에서 바뀐 파일이나 freshness가 불확실한 결과는 source를 직접 읽습니다.
 - retrieval runtime은 `docs/_indexes/retrieval-policy.yaml`의 revision, tombstone, direct-read fallback 계약을 따릅니다.
 - lifecycle `status`와 execution `loop_state`를 분리하고, active execution은 current checkpoint를 연결합니다.
@@ -312,9 +337,10 @@
 - active `project`, `task`, `report`는 첫 화면에 `Status`, `Owner`, `Updated`, `Current Focus`를 드러냅니다.
 - `report`는 살아 있는 truth를 누적하는 문서가 아닙니다. 재사용 규칙이나 현재 기준이 생기면 해당 타입 문서로 승격하고 링크를 남깁니다.
 - 설계가 변경되면:
-  - 먼저 `design` 문서를 수정합니다.
-  - 새 핵심 용어, 상태, 경계가 생기면 `docs/design/ubiquitous-language.md`를 같은 변경 셋에서 함께 수정합니다.
-  - 이후 관련 `task`, `project`, `guide`의 참조와 상태를 갱신합니다.
+  - 먼저 affected bounded context의 domain model, ubiquitous language, examples를 같은 변경 셋에서 수정합니다.
+  - 경계나 upstream/downstream 관계가 바뀌면 landscape와 context map도 함께 수정합니다.
+  - AI 초안은 `review_requested`로 두고 domain expert에게 exact model bytes 검토를 요청합니다.
+  - 승인 receipt와 freshness 검증 뒤 관련 `task`, `project`, `qa`, `guide`, architecture 참조를 갱신합니다.
 
 ## Writing Bar
 
@@ -356,11 +382,11 @@
 ## Recommended Workflow
 
 1. 새 repository인지 mature repository인지 먼저 판정합니다. 기존 AGENTS, design, template, validator 또는 numbered doc가 있다면 `docs/ADOPT.md`의 no-write migrate plan부터 사용하고 public 파일을 단순 복사하지 않습니다.
-2. 새 프로젝트 시작 시 `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 먼저 채웁니다.
+2. 새 프로젝트 시작 시 `docs/architecture/control-plane.md`, `docs/design/domain-landscape.md`, `docs/design/context-map.md`를 먼저 채웁니다.
 3. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.
 4. Codex가 작업할 프로젝트라면 루트 `AGENTS.md`와 repository-local `operate-document-harness` skill을 실제 repo 기준으로 조정합니다.
 5. 정책·지침을 검토한 뒤 사람의 exact approval로 첫 `I####` 추진안을 발급합니다.
-6. 추진안 아래 첫 bounded `project`를 발급하고 핵심 boundary와 계약을 `design`으로 고정합니다.
+6. domain expert와 함께 bounded context별 model·ubiquitous language·examples를 작성하고 exact-byte approval receipt를 만든 뒤, 승인된 추진안 아래 첫 bounded `project`를 발급합니다.
 7. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
 8. 실제 작업 단위가 생기면 먼저 현재 project 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
 9. 별도 delivery boundary가 명확하고 사람이 승인할 때만 새 `project`를 발급하고 issuance check에 그 이유를 남깁니다.
@@ -371,7 +397,7 @@
 14. 반복적으로 참조할 설명, 체크리스트, 운영 기준은 `guide`로 남깁니다.
 15. 요청성 정리나 특정 시점 보고는 `report`로 남기고, 재사용 가치가 생기면 다른 타입으로 승격합니다.
 16. 주기적으로 `docs/guide/llm-wiki-operations.md`의 lint workflow로 stale claim, orphan, property drift를 점검합니다.
-17. corpus 규모나 freshness 병목이 생기면 `docs/design/retrieval-plane.md`와 `docs/guide/hybrid-retrieval-and-freshness.md`에 따라 hybrid profile을 활성화합니다.
+17. corpus 규모나 freshness 병목이 생기면 `docs/architecture/retrieval-plane.md`와 `docs/guide/hybrid-retrieval-and-freshness.md`에 따라 hybrid profile을 활성화합니다.
 18. `./docs/bin/validate-codex-readiness.sh`와 `./docs/bin/validate-harness-adoption.sh`로 Codex/adoption entrypoint를 확인합니다.
 19. `./docs/bin/validate-harness-foundation.sh`, `./docs/bin/validate-execution-loop.sh --all`, `./docs/bin/validate-closeout.sh`로 control, loop, closeout gate를 확인합니다.
 
@@ -389,13 +415,17 @@
 ./docs/bin/new-doc.sh task bootstrap-ingestion-worker P0001
 ./docs/bin/new-doc.sh task "문서 하네스 정리" P0001
 ./docs/bin/new-doc.sh qa first-test-strategy
-./docs/bin/new-doc.sh design event-ingestion
+./docs/bin/new-doc.sh design bounded-context ingestion domain-model
+./docs/bin/new-doc.sh design ubiquitous-language ingestion ubiquitous-language
+./docs/bin/new-doc.sh design domain-examples ingestion examples
 ./docs/bin/new-doc.sh guide project-cutting-and-execution
 ./docs/bin/new-doc.sh report sprint-01-status
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
 ./docs/bin/validate-harness-adoption.sh
 ./docs/bin/validate-doc-retrieval.sh
+./docs/bin/validate-domain-design.sh --all
+./docs/bin/validate-domain-lineage.sh --all
 ./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/close-doc.sh docs/tasks/T0001-bootstrap-ingest.md "issued goals and evidence verified"
@@ -408,14 +438,17 @@
 - `CLAUDE.md`
 - `.agents/skills/operate-document-harness/SKILL.md`
 - `.claude/skills/operate-document-harness/SKILL.md`
-- `docs/design/ubiquitous-language.md`
-- `docs/design/control-plane.md`
-- `docs/design/initiative-governance-plane.md`
-- `docs/design/harness-adoption-plane.md`
-- `docs/design/retrieval-plane.md`
-- `docs/design/policy-to-evidence-governance.md`
-- `docs/design/execution-loop-plane.md`
-- `docs/design/human-control-view-plane.md`
+- `docs/architecture/harness-language.md`
+- `docs/design/domain-landscape.md`
+- `docs/design/context-map.md`
+- `docs/guide/ddd-domain-design.md`
+- `docs/architecture/control-plane.md`
+- `docs/governance/initiative-governance.md`
+- `docs/architecture/harness-adoption-plane.md`
+- `docs/architecture/retrieval-plane.md`
+- `docs/governance/policy-to-evidence.md`
+- `docs/architecture/execution-loop-plane.md`
+- `docs/architecture/human-control-view-plane.md`
 - `AGENTS.md`
 - `docs/guide/harness-philosophy.md`
 - `docs/guide/codex-agent-guidance.md`

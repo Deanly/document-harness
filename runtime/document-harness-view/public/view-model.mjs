@@ -32,6 +32,36 @@ function uniqueSorted(values) {
   return [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right));
 }
 
+export function filterDomainContexts({ contexts = [], query = "", role = "all", filter = "all" }) {
+  const needle = normalized(query);
+  return contexts.filter((context) => {
+    const roleMatch = role === "all" || (context.roleViews ?? []).includes(role);
+    if (!roleMatch) return false;
+    const statusMatch = filter === "all"
+      || (filter === "approved" && context.validationStatus === "approved_current")
+      || (filter === "review" && context.validationStatus !== "approved_current" && context.validationStatus !== "invalid")
+      || (filter === "invalid" && context.validationStatus === "invalid");
+    if (!statusMatch) return false;
+    if (!needle) return true;
+    const haystack = [
+      context.id,
+      context.name,
+      context.title,
+      context.subdomainType,
+      context.owner,
+      context.summary,
+      context.modelRef,
+      context.languageRef,
+      context.examplesRef,
+      context.validationStatus,
+      ...(context.domainExpertRoles ?? []),
+      ...(context.roleViews ?? []),
+      ...(context.openQuestions ?? [])
+    ].filter(Boolean).join(" ").toLocaleLowerCase();
+    return haystack.includes(needle);
+  });
+}
+
 export function sortAttention(attention = []) {
   return [...attention].sort((left, right) => {
     const rank = (severityOrder.get(left.severity) ?? 99) - (severityOrder.get(right.severity) ?? 99);

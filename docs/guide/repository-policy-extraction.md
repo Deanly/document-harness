@@ -6,9 +6,9 @@ owner:
 created: 2026-07-15
 updated: 2026-07-17
 related_design:
-  - docs/design/harness-adoption-plane.md
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/human-control-view-plane.md
+  - docs/architecture/harness-adoption-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/architecture/human-control-view-plane.md
 tags:
   - docs/guide
   - governance
@@ -197,7 +197,7 @@ Minimum candidate shape:
   "decisionReceiptRef": null,
   "sourceRefs": [
     {
-      "path": "docs/design/control-plane.md",
+      "path": "docs/architecture/control-plane.md",
       "heading": "Invariants",
       "lineStart": 10,
       "lineEnd": 18,
@@ -274,7 +274,7 @@ The first human screen should show:
 - critical gaps and conflicts
 - repository revision/dirty state and latest verification
 
-이 항목은 repository별 독립 View의 `single-repository-top-tabs-v2` profile에 다음처럼 배치합니다.
+이 항목은 repository별 독립 View의 `single-repository-top-tabs-v3` profile에 다음처럼 배치합니다.
 
 - top bar: 스크롤 중에도 유지되는 `<displayName> / <repository>`, revision/dirty, snapshot/freshness, local-only/read-only
 - `개요`: product direction, count summary, critical gap와 latest verification

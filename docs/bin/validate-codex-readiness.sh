@@ -56,16 +56,19 @@ CLAUDE_TEMPLATE="$DOCS_DIR/_templates/claude.md"
 CODEX_GUIDE="$DOCS_DIR/guide/codex-agent-guidance.md"
 NEW_DOC_SCRIPT="$DOCS_DIR/bin/new-doc.sh"
 EXECUTION_ENTRY="$DOCS_DIR/EXECUTE.md"
-EXECUTION_LOOP="$DOCS_DIR/design/execution-loop-plane.md"
-HUMAN_VIEW_DESIGN="$DOCS_DIR/design/human-control-view-plane.md"
-POLICY_GOVERNANCE="$DOCS_DIR/design/policy-to-evidence-governance.md"
+EXECUTION_LOOP="$DOCS_DIR/architecture/execution-loop-plane.md"
+HUMAN_VIEW_DESIGN="$DOCS_DIR/architecture/human-control-view-plane.md"
+POLICY_GOVERNANCE="$DOCS_DIR/governance/policy-to-evidence.md"
 EXECUTION_POLICY="$DOCS_DIR/_indexes/execution-loop-policy.yaml"
 EXECUTION_CHECKPOINT_TEMPLATE="$DOCS_DIR/_templates/execution-checkpoint.md"
 EXECUTION_VALIDATOR="$DOCS_DIR/bin/validate-execution-loop.sh"
 ADOPTION_ENTRY="$DOCS_DIR/ADOPT.md"
-ADOPTION_DESIGN="$DOCS_DIR/design/harness-adoption-plane.md"
+ADOPTION_DESIGN="$DOCS_DIR/architecture/harness-adoption-plane.md"
 ADOPTION_GUIDE="$DOCS_DIR/guide/repository-policy-extraction.md"
 ADOPTION_VALIDATOR="$DOCS_DIR/bin/validate-harness-adoption.sh"
+DOMAIN_DESIGN_GUIDE="$DOCS_DIR/guide/ddd-domain-design.md"
+DOMAIN_DESIGN_VALIDATOR="$DOCS_DIR/bin/validate-domain-design.sh"
+DOMAIN_LINEAGE_VALIDATOR="$DOCS_DIR/bin/validate-domain-lineage.sh"
 CODEX_HARNESS_SKILL="$REPO_ROOT/.agents/skills/operate-document-harness/SKILL.md"
 CODEX_HARNESS_SKILL_METADATA="$REPO_ROOT/.agents/skills/operate-document-harness/agents/openai.yaml"
 CLAUDE_HARNESS_SKILL="$REPO_ROOT/.claude/skills/operate-document-harness/SKILL.md"
@@ -87,6 +90,9 @@ require_file "$ADOPTION_ENTRY"
 require_file "$ADOPTION_DESIGN"
 require_file "$ADOPTION_GUIDE"
 require_file "$ADOPTION_VALIDATOR"
+require_file "$DOMAIN_DESIGN_GUIDE"
+require_file "$DOMAIN_DESIGN_VALIDATOR"
+require_file "$DOMAIN_LINEAGE_VALIDATOR"
 require_file "$CODEX_HARNESS_SKILL"
 require_file "$CODEX_HARNESS_SKILL_METADATA"
 require_file "$CLAUDE_HARNESS_SKILL"
@@ -143,6 +149,10 @@ require_contains "$AGENTS_FILE" './docs/bin/validate-execution-loop.sh --all'
 require_contains "$AGENTS_TEMPLATE" './docs/bin/validate-execution-loop.sh --all'
 require_contains "$AGENTS_FILE" './docs/bin/validate-harness-adoption.sh'
 require_contains "$AGENTS_TEMPLATE" './docs/bin/validate-harness-adoption.sh'
+require_contains "$AGENTS_FILE" './docs/bin/validate-domain-design.sh --all'
+require_contains "$AGENTS_TEMPLATE" './docs/bin/validate-domain-design.sh --all'
+require_contains "$AGENTS_FILE" 'docs/design/` is reserved for DDD domain-model truth'
+require_contains "$AGENTS_TEMPLATE" 'docs/design/` is reserved for DDD domain-model truth'
 require_contains "$CLAUDE_FILE" '@AGENTS.md'
 require_contains "$CLAUDE_TEMPLATE" '@AGENTS.md'
 require_contains "$CLAUDE_FILE" 'docs/ADOPT.md'
@@ -174,11 +184,15 @@ do
   require_frontmatter "$template"
 done
 
-require_contains "$DOCS_DIR/_templates/design.md" 'governance_role:'
+require_contains "$DOCS_DIR/_templates/design.md" 'design_kind: bounded-context'
+require_contains "$DOCS_DIR/_templates/design.md" 'domain_expert_roles:'
+require_contains "$DOCS_DIR/_templates/design.md" 'role_views:'
 require_contains "$DOCS_DIR/_templates/report.md" 'proposal_status:'
 require_contains "$DOCS_DIR/_templates/task.md" 'execution_contract: v1'
 require_contains "$DOCS_DIR/_templates/task.md" 'loop_state: ready'
-require_contains "$DOCS_DIR/_templates/qa.md" 'Policy Clause'
+require_contains "$DOCS_DIR/_templates/task.md" 'domain_contract: v1'
+require_contains "$DOCS_DIR/_templates/project.md" 'domain_contract: v1'
+require_contains "$DOCS_DIR/_templates/qa.md" '| Rule ID | Scenario ID |'
 
 for header in \
   '## Purpose' '## Load Order' '## Start Gate' '## Execute Loop' \

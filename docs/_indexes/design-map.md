@@ -1,23 +1,24 @@
-# Design Map
+# DDD Design Map
 
-This is a compact design selection map derived from `docs/design/README.md`.
+This compact selection map is derived from `docs/design/README.md`. Only DDD domain truth appears here; architecture and governance have separate indexes.
 
 | Design Doc | Retrieval Class | Domain | Size Tier | Default Load | Section Load |
 | --- | --- | --- | --- | --- | --- |
-| `docs/design/control-plane.md` | `core-start` | control-plane | small | true | false |
-| `docs/design/retrieval-plane.md` | `domain-current` | retrieval | medium | false | false |
-| `docs/design/policy-to-evidence-governance.md` | `domain-current` | governance | small | false | false |
-| `docs/design/initiative-governance-plane.md` | `domain-current` | initiative-governance | small | false | false |
-| `docs/design/execution-loop-plane.md` | `domain-current` | execution | medium | false | false |
-| `docs/design/human-control-view-plane.md` | `domain-current` | human-view | small | false | false |
-| `docs/design/harness-adoption-plane.md` | `domain-current` | harness-adoption | medium | false | false |
-| `docs/design/ubiquitous-language.md` | `term-excerpt` | ubiquitous-language | small | false | true |
+| `docs/design/domain-landscape.md` | `core-start` | document-harness | small | true | false |
+| `docs/design/context-map.md` | `context-map` | document-harness | small | true | false |
+| `docs/design/contexts/governance/domain-model.md` | `domain-current` | document-harness | medium | false | false |
+| `docs/design/contexts/governance/ubiquitous-language.md` | `term-excerpt` | document-harness | small | false | true |
+| `docs/design/contexts/governance/examples.md` | `domain-examples` | document-harness | small | false | true |
+| `docs/design/contexts/execution/domain-model.md` | `domain-current` | document-harness | medium | false | false |
+| `docs/design/contexts/execution/ubiquitous-language.md` | `term-excerpt` | document-harness | small | false | true |
+| `docs/design/contexts/execution/examples.md` | `domain-examples` | document-harness | small | false | true |
+| `docs/design/contexts/adoption/domain-model.md` | `domain-current` | document-harness | medium | false | false |
+| `docs/design/contexts/adoption/ubiquitous-language.md` | `term-excerpt` | document-harness | small | false | true |
+| `docs/design/contexts/adoption/examples.md` | `domain-examples` | document-harness | small | false | true |
+| `docs/design/contexts/retrieval/domain-model.md` | `domain-current` | document-harness | medium | false | false |
+| `docs/design/contexts/retrieval/ubiquitous-language.md` | `term-excerpt` | document-harness | small | false | true |
+| `docs/design/contexts/retrieval/examples.md` | `domain-examples` | document-harness | small | false | true |
 
 ## Change Log
 
-- 2026-05-16: compact design map created from design retrieval index.
-- 2026-07-15: retrieval-plane domain design added.
-- 2026-07-15: policy governance and execution loop domain designs added.
-- 2026-07-15: human-control-view domain design added.
-- 2026-07-15: harness-adoption domain design added.
-- 2026-07-18: initiative-governance domain design added.
+- 2026-07-29: 범용 architecture index를 DDD landscape/context-map/context model map으로 교체했다.

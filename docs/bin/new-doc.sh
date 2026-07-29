@@ -12,13 +12,14 @@ Usage:
   ./docs/bin/new-doc.sh initiative <slug> <issuance-approval-ref>
   ./docs/bin/new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]
   ./docs/bin/new-doc.sh task <slug> <project-id>
-  ./docs/bin/new-doc.sh <design|guide|report|qa> <slug>
+  ./docs/bin/new-doc.sh design <domain-landscape|context-map|bounded-context|ubiquitous-language|domain-examples> <bounded-context|all> <slug>
+  ./docs/bin/new-doc.sh <guide|report|qa> <slug>
 
 Types:
   initiative -> docs/initiatives/I0001-slug.md
   task      -> docs/tasks/T0001-slug.md
   project   -> docs/projects/P0001-slug.md
-  design    -> docs/design/slug.md
+  design    -> docs/design/{domain-landscape|context-map}.md or docs/design/contexts/<bounded-context>/<slug>.md
   guide     -> docs/guide/slug.md
   report    -> docs/reports/YYYY-MM-DD-slug.md
   qa        -> docs/qa/QA0001-slug.md
@@ -137,6 +138,8 @@ render_template() {
   local related_initiative="$6"
   local initiative_relation="$7"
   local related_project="$8"
+  local design_kind="$9"
+  local bounded_context="${10}"
 
   DOC_ID_VALUE="$doc_id" \
   TITLE_VALUE="$title" \
@@ -145,6 +148,8 @@ render_template() {
   RELATED_INITIATIVE_VALUE="$related_initiative" \
   INITIATIVE_RELATION_VALUE="$initiative_relation" \
   RELATED_PROJECT_VALUE="$related_project" \
+  DESIGN_KIND_VALUE="$design_kind" \
+  BOUNDED_CONTEXT_VALUE="$bounded_context" \
     perl -pe '
       s/\{\{DOC_ID\}\}/$ENV{DOC_ID_VALUE}/g;
       s/\{\{TITLE\}\}/$ENV{TITLE_VALUE}/g;
@@ -153,6 +158,8 @@ render_template() {
       s/\{\{RELATED_INITIATIVE\}\}/$ENV{RELATED_INITIATIVE_VALUE}/g;
       s/\{\{INITIATIVE_RELATION\}\}/$ENV{INITIATIVE_RELATION_VALUE}/g;
       s/\{\{RELATED_PROJECT\}\}/$ENV{RELATED_PROJECT_VALUE}/g;
+      s/\{\{DESIGN_KIND\}\}/$ENV{DESIGN_KIND_VALUE}/g;
+      s/\{\{BOUNDED_CONTEXT\}\}/$ENV{BOUNDED_CONTEXT_VALUE}/g;
     ' "$template" > "$output"
 }
 
@@ -310,12 +317,25 @@ TYPE="$1"
 RAW_SLUG="$2"
 ARG3="${3:-}"
 ARG4="${4:-}"
+DESIGN_KIND=""
+BOUNDED_CONTEXT=""
 ISSUANCE_APPROVAL_REF=""
 RELATED_INITIATIVE=""
 INITIATIVE_RELATION=""
 RELATED_PROJECT=""
-SLUG="$(slugify "$RAW_SLUG")"
 NUMBERED_DOC="false"
+
+if [[ "$TYPE" == "design" ]]; then
+  if [[ $# -ne 4 ]]; then
+    usage
+    exit 1
+  fi
+  DESIGN_KIND="$2"
+  BOUNDED_CONTEXT="$(slugify "$3")"
+  RAW_SLUG="$4"
+fi
+
+SLUG="$(slugify "$RAW_SLUG")"
 
 if [[ -z "$SLUG" ]]; then
   echo "error: slug must contain at least one letter or number" >&2
@@ -379,13 +399,42 @@ case "$TYPE" in
     NUMBERED_DOC="true"
     ;;
   design)
-    if [[ -n "$ARG3" || -n "$ARG4" ]]; then usage; exit 1; fi
-    DOC_DIR="$ROOT_DIR/design"
+    case "$DESIGN_KIND" in
+      domain-landscape)
+        [[ "$BOUNDED_CONTEXT" == "all" ]] || { echo "error: domain-landscape requires bounded-context 'all'" >&2; exit 1; }
+        DOC_DIR="$ROOT_DIR/design"
+        TEMPLATE="$ROOT_DIR/_templates/design-domain-landscape.md"
+        ;;
+      context-map)
+        [[ "$BOUNDED_CONTEXT" == "all" ]] || { echo "error: context-map requires bounded-context 'all'" >&2; exit 1; }
+        DOC_DIR="$ROOT_DIR/design"
+        TEMPLATE="$ROOT_DIR/_templates/design-context-map.md"
+        ;;
+      bounded-context)
+        [[ -n "$BOUNDED_CONTEXT" && "$BOUNDED_CONTEXT" != "all" ]] || { echo "error: bounded-context design requires a concrete bounded context" >&2; exit 1; }
+        DOC_DIR="$ROOT_DIR/design/contexts/$BOUNDED_CONTEXT"
+        TEMPLATE="$ROOT_DIR/_templates/design.md"
+        ;;
+      ubiquitous-language)
+        [[ -n "$BOUNDED_CONTEXT" && "$BOUNDED_CONTEXT" != "all" ]] || { echo "error: ubiquitous-language requires a concrete bounded context" >&2; exit 1; }
+        DOC_DIR="$ROOT_DIR/design/contexts/$BOUNDED_CONTEXT"
+        TEMPLATE="$ROOT_DIR/_templates/design-ubiquitous-language.md"
+        ;;
+      domain-examples)
+        [[ -n "$BOUNDED_CONTEXT" && "$BOUNDED_CONTEXT" != "all" ]] || { echo "error: domain-examples requires a concrete bounded context" >&2; exit 1; }
+        DOC_DIR="$ROOT_DIR/design/contexts/$BOUNDED_CONTEXT"
+        TEMPLATE="$ROOT_DIR/_templates/design-examples.md"
+        ;;
+      *)
+        echo "error: unsupported design kind: $DESIGN_KIND" >&2
+        usage
+        exit 1
+        ;;
+    esac
     mkdir -p "$DOC_DIR"
-    TEMPLATE="$ROOT_DIR/_templates/design.md"
     DOC_ID=""
     TITLE="$SLUG"
-    OUTPUT="$ROOT_DIR/design/${SLUG}.md"
+    OUTPUT="$DOC_DIR/${SLUG}.md"
     ;;
   guide)
     if [[ -n "$ARG3" || -n "$ARG4" ]]; then usage; exit 1; fi
@@ -431,7 +480,7 @@ if [[ -e "$OUTPUT" ]]; then
   exit 1
 fi
 
-render_template "$TEMPLATE" "$OUTPUT" "$DOC_ID" "$TITLE" "$ISSUANCE_APPROVAL_REF" "$RELATED_INITIATIVE" "$INITIATIVE_RELATION" "$RELATED_PROJECT"
+render_template "$TEMPLATE" "$OUTPUT" "$DOC_ID" "$TITLE" "$ISSUANCE_APPROVAL_REF" "$RELATED_INITIATIVE" "$INITIATIVE_RELATION" "$RELATED_PROJECT" "$DESIGN_KIND" "$BOUNDED_CONTEXT"
 if [[ "$NUMBERED_DOC" == "true" ]]; then
   commit_numbered_doc_draft "$OUTPUT" "$DOC_ID" "$SLUG"
   echo "hint: draft committed on main; push/share if needed, then merge main back into the work branch" >&2

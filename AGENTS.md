@@ -9,18 +9,20 @@
 - `docs/README.md` is the main schema for document types, issuing rules, update rules, and commands.
 - `docs/ADOPT.md` is the single entrypoint for initializing, migrating, or upgrading the harness in a target repository.
 - `docs/EXECUTE.md` is the single orchestration index for starting or resuming a loop-enabled task.
-- `docs/design/control-plane.md` is the top-level control surface for goals, pipeline, validators, and handoff rules.
-- `docs/design/harness-adoption-plane.md` defines ownership-aware plan/apply migration, policy extraction, repo-local View, and quality handoff contracts.
-- `docs/design/retrieval-plane.md` defines scalable search, revision, and freshness contracts.
-- `docs/design/policy-to-evidence-governance.md` defines human policy, AI proposal, approval, exception, and traceability authority.
-- `docs/design/initiative-governance-plane.md` defines the distinct Initiative → Project → Task hierarchy, policy/guideline relationships, approval, and legacy umbrella bridge.
-- `docs/design/execution-loop-plane.md` defines task checkpoint, attention, stop/resume, and evidence contracts.
-- `docs/design/human-control-view-plane.md` defines projector, snapshot API/SSE, freshness, security, and runtime boundaries.
+- `docs/design/` is reserved for DDD domain-model truth: landscape, context map, bounded-context models, ubiquitous language, and executable domain examples.
+- `docs/guide/ddd-domain-design.md` defines domain-expert authorship, stable model IDs, role-based loading, validation receipts, freshness, and delivery traceability.
+- `docs/architecture/control-plane.md` is the top-level control surface for goals, pipeline, validators, and handoff rules.
+- `docs/architecture/harness-adoption-plane.md` defines ownership-aware plan/apply migration, policy extraction, repo-local View, and quality handoff contracts.
+- `docs/architecture/retrieval-plane.md` defines scalable search, revision, and freshness contracts.
+- `docs/governance/policy-to-evidence.md` defines human policy, AI proposal, approval, exception, and traceability authority.
+- `docs/governance/initiative-governance.md` defines the distinct Initiative → Project → Task hierarchy, policy/guideline relationships, approval, and legacy umbrella bridge.
+- `docs/architecture/execution-loop-plane.md` defines task checkpoint, attention, stop/resume, and evidence contracts.
+- `docs/architecture/human-control-view-plane.md` defines projector, snapshot API/SSE, freshness, security, and runtime boundaries.
 - `docs/guide/human-control-view.md` defines how a person operates the read-only local human view.
 - `docs/guide/repository-policy-extraction.md` defines how existing repository rules become reviewable policy/guideline candidates without AI self-approval.
 - `docs/guide/initiative-governance.md` defines how approved policy/guideline direction becomes a human-approved `I####` 추진안 and linked delivery projects.
 - `docs/guide/governance-authoring-assistance.md` defines how AI tools help non-specialists author reviewable locale-appropriate policy, guideline, and initiative drafts without taking approval authority.
-- `docs/design/ubiquitous-language.md` holds canonical terms.
+- `docs/architecture/harness-language.md` holds canonical terms.
 - `docs/guide/` holds reusable operating rules, including Codex guidance and artifact contracts.
 - `docs/_templates/` holds templates used by `docs/bin/new-doc.sh`.
 - `docs/bin/` holds deterministic helper scripts and validators.
@@ -36,6 +38,7 @@
 - Prefer `rg` and the scripts in `docs/bin/` for navigation and verification.
 - If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.
 - Treat policy, guideline, and initiative as mandatory upper governance for project/task work. Before planning, issuing, or executing delivery, direct-read the current project lineage, active approved initiative, exact effective policy/guideline refs, approval receipts, and freshness. Project/task text may refine delivery but must not weaken or reinterpret them; stop with attention on missing, stale, unapproved-required, or conflicting governance.
+- Treat the approved current DDD model as the shared business contract for customers, planners, architects, developers, and QA. Before delivery work, identify affected bounded contexts, load the role packet from `docs/_indexes/context-packets.yaml`, and verify exact model bytes through `docs/lib/domain-design-authority.mjs`. Stop on missing, stale, disputed, or unapproved-required domain truth; AI may draft a model but cannot approve its own bytes.
 - When a user needs help expressing governance, follow `docs/guide/governance-authoring-assistance.md`: ask the smallest useful questions, draft human-facing wording in clear user-language, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence and unknowns, and request exact human review. Never turn assistance into self-approval.
 - Before loop-enabled execution, read the effective policy/standard refs, current task contract, and current checkpoint; keep lifecycle `status` separate from `loop_state`.
 - AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.
@@ -53,7 +56,8 @@
 - Preserve YAML frontmatter on generated markdown templates.
 - Keep frontmatter properties and first-screen bullet metadata in sync.
 - Keep `source_refs` populated when a claim depends on raw source material, external docs, transcripts, datasets, or official references.
-- `design` documents hold current truth; `initiative`, `task`, and `project` status sections hold append-only lifecycle or execution history.
+- `docs/design/` is reserved for DDD domain truth. Put technical topology and mechanisms in `docs/architecture/`, and approval/governance systems in `docs/governance/`.
+- DDD design documents hold current truth only after domain-expert review and an exact-byte approval receipt; `initiative`, `task`, and `project` status sections hold append-only lifecycle or execution history.
 - If a reusable answer emerges from a report or conversation, promote it into `guide`, `design`, `initiative`, `project`, or `task` as appropriate.
 - Prefer adding a narrow guide over expanding `docs/README.md` when a rule needs detailed explanation.
 
@@ -66,6 +70,8 @@ Run these after harness changes:
 ./docs/bin/validate-harness-foundation.sh
 ./docs/bin/validate-harness-adoption.sh
 ./docs/bin/validate-doc-retrieval.sh
+./docs/bin/validate-domain-design.sh --all
+./docs/bin/validate-domain-lineage.sh --all
 ./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 git diff --check
@@ -82,6 +88,7 @@ A harness change is done only when:
 - Codex and Claude entrypoints delegate to the same durable contracts rather than defining competing rules.
 - Validators pass or any skipped validator is explicitly explained.
 - Human-owned policy and approval state are not inferred from AI-authored prose alone.
+- DDD model authority is human-owned, exact-byte approved, current, and traceable into affected project/task/QA documents.
 - Applicable governance lineage and freshness are verified before delivery work, and unresolved conflicts stop execution.
 - Existing repository ownership, migration conflicts, and runtime-local state remain explicit and reversible.
 - The final response names the changed surfaces and the verification result.

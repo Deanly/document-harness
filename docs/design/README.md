@@ -1,55 +1,46 @@
-# Design Retrieval Index
+# DDD Design Index
 
-이 파일은 `docs/design/` 문서를 LLM/Codex가 통째로 읽지 않고 작업 성격에 맞게 선택하도록 돕는 retrieval index입니다.
+`docs/design/`은 고객, 도메인 전문가, 기획자, 설계자, 개발자와 QA가 함께 사용하는 DDD domain truth 전용 surface입니다. 기술 구조는 `docs/architecture/`, policy·approval authority는 `docs/governance/`를 사용합니다.
 
 ## Rules
 
-- `docs/design/control-plane.md`는 whole-system orientation용 `core-start` 문서입니다.
-- `docs/design/ubiquitous-language.md`는 canonical term registry이지만 기본 전체 로딩 대상이 아닙니다. 용어 판단이 필요한 section만 읽는 section-load 문서입니다.
-- `docs/design/retrieval-plane.md`는 corpus 규모와 freshness 병목이 있을 때 선택하는 retrieval domain current truth입니다.
-- `docs/design/policy-to-evidence-governance.md`는 human policy, AI proposal, approval, exception, rule-to-evidence 권한을 바꿀 때 선택합니다.
-- `docs/design/initiative-governance-plane.md`는 policy/guideline을 추진안과 project/task lineage로 연결하거나 legacy umbrella project를 migration할 때 선택합니다.
-- `docs/design/execution-loop-plane.md`는 task checkpoint, attention, stop/resume, evidence barrier를 바꿀 때 선택합니다.
-- `docs/design/human-control-view-plane.md`는 projector, snapshot API/SSE, freshness, read-only security/runtime을 바꿀 때 선택합니다.
-- `docs/design/harness-adoption-plane.md`는 기존 repository의 ownership-aware migration, repository-local skill, policy extraction, repo-local View와 quality handoff를 설계할 때 선택합니다.
-- 새 domain design 문서를 추가하면 이 index와 `docs/_indexes/design-map.md`도 함께 갱신합니다.
-- 이 index는 design truth를 대체하지 않습니다. 실제 결정은 source design doc에서 합니다.
-
-## Size Tiers
-
-- `small`: 2,000 words 미만
-- `medium`: 2,000 words 이상 5,000 words 미만
-- `large`: 5,000 words 이상
+- 먼저 [`domain-landscape.md`](domain-landscape.md)에서 domain vision과 subdomain을 확인합니다.
+- 다음으로 [`context-map.md`](context-map.md)에서 대상 bounded context와 upstream/downstream 관계를 선택합니다.
+- 역할에 맞는 target context의 `domain-model.md`, `ubiquitous-language.md`, `examples.md` section을 읽습니다.
+- `current` model은 exact human domain-expert approval receipt가 current bytes와 일치할 때만 authoritative합니다.
+- `draft`와 `review_requested`는 유용한 candidate이지만 구현·QA의 current truth로 사용할 수 없습니다.
+- 같은 용어가 context마다 다른 뜻이면 하나로 합치지 않고 context map translation을 명시합니다.
+- 상세 authoring과 validation은 `docs/guide/ddd-domain-design.md`를 따릅니다.
 
 ## Retrieval Classes
 
 | Retrieval Class | Meaning |
 | --- | --- |
-| `core-start` | 거의 모든 docs/runtime orientation에서 짧게 읽는 whole-system entry |
-| `term-excerpt` | full document가 아니라 관련 heading/term section만 읽는 vocabulary source |
-| `domain-current` | 특정 bounded context current truth |
-| `context-map` | bounded context ownership과 shared seam을 고를 때 읽는 map |
+| `core-start` | domain vision과 subdomain orientation |
+| `context-map` | bounded context ownership, relation과 translation |
+| `domain-current` | 특정 bounded context의 tactical model |
+| `term-excerpt` | 해당 context의 필요한 term section |
+| `domain-examples` | role/QA가 사용하는 business examples와 counterexamples |
 
 ## Design Index
 
-| Design Doc | Design Kind | Retrieval Class | Read When | Do Not Read When | Size Tier | Related Domain | Related Project/Task |
+| Design Doc | Design Kind | Retrieval Class | Status / Validation | Read When | Size Tier | Bounded Context | Role Views |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`control-plane.md`](control-plane.md) | control | `core-start` | whole-system outcome, active surfaces, validators, project/task handoff를 확인할 때 | 특정 domain의 상세 boundary를 대체하려 할 때 | small | whole-system control | all projects/tasks |
-| [`retrieval-plane.md`](retrieval-plane.md) | domain | `domain-current` | hybrid 검색, revision, freshness, update/delete/rename 계약을 설계하거나 진단할 때 | ordinary docs work에서 retrieval runtime 변경이 없을 때 | medium | retrieval | retrieval-sensitive work |
-| [`policy-to-evidence-governance.md`](policy-to-evidence-governance.md) | governance | `domain-current` | human policy, AI proposal, normative approval, exception, policy-to-evidence traceability를 설계하거나 검토할 때 | policy/risk authority와 무관한 ordinary task execution | small | governance | governance-sensitive work |
-| [`initiative-governance-plane.md`](initiative-governance-plane.md) | governance | `domain-current` | policy/guideline → 추진안 → project/task 관계, approval, legacy umbrella bridge를 설계하거나 검토할 때 | initiative lineage와 무관한 ordinary task execution | small | initiative-governance | portfolio and migration work |
-| [`execution-loop-plane.md`](execution-loop-plane.md) | domain | `domain-current` | loop-enabled task의 checkpoint, attention, retry/stop, receipt를 설계하거나 재개할 때 | checkpoint를 쓰지 않는 단순 문서 작업 | medium | execution | loop-enabled tasks |
-| [`human-control-view-plane.md`](human-control-view-plane.md) | domain | `domain-current` | `Board` local view projector, snapshot API/SSE, freshness, read-only security/runtime을 설계할 때 | ordinary loop task 실행 또는 UI runtime 변경이 없을 때 | small | human-view | human view runtime |
-| [`harness-adoption-plane.md`](harness-adoption-plane.md) | domain | `domain-current` | executable initialize/migrate/upgrade/verify/rollback, file ownership, repository-local skill, policy extraction, versioned repo-local View handoff를 설계할 때 | 이미 설치된 harness의 ordinary task execution | medium | harness-adoption | repository adoption/migration |
-| [`ubiquitous-language.md`](ubiquitous-language.md) | term-registry | `term-excerpt` | canonical term, naming, status vocabulary, boundary vocabulary 판단이 필요할 때 | ordinary task work에서 full document를 기본 로딩할 때 | small | all domains | all term-linked docs |
+| [`domain-landscape.md`](domain-landscape.md) | domain-landscape | `core-start` | review_requested | domain vision, subdomain portfolio와 core differentiation을 확인할 때 | small | all | all |
+| [`context-map.md`](context-map.md) | context-map | `context-map` | review_requested | context 선택, upstream/downstream와 translation을 확인할 때 | small | all | all |
+| [`contexts/governance/domain-model.md`](contexts/governance/domain-model.md) | bounded-context | `domain-current` | review_requested | policy, guideline, initiative와 human decision 의미를 다룰 때 | medium | governance | all |
+| [`contexts/governance/ubiquitous-language.md`](contexts/governance/ubiquitous-language.md) | ubiquitous-language | `term-excerpt` | review_requested | governance 용어 의미가 필요할 때 | small | governance | all |
+| [`contexts/governance/examples.md`](contexts/governance/examples.md) | domain-examples | `domain-examples` | review_requested | approval·activation 정상/거절 example을 사용할 때 | small | governance | all |
+| [`contexts/execution/domain-model.md`](contexts/execution/domain-model.md) | bounded-context | `domain-current` | review_requested | task, checkpoint, attention, evidence와 closeout을 다룰 때 | medium | execution | all |
+| [`contexts/execution/ubiquitous-language.md`](contexts/execution/ubiquitous-language.md) | ubiquitous-language | `term-excerpt` | review_requested | execution 용어 의미가 필요할 때 | small | execution | all |
+| [`contexts/execution/examples.md`](contexts/execution/examples.md) | domain-examples | `domain-examples` | review_requested | 실행·중단·완료 example과 QA를 만들 때 | small | execution | all |
+| [`contexts/adoption/domain-model.md`](contexts/adoption/domain-model.md) | bounded-context | `domain-current` | review_requested | initialize/migrate/upgrade/rollback 의미를 다룰 때 | medium | adoption | all |
+| [`contexts/adoption/ubiquitous-language.md`](contexts/adoption/ubiquitous-language.md) | ubiquitous-language | `term-excerpt` | review_requested | adoption 용어 의미가 필요할 때 | small | adoption | all |
+| [`contexts/adoption/examples.md`](contexts/adoption/examples.md) | domain-examples | `domain-examples` | review_requested | plan/apply/conflict/rollback example을 사용할 때 | small | adoption | all |
+| [`contexts/retrieval/domain-model.md`](contexts/retrieval/domain-model.md) | bounded-context | `domain-current` | review_requested | source revision, search visibility와 freshness를 다룰 때 | medium | retrieval | all |
+| [`contexts/retrieval/ubiquitous-language.md`](contexts/retrieval/ubiquitous-language.md) | ubiquitous-language | `term-excerpt` | review_requested | retrieval 용어 의미가 필요할 때 | small | retrieval | all |
+| [`contexts/retrieval/examples.md`](contexts/retrieval/examples.md) | domain-examples | `domain-examples` | review_requested | write/read/delete/rename freshness example을 사용할 때 | small | retrieval | all |
 
 ## Change Log
 
-- 2026-05-16: reusable design retrieval index created.
-- 2026-07-15: retrieval-plane domain design selection rule added.
-- 2026-07-15: policy governance and execution loop design selection rules added.
-- 2026-07-15: human-control-view-plane을 execution loop에서 분리했다.
-- 2026-07-15: mature repository adoption과 policy extraction을 위한 harness-adoption-plane을 추가했다.
-- 2026-07-16: harness-adoption-plane selection rule에 repository-local harness skill을 추가했다.
-- 2026-07-16: harness-adoption-plane을 executable v1 lifecycle/schema/status/reference View contract에 정렬했다.
-- 2026-07-18: initiative-governance-plane selection rule을 추가했다.
+- 2026-07-29: 범용 control-plane index를 DDD-only landscape/context-map/bounded-context index로 교체했다.

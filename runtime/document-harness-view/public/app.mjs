@@ -1,6 +1,7 @@
 import {
   buildEvidenceGroups,
   filterEvidence,
+  filterDomainContexts,
   filterGuidelines,
   filterInitiatives,
   filterPolicies,
@@ -12,15 +13,16 @@ import {
   reviewStats,
   runtimeSummary,
   sortAttention
-} from "/view-model.mjs?v=4";
+} from "/view-model.mjs?v=5";
 
-const tabNames = ["overview", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
+const tabNames = ["overview", "domain", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
 const defaultPresentation = {
   displayName: "Board",
   locale: "en-US",
   sortLocale: "en",
   tabLabels: {
     overview: "Overview",
+    domain: "Domain",
     policies: "Policies",
     guidelines: "Guidelines",
     initiatives: "Initiatives",
@@ -35,6 +37,9 @@ const state = {
   etag: null,
   presentation: defaultPresentation,
   activeTab: "policies",
+  domainQuery: "",
+  domainRole: "all",
+  domainFilter: "all",
   policyFilter: "all",
   policyQuery: "",
   policyPage: 1,
@@ -140,7 +145,16 @@ const labels = {
   supports: "지원",
   explores: "탐색",
   migration_candidate: "전환 후보",
-  confirmed: "연결됨"
+  confirmed: "연결됨",
+  approved_current: "승인 · current bytes",
+  core: "핵심 도메인",
+  supporting: "지원 도메인",
+  generic: "일반 도메인",
+  customer: "고객 / 도메인 전문가",
+  planner: "기획자",
+  architect: "설계자",
+  developer: "개발자",
+  qa: "QA"
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -200,7 +214,7 @@ function number(value) {
 }
 
 function toneFor(value) {
-  if (["effective", "approved", "active", "completed", "enforced", "fresh", "current", "clean", "UP", "confirmed"].includes(value)) return "success";
+  if (["effective", "approved", "approved_current", "active", "completed", "enforced", "fresh", "current", "clean", "UP", "confirmed"].includes(value)) return "success";
   if (["not_implemented", "stale", "degraded", "rejected", "missing", "invalid", "changed", "DOWN", "critical"].includes(value)) return "danger";
   if (["partially_enforced", "review_requested", "proposed", "advisory", "dirty", "warning", "unverified", "last_known_unverified"].includes(value)) return "warning";
   if (["decision"].includes(value)) return "info";
@@ -353,6 +367,7 @@ function renderOverview(snapshot) {
 
   const unverified = snapshot.summary.state === "last_known_unverified";
   renderMetricSet($("#overview-summary"), [
+    ["Bounded context", number(snapshot.summary.domainContextCount), `${number(snapshot.summary.domainApprovedCount)}개 exact-byte 승인`],
     ["정책 후보", number(snapshot.summary.policyCount), "기존 소스에서 추출"],
     ["실행 지침", number(snapshot.summary.guidelineCount), "정책 구현 방법"],
     ["추진안", number(snapshot.summary.initiativeCount), `${number(snapshot.summary.linkedProjectCount)}개 프로젝트 연결`],
@@ -373,6 +388,159 @@ function renderOverview(snapshot) {
   else for (const item of sorted) reviewList.append(reviewPreview(item));
 
   renderRuntimeStrip($("#overview-runtime"), snapshot);
+}
+
+function domainReference(pathValue, label = pathValue) {
+  return element("span", { className: "domain-reference" }, [
+    element("strong", { text: label }),
+    pathValue && label !== pathValue ? element("code", { text: pathValue }) : null
+  ]);
+}
+
+function domainCountSet(context) {
+  const counts = context.counts ?? {};
+  return [
+    ["Aggregate", counts.aggregates ?? 0],
+    ["Rule", counts.rules ?? 0],
+    ["Scenario", counts.scenarios ?? 0],
+    ["Command", counts.commands ?? 0],
+    ["Event", counts.events ?? 0]
+  ];
+}
+
+function renderDomain(snapshot) {
+  const domain = snapshot.domain ?? {
+    configured: false,
+    status: "not_configured",
+    contexts: [],
+    relationships: []
+  };
+  const contexts = domain.contexts ?? [];
+  const totalRules = contexts.reduce((sum, context) => sum + Number(context.counts?.rules ?? 0), 0);
+  const totalScenarios = contexts.reduce((sum, context) => sum + Number(context.counts?.scenarios ?? 0), 0);
+  renderMetricSet($("#domain-summary"), [
+    ["Bounded context", number(contexts.length)],
+    ["핵심 도메인", number(contexts.filter((context) => context.subdomainType === "core").length)],
+    ["승인된 current", number(contexts.filter((context) => context.validationStatus === "approved_current").length)],
+    ["전문가 검토 필요", number(contexts.filter((context) => context.validationStatus !== "approved_current").length)],
+    ["Rule / Scenario", `${number(totalRules)} / ${number(totalScenarios)}`]
+  ], "compact-metric");
+
+  const authorityState = $("#domain-authority-state");
+  authorityState.className = `status-label ${domain.status === "current" ? "success" : domain.status === "degraded" ? "danger" : "warning"}`;
+  authorityState.textContent = domain.status === "current"
+    ? "모든 모델 exact-byte 승인"
+    : domain.status === "review_requested"
+      ? "Domain expert 검토 대기"
+      : domain.status === "degraded"
+        ? "승인 / freshness 오류"
+        : "DDD 모델 미설정";
+  $("#domain-authority-message").textContent = domain.error
+    ?? (domain.status === "current"
+      ? "표시된 모든 bounded-context model은 식별 가능한 domain expert가 current bytes를 승인한 receipt와 일치합니다."
+      : domain.status === "review_requested"
+        ? "현재 모델은 구조화된 review candidate입니다. 고객·기획·설계·개발·QA의 공통 truth로 확정하기 전에 domain expert의 exact-byte 승인이 필요합니다."
+        : "이 repository에 DDD domain landscape와 bounded-context model을 먼저 작성해야 합니다.");
+  const authorityLinks = $("#domain-authority-links");
+  clear(authorityLinks);
+  if (domain.landscape?.source) authorityLinks.append(domainReference(domain.landscape.source, "Domain landscape"));
+  if (domain.contextMap?.source) authorityLinks.append(domainReference(domain.contextMap.source, "Context map"));
+  if (!domain.landscape?.source && !domain.contextMap?.source) {
+    authorityLinks.append(element("span", { className: "muted", text: domain.sourceRoot ?? "docs/design" }));
+  }
+
+  const filtered = filterDomainContexts({
+    contexts,
+    query: state.domainQuery,
+    role: state.domainRole,
+    filter: state.domainFilter
+  });
+  $("#domain-result-count").textContent = `${number(filtered.length)}개 bounded context`;
+  const contextList = $("#domain-context-list");
+  clear(contextList);
+  if (filtered.length === 0) {
+    const empty = element("section", { className: "panel-card domain-empty" });
+    empty.append($("#empty-template").content.cloneNode(true));
+    contextList.append(empty);
+  }
+  for (const context of filtered) {
+    const status = context.validationStatus ?? "review_requested";
+    const card = element("article", { className: `panel-card domain-context-card ${toneFor(status)}` });
+    card.append(element("div", { className: "domain-context-head" }, [
+      element("div", {}, [
+        element("p", { className: "item-id", text: context.id }),
+        element("h2", { text: context.name }),
+        element("p", { className: "page-description", text: context.summary ?? context.title })
+      ]),
+      element("div", { className: "status-stack" }, [
+        statusLabel(context.subdomainType, "neutral", localized(context.subdomainType)),
+        statusLabel(status, toneFor(status), localized(status))
+      ])
+    ]));
+    const counts = element("div", { className: "domain-counts" });
+    for (const [label, value] of domainCountSet(context)) counts.append(metric(label, number(value), null, "domain-count"));
+    card.append(counts);
+
+    const facts = element("dl", { className: "domain-facts" });
+    const factValues = [
+      ["모델 revision", context.modelRevision],
+      ["Owner", context.owner],
+      ["Domain expert", (context.domainExpertRoles ?? []).join(", ") || "확인 필요"],
+      ["승인자", context.validatedBy ?? "승인 대기"],
+      ["승인 시각", context.validatedAt ? formatTime(context.validatedAt, true) : "기록 없음"]
+    ];
+    for (const [label, value] of factValues) facts.append(element("dt", { text: label }), element("dd", { text: value ?? "-" }));
+    card.append(facts);
+
+    const roleSection = element("div", { className: "domain-card-section" }, [
+      element("h3", { text: "역할 관점" })
+    ]);
+    const roleList = element("div", { className: "domain-role-list" });
+    for (const role of context.roleViews ?? []) roleList.append(statusLabel(role, "info", localized(role)));
+    roleSection.append(roleList);
+    card.append(roleSection);
+
+    const referenceSection = element("div", { className: "domain-card-section" }, [
+      element("h3", { text: "공통 source set" })
+    ]);
+    const references = element("div", { className: "reference-list" });
+    references.append(domainReference(context.modelRef, "Domain model"));
+    if (context.languageRef) references.append(domainReference(context.languageRef, "Ubiquitous language"));
+    if (context.examplesRef) references.append(domainReference(context.examplesRef, "Executable examples"));
+    if (context.validationRef) references.append(domainReference(context.validationRef, "Approval receipt"));
+    referenceSection.append(references);
+    card.append(referenceSection);
+
+    if ((context.openQuestions ?? []).length > 0 || context.validationError) {
+      const unknowns = element("div", { className: "domain-card-section domain-open-questions" }, [
+        element("h3", { text: "미결정 / 검토 항목" })
+      ]);
+      const list = element("ul");
+      if (context.validationError) list.append(element("li", { text: context.validationError }));
+      for (const item of context.openQuestions ?? []) list.append(element("li", { text: item }));
+      unknowns.append(list);
+      card.append(unknowns);
+    }
+    contextList.append(card);
+  }
+
+  const mapBody = $("#domain-map-body");
+  clear(mapBody);
+  if ((domain.relationships ?? []).length === 0) {
+    const row = element("tr");
+    row.append(element("td", { attrs: { colspan: "6" } }, [$("#empty-template").content.cloneNode(true)]));
+    mapBody.append(row);
+  }
+  for (const relation of domain.relationships ?? []) {
+    mapBody.append(element("tr", {}, [
+      element("td", { text: relation.upstream ?? "-" }),
+      element("td", { text: relation.downstream ?? "-" }),
+      element("td", { text: relation.pattern ?? "-" }),
+      element("td", { text: relation.contract ?? "-" }),
+      element("td", { text: relation.consistency ?? "-" }),
+      element("td", { text: relation.failureOwner ?? "-" })
+    ]));
+  }
 }
 
 function policyFilterCount(snapshot, filter) {
@@ -1362,6 +1530,7 @@ function render(snapshot) {
   state.snapshot = snapshot;
   renderChrome(snapshot);
   renderOverview(snapshot);
+  renderDomain(snapshot);
   renderPolicies(snapshot);
   renderInitiatives(snapshot);
   renderReview(snapshot);
@@ -1408,6 +1577,28 @@ async function loadSnapshot(force = false) {
 }
 
 function setupControls() {
+  $("#domain-search").addEventListener("input", (event) => {
+    state.domainQuery = event.target.value.trim();
+    if (state.snapshot) renderDomain(state.snapshot);
+  });
+  $("#domain-role-filter").addEventListener("change", (event) => {
+    state.domainRole = event.target.value;
+    if (state.snapshot) renderDomain(state.snapshot);
+  });
+  $("#domain-status-filter").addEventListener("change", (event) => {
+    state.domainFilter = event.target.value;
+    if (state.snapshot) renderDomain(state.snapshot);
+  });
+  $("#clear-domain-filters").addEventListener("click", () => {
+    state.domainQuery = "";
+    state.domainRole = "all";
+    state.domainFilter = "all";
+    $("#domain-search").value = "";
+    $("#domain-role-filter").value = "all";
+    $("#domain-status-filter").value = "all";
+    if (state.snapshot) renderDomain(state.snapshot);
+    $("#domain-search").focus();
+  });
   $("#policy-search").addEventListener("input", (event) => {
     state.policyQuery = event.target.value.trim();
     state.policyPage = 1;

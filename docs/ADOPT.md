@@ -6,9 +6,9 @@ owner:
 created: 2026-07-15
 updated: 2026-07-17
 related_design:
-  - docs/design/harness-adoption-plane.md
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/human-control-view-plane.md
+  - docs/architecture/harness-adoption-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/architecture/human-control-view-plane.md
 tags:
   - docs/guide
   - adoption
@@ -39,7 +39,7 @@ tags:
 1. target repository의 root `AGENTS.md`와 nested instructions
 2. 이미 설치되어 있다면 `.agents/skills/operate-document-harness/SKILL.md`
 3. target repository의 current control-plane/design와 active task index
-4. `docs/design/harness-adoption-plane.md`
+4. `docs/architecture/harness-adoption-plane.md`
 5. `docs/guide/repository-policy-extraction.md`
 6. governance와 View를 적용할 때 해당 public design/guide
 7. target repository가 직접 참조하는 validator와 operator guide
@@ -150,7 +150,7 @@ docs/bin/new-doc.sh                               # clean-main numbered and unnu
 docs/bin/validate-execution-loop.sh               # task/checkpoint loop contract
 docs/bin/validate-closeout.sh                     # project/task/QA completion contract
 docs/bin/close-doc.sh                             # validation-gated project/task closeout
-docs/design/ubiquitous-language.md                # project-owned terminology surface
+docs/architecture/harness-language.md                # project-owned terminology surface
 docs/guide/                                       # reusable goal, project/task, QA, and quality guidance
 docs/_indexes/harness-installation.yaml         # JSON installation/version/ownership lock
 docs/_indexes/governance-catalog.json           # nested migration fence + candidate/gap projection
@@ -172,7 +172,7 @@ docs/receipts/migration-evidence-pack.json      # gate/human-review completion e
 2. source-backed policy/guideline 후보를 작성하되 사람이 읽는 field만 사용자 표시 언어로 합성합니다.
 3. 기존 project/design/roadmap/task를 읽고 outcome portfolio를 식별합니다. `INIT-*` 후보를 작성하거나 initiative extraction gap/attention을 유지하며, 둘 다 없게 두지 않습니다.
 4. View project description과 empty/gap/attention 문구를 사용자 표시 언어로 준비하고 top bar의 `<displayName> / <repository>`가 scroll 중에도 유지되는지 확인합니다.
-5. canonical tab key를 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` 순서로 표시합니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 정책·지침·추진안은 각각 독립 search/filter/pagination/detail을 제공하며 추진안은 Project의 `related_initiative`를 역색인합니다.
+5. canonical tab key를 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` 순서로 표시합니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. Domain은 DDD landscape/context/model approval과 역할 관점을 투영하고, 정책·지침·추진안은 각각 독립 search/filter/pagination/detail을 제공하며 추진안은 Project의 `related_initiative`를 역색인합니다.
 6. 기존 영어 human-facing field는 stable ID와 모든 governance/evidence fence를 유지한 채 번역합니다. authority나 approval이 달라지는 변경은 localization과 분리합니다.
 7. 긴 technical ID/source ref가 자기 container 안에서 줄바꿈되고 adjacent content와 겹치지 않는지 desktop와 narrow viewport에서 확인합니다.
 8. 새 snapshot을 생성한 뒤 source freshness, project-owned catalog/register 보존과 human review barrier를 다시 검증합니다.
@@ -234,11 +234,11 @@ upgrade에서 project-owned로 보존한 `AGENTS.md`, `CLAUDE.md`, `new-doc.sh`,
 
 ## References
 
-- `docs/design/harness-adoption-plane.md`
+- `docs/architecture/harness-adoption-plane.md`
 - `docs/guide/repository-policy-extraction.md`
 - `docs/guide/initiative-governance.md`
-- `docs/design/policy-to-evidence-governance.md`
-- `docs/design/human-control-view-plane.md`
+- `docs/governance/policy-to-evidence.md`
+- `docs/architecture/human-control-view-plane.md`
 - `docs/EXECUTE.md`
 
 ## Change Log

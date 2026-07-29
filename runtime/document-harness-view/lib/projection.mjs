@@ -7,6 +7,7 @@ import { REFERENCE_VIEW_VERSION } from "../version.mjs";
 export const VIEW_RUNTIME_CONTRACT = Object.freeze({
   stateDir: ".document-harness/runtime/view",
   runtimeProbes: ".document-harness/runtime/view/runtime-probes.json",
+  domainDesignRoot: "docs/design",
   executionCheckpointRoot: "docs/checkpoints",
   projectRoot: "docs/projects",
   refreshIntervalMs: 2000,
@@ -69,13 +70,14 @@ const ALLOWED_INITIATIVE_LIFECYCLE = new Set([
   "superseded"
 ]);
 
-const TAB_KEYS = ["overview", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
+const TAB_KEYS = ["overview", "domain", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
 const DEFAULT_PRESENTATION = Object.freeze({
   displayName: "Board",
   locale: "en-US",
   sortLocale: "en",
   tabLabels: Object.freeze({
     overview: "Overview",
+    domain: "Domain",
     policies: "Policies",
     guidelines: "Guidelines",
     initiatives: "Initiatives",
@@ -372,7 +374,7 @@ export async function loadViewConfig(repoRoot, configPath) {
 
   const allowedConfigKeys = new Set([
     "schemaVersion", "project", "governanceCatalog", "initiativeRegister", "bindHost", "portMode", "qualityCommands", "probes",
-    "presentation", "stateDir", "runtimeProbes", "refreshIntervalMs", "reconcileIntervalMs"
+    "presentation", "stateDir", "runtimeProbes", "domainDesignRoot", "refreshIntervalMs", "reconcileIntervalMs"
   ]);
   for (const key of Object.keys(config)) {
     if (!allowedConfigKeys.has(key)) throw new Error(`지원하지 않는 View config key입니다: ${key}`);
@@ -1151,6 +1153,331 @@ function parseMarkdownFrontmatter(captured, label) {
   return values;
 }
 
+function markdownSectionLines(captured, heading) {
+  const lines = captured.bytes.toString("utf8").split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === `## ${heading}`);
+  if (start < 0) return [];
+  const section = [];
+  for (const line of lines.slice(start + 1)) {
+    if (line.startsWith("## ")) break;
+    section.push(line);
+  }
+  return section;
+}
+
+function markdownSectionSummary(captured, heading) {
+  return markdownSectionLines(captured, heading)
+    .map((line) => line.trim())
+    .find((line) => line !== "" && !line.startsWith("|") && !line.startsWith("- ")) ?? null;
+}
+
+function markdownSectionBullets(captured, heading) {
+  return markdownSectionLines(captured, heading)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("- "))
+    .map((line) => line.slice(2).trim())
+    .filter(Boolean);
+}
+
+function markdownTableRows(captured, heading) {
+  const rows = markdownSectionLines(captured, heading)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|") && line.endsWith("|"));
+  if (rows.length < 3) return [];
+  return rows.slice(2).map((line) => line
+    .split("|")
+    .slice(1, -1)
+    .map((cell) => cell.trim().replaceAll("`", "")));
+}
+
+function domainModelCounts(captured) {
+  const ids = captured.bytes.toString("utf8").match(/\b(?:TERM|AGG|ENT|VO|CMD|EVT|POL|BR|SCN)-[A-Z0-9-]+\b/g) ?? [];
+  const unique = [...new Set(ids)];
+  const count = (prefix) => unique.filter((id) => id.startsWith(`${prefix}-`)).length;
+  return {
+    terms: count("TERM"),
+    aggregates: count("AGG"),
+    entities: count("ENT"),
+    valueObjects: count("VO"),
+    commands: count("CMD"),
+    events: count("EVT"),
+    policies: count("POL"),
+    rules: count("BR"),
+    scenarios: count("SCN")
+  };
+}
+
+async function inspectDomainDesignApproval(repoRoot, captured, design) {
+  if (design.status !== "current" && design.validation_status !== "approved") {
+    return {
+      state: design.validation_status ?? design.status ?? "review_requested",
+      receiptRef: design.validation_ref ?? null,
+      decidedBy: null,
+      decidedAt: null,
+      input: null
+    };
+  }
+  if (design.status !== "current" || design.validation_status !== "approved"
+    || typeof design.validation_ref !== "string" || design.validation_ref.trim() === "") {
+    return {
+      state: "invalid",
+      receiptRef: design.validation_ref ?? null,
+      decidedBy: null,
+      decidedAt: null,
+      error: "current/approved domain design metadata and validation_ref must be present",
+      input: null
+    };
+  }
+
+  const receiptInput = await captureRepositoryFile(repoRoot, design.validation_ref, "domain design approval receipt");
+  if (receiptInput.state !== "file") {
+    return {
+      state: "invalid",
+      receiptRef: design.validation_ref,
+      decidedBy: null,
+      decidedAt: null,
+      error: `approval receipt is not a safe repository file: ${design.validation_ref}`,
+      input: null
+    };
+  }
+  try {
+    const receipt = parseCapturedJson(receiptInput, "domain design approval receipt");
+    const valid = receipt.schemaVersion === 1
+      && receipt.kind === "domain-design-approval"
+      && receipt.decision === "approved"
+      && receipt.documentRef === captured.relativePath
+      && receipt.documentSha256 === captured.digest
+      && receipt.modelRevision === design.model_revision
+      && receipt.boundedContext === design.bounded_context
+      && receipt.decidedBy?.actorKind === "human"
+      && typeof receipt.decidedBy?.identifier === "string"
+      && receipt.decidedBy.identifier.trim() !== ""
+      && !Number.isNaN(Date.parse(receipt.decidedAt ?? ""));
+    if (!valid) throw new Error("receipt does not approve the current model bytes and identity");
+    return {
+      state: "approved_current",
+      receiptRef: design.validation_ref,
+      decidedBy: receipt.decidedBy.identifier,
+      decidedAt: receipt.decidedAt,
+      input: {
+        label: "domain design approval receipt",
+        relativePath: receiptInput.relativePath,
+        fence: receiptInput.fence
+      }
+    };
+  } catch (error) {
+    return {
+      state: "invalid",
+      receiptRef: design.validation_ref,
+      decidedBy: null,
+      decidedAt: null,
+      error: error.message,
+      input: {
+        label: "domain design approval receipt",
+        relativePath: receiptInput.relativePath,
+        fence: receiptInput.fence
+      }
+    };
+  }
+}
+
+async function readDomainDesign(repoRoot, domainRoot) {
+  const resolved = await resolveInsideRoot(repoRoot, domainRoot);
+  let rootStat;
+  try {
+    rootStat = await lstat(resolved);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return {
+        domain: {
+          configured: false,
+          status: "not_configured",
+          sourceRoot: domainRoot,
+          landscape: null,
+          contextMap: null,
+          relationships: [],
+          contexts: []
+        },
+        inputs: []
+      };
+    }
+    throw error;
+  }
+  if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) {
+    return {
+      domain: {
+        configured: true,
+        status: "degraded",
+        sourceRoot: domainRoot,
+        error: `domain design root must be a non-symlink directory: ${domainRoot}`,
+        landscape: null,
+        contextMap: null,
+        relationships: [],
+        contexts: []
+      },
+      inputs: []
+    };
+  }
+
+  try {
+    const rootRealPath = await realpath(resolved);
+    if (!pathIsInside(repoRoot, rootRealPath)) throw new Error(`domain design root escapes repository: ${domainRoot}`);
+    const capturedDocs = [];
+    const topEntries = (await readdir(rootRealPath, { withFileTypes: true }))
+      .sort((left, right) => left.name.localeCompare(right.name, "en"));
+    for (const entry of topEntries) {
+      if (entry.isSymbolicLink()) throw new Error(`domain design entry cannot be a symlink: ${domainRoot}/${entry.name}`);
+      if (entry.isFile() && ["domain-landscape.md", "context-map.md"].includes(entry.name)) {
+        const relativePath = `${domainRoot}/${entry.name}`;
+        const captured = await captureRepositoryFile(repoRoot, relativePath, "domain design");
+        if (captured.state !== "file") throw new Error(`domain design is not a safe repository file: ${relativePath}`);
+        capturedDocs.push(captured);
+      }
+    }
+
+    const contextsRoot = `${domainRoot}/contexts`;
+    const contextsResolved = await resolveInsideRoot(repoRoot, contextsRoot);
+    let contextsStat = null;
+    try {
+      contextsStat = await lstat(contextsResolved);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    if (contextsStat) {
+      if (contextsStat.isSymbolicLink() || !contextsStat.isDirectory()) {
+        throw new Error(`domain contexts root must be a non-symlink directory: ${contextsRoot}`);
+      }
+      const contextEntries = (await readdir(contextsResolved, { withFileTypes: true }))
+        .sort((left, right) => left.name.localeCompare(right.name, "en"));
+      for (const contextEntry of contextEntries) {
+        if (contextEntry.isSymbolicLink() || !contextEntry.isDirectory()) {
+          throw new Error(`domain context entry must be a direct non-symlink directory: ${contextsRoot}/${contextEntry.name}`);
+        }
+        const contextRelativeRoot = `${contextsRoot}/${contextEntry.name}`;
+        const contextRealRoot = await realpath(path.join(repoRoot, contextRelativeRoot));
+        if (!pathIsInside(repoRoot, contextRealRoot)) throw new Error(`domain context escapes repository: ${contextRelativeRoot}`);
+        const documentEntries = (await readdir(contextRealRoot, { withFileTypes: true }))
+          .sort((left, right) => left.name.localeCompare(right.name, "en"));
+        for (const documentEntry of documentEntries) {
+          if (documentEntry.isSymbolicLink() || documentEntry.isDirectory()) {
+            throw new Error(`domain context document must be a direct non-symlink file: ${contextRelativeRoot}/${documentEntry.name}`);
+          }
+          if (!documentEntry.isFile() || !documentEntry.name.endsWith(".md") || documentEntry.name === "README.md") continue;
+          const relativePath = `${contextRelativeRoot}/${documentEntry.name}`;
+          const captured = await captureRepositoryFile(repoRoot, relativePath, "domain context document");
+          if (captured.state !== "file") throw new Error(`domain context document is not a safe repository file: ${relativePath}`);
+          capturedDocs.push(captured);
+        }
+      }
+    }
+
+    const parsed = capturedDocs.map((captured) => ({
+      captured,
+      design: parseMarkdownFrontmatter(captured, "domain design")
+    }));
+    for (const { captured, design } of parsed) {
+      if (design.type !== "design") throw new Error(`non-design document found under DDD root: ${captured.relativePath}`);
+    }
+    const landscapeEntry = parsed.find(({ design }) => design.design_kind === "domain-landscape") ?? null;
+    const contextMapEntry = parsed.find(({ design }) => design.design_kind === "context-map") ?? null;
+    const modelEntries = parsed.filter(({ design }) => design.design_kind === "bounded-context");
+    const approvalInputs = [];
+    const contexts = [];
+    for (const { captured, design } of modelEntries) {
+      const approval = await inspectDomainDesignApproval(repoRoot, captured, design);
+      if (approval.input) approvalInputs.push(approval.input);
+      const contextRoot = path.posix.dirname(captured.relativePath);
+      const language = parsed.find(({ captured: item, design: itemDesign }) =>
+        path.posix.dirname(item.relativePath) === contextRoot && itemDesign.design_kind === "ubiquitous-language"
+      );
+      const examples = parsed.find(({ captured: item, design: itemDesign }) =>
+        path.posix.dirname(item.relativePath) === contextRoot && itemDesign.design_kind === "domain-examples"
+      );
+      contexts.push({
+        id: design.bounded_context_id,
+        name: design.bounded_context,
+        title: design.title,
+        subdomainType: design.subdomain_type,
+        owner: design.owner ?? null,
+        status: design.status,
+        modelRevision: design.model_revision,
+        validationStatus: approval.state,
+        validationRef: approval.receiptRef,
+        validatedBy: approval.decidedBy,
+        validatedAt: approval.decidedAt,
+        validationError: approval.error ?? null,
+        domainExpertRoles: Array.isArray(design.domain_expert_roles) ? design.domain_expert_roles : [],
+        roleViews: Array.isArray(design.role_views) ? design.role_views : [],
+        summary: markdownSectionSummary(captured, "Domain Purpose And Customer Outcome"),
+        openQuestions: markdownSectionBullets(captured, "Unknowns And Disputes"),
+        counts: domainModelCounts(captured),
+        modelRef: captured.relativePath,
+        languageRef: language?.captured.relativePath ?? null,
+        examplesRef: examples?.captured.relativePath ?? null,
+        sourceSha256: captured.digest
+      });
+    }
+    contexts.sort((left, right) => String(left.id).localeCompare(String(right.id), "en"));
+    const relationships = contextMapEntry
+      ? markdownTableRows(contextMapEntry.captured, "Context Relationships").map((cells) => ({
+          upstream: cells[0] ?? null,
+          downstream: cells[1] ?? null,
+          pattern: cells[2] ?? null,
+          contract: cells[3] ?? null,
+          consistency: cells[4] ?? null,
+          failureOwner: cells[5] ?? null
+        }))
+      : [];
+    const reviewCount = contexts.filter((item) => item.validationStatus !== "approved_current").length;
+    const invalidCount = contexts.filter((item) => item.validationStatus === "invalid").length;
+    return {
+      domain: {
+        configured: true,
+        status: invalidCount > 0 ? "degraded" : reviewCount > 0 ? "review_requested" : "current",
+        sourceRoot: domainRoot,
+        landscape: landscapeEntry ? {
+          title: landscapeEntry.design.title,
+          status: landscapeEntry.design.status,
+          modelRevision: landscapeEntry.design.model_revision,
+          source: landscapeEntry.captured.relativePath,
+          openQuestions: markdownSectionBullets(landscapeEntry.captured, "Unknowns And Disputes")
+        } : null,
+        contextMap: contextMapEntry ? {
+          title: contextMapEntry.design.title,
+          status: contextMapEntry.design.status,
+          modelRevision: contextMapEntry.design.model_revision,
+          source: contextMapEntry.captured.relativePath,
+          openQuestions: markdownSectionBullets(contextMapEntry.captured, "Unknowns And Disputes")
+        } : null,
+        relationships,
+        contexts
+      },
+      inputs: [
+        ...capturedDocs.map((captured) => ({
+          label: "domain design",
+          relativePath: captured.relativePath,
+          fence: captured.fence
+        })),
+        ...approvalInputs
+      ]
+    };
+  } catch (error) {
+    return {
+      domain: {
+        configured: true,
+        status: "degraded",
+        sourceRoot: domainRoot,
+        error: error.message,
+        landscape: null,
+        contextMap: null,
+        relationships: [],
+        contexts: []
+      },
+      inputs: []
+    };
+  }
+}
+
 function parseInitiativeRelationshipTable(captured, heading, kind, minimumRows) {
   const lines = captured.bytes.toString("utf8").split(/\r?\n/);
   const start = lines.findIndex((line) => line.trim() === heading);
@@ -1516,7 +1843,7 @@ async function readExecutionCheckpoint(repoRoot, checkpointRoot) {
   }
 }
 
-function createGeneratedAttention(register, policies, guidelines, initiatives, orphanedProjects, migrationFence, execution) {
+function createGeneratedAttention(register, policies, guidelines, initiatives, orphanedProjects, migrationFence, execution, domain) {
   const attention = [...(register.attention ?? [])];
   const staleItems = [...policies, ...guidelines, ...initiatives].filter((item) => item.evidenceState !== "current");
   const initiativeReviews = initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState));
@@ -1597,6 +1924,28 @@ function createGeneratedAttention(register, policies, guidelines, initiatives, o
     });
   }
 
+  if (domain.status === "degraded") {
+    attention.unshift({
+      id: "ATTN-DOMAIN-DESIGN-INVALID",
+      severity: "warning",
+      title: "DDD 도메인 모델을 신뢰할 수 없습니다",
+      humanSummary: domain.error
+        ?? `${domain.contexts.filter((item) => item.validationStatus === "invalid").length}개 bounded context의 승인 receipt 또는 current model bytes가 일치하지 않습니다.`,
+      relatedRefs: domain.contexts.filter((item) => item.validationStatus === "invalid").map((item) => item.modelRef)
+    });
+  } else if (domain.configured) {
+    const reviewContexts = domain.contexts.filter((item) => item.validationStatus !== "approved_current");
+    if (reviewContexts.length > 0) {
+      attention.unshift({
+        id: "ATTN-DOMAIN-DESIGN-REVIEW",
+        severity: "decision",
+        title: "도메인 전문가의 모델 검토가 필요합니다",
+        humanSummary: `${reviewContexts.length}개 bounded context가 exact-byte 승인을 기다립니다. 고객·기획·설계·개발·QA가 이 모델을 current truth로 사용하기 전에 domain expert가 검토해야 합니다.`,
+        relatedRefs: reviewContexts.map((item) => item.modelRef)
+      });
+    }
+  }
+
   return attention;
 }
 
@@ -1665,6 +2014,8 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
   const runtime = await readRuntimeProbes(config.resolvedRoot, config.runtimeProbes);
   const executionInspection = await readExecutionCheckpoint(config.resolvedRoot, config.executionCheckpointRoot);
   const execution = executionInspection.execution;
+  const domainInspection = await readDomainDesign(config.resolvedRoot, config.domainDesignRoot);
+  const domain = domainInspection.domain;
   const attention = createGeneratedAttention(
     register,
     policies,
@@ -1672,7 +2023,8 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     initiatives,
     initiativeInspection.orphanedProjects,
     migrationFence,
-    execution
+    execution,
+    domain
   );
   const allRefs = [...policies, ...guidelines, ...initiatives].flatMap((item) => item.sourceRefs);
   const sourceEvidenceState = allRefs.length === 0
@@ -1682,7 +2034,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
       : allRefs.some((ref) => ref.state === "changed")
         ? "stale"
         : "fresh";
-  const projectionState = migrationFence.state !== "valid" || execution.status === "degraded"
+  const projectionState = migrationFence.state !== "valid" || execution.status === "degraded" || domain.status === "degraded"
     ? "degraded"
     : sourceEvidenceState;
   const semantic = {
@@ -1692,6 +2044,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     policies,
     guidelines,
     initiatives,
+    domain,
     attention,
     runtime,
     migrationFence,
@@ -1738,6 +2091,9 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
       initiativeCount: initiatives.length,
       initiativeActiveCount: initiatives.filter((item) => item.lifecycleState === "active").length,
       initiativeReviewCount: initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState)).length,
+      domainContextCount: domain.contexts.length,
+      domainApprovedCount: domain.contexts.filter((item) => item.validationStatus === "approved_current").length,
+      domainReviewCount: domain.contexts.filter((item) => item.validationStatus !== "approved_current").length,
       linkedProjectCount: new Set(initiatives.flatMap((item) => item.projects.map((project) => project.id))).size,
       approvedCount: [...policies, ...guidelines].filter((item) => item.approvalState === "approved").length,
       reviewCount: [...policies, ...guidelines].filter((item) => item.approvalState === "unreviewed" || item.approvalState === "review_requested").length,
@@ -1748,6 +2104,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     policies,
     guidelines,
     initiatives,
+    domain,
     attention,
     runtime,
     execution,
@@ -1782,6 +2139,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     ...guidelineInspection.approvalInputs,
     ...initiativeInspection.approvalInputs,
     ...initiativeInspection.stableInputs,
+    ...domainInspection.inputs,
     ...(migrationFence.receiptInput ? [migrationFence.receiptInput] : []),
     ...executionInspection.inputs
   ]);

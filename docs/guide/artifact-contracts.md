@@ -15,8 +15,8 @@
 ### Whole-System Control
 
 - `AGENTS.md`: Codex가 repo 작업 전에 읽는 짧은 agent instruction surface
-- `docs/design/control-plane.md`: 전체 목표, pipeline, validator, active surface
-- `docs/design/ubiquitous-language.md`: canonical term
+- `docs/architecture/control-plane.md`: 전체 목표, pipeline, validator, active surface
+- `docs/architecture/harness-language.md`: canonical term
 - 핵심 `design`: boundary, invariant, interface, failure boundary
 
 ### Focused Execution

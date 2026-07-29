@@ -4,13 +4,13 @@ title: context-loading-playbooks
 status: current
 owner: Codex
 created: 2026-05-16
-updated: 2026-07-15
+updated: 2026-07-29
 related_project: []
 related_task: []
 related_design:
-  - docs/design/control-plane.md
-  - docs/design/retrieval-plane.md
-  - docs/design/ubiquitous-language.md
+  - docs/architecture/control-plane.md
+  - docs/architecture/retrieval-plane.md
+  - docs/architecture/harness-language.md
 source_refs:
   - https://arxiv.org/abs/2104.08663
   - https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf
@@ -25,10 +25,10 @@ tags:
 - Status: current
 - Owner: Codex
 - Created: 2026-05-16
-- Updated: 2026-07-15
+- Updated: 2026-07-29
 - Current Focus: reusable document harness에서 work type별 context loading rule을 고정한다.
 - Related Task:
-- Related Design: docs/design/control-plane.md; docs/design/retrieval-plane.md; docs/design/ubiquitous-language.md
+- Related Design: docs/architecture/control-plane.md; docs/architecture/retrieval-plane.md; docs/architecture/harness-language.md
 
 ## Purpose
 
@@ -40,8 +40,9 @@ tags:
 
 - Load current truth before historical evidence.
 - Load active ledger before done ledger.
-- Treat `docs/design/ubiquitous-language.md` as section-load unless the task is terminology governance.
-- Use `docs/design/README.md` to choose design docs instead of loading all design docs.
+- Treat `docs/architecture/harness-language.md` as section-load unless the task is terminology governance.
+- Use `docs/design/domain-landscape.md` and `docs/design/context-map.md` to choose the affected bounded context instead of loading all DDD models.
+- Select the actor packet in `docs/_indexes/context-packets.yaml`; all roles share stable model IDs but load different sections and downstream outputs.
 - Use `docs/_indexes/active-docs.md` and folder README files to find active work.
 - Treat hybrid index results as candidates; fetch the authoritative source section before using a claim or editing.
 - Read files changed in the current task directly until the required source revision is confirmed searchable.
@@ -84,7 +85,7 @@ If the runtime cannot prove freshness for a file changed in this task, skip its 
 ### Load
 
 - `docs/README.md`
-- `docs/design/control-plane.md`
+- `docs/architecture/control-plane.md`
 - `docs/guide/llm-wiki-operations.md`
 - `docs/guide/context-loading-playbooks.md`
 - relevant templates and validators
@@ -92,7 +93,7 @@ If the runtime cannot prove freshness for a file changed in this task, skip its 
 ### Avoid By Default
 
 - all project/task history
-- full `docs/design/ubiquitous-language.md`
+- full `docs/architecture/harness-language.md`
 - examples unless checking shape
 
 ### Search Order
@@ -112,10 +113,13 @@ List validators run and state that runtime verification was not needed for docs-
 
 ### Load
 
-- `docs/design/control-plane.md`
+- `docs/design/domain-landscape.md`
+- `docs/design/context-map.md`
+- `docs/guide/ddd-domain-design.md`
 - `docs/design/README.md`
-- target design doc
-- relevant `ubiquitous-language` sections if terms change
+- target bounded-context model
+- target ubiquitous-language sections and executable examples
+- exact domain-expert sources, approval receipt, and current model bytes
 - related task/project if delivery state changes
 
 ### Avoid By Default
@@ -126,14 +130,24 @@ List validators run and state that runtime verification was not needed for docs-
 
 ### Search Order
 
-1. design README
-2. target design
-3. selected UL section
-4. related project/task
+1. domain landscape and context map
+2. target context model and validation receipt
+3. selected ubiquitous-language and example sections
+4. related project/task/QA lineage
 
 ### Context Used Output
 
-Name the design truth changed, any UL terms touched, and downstream project/task updates.
+Name the context and stable model IDs changed, exact approval/freshness state, role views affected, and downstream project/task/QA updates.
+
+## Role Packets For DDD Design
+
+| Role | Load | Required Output |
+| --- | --- | --- |
+| customer / domain expert | landscape, context language/examples, customer outcome, unknowns, exact review diff | meaning correction or exact-byte approval decision |
+| planner | scenarios, business rules, state transitions, target language, active initiative/project | outcome and acceptance criteria using SCN/BR IDs |
+| architect | context map, aggregates/consistency, relationships/integration, published contracts | architecture that preserves context ownership |
+| developer | approved/current model, commands/events/rules/examples, current task and QA | implementation/tests traced to CMD/EVT/BR IDs |
+| QA | approved/current rules/state/examples, task goals, evidence | covered_rule_ids, covered_scenario_ids and verdict evidence |
 
 ## Work Type: project_task_execution
 
@@ -141,8 +155,10 @@ Name the design truth changed, any UL terms touched, and downstream project/task
 
 - current task doc
 - parent/reference project doc
-- `docs/design/control-plane.md`
+- `docs/architecture/control-plane.md`
 - directly referenced design docs
+- exact approved/current domain model refs declared by the task/project
+- target context language/examples and actor-specific model sections
 - relevant guide or validator docs
 - effective policy/standard refs and active exception, when present
 - current execution checkpoint for `execution_contract: v1`
@@ -157,13 +173,13 @@ Name the design truth changed, any UL terms touched, and downstream project/task
 
 1. current task
 2. parent/reference project
-3. referenced design docs
+3. exact approved/current domain models and role packet
 4. sibling tasks only if WBS/evidence depends on them
 5. current checkpoint and latest referenced receipts; do not load full chat history
 
 ### Context Used Output
 
-List the task, project, design docs, and validation commands used.
+List the task, project, affected contexts, model revisions/receipts, actor role, stable IDs, and validation commands used.
 
 ## Work Type: execution_resume
 
@@ -172,7 +188,7 @@ List the task, project, design docs, and validation commands used.
 - `docs/EXECUTE.md`
 - current task document and exact task contract revision
 - current execution checkpoint
-- `docs/design/execution-loop-plane.md`
+- `docs/architecture/execution-loop-plane.md`
 - `docs/_indexes/execution-loop-policy.yaml`
 - exact effective policy/standard/exception refs
 - latest referenced decision and verification receipts
@@ -201,7 +217,7 @@ State task contract revision, attempt/checkpoint sequence, loop state, next acto
 ### Load
 
 - exact human policy source or mapping design
-- `docs/design/policy-to-evidence-governance.md`
+- `docs/governance/policy-to-evidence.md`
 - `docs/guide/policy-proposal-and-approval.md`
 - affected normative designs, tasks, and QA rows
 - exact approval/exception receipts
@@ -228,10 +244,10 @@ Separate effective rules, proposals, assumptions, conflicts, and the exact human
 
 ### Load
 
-- `docs/design/human-control-view-plane.md`
+- `docs/architecture/human-control-view-plane.md`
 - `docs/guide/human-control-view.md`
-- `docs/design/retrieval-plane.md`
-- representative fixture가 사용하는 `docs/design/execution-loop-plane.md` section
+- `docs/architecture/retrieval-plane.md`
+- representative fixture가 사용하는 `docs/architecture/execution-loop-plane.md` section
 - registered source/sensitivity policy
 - representative policy, task, checkpoint, attention, receipt fixtures
 - downstream runtime security/deployment design
@@ -299,7 +315,7 @@ List source_refs and state whether follow-up promotion is needed.
 
 1. target doc
 2. goal inventory and verification sections
-3. related design/control-plane
+3. related approved/current domain model and architecture control-plane
 4. required validators
 
 ### Context Used Output
@@ -310,7 +326,7 @@ State goals closed, validators run, skipped runtime verification if docs-only, a
 
 ### Load
 
-- `docs/design/retrieval-plane.md`
+- `docs/architecture/retrieval-plane.md`
 - `docs/guide/hybrid-retrieval-and-freshness.md`
 - `docs/_indexes/retrieval-policy.yaml`
 - affected source files
@@ -344,3 +360,4 @@ State the affected source revision, whether direct-read fallback was used, visib
 - 2026-05-16: reusable context loading playbooks created.
 - 2026-07-15: hybrid candidate search, direct source freshness rule, retrieval incident packet added.
 - 2026-07-15: execution resume and policy governance packets added; current checkpoint and exact effective rules replace broad chat/history loading.
+- 2026-07-29: DDD landscape/context-map preflight와 customer/planner/architect/developer/QA 역할별 model packet을 추가했다.

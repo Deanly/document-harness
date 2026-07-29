@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.local/schemas/domain-design-approval-receipt.schema.json",
+  "title": "Domain Design Approval Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "receiptId",
+    "decision",
+    "documentRef",
+    "documentSha256",
+    "modelRevision",
+    "boundedContext",
+    "decidedBy",
+    "decidedAt",
+    "reason"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "domain-design-approval" },
+    "receiptId": { "type": "string", "minLength": 1 },
+    "decision": { "const": "approved" },
+    "documentRef": { "type": "string", "pattern": "^docs/design/.+\\.md$" },
+    "documentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "modelRevision": { "type": "integer", "minimum": 1 },
+    "boundedContext": { "type": "string", "minLength": 1 },
+    "decidedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorKind", "identifier"],
+      "properties": {
+        "actorKind": { "const": "human" },
+        "identifier": { "type": "string", "minLength": 1 }
+      }
+    },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "reason": { "type": "string", "minLength": 1 }
+  }
+}

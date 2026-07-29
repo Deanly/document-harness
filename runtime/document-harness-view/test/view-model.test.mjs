@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildEvidenceGroups,
+  filterDomainContexts,
   filterEvidence,
   filterGuidelines,
   filterInitiatives,
@@ -83,6 +84,45 @@ const initiative = {
   evidenceState: "current",
   sourceRefs: policy.sourceRefs
 };
+
+const domainContext = {
+  id: "BC-EXECUTION",
+  name: "execution",
+  title: "execution-domain-model",
+  subdomainType: "core",
+  owner: "delivery-owner",
+  summary: "목표가 잠긴 task를 실행합니다.",
+  validationStatus: "review_requested",
+  roleViews: ["customer", "planner", "architect", "developer", "qa"],
+  domainExpertRoles: ["delivery-owner"],
+  modelRef: "docs/design/contexts/execution/domain-model.md",
+  languageRef: "docs/design/contexts/execution/ubiquitous-language.md",
+  examplesRef: "docs/design/contexts/execution/examples.md",
+  openQuestions: ["risk tier를 확정해야 합니다."]
+};
+
+test("domain filters keep one shared model and narrow it by actor role, review state, and search", () => {
+  assert.deepEqual(filterDomainContexts({
+    contexts: [domainContext],
+    role: "qa",
+    filter: "review"
+  }), [domainContext]);
+  assert.deepEqual(filterDomainContexts({
+    contexts: [domainContext],
+    role: "developer",
+    query: "risk tier"
+  }), [domainContext]);
+  assert.deepEqual(filterDomainContexts({
+    contexts: [domainContext],
+    role: "qa",
+    filter: "approved"
+  }), []);
+  assert.deepEqual(filterDomainContexts({
+    contexts: [{ ...domainContext, validationStatus: "approved_current" }],
+    role: "customer",
+    filter: "approved"
+  }).map((item) => item.id), ["BC-EXECUTION"]);
+});
 
 test("policy search includes linked guideline content and attention severity", () => {
   const linked = filterPolicies({

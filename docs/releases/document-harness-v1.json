@@ -2,7 +2,7 @@
   "$schema": "../schemas/release-manifest.schema.json",
   "schemaVersion": 1,
   "releaseId": "document-harness-public-v1",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "profiles": [
     "core",
     "governance",
@@ -51,6 +51,18 @@
       "artifactType": "template"
     },
     {
+      "sourcePath": "docs/_templates/adoption/domain-landscape.md",
+      "targetPath": "docs/_templates/adoption/domain-landscape.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/context-map.md",
+      "targetPath": "docs/_templates/adoption/context-map.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
       "sourcePath": "docs/_templates/claude.md",
       "targetPath": "docs/_templates/claude.md",
       "profiles": ["core"],
@@ -76,13 +88,31 @@
     },
     {
       "sourcePath": "docs/_templates/adoption/control-plane.md",
-      "targetPath": "docs/design/control-plane.md",
+      "targetPath": "docs/architecture/control-plane.md",
       "profiles": ["core"],
       "ownership": "project-owned"
     },
     {
       "sourcePath": "docs/_templates/adoption/ubiquitous-language.md",
-      "targetPath": "docs/design/ubiquitous-language.md",
+      "targetPath": "docs/architecture/harness-language.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/domain-landscape.md",
+      "targetPath": "docs/design/domain-landscape.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
+      "sourcePath": "docs/_templates/adoption/context-map.md",
+      "targetPath": "docs/design/context-map.md",
+      "profiles": ["core"],
+      "ownership": "project-owned"
+    },
+    {
+      "sourcePath": "docs/_indexes/context-packets.yaml",
+      "targetPath": "docs/_indexes/context-packets.yaml",
       "profiles": ["core"],
       "ownership": "project-owned"
     },
@@ -118,6 +148,36 @@
     {
       "sourcePath": "docs/_templates/design.md",
       "targetPath": "docs/_templates/design.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/design-domain-landscape.md",
+      "targetPath": "docs/_templates/design-domain-landscape.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/design-context-map.md",
+      "targetPath": "docs/_templates/design-context-map.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/design-ubiquitous-language.md",
+      "targetPath": "docs/_templates/design-ubiquitous-language.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/design-examples.md",
+      "targetPath": "docs/_templates/design-examples.md",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/domain-design-approval-receipt.json",
+      "targetPath": "docs/_templates/domain-design-approval-receipt.json",
       "profiles": ["core"],
       "artifactType": "template"
     },
@@ -252,33 +312,50 @@
       "mode": "0755"
     },
     {
-      "sourcePath": "docs/design/execution-loop-plane.md",
-      "targetPath": "docs/design/execution-loop-plane.md",
+      "sourcePath": "docs/bin/validate-domain-design.sh",
+      "targetPath": "docs/bin/validate-domain-design.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/validate-domain-lineage.sh",
+      "targetPath": "docs/bin/validate-domain-lineage.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/architecture/execution-loop-plane.md",
+      "targetPath": "docs/architecture/execution-loop-plane.md",
       "profiles": ["core"]
     },
     {
-      "sourcePath": "docs/design/harness-adoption-plane.md",
-      "targetPath": "docs/design/harness-adoption-plane.md",
+      "sourcePath": "docs/architecture/harness-adoption-plane.md",
+      "targetPath": "docs/architecture/harness-adoption-plane.md",
       "profiles": ["core"]
     },
     {
-      "sourcePath": "docs/design/human-control-view-plane.md",
-      "targetPath": "docs/design/human-control-view-plane.md",
+      "sourcePath": "docs/architecture/human-control-view-plane.md",
+      "targetPath": "docs/architecture/human-control-view-plane.md",
       "profiles": ["view"]
     },
     {
-      "sourcePath": "docs/design/initiative-governance-plane.md",
-      "targetPath": "docs/design/initiative-governance-plane.md",
+      "sourcePath": "docs/governance/initiative-governance.md",
+      "targetPath": "docs/governance/initiative-governance.md",
       "profiles": ["core"]
     },
     {
-      "sourcePath": "docs/design/policy-to-evidence-governance.md",
-      "targetPath": "docs/design/policy-to-evidence-governance.md",
+      "sourcePath": "docs/governance/policy-to-evidence.md",
+      "targetPath": "docs/governance/policy-to-evidence.md",
       "profiles": ["governance"]
     },
     {
       "sourcePath": "docs/guide/execution-loop-operations.md",
       "targetPath": "docs/guide/execution-loop-operations.md",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/guide/ddd-domain-design.md",
+      "targetPath": "docs/guide/ddd-domain-design.md",
       "profiles": ["core"]
     },
     {
@@ -353,6 +430,11 @@
       "profiles": ["core"]
     },
     {
+      "sourcePath": "docs/lib/domain-design-authority.mjs",
+      "targetPath": "docs/lib/domain-design-authority.mjs",
+      "profiles": ["core"]
+    },
+    {
       "sourcePath": "docs/releases/document-harness-v1.json",
       "targetPath": "docs/releases/document-harness-v1.json",
       "profiles": ["core"]
@@ -380,6 +462,11 @@
     {
       "sourcePath": "docs/schemas/initiative-activation-receipt.schema.json",
       "targetPath": "docs/schemas/initiative-activation-receipt.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/domain-design-approval-receipt.schema.json",
+      "targetPath": "docs/schemas/domain-design-approval-receipt.schema.json",
       "profiles": ["core"]
     },
     {
@@ -524,12 +611,18 @@
       "docs/ADOPT.md",
       "docs/EXECUTE.md",
       "docs/_indexes/execution-loop-policy.yaml",
+      "docs/_indexes/context-packets.yaml",
       "docs/_indexes/initiative-register.json",
       "docs/_templates/initiative-activation-receipt.json",
       "docs/_templates/initiative.md",
       "docs/_templates/project.md",
       "docs/_templates/task.md",
       "docs/_templates/design.md",
+      "docs/_templates/design-domain-landscape.md",
+      "docs/_templates/design-context-map.md",
+      "docs/_templates/design-ubiquitous-language.md",
+      "docs/_templates/design-examples.md",
+      "docs/_templates/domain-design-approval-receipt.json",
       "docs/_templates/guide.md",
       "docs/_templates/report.md",
       "docs/_templates/qa.md",
@@ -540,12 +633,17 @@
       "docs/bin/validate-closeout.sh",
       "docs/bin/close-doc.sh",
       "docs/bin/validate-execution-loop.sh",
-      "docs/design/ubiquitous-language.md",
-      "docs/design/execution-loop-plane.md",
-      "docs/design/harness-adoption-plane.md",
-      "docs/design/human-control-view-plane.md",
-      "docs/design/initiative-governance-plane.md",
-      "docs/design/policy-to-evidence-governance.md",
+      "docs/bin/validate-domain-design.sh",
+      "docs/bin/validate-domain-lineage.sh",
+      "docs/architecture/harness-language.md",
+      "docs/architecture/execution-loop-plane.md",
+      "docs/architecture/harness-adoption-plane.md",
+      "docs/architecture/human-control-view-plane.md",
+      "docs/design/domain-landscape.md",
+      "docs/design/context-map.md",
+      "docs/governance/initiative-governance.md",
+      "docs/governance/policy-to-evidence.md",
+      "docs/guide/ddd-domain-design.md",
       "docs/guide/execution-loop-operations.md",
       "docs/guide/governance-authoring-assistance.md",
       "docs/guide/initiative-governance.md",
@@ -559,6 +657,8 @@
       "docs/guide/repository-policy-extraction.md",
       "docs/initiatives/README.md",
       "docs/lib/initiative-authority.mjs",
+      "docs/lib/domain-design-authority.mjs",
+      "docs/schemas/domain-design-approval-receipt.schema.json",
       "docs/schemas/initiative-activation-receipt.schema.json",
       "docs/schemas/initiative-register.schema.json",
       "runtime/document-harness-view/bin/human-view",

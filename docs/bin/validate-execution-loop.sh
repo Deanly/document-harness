@@ -5,9 +5,9 @@ set -euo pipefail
 DOCS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "$DOCS_DIR/.." && pwd)"
 
-EXECUTION_DESIGN="$DOCS_DIR/design/execution-loop-plane.md"
-HUMAN_VIEW_DESIGN="$DOCS_DIR/design/human-control-view-plane.md"
-GOVERNANCE_DESIGN="$DOCS_DIR/design/policy-to-evidence-governance.md"
+EXECUTION_DESIGN="$DOCS_DIR/architecture/execution-loop-plane.md"
+HUMAN_VIEW_DESIGN="$DOCS_DIR/architecture/human-control-view-plane.md"
+GOVERNANCE_DESIGN="$DOCS_DIR/governance/policy-to-evidence.md"
 EXECUTION_GUIDE="$DOCS_DIR/guide/execution-loop-operations.md"
 HUMAN_VIEW_GUIDE="$DOCS_DIR/guide/human-control-view.md"
 EXECUTION_ENTRY="$DOCS_DIR/EXECUTE.md"
@@ -526,7 +526,7 @@ validate_public_surfaces() {
     require_contains "$HUMAN_VIEW_DESIGN" 'capabilities'
     require_contains "$HUMAN_VIEW_DESIGN" 'snapshot.published'
     require_contains "$HUMAN_VIEW_DESIGN" 'resync.required'
-    for value in 'displayName' 'locale' 'tabLabels' 'overview' 'policies' 'guidelines' 'initiatives' 'review' 'execution' 'evidence'; do
+    for value in 'displayName' 'locale' 'tabLabels' 'overview' 'domain' 'policies' 'guidelines' 'initiatives' 'review' 'execution' 'evidence'; do
       require_contains "$HUMAN_VIEW_DESIGN" "$value"
     done
   fi
@@ -567,7 +567,7 @@ validate_public_surfaces() {
       require_contains "$HUMAN_VIEW_GUIDE" "$value"
     done
     require_contains "$HUMAN_VIEW_GUIDE" 'proposed / accepted_for_promotion / effective / superseded'
-    for value in 'displayName' 'locale' 'tabLabels' 'overview' 'policies' 'guidelines' 'initiatives' 'review' 'execution' 'evidence'; do
+    for value in 'displayName' 'locale' 'tabLabels' 'overview' 'domain' 'policies' 'guidelines' 'initiatives' 'review' 'execution' 'evidence'; do
       require_contains "$HUMAN_VIEW_GUIDE" "$value"
     done
   fi

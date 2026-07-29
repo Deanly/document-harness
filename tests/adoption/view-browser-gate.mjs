@@ -163,7 +163,7 @@ async function buildBrowserFixture() {
 }
 
 async function assertTabs(page) {
-  const expected = ["Overview", "Policies", "Guidelines", "Initiatives", "Review", "Execution", "Evidence"];
+  const expected = ["Overview", "Domain", "Policies", "Guidelines", "Initiatives", "Review", "Execution", "Evidence"];
   const tabs = page.getByRole("tab");
   assert.equal(await tabs.count(), expected.length);
   const labels = await tabs.allTextContents();
@@ -574,7 +574,7 @@ async function main() {
       status: "PLAN_READY",
       gateResult: "passed",
       gate: "reference-view-browser",
-      tabs: 7,
+      tabs: 8,
       viewports: [1440, 949, 768, 390],
       consoleProblems: 0,
       externalRequests: 0,

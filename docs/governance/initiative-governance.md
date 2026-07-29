@@ -1,5 +1,5 @@
 ---
-type: design
+type: governance
 title: initiative-governance-plane
 status: current
 domain: initiative-governance
@@ -15,11 +15,11 @@ context:
   size_tier: small
 referenced_by:
   - docs/README.md
-  - docs/design/control-plane.md
+  - docs/architecture/control-plane.md
   - docs/guide/initiative-governance.md
 source_refs: []
 tags:
-  - docs/design
+  - docs/governance
   - initiative
   - governance
 ---

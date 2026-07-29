@@ -3,17 +3,24 @@ type: task
 doc_id: T0001
 title: retrieval-plane-baseline
 status: done
+domain_contract: legacy-v0
 owner: Codex
 created: 2026-05-16
 updated: 2026-05-16
 current_focus: reusable document-harness에 design retrieval index, context loading playbook, retrieval indexes, validator baseline을 추가했다.
 completion_mode: functional
-related_control_plane: docs/design/control-plane.md
+domain_impact: legacy
+domain_contexts:
+  - retrieval
+domain_model_refs: []
+actor_roles:
+  - developer
+related_control_plane: docs/architecture/control-plane.md
 related_umbrella_project: docs/projects/P0001-document-harness-baseline.md
 related_project:
 related_design:
-  - docs/design/control-plane.md
-  - docs/design/ubiquitous-language.md
+  - docs/architecture/control-plane.md
+  - docs/architecture/harness-language.md
 source_refs:
   - "repo:silverstone-core:docs/reports/2026-05-16-document-taxonomy-context-window-analysis.md"
 quality_axes:
@@ -31,16 +38,21 @@ tags:
 - Document ID: T0001
 - Status: done
 - Completion Mode: functional
+- Domain Contract: legacy-v0
+- Domain Impact: legacy
+- Domain Contexts: retrieval
+- Domain Model Refs:
+- Actor Roles: developer
 - Owner: Codex
 - Created: 2026-05-16
 - Updated: 2026-05-16
 - Current Focus: reusable document-harness에 design retrieval index, context loading playbook, retrieval indexes, validator baseline을 추가했다.
-- Related Control Plane: docs/design/control-plane.md
+- Related Control Plane: docs/architecture/control-plane.md
 - Related Umbrella Project: docs/projects/P0001-document-harness-baseline.md
 - Related Project:
 - Related Design:
-  - `docs/design/control-plane.md`
-  - `docs/design/ubiquitous-language.md`
+  - `docs/architecture/control-plane.md`
+  - `docs/architecture/harness-language.md`
 
 ## Purpose
 
@@ -99,8 +111,8 @@ tags:
 ## References
 
 - `repo:silverstone-core:docs/reports/2026-05-16-document-taxonomy-context-window-analysis.md`
-- `docs/design/control-plane.md`
-- `docs/design/ubiquitous-language.md`
+- `docs/architecture/control-plane.md`
+- `docs/architecture/harness-language.md`
 - `docs/guide/llm-wiki-operations.md`
 
 ## Dependencies

@@ -8,10 +8,10 @@ updated: 2026-07-17
 related_project: []
 related_task: []
 related_design:
-  - docs/design/control-plane.md
-  - docs/design/execution-loop-plane.md
-  - docs/design/human-control-view-plane.md
-  - docs/design/policy-to-evidence-governance.md
+  - docs/architecture/control-plane.md
+  - docs/architecture/execution-loop-plane.md
+  - docs/architecture/human-control-view-plane.md
+  - docs/governance/policy-to-evidence.md
 source_refs:
   - https://html.spec.whatwg.org/multipage/server-sent-events.html
   - https://www.w3.org/TR/prov-dm/
@@ -36,13 +36,13 @@ tags:
 - Updated: 2026-07-17
 - Related Project:
 - Related Task:
-- Related Design: docs/design/control-plane.md; docs/design/execution-loop-plane.md; docs/design/human-control-view-plane.md; docs/design/policy-to-evidence-governance.md
+- Related Design: docs/architecture/control-plane.md; docs/architecture/execution-loop-plane.md; docs/architecture/human-control-view-plane.md; docs/governance/policy-to-evidence.md
 
 ## Purpose
 
 이 guide는 repository 하나에 연결된 local view에서 project/task의 현재 위치, 사람의 행동이 필요한 attention, policy-to-task trace, evidence와 freshness를 빠르게 판단하는 운영 절차를 설명합니다.
 
-loop state/checkpoint/attention canonical fields는 `docs/design/execution-loop-plane.md`, projector/API/polling/optional-SSE/freshness/security contract는 `docs/design/human-control-view-plane.md`를 우선합니다.
+loop state/checkpoint/attention canonical fields는 `docs/architecture/execution-loop-plane.md`, projector/API/polling/optional-SSE/freshness/security contract는 `docs/architecture/human-control-view-plane.md`를 우선합니다.
 
 ## Operator Mental Model
 
@@ -72,13 +72,23 @@ Top Bar
   local-only | READ ONLY | health
 
 Horizontal Tabs
-  Overview | Policies | Guidelines | Initiatives | Review | Execution | Evidence
+  Overview | Domain | Policies | Guidelines | Initiatives | Review | Execution | Evidence
 
 Selected Tab Panel
   one large reading and operation surface
 ```
 
-이 View는 repository마다 독립적으로 실행되므로 repository selector, workspace switcher와 left sidebar를 두지 않습니다. top bar 왼쪽의 `<displayName> / <repository>`는 고정 context이며, 스크롤 중에도 계속 보여야 합니다. `Board`는 reference 기본 displayName이고, 배포 profile은 사용자 표시 언어에 맞게 `presentation.displayName`과 `presentation.tabLabels`를 설정할 수 있습니다. 내부 route/hash key는 `overview|policies|guidelines|initiatives|review|execution|evidence`를 사용하고 기존 `#policies`는 policies tab을 계속 가리킵니다. 좁은 화면은 horizontal tab overflow로 대응하며 left navigation으로 변환하지 않습니다.
+이 View는 repository마다 독립적으로 실행되므로 repository selector, workspace switcher와 left sidebar를 두지 않습니다. top bar 왼쪽의 `<displayName> / <repository>`는 고정 context이며, 스크롤 중에도 계속 보여야 합니다. `Board`는 reference 기본 displayName이고, 배포 profile은 사용자 표시 언어에 맞게 `presentation.displayName`과 `presentation.tabLabels`를 설정할 수 있습니다. 내부 route/hash key는 `overview|domain|policies|guidelines|initiatives|review|execution|evidence`를 사용하고 기존 `#policies`는 policies tab을 계속 가리킵니다. 좁은 화면은 horizontal tab overflow로 대응하며 left navigation으로 변환하지 않습니다.
+
+### Domain Tab
+
+Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context model, ubiquitous language와 executable examples를 읽기 전용으로 투영합니다.
+
+- bounded context별 core/supporting/generic 구분, owner와 domain expert를 표시합니다.
+- model revision, exact-byte approval receipt, validation/freshness를 분리해 보여줍니다.
+- 고객/domain expert, 기획자, 설계자, 개발자, QA role filter는 같은 stable model ID를 역할 관점별로 좁힐 뿐 별도 모델을 만들지 않습니다.
+- aggregate, business rule, scenario, command, event count와 open question을 표시합니다.
+- Board의 표시나 필터 조작은 모델 승인, 변경 또는 delivery 실행 권한을 만들지 않습니다.
 
 상단 bar의 `connected` 표시는 freshness를 의미하지 않습니다. `fresh`, `updating`, `direct`, `degraded`, `unknown`을 별도 badge로 표시합니다.
 
@@ -493,7 +503,7 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] path traversal, symlink escape, excluded sensitivity, browser-origin 공격을 차단한다.
 - [ ] cache 삭제 뒤 hidden decision/approval truth가 손실되지 않는다.
 - [ ] top bar 왼쪽의 `<displayName> / <repository>`가 모든 tab과 scroll 위치에서 보이고 selector/workspace switcher가 없다.
-- [ ] left sidebar 없이 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`를 canonical order의 seven horizontal tabs로 제공하고 사용자 label은 `presentation.tabLabels`에서 읽는다.
+- [ ] left sidebar 없이 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`를 canonical order의 eight horizontal tabs로 제공하고 사용자 label은 `presentation.tabLabels`에서 읽는다.
 - [ ] `정책`과 `지침` tab이 각각 독립 search/filter/pagination/detail state를 가지며 related guideline/policy를 양방향으로 연결한다.
 - [ ] `추진안` tab이 독립 search/filter/pagination/detail state를 가지며 정책 WHY, 선택 지침 HOW와 역색인된 Project 연결을 보여준다.
 - [ ] 모든 tab이 같은 snapshot/read fence를 사용한다.
@@ -507,8 +517,8 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 
 ## References
 
-- [Execution Loop Plane](../design/execution-loop-plane.md)
-- [Human Control View Plane](../design/human-control-view-plane.md)
+- [Execution Loop Plane](../architecture/execution-loop-plane.md)
+- [Human Control View Plane](../architecture/human-control-view-plane.md)
 - [WHATWG HTML — Server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 - [W3C PROV-DM — The PROV Data Model](https://www.w3.org/TR/prov-dm/)
 - [Google SRE Book — Monitoring Distributed Systems](https://sre.google/sre-book/monitoring-distributed-systems/)
@@ -516,12 +526,13 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [PatternFly — Tabs accessibility](https://www.patternfly.org/components/tabs/accessibility/)
 - [PatternFly — Table design guidelines](https://www.patternfly.org/components/table/design-guidelines/)
 - [PatternFly — Design tokens](https://www.patternfly.org/tokens/about-tokens/)
-- `docs/design/control-plane.md`
+- `docs/architecture/control-plane.md`
 
 ## Change Log
 
 - 2026-07-15: read-only local view, information architecture, attention, policy trace, freshness, SSE/polling, approval workflow, security 운영 기준을 생성했다.
 - 2026-07-16: repository 정적 identity, five top tabs, tab별 product plan, refresh-stable interaction과 PatternFly-inspired local semantic design 기준을 추가했다.
+- 2026-07-29: DDD landscape/context/model approval, role filter와 open question을 보여주는 read-only Domain 탭을 canonical navigation에 추가했다.
 - 2026-07-16: shipped reference View의 doctor/refresh/start/status/url/stop/test, Node no-DB/ETag/lease-safe runtime과 migration/current/source fence 운영 절차를 추가했다.
 - 2026-07-17: approval badge를 complete source/decision/effective evidence에 묶고 `실행 상태`를 canonical Markdown checkpoint의 deterministic fail-closed projection으로 정렬했다.
 - 2026-07-17: locale-configured 표시, 기술 식별자 원형 보존, presentation-only localization과 긴 ID containment 계약을 추가했다.

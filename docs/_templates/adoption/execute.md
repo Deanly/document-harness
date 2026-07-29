@@ -4,11 +4,11 @@ title: execute
 status: current
 owner: document-harness
 related_design:
-  - docs/design/control-plane.md
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/initiative-governance-plane.md
-  - docs/design/execution-loop-plane.md
-  - docs/design/human-control-view-plane.md
+  - docs/architecture/control-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/governance/initiative-governance.md
+  - docs/architecture/execution-loop-plane.md
+  - docs/architecture/human-control-view-plane.md
 source_refs:
   - docs/_indexes/execution-loop-policy.yaml
   - docs/guide/governance-authoring-assistance.md
@@ -106,12 +106,12 @@ handoff에는 goal, task/checkpoint revision, last valid evidence, next actor/ac
 
 ## References
 
-- `docs/design/execution-loop-plane.md`
+- `docs/architecture/execution-loop-plane.md`
 - `docs/guide/execution-loop-operations.md`
-- `docs/design/policy-to-evidence-governance.md`
-- `docs/design/initiative-governance-plane.md`
+- `docs/governance/policy-to-evidence.md`
+- `docs/governance/initiative-governance.md`
 - `docs/guide/governance-authoring-assistance.md`
-- `docs/design/human-control-view-plane.md`
+- `docs/architecture/human-control-view-plane.md`
 - `docs/guide/human-control-view.md`
 
 ## Change Log

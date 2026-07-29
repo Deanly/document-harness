@@ -96,6 +96,7 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   assert.deepEqual(schemaFiles.sort(), [
     "adoption-plan.schema.json",
     "apply-receipt.schema.json",
+    "domain-design-approval-receipt.schema.json",
     "governance-catalog.schema.json",
     "harness-installation-lock.schema.json",
     "human-policy-decision-receipt.schema.json",
@@ -276,7 +277,7 @@ test("apply is fenced, installs atomically, and a second apply is a zero-write n
   assert.match(adoptionProfile, /installation_lock: docs\/_indexes\/harness-installation\.yaml/);
   assert.match(
     adoptionProfile,
-    /tabs:\n      overview: Overview\n      policies: Policies\n      guidelines: Guidelines\n      initiatives: Initiatives\n      review: Review\n      execution: Execution\n      evidence: Evidence\n/,
+    /tabs:\n      overview: Overview\n      domain: Domain\n      policies: Policies\n      guidelines: Guidelines\n      initiatives: Initiatives\n      review: Review\n      execution: Execution\n      evidence: Evidence\n/,
   );
   assert.equal(adoptionProfile.includes("정책·지침"), false);
   assert.equal(adoptionProfile.includes("{{"), false);
@@ -613,7 +614,7 @@ test("upgrade fails closed for approved governance reference byte changes but pe
   });
   applyPlan({ planFile, expectedPlanHash: initial.planHash });
 
-  const managedPath = "docs/design/policy-to-evidence-governance.md";
+  const managedPath = "docs/governance/policy-to-evidence.md";
   const managedFile = path.join(target, ...managedPath.split("/"));
   const currentBytes = readFileSync(managedFile);
   const olderInstalledBytes = Buffer.from("# 이전 release에서 설치된 거버넌스 근거\n");

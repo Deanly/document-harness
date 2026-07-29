@@ -2,8 +2,8 @@
 # Default packets must not include all design docs, all task docs, or the full
 # ubiquitous language registry.
 
-version: 3
-updated: 2026-07-18
+version: 4
+updated: 2026-07-29
 source_guides:
   - docs/guide/context-loading-playbooks.md
   - docs/guide/hybrid-retrieval-and-freshness.md
@@ -19,7 +19,7 @@ packets:
     default_load:
       - docs/ADOPT.md
       - .agents/skills/operate-document-harness/SKILL.md
-      - docs/design/harness-adoption-plane.md
+      - docs/architecture/harness-adoption-plane.md
       - docs/guide/repository-policy-extraction.md
       - target_repository_AGENTS
       - target_current_control_plane
@@ -39,7 +39,7 @@ packets:
   docs_harness:
     default_load:
       - docs/README.md
-      - docs/design/control-plane.md
+      - docs/architecture/control-plane.md
       - docs/guide/llm-wiki-operations.md
       - docs/guide/context-loading-playbooks.md
     dynamic_load:
@@ -48,24 +48,122 @@ packets:
     avoid_by_default:
       - docs/design/*.md
       - docs/tasks/*.md
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
     section_only:
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
 
   design_change:
     default_load:
-      - docs/design/control-plane.md
+      - docs/design/domain-landscape.md
+      - docs/design/context-map.md
       - docs/design/README.md
+      - docs/guide/ddd-domain-design.md
     dynamic_load:
-      - target_design_doc
-      - relevant_ubiquitous_language_sections
-      - related_project_or_task_if_delivery_changes
+      - target_bounded_context_domain_model
+      - target_bounded_context_language_sections
+      - target_bounded_context_examples
+      - related_project_task_and_qa
+      - exact_domain_expert_sources_and_current_approval_receipt
     avoid_by_default:
       - docs/design/*.md
       - docs/tasks/*.md
-      - docs/design/ubiquitous-language.md
+      - unrelated_bounded_contexts
+      - docs/architecture/*.md
     section_only:
-      - docs/design/ubiquitous-language.md
+      - target_bounded_context_language_sections
+
+  domain_discovery:
+    default_load:
+      - docs/design/domain-landscape.md
+      - docs/design/context-map.md
+      - docs/guide/ddd-domain-design.md
+    dynamic_load:
+      - human_domain_expert_sources
+      - business_examples_and_counterexamples
+      - target_context_candidate_model
+      - disputed_terms_and_open_questions
+    avoid_by_default:
+      - code_behavior_as_business_truth
+      - unrelated_architecture_docs
+      - all_repository_history
+    section_only:
+      - relevant_existing_context_language_sections
+
+  role_customer_domain_expert:
+    default_load:
+      - docs/design/domain-landscape.md
+      - docs/design/context-map.md
+    dynamic_load:
+      - target_context_language
+      - target_context_examples
+      - target_context_customer_outcome_and_unknowns
+      - exact_source_and_review_diff
+    avoid_by_default:
+      - tactical_implementation_details_without_business_need
+      - unrelated_contexts
+    section_only:
+      - customer_role_consumer_contract
+
+  role_planner:
+    default_load:
+      - docs/design/domain-landscape.md
+      - docs/design/context-map.md
+    dynamic_load:
+      - target_context_scenarios
+      - target_context_business_rules_and_state_transitions
+      - target_context_language
+      - active_initiative_and_project
+    avoid_by_default:
+      - architecture_as_domain_truth
+      - unrelated_task_history
+    section_only:
+      - planner_role_consumer_contract
+
+  role_architect:
+    default_load:
+      - docs/design/domain-landscape.md
+      - docs/design/context-map.md
+    dynamic_load:
+      - target_context_aggregates_and_consistency
+      - target_context_relationships_and_integration
+      - relevant_architecture_current_truth
+      - published_contracts
+    avoid_by_default:
+      - unrelated_context_models
+      - code_structure_as_aggregate_authority
+    section_only:
+      - architect_role_consumer_contract
+
+  role_developer:
+    default_load:
+      - docs/design/context-map.md
+      - current_task_doc
+    dynamic_load:
+      - exact_approved_target_domain_models
+      - target_language_commands_events_rules_and_examples
+      - directly_related_architecture_and_guides
+      - current_qa_checks
+    avoid_by_default:
+      - review_requested_models_as_current_truth
+      - unrelated_contexts
+    section_only:
+      - developer_role_consumer_contract
+
+  role_qa:
+    default_load:
+      - docs/design/context-map.md
+      - current_qa_doc
+      - docs/guide/qa-document-system.md
+    dynamic_load:
+      - exact_approved_target_domain_models
+      - target_rules_state_transitions_and_examples
+      - related_task_goals
+      - linked_test_evidence
+    avoid_by_default:
+      - uncovered_rules_or_scenarios
+      - architecture_only_behavior_as_requirement
+    section_only:
+      - qa_role_consumer_contract
 
   project_task_execution:
     default_load:
@@ -73,16 +171,19 @@ packets:
       - current_task_doc
       - parent_or_reference_project_doc
       - referenced_initiative_doc
-      - docs/design/control-plane.md
+      - docs/architecture/control-plane.md
+      - docs/design/context-map.md
     dynamic_load:
-      - directly_referenced_design_docs
+      - exact_approved_domain_model_refs
+      - relevant_domain_language_and_examples
+      - directly_referenced_architecture_docs
       - relevant_guide_or_validator_docs
     avoid_by_default:
       - docs/tasks/*.md
       - docs/reports/*.md
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
     section_only:
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
 
   execution_resume:
     default_load:
@@ -101,11 +202,11 @@ packets:
       - superseded_policy_or_standard_versions
       - raw_execution_logs
     section_only:
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
 
   policy_governance:
     default_load:
-      - docs/design/policy-to-evidence-governance.md
+      - docs/governance/policy-to-evidence.md
       - docs/guide/policy-proposal-and-approval.md
       - exact_human_policy_source
     dynamic_load:
@@ -121,7 +222,7 @@ packets:
 
   initiative_governance:
     default_load:
-      - docs/design/initiative-governance-plane.md
+      - docs/governance/initiative-governance.md
       - docs/guide/initiative-governance.md
       - exact_human_policy_and_guideline_sources
     dynamic_load:
@@ -138,11 +239,11 @@ packets:
 
   human_view_runtime:
     default_load:
-      - docs/design/human-control-view-plane.md
+      - docs/architecture/human-control-view-plane.md
       - docs/guide/human-control-view.md
-      - docs/design/retrieval-plane.md
+      - docs/architecture/retrieval-plane.md
     dynamic_load:
-      - docs/design/execution-loop-plane.md
+      - docs/architecture/execution-loop-plane.md
       - source_registry_and_sensitivity_policy
       - representative_policy_task_checkpoint_and_receipt_fixtures
       - runtime_security_and_deployment_design
@@ -152,7 +253,7 @@ packets:
       - proposal_reports_as_effective_policy
       - unrelated_task_history
     section_only:
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
 
   report_synthesis:
     default_load:
@@ -165,9 +266,9 @@ packets:
     avoid_by_default:
       - docs/design/*.md
       - docs/tasks/*.md
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
     section_only:
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
 
   qa_maintenance:
     default_load:
@@ -175,19 +276,20 @@ packets:
       - docs/guide/qa-document-system.md
     dynamic_load:
       - qa_source_documents
-      - related_design_invariants
+      - exact_approved_domain_model_refs
+      - covered_domain_rules_and_scenarios
       - linked_test_evidence
     avoid_by_default:
       - docs/qa/*.md
       - unrelated_tasks
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
     section_only:
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md
 
   closeout:
     default_load:
       - target_project_or_task_doc
-      - docs/design/control-plane.md
+      - docs/architecture/control-plane.md
     dynamic_load:
       - related_design_docs
       - validators_referenced_by_doc
@@ -198,7 +300,7 @@ packets:
 
   retrieval_incident:
     default_load:
-      - docs/design/retrieval-plane.md
+      - docs/architecture/retrieval-plane.md
       - docs/guide/hybrid-retrieval-and-freshness.md
       - docs/_indexes/retrieval-policy.yaml
     dynamic_load:
@@ -211,4 +313,4 @@ packets:
       - docs/tasks/*.md
       - unrelated_source_roots
     section_only:
-      - docs/design/ubiquitous-language.md
+      - docs/architecture/harness-language.md

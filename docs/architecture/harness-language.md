@@ -1,8 +1,8 @@
 ---
-type: design
+type: architecture
 title: ubiquitous-language
 status: current
-domain: ubiquitous-language
+domain: document-harness-language
 owner:
 created: 2026-04-10
 updated: 2026-07-17
@@ -15,12 +15,12 @@ context:
   size_tier: small
 referenced_by:
   - docs/README.md
-  - docs/design/control-plane.md
+  - docs/architecture/control-plane.md
 related_task:
   - docs/tasks/T0001-retrieval-plane-baseline.md
 source_refs: []
 tags:
-  - docs/design
+  - docs/architecture
   - ubiquitous-language
 ---
 
@@ -33,7 +33,7 @@ tags:
 - Updated: 2026-07-17
 - Referenced By:
   - `docs/README.md`
-  - `docs/design/control-plane.md`
+  - `docs/architecture/control-plane.md`
 
 ## Purpose
 
@@ -43,7 +43,7 @@ tags:
 
 placeholder 대신 채워진 예시가 필요하면 `docs/examples/README.md`를 먼저 봅니다.
 
-이 문서는 `docs/design/control-plane.md`와 함께 whole-system control surface를 이룹니다.
+이 문서는 `docs/architecture/control-plane.md`와 함께 whole-system control surface를 이룹니다.
 
 ## Retrieval Rule
 

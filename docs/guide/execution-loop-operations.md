@@ -8,8 +8,8 @@ updated: 2026-07-17
 related_project: []
 related_task: []
 related_design:
-  - docs/design/execution-loop-plane.md
-  - docs/design/policy-to-evidence-governance.md
+  - docs/architecture/execution-loop-plane.md
+  - docs/governance/policy-to-evidence.md
 source_refs: []
 tags:
   - docs/guide
@@ -23,7 +23,7 @@ tags:
 - Status: current
 - Created: 2026-07-15
 - Updated: 2026-07-17
-- Related Design: docs/design/execution-loop-plane.md; docs/design/policy-to-evidence-governance.md
+- Related Design: docs/architecture/execution-loop-plane.md; docs/governance/policy-to-evidence.md
 
 ## Purpose
 
@@ -229,8 +229,8 @@ task contract 변경, scope 확대, 비가역 작업, production/secret 접근, 
 
 ## References
 
-- `docs/design/execution-loop-plane.md`
-- `docs/design/policy-to-evidence-governance.md`
+- `docs/architecture/execution-loop-plane.md`
+- `docs/governance/policy-to-evidence.md`
 - `docs/guide/human-control-view.md`
 - `docs/_indexes/execution-loop-policy.yaml`
 - `docs/_templates/execution-checkpoint.md`

@@ -1,5 +1,5 @@
 ---
-type: design
+type: architecture
 title: human-control-view-plane
 status: current
 domain: human-view
@@ -16,8 +16,8 @@ context:
 referenced_by:
   - docs/guide/human-control-view.md
 related_design:
-  - docs/design/execution-loop-plane.md
-  - docs/design/policy-to-evidence-governance.md
+  - docs/architecture/execution-loop-plane.md
+  - docs/governance/policy-to-evidence.md
 related_task: []
 source_refs:
   - https://html.spec.whatwg.org/multipage/server-sent-events.html
@@ -27,7 +27,7 @@ source_refs:
   - https://www.patternfly.org/components/tabs/accessibility/
   - https://www.patternfly.org/tokens/about-tokens/
 tags:
-  - docs/design
+  - docs/architecture
   - human-control
   - projection
   - local-view
@@ -42,7 +42,7 @@ tags:
 - Updated: 2026-07-17
 - Referenced By:
   - `docs/guide/human-control-view.md`
-- Related Design: `docs/design/execution-loop-plane.md`; `docs/design/policy-to-evidence-governance.md`
+- Related Design: `docs/architecture/execution-loop-plane.md`; `docs/governance/policy-to-evidence.md`
 
 ## Purpose
 
@@ -52,9 +52,9 @@ view는 실행 state machine이나 approval authority를 소유하지 않습니�
 
 ## Whole-System Role
 
-- `docs/design/control-plane.md`가 whole-system goal과 active surface를 소유합니다.
-- `docs/design/policy-to-evidence-governance.md`가 human policy, proposal, effective standard와 approval authority를 소유합니다.
-- `docs/design/execution-loop-plane.md`가 loop state, checkpoint, attention, receipt, stop/resume를 소유합니다.
+- `docs/architecture/control-plane.md`가 whole-system goal과 active surface를 소유합니다.
+- `docs/governance/policy-to-evidence.md`가 human policy, proposal, effective standard와 approval authority를 소유합니다.
+- `docs/architecture/execution-loop-plane.md`가 loop state, checkpoint, attention, receipt, stop/resume를 소유합니다.
 - 이 설계는 source를 어떻게 읽고 atomic snapshot, API, SSE/polling, freshness, security와 user-facing projection으로 제공할지를 소유합니다.
 - `docs/guide/human-control-view.md`는 이 계약을 사람이 운영하는 화면 구조와 playbook으로 번역합니다.
 
@@ -103,16 +103,17 @@ Markdown / Git authority
 
 사용자가 다른 repository를 고르는 selector를 제공하지 않습니다. 여러 repository를 한 화면에서 aggregate하거나 전환하는 기능은 이 profile의 범위 밖입니다.
 
-canonical presentation profile은 `single-repository-top-tabs-v2`입니다.
+canonical presentation profile은 `single-repository-top-tabs-v3`입니다.
 
 ```text
 <displayName> / Static repository identity | freshness | snapshot | READ ONLY | local-only
 
-Overview | Policies | Guidelines | Initiatives | Review | Execution | Evidence
+Overview | Domain | Policies | Guidelines | Initiatives | Review | Execution | Evidence
 ```
 
 - 한 개의 큰 page shell과 상단 horizontal tab list를 사용합니다.
-- canonical tab key와 순서는 정확히 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`입니다. 사용자에게 보이는 label은 `presentation.tabLabels`에서 읽고, reference 기본값은 `Overview`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 기존 `#policies` deep link는 policies tab을 계속 가리킵니다.
+- canonical tab key와 순서는 정확히 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`입니다. 사용자에게 보이는 label은 `presentation.tabLabels`에서 읽고, reference 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 기존 `#policies` deep link는 policies tab을 계속 가리킵니다.
+- Domain tab은 `docs/design/`의 DDD landscape, context map과 bounded-context sets를 투영하고, role filter와 exact-byte approval/freshness를 표시합니다. 이 projection은 model authority나 approval intent를 생성하지 않습니다.
 - left sidebar, collapsible navigation rail, repository selector와 workspace switcher는 제공하지 않습니다.
 - 좁은 화면에서도 tab list를 horizontal scroll 또는 overflow control로 유지하며 sidebar로 변환하지 않습니다.
 - 한 시점에는 선택된 tab panel 하나만 primary content로 표시하되 `displayName`, repository identity와 freshness는 모든 tab과 스크롤 위치에서 유지합니다.
@@ -348,7 +349,8 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 | HV-11 | read-only | mutation 405, source write capability 없음 |
 | HV-12 | source scope security | traversal, symlink escape, secret, permissive CORS 차단 |
 | HV-13 | repository presentation | static identity가 보이고 repository selector와 left sidebar가 없음 |
-| HV-14 | canonical tabs | `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`가 순서대로 있고 configured label과 keyboard navigation 가능 |
+| HV-14 | canonical tabs | `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`가 순서대로 있고 configured label과 keyboard navigation 가능 |
+| HV-15 | DDD Domain projection | landscape/context map/context sets와 model revision, role views, open questions, exact-byte approval/freshness가 source-derived read-only 상태로 보임 |
 | HV-15 | cross-tab consistency | 모든 tab이 같은 snapshot/read fence를 사용하고 mixed generation이 없음 |
 | HV-16 | refresh continuity | polling/manual refresh 후 tab, filter, search, expansion과 focus가 유지됨 |
 | HV-17 | local asset boundary | external CDN/font/script request가 0이고 local-only/read-only가 유지됨 |
@@ -391,14 +393,15 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - [PatternFly — Tabs design guidelines](https://www.patternfly.org/components/tabs/design-guidelines/)
 - [PatternFly — Tabs accessibility](https://www.patternfly.org/components/tabs/accessibility/)
 - [PatternFly — Design tokens](https://www.patternfly.org/tokens/about-tokens/)
-- `docs/design/execution-loop-plane.md`
-- `docs/design/policy-to-evidence-governance.md`
+- `docs/architecture/execution-loop-plane.md`
+- `docs/governance/policy-to-evidence.md`
 - `docs/guide/human-control-view.md`
 
 ## Change Log
 
 - 2026-07-15: execution-loop-plane에서 projector, snapshot API, SSE, freshness, security, runtime, observability와 view acceptance 책임을 분리했다.
 - 2026-07-16: repository별 정적 identity, five top tabs, cross-tab snapshot fence, refresh-stable interaction과 local semantic asset profile을 고정했다.
+- 2026-07-29: DDD Domain projection과 canonical eight-tab profile v3를 추가하고 approval/freshness를 source-derived read-only 상태로 고정했다.
 - 2026-07-16: shipped Node/ETag reference View distribution, exact read endpoints, migration/current/source fence separation과 lease-safe no-DB runtime profile을 current contract로 정렬했다.
 - 2026-07-17: approved/effective projection을 complete source fence와 real decision/effective evidence에 묶고, Execution Status 입력을 canonical `docs/checkpoints/*.md`의 deterministic fail-closed selection으로 정렬했다.
 - 2026-07-17: configured `presentation.locale` human projection, localization authority fence와 긴 technical metadata containment를 고정했다.

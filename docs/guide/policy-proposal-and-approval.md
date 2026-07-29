@@ -9,8 +9,8 @@ updated: 2026-07-15
 related_project: []
 related_task: []
 related_design:
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/execution-loop-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/architecture/execution-loop-plane.md
 source_refs:
   - https://www.nist.gov/publications/nist-cybersecurity-framework-csf-20
   - https://sre.google/workbook/implementing-slos/
@@ -27,7 +27,7 @@ tags:
 - Governance Role: operational-guidance
 - Created: 2026-07-15
 - Updated: 2026-07-15
-- Related Design: docs/design/policy-to-evidence-governance.md; docs/design/execution-loop-plane.md
+- Related Design: docs/governance/policy-to-evidence.md; docs/architecture/execution-loop-plane.md
 
 ## Purpose
 
@@ -167,7 +167,7 @@ AI는 먼저 다음을 결정해 달라고 요청합니다.
 
 - [NIST Cybersecurity Framework 2.0](https://www.nist.gov/publications/nist-cybersecurity-framework-csf-20)
 - [Google SRE Workbook: Implementing SLOs](https://sre.google/workbook/implementing-slos/)
-- [policy-to-evidence-governance](../design/policy-to-evidence-governance.md)
+- [policy-to-evidence-governance](../governance/policy-to-evidence.md)
 
 ## Change Log
 

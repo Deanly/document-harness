@@ -8,8 +8,8 @@ updated: 2026-07-15
 related_project: []
 related_task: []
 related_design:
-  - docs/design/control-plane.md
-  - docs/design/retrieval-plane.md
+  - docs/architecture/control-plane.md
+  - docs/architecture/retrieval-plane.md
 source_refs: []
 tags:
   - docs/guide
@@ -22,7 +22,7 @@ tags:
 - Updated: 2026-07-15
 - Related Project:
 - Related Task:
-- Related Design: docs/design/control-plane.md; docs/design/retrieval-plane.md
+- Related Design: docs/architecture/control-plane.md; docs/architecture/retrieval-plane.md
 
 ## Purpose
 
@@ -80,7 +80,7 @@ Corpus 규모나 freshness 병목 때문에 hybrid runtime을 활성화하면 �
 7. tombstone과 active revision filter를 적용한 뒤 source path, heading, revision fence를 반환합니다.
 8. 같은 작업에서 바뀐 파일은 write receipt가 확인될 때까지 dirty-source candidate union에서 직접 읽고 stale hit를 mask합니다.
 
-Machine-readable 기본값은 `docs/_indexes/retrieval-policy.yaml`을, 상세 계약은 `docs/design/retrieval-plane.md`를 따릅니다. 정적 validator는 이 구조의 정합성을 확인할 뿐 runtime freshness를 증명하지 않습니다.
+Machine-readable 기본값은 `docs/_indexes/retrieval-policy.yaml`을, 상세 계약은 `docs/architecture/retrieval-plane.md`를 따릅니다. 정적 validator는 이 구조의 정합성을 확인할 뿐 runtime freshness를 증명하지 않습니다.
 
 ## Lint Workflow
 
@@ -91,15 +91,15 @@ Machine-readable 기본값은 `docs/_indexes/retrieval-policy.yaml`을, 상세 �
 - root `AGENTS.md`가 현재 validator, template, 핵심 guide를 가리키는지 봅니다.
 - properties와 첫 화면 visible metadata가 일치하는지 봅니다.
 - `source_refs`가 없는 주장성 문서가 있는지 봅니다.
-- 새 핵심 용어가 `docs/design/ubiquitous-language.md`에 반영되었는지 봅니다.
+- 새 핵심 용어가 `docs/architecture/harness-language.md`에 반영되었는지 봅니다.
 - `design`의 current truth와 `guide`, `project`, `task`의 오래된 설명이 충돌하지 않는지 봅니다.
 - inbound link가 없는 중요한 문서, 또는 반복 언급되지만 독립 문서가 없는 개념을 찾습니다.
 
 ## Index And Log Mapping
 
-- `index.md` 역할은 현재 각 폴더 `README.md`, `docs/design/control-plane.md`의 active surface 표, `docs/design/README.md`, 그리고 `docs/_indexes/` retrieval-plane index가 함께 맡습니다.
+- `index.md` 역할은 현재 각 폴더 `README.md`, `docs/architecture/control-plane.md`의 active surface 표, `docs/design/README.md`, 그리고 `docs/_indexes/` retrieval-plane index가 함께 맡습니다.
 - 작업 성격별 context packet 선택은 `docs/guide/context-loading-playbooks.md`를 우선합니다.
-- hybrid runtime 기본 계약은 `docs/_indexes/retrieval-policy.yaml`을 읽고, authoritative 결정은 `docs/design/retrieval-plane.md`에서 확인합니다.
+- hybrid runtime 기본 계약은 `docs/_indexes/retrieval-policy.yaml`을 읽고, authoritative 결정은 `docs/architecture/retrieval-plane.md`에서 확인합니다.
 - `log.md` 역할은 `task`/`project`의 append-only `Status`, `design`/`guide`의 `Change Log`, `report`의 `Status`가 맡습니다.
 - 문서 수가 늘어나면 별도 `docs/index.md`나 검색 도구를 추가할 수 있지만, 먼저 각 문서의 properties와 README가 정확해야 합니다.
 

@@ -2,7 +2,7 @@
 
 This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. Its configurable user-facing name is `Board`; the technical executable remains `human-view` for compatibility. It is copied as a unit; an adopter does not regenerate its design.
 
-Reference View distribution version: `1.3.1`. The public release manifest pins the byte hashes for this complete tree.
+Reference View distribution version: `1.4.0`. The public release manifest pins the byte hashes for this complete tree.
 
 ## Installed surfaces
 
@@ -72,7 +72,8 @@ The governance catalog records the historical capture independently from current
 
 - one independent server and static repository identity
 - fixed top-left identity `<displayName> / <repository>`, visible across every tab and scroll position; `displayName` is repository-configurable
-- exact horizontal tab keys: `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` (labels come from `presentation.tabLabels`, defaulting to English)
+- exact horizontal tab keys: `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` (labels come from `presentation.tabLabels`, defaulting to English)
+- `domain` projects `docs/design/` DDD landscape, context map, bounded-context models, role views, open questions, and exact-byte approval/freshness without granting model authority
 - policy and guideline are independent first-class surfaces with reciprocal related-item links and separate search/filter/pagination/expanded state
 - locale-configured (configured `presentation.locale`) UI chrome and synthesized project/governance wording by default; technical IDs, enum values, paths, hashes, commands, exact source headings, and exact quotes remain unchanged
 - translation is presentation-only and never changes meaning, authority, approval, enforcement, evidence freshness, source refs/hashes, effective refs, or decision receipts

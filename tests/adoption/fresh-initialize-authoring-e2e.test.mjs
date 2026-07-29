@@ -133,7 +133,7 @@ test("fresh full-profile initialize installs and runs the reusable document auth
     "docs/_templates/guide.md",
     "docs/_templates/report.md",
     "docs/_templates/qa.md",
-    "docs/design/ubiquitous-language.md",
+    "docs/architecture/harness-language.md",
     "docs/guide/goal-locked-completion.md",
     "docs/guide/project-cutting-and-execution.md",
     "docs/guide/umbrella-project-governance.md",
@@ -205,7 +205,7 @@ test("fresh full-profile initialize installs and runs the reusable document auth
     git(target, "commit", "-qm", `docs: activate ${docId} fixture`);
   }
 
-  const governanceSourceRef = "docs/design/control-plane.md";
+  const governanceSourceRef = "docs/architecture/control-plane.md";
   const governanceSourceBytes = readFileSync(path.join(target, governanceSourceRef));
   const governanceSourceHash = sha256(governanceSourceBytes);
   const governanceSourceRevision = git(target, "rev-parse", "HEAD").trim();
@@ -407,10 +407,10 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   git(target, "add", qaPath);
   git(target, "commit", "-qm", "docs: configure QA0001 strategy");
 
-  const designOutput = run(target, newDoc, ["design", "service-boundary"]).trim();
+  const designOutput = run(target, newDoc, ["design", "bounded-context", "service", "domain-model"]).trim();
   const guideOutput = run(target, newDoc, ["guide", "operating-rule"]).trim();
   const reportOutput = run(target, newDoc, ["report", "investigation"]).trim();
-  assert.equal(path.basename(designOutput), "service-boundary.md");
+  assert.equal(path.basename(designOutput), "domain-model.md");
   assert.equal(path.basename(guideOutput), "operating-rule.md");
   assert.match(path.basename(reportOutput), /^\d{4}-\d{2}-\d{2}-investigation\.md$/);
   git(target, "add", "-A");
@@ -420,10 +420,13 @@ test("fresh full-profile initialize installs and runs the reusable document auth
     run(target, path.join(target, "docs/bin/validate-execution-loop.sh"), ["--all"]),
     /Validated execution loop surfaces/,
   );
-  assert.match(
-    run(target, path.join(target, "docs/bin/validate-closeout.sh"), ["--all"]),
-    /Validated 6 doc\(s\)\./,
+  const closeoutValidation = spawnSync(
+    path.join(target, "docs/bin/validate-closeout.sh"),
+    ["--all"],
+    { cwd: target, encoding: "utf8" },
   );
+  assert.equal(closeoutValidation.status, 0, `${closeoutValidation.stdout}\n${closeoutValidation.stderr}`);
+  assert.match(closeoutValidation.stdout, /Validated 6 doc\(s\)\./);
 
   const prematureClose = spawnSync(
     path.join(target, "docs/bin/close-doc.sh"),

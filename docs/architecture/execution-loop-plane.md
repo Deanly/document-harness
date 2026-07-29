@@ -1,5 +1,5 @@
 ---
-type: design
+type: architecture
 title: execution-loop-plane
 status: current
 domain: execution
@@ -18,13 +18,13 @@ referenced_by:
   - docs/guide/execution-loop-operations.md
   - docs/guide/human-control-view.md
 related_design:
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/human-control-view-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/architecture/human-control-view-plane.md
 related_task: []
 source_refs:
   - https://www.w3.org/TR/prov-dm/
 tags:
-  - docs/design
+  - docs/architecture
   - execution-loop
   - checkpoint
   - evidence
@@ -41,21 +41,21 @@ tags:
   - `docs/EXECUTE.md`
   - `docs/guide/execution-loop-operations.md`
   - `docs/guide/human-control-view.md`
-- Related Design: `docs/design/policy-to-evidence-governance.md`; `docs/design/human-control-view-plane.md`
+- Related Design: `docs/governance/policy-to-evidence.md`; `docs/architecture/human-control-view-plane.md`
 
 ## Purpose
 
 이 문서는 사람과 에이전트가 여러 세션에 걸쳐 같은 목표를 이어서 수행할 때 필요한 실행 상태, checkpoint, attention, evidence, decision/approval receipt와 stop/resume 계약을 고정합니다.
 
-핵심은 대화나 view server를 기억 장치로 승격하지 않고, Markdown/Git source에 기록된 목표와 실행 이력을 바탕으로 다음 실행을 안전하게 재개하는 것입니다. projector/API/SSE/freshness/security는 `docs/design/human-control-view-plane.md`가 소유합니다.
+핵심은 대화나 view server를 기억 장치로 승격하지 않고, Markdown/Git source에 기록된 목표와 실행 이력을 바탕으로 다음 실행을 안전하게 재개하는 것입니다. projector/API/SSE/freshness/security는 `docs/architecture/human-control-view-plane.md`가 소유합니다.
 
 ## Whole-System Role
 
-- `docs/design/control-plane.md`가 전체 목표와 active control surface를 소유합니다.
+- `docs/architecture/control-plane.md`가 전체 목표와 active control surface를 소유합니다.
 - `project`는 human-facing initiative와 delivery boundary를 소유합니다.
 - `task`는 goal inventory, 실행 slice, checkpoint, evidence, handoff를 소유합니다.
 - 이 설계는 한 task의 반복 실행을 어떻게 이어 붙이고, 언제 사람의 입력·검토·승인을 요구하며, 어떤 evidence barrier에서 성공·중단하는지를 소유합니다.
-- `docs/design/human-control-view-plane.md`는 이 source contract를 사용자용 read projection으로 변환합니다.
+- `docs/architecture/human-control-view-plane.md`는 이 source contract를 사용자용 read projection으로 변환합니다.
 
 ## Authority Boundary
 
@@ -275,7 +275,7 @@ approval_fence: null
 
 ## Human View Projection Handoff
 
-execution source는 task, lifecycle/loop state, checkpoint, attention, approval fence, receipt와 exact trace ref를 제공합니다. projector, immutable snapshot, GET/SSE, polling, freshness, read-only security와 view acceptance는 `docs/design/human-control-view-plane.md`가 소유합니다.
+execution source는 task, lifecycle/loop state, checkpoint, attention, approval fence, receipt와 exact trace ref를 제공합니다. projector, immutable snapshot, GET/SSE, polling, freshness, read-only security와 view acceptance는 `docs/architecture/human-control-view-plane.md`가 소유합니다.
 
 projection은 이 계약을 설명할 수 있지만 state나 authority를 독자적으로 생성·수정하지 않습니다. view에서 관찰된 mismatch는 source를 직접 확인하는 attention이며 자동 write-back 사유가 아닙니다.
 
@@ -334,7 +334,7 @@ approval_fence:
 - public harness는 execution vocabulary, checkpoint/attention/receipt/approval fence schema와 static validator를 소유합니다.
 - downstream executor는 tool capability, isolated environment, actual command/test/review execution과 durable receipt storage를 소유합니다.
 - human-owned source나 trusted approval mechanism 없이는 AI가 policy/directive/approval을 자체 생성하지 않습니다.
-- local view runtime은 `docs/design/human-control-view-plane.md` 경계를 따르고 execution capability를 갖지 않습니다.
+- local view runtime은 `docs/architecture/human-control-view-plane.md` 경계를 따르고 execution capability를 갖지 않습니다.
 - optional approval broker/executor는 explicit user decision과 별도 threat model이 승인된 뒤에만 추가합니다.
 
 ## Acceptance Scenarios
@@ -370,9 +370,9 @@ approval_fence:
 ## References
 
 - [W3C PROV-DM — The PROV Data Model](https://www.w3.org/TR/prov-dm/)
-- `docs/design/control-plane.md`
-- `docs/design/policy-to-evidence-governance.md`
-- `docs/design/human-control-view-plane.md`
+- `docs/architecture/control-plane.md`
+- `docs/governance/policy-to-evidence.md`
+- `docs/architecture/human-control-view-plane.md`
 - `docs/EXECUTE.md`
 
 ## Change Log

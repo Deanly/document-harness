@@ -21,7 +21,7 @@ view:
   bind_host: 127.0.0.1
   port_mode: auto
   presentation:
-    profile: single-repository-top-tabs-v2
+    profile: single-repository-top-tabs-v3
     display_name: Board
     locale: en-US
     sort_locale: en
@@ -30,6 +30,7 @@ view:
     sidebar: false
     tabs:
       overview: Overview
+      domain: Domain
       policies: Policies
       guidelines: Guidelines
       initiatives: Initiatives

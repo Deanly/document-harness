@@ -184,7 +184,7 @@ bounded를 잘 자르는 것만으로는 충분하지 않습니다. 정책 방�
 
 이 하네스를 새 프로젝트에 복사한 뒤에는 아래를 가장 먼저 합니다.
 
-1. `docs/design/control-plane.md`와 `docs/design/ubiquitous-language.md`를 실제 기준으로 채웁니다.
+1. `docs/architecture/control-plane.md`와 `docs/architecture/harness-language.md`를 실제 기준으로 채웁니다.
 2. 정책과 지침을 정돈하고 사람의 exact approval 뒤 첫 `I####` 추진안의 outcome, 범위, 성공 신호를 고정합니다.
 3. 첫 bounded `project`를 initiative에 연결하고 목적, 범위, 비범위, whole-system anchor를 고정합니다.
 4. 설계 기준이 생기면 `design` 문서를 만들고 같은 변경 셋에서 control-plane과 용어 문서를 갱신합니다.

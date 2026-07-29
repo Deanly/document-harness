@@ -1,17 +1,22 @@
 ---
 type: design
+design_kind: bounded-context
 title: {{TITLE}}
-status: current
+status: draft
 domain:
-governance_role:
-governance_id:
-normative_version:
-approval_status:
-approval_ref:
-effective_from:
-supersedes:
-policy_refs: []
-standard_refs: []
+bounded_context: {{BOUNDED_CONTEXT}}
+bounded_context_id:
+subdomain_type:
+model_revision: 1
+validation_status: unreviewed
+validation_ref:
+domain_expert_roles: []
+role_views:
+  - customer
+  - planner
+  - architect
+  - developer
+  - qa
 owner:
 created: {{DATE}}
 updated: {{DATE}}
@@ -21,103 +26,148 @@ context:
   default_load: false
   section_load: false
   evidence_only: false
-  size_tier: small
+  size_tier: medium
 referenced_by: []
 source_refs: []
 tags:
   - docs/design
+  - ddd
+  - bounded-context
 ---
 
 # {{TITLE}}
 
 - Type: design
+- Design Kind: bounded-context
+- Status: draft
 - Domain:
-- Governance Role:
-- Governance ID / Normative Version:
-- Approval Status / Reference:
+- Bounded Context: {{BOUNDED_CONTEXT}}
+- Bounded Context ID:
+- Subdomain Type:
+- Model Revision: 1
+- Validation Status / Reference: unreviewed /
+- Domain Expert Roles:
 - Owner:
 - Created: {{DATE}}
 - Updated: {{DATE}}
-- Referenced By:
 
-## Context
+## Domain Purpose And Customer Outcome
 
-이 설계 문서가 다루는 도메인, 경계, 배경을 적습니다.
+이 bounded context가 해결하는 고객·업무 문제, 성공 결과와 존재 이유를 도메인 언어로 적습니다.
 
-## Whole-System Role
+## Domain Experts And Sources
 
-- 이 설계가 전체 시스템 목표를 어떻게 붙잡는지 적습니다.
-- `docs/design/control-plane.md`에서 이 설계가 담당하는 control surface를 적습니다.
+도메인 사실을 확인할 사람의 역할과 source를 적습니다. 코드 동작만으로 업무 규칙을 확정하지 않습니다.
 
-## Boundary
+## Bounded Context Boundary
 
-- 포함하는 책임
+- 포함하는 business capability와 책임
 - 포함하지 않는 책임
-- 외부 시스템과의 경계
+- upstream/downstream context
+- 이 context 안에서만 유효한 용어 의미
+
+## Ubiquitous Language
+
+| Term ID | Term | Meaning In This Context | Examples / Counterexamples | Avoid | Source / Expert |
+| --- | --- | --- | --- | --- | --- |
+| TERM-... | | | | | |
+
+## Domain Scenarios
+
+| Scenario ID | Actor / Goal | Given | When / Command | Then / Domain Event | Related Rule |
+| --- | --- | --- | --- | --- | --- |
+| SCN-... | | | | | BR-... |
 
 ## Domain Model
 
-- 주요 엔티티
-- 주요 값 객체
-- 주요 상태 전이
+### Aggregates
 
-## Invariants
+| Aggregate ID | Aggregate Root | Responsibility | Invariants | Commands | Events | Consistency Boundary |
+| --- | --- | --- | --- | --- | --- | --- |
+| AGG-... | | | BR-... | CMD-... | EVT-... | |
 
-- 반드시 지켜져야 하는 규칙
+### Entities
 
-## Governance Extension
-
-정책 또는 표준 역할일 때만 채웁니다. 일반 domain design이면 `Not applicable`로 둡니다.
-
-- `human-policy`: human-owned outcome, policy clause, non-waivable rule, approver role
-- `normative-standard`: policy에서 파생되어 승인된 stable rule ID, MUST/SHOULD, verification method
-- AI가 만든 초안은 이 문서에서 effective로 표시하지 않고 `report` proposal로 먼저 검토합니다.
-
-| Rule / Clause ID | Normative Statement | Derived From | Required Check | Waivable |
+| Entity ID | Entity | Identity | Lifecycle | Owning Aggregate |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| ENT-... | | | | AGG-... |
 
-### Approval And Versioning
+### Value Objects
 
-- exact content revision 또는 diff에 묶인 human approval reference
-- effective date, change kind, superseded version
-- approval authority를 검증할 downstream mechanism
+| Value Object ID | Value Object | Meaning | Validity / Immutability | Used By |
+| --- | --- | --- | --- | --- |
+| VO-... | | | | |
 
-### Approved Exceptions
+### Commands
 
-- exception ID, exact rule ref, scope, human risk acceptor, expiry, compensating check, exit task
+| Command ID | Command | Actor | Target Aggregate | Preconditions | Result Event / Rejection |
+| --- | --- | --- | --- | --- | --- |
+| CMD-... | | | AGG-... | BR-... | EVT-... |
 
-## Failure Boundaries
+### Domain Events
 
-- 어떤 실패는 이 설계 안에서 흡수하는가
-- 어떤 실패는 상위 운영 또는 downstream으로 넘기는가
-- 어떤 실패는 절대 조용히 삼키지 않는가
+| Event ID | Domain Event | Producer | Business Meaning | Consumers | Published Contract |
+| --- | --- | --- | --- | --- | --- |
+| EVT-... | | AGG-... | | | |
 
-## Interfaces
+### Domain Policies And Services
 
-- 내부 인터페이스
-- 외부 인터페이스
-- 입력/출력 계약
+| Policy / Service ID | Kind | Trigger | Decision / Coordination | Inputs | Outputs |
+| --- | --- | --- | --- | --- | --- |
+| POL-... | policy / domain-service / process-manager | | | | |
 
-## Artifact Contracts
+## Business Rules And Invariants
 
-- 이 설계가 authoritative truth로 잠그는 산출물
-- 이 설계를 입력으로 읽는 project/task/guide/report
-- 설계 변경 시 같이 갱신해야 하는 문서
+| Rule ID | Rule / Invariant | Scope | Enforced By | Scenario Coverage | QA Coverage |
+| --- | --- | --- | --- | --- | --- |
+| BR-... | | AGG-... | | SCN-... | |
 
-## Quality Axes
+## State Transitions
 
-- 이 설계가 특히 강하게 붙잡아야 하는 quality axis
-- 각 axis가 깨졌을 때 어떤 회귀가 생기는지
+| State Model | From | Command | Guard / Rule | To | Domain Event | Rejection |
+| --- | --- | --- | --- | --- | --- | --- |
+| | | CMD-... | BR-... | | EVT-... | |
+
+## Context Relationships And Integration
+
+| Related Context | Direction | Relationship Pattern | Contract / Translation | Consistency | Failure Ownership |
+| --- | --- | --- | --- | --- | --- |
+| BC-... | upstream / downstream | Customer-Supplier / ACL / Published Language / Shared Kernel / Conformist | | | |
+
+## Failure And Exception Semantics
+
+- 업무상 거절과 기술 실패를 구분합니다.
+- 조용히 삼키면 안 되는 실패와 보상·재시도 소유자를 적습니다.
+- 승인된 업무 예외와 모델 자체의 rule을 분리합니다.
+
+## Role Consumer Contract
+
+| Role | Questions This Model Answers | Required Sections / IDs | Required Downstream Output |
+| --- | --- | --- | --- |
+| customer | 고객 결과와 업무 의미가 맞는가 | 목적, language, scenarios | 의미 확인 또는 정정 |
+| planner | capability, rule, flow와 예외는 무엇인가 | BR-*, CMD-*, EVT-*, SCN-* | 요구·수용 조건 |
+| architect | 경계, aggregate, consistency, integration은 무엇인가 | BC-*, AGG-*, context relationships | 아키텍처·통합 결정 |
+| developer | 어떤 모델과 규칙을 구현해야 하는가 | AGG-*, ENT-*, VO-*, CMD-*, EVT-*, BR-* | 코드·API·event·단위 테스트 |
+| qa | 어떤 규칙과 전이를 검증해야 하는가 | BR-*, SCN-*, state transitions | traceable QA checks |
+
+## Traceability
+
+| Model ID | Source / Expert | Project / Task | API / Event / Code | QA Check | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
 
 ## Decisions
 
-- 핵심 설계 결정과 이유
+- 핵심 도메인 모델 결정과 선택 이유를 적습니다.
 
-## Open Questions
+## Unknowns And Disputes
 
-- 추가 검토가 필요한 항목
+- 확인되지 않은 사실, 경쟁하는 해석과 필요한 사람 결정을 적습니다.
+
+## Change Impact
+
+- 영향받는 역할, project/task/QA, published contract와 데이터 migration을 적습니다.
 
 ## Change Log
 
-- {{DATE}}: design 문서 생성.
+- {{DATE}}: bounded-context design draft 생성.

@@ -1,5 +1,5 @@
 ---
-type: design
+type: architecture
 title: project-control-plane
 status: draft
 domain: control-plane
@@ -7,7 +7,7 @@ owner: human
 initialization_required: true
 source_refs: []
 tags:
-  - docs/design
+  - docs/architecture
   - control-plane
   - adoption
 ---
@@ -16,7 +16,7 @@ tags:
 
 ## Purpose
 
-This project-owned document is the human-readable direction and invariant surface for the repository. Adoption creates it only when the target has no existing `docs/design/control-plane.md`; a mature repository's existing control plane is preserved.
+This project-owned document is the human-readable direction and invariant surface for the repository. Adoption creates it only when the target has no existing `docs/architecture/control-plane.md`; a mature repository's existing control plane is preserved.
 
 ## Current Direction
 

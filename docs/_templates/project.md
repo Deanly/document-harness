@@ -4,14 +4,23 @@ doc_id: {{DOC_ID}}
 title: {{TITLE}}
 status: draft
 lineage_contract: v2
+domain_contract: v1
 related_initiative: {{RELATED_INITIATIVE}}
 initiative_relation: {{INITIATIVE_RELATION}}
+domain_impact: required
+domain_impact_reason:
+domain_review_ref:
+domain_contexts: []
+domain_model_refs: []
+actor_roles:
+  - planner
+  - architect
 completion_mode: functional
 owner:
 created: {{DATE}}
 updated: {{DATE}}
 current_focus:
-related_control_plane: docs/design/control-plane.md
+related_control_plane: docs/architecture/control-plane.md
 related_design: []
 source_refs: []
 quality_axes:
@@ -29,12 +38,19 @@ tags:
 - Status: draft
 - Related Initiative: {{RELATED_INITIATIVE}}
 - Initiative Relation: {{INITIATIVE_RELATION}}
+- Domain Contract: v1
+- Domain Impact: required
+- Domain Impact Reason:
+- Domain Review Ref:
+- Domain Contexts:
+- Domain Model Refs:
+- Actor Roles: planner, architect
 - Completion Mode: functional
 - Owner:
 - Created: {{DATE}}
 - Updated: {{DATE}}
 - Current Focus:
-- Related Control Plane: docs/design/control-plane.md
+- Related Control Plane: docs/architecture/control-plane.md
 - Related Design:
 
 ## Purpose
@@ -46,6 +62,13 @@ tags:
 - 이 project가 어떤 승인된 `I####`의 outcome에 기여하는지 적습니다.
 - 관계가 `delivers`, `supports`, `explores` 중 무엇인지와 이유를 적습니다.
 - initiative의 policy/guideline 관계를 이 문서에서 재해석하지 않고 exact initiative revision을 참조합니다.
+
+## Domain Model Alignment
+
+- `docs/design/context-map.md`에서 이 delivery가 바꾸거나 사용하는 bounded context를 선택합니다.
+- 기능·업무 의미·용어·상태·API/event가 바뀌면 `domain_impact: required`와 exact approved/current `domain_model_refs`를 채웁니다.
+- domain 영향이 정말 없으면 `domain_impact: none`과 사람이 검토할 수 있는 이유를 적습니다.
+- project가 domain model을 약화하거나 새로운 업무 rule을 독자적으로 만들지 않습니다.
 
 ## Project Issuance Check
 

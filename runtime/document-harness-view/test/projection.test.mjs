@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.3.1");
+  assert.equal(result.snapshot.runtimeVersion, "1.4.0");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -24,6 +24,125 @@ test("projection keeps approval, migration fence, current repository, and source
   assert.equal(result.snapshot.summary.approvedCount, 0);
   assert.equal(result.snapshot.execution.status, "not_configured");
   assert.equal(result.snapshot.snapshot.capabilities.write, false);
+});
+
+test("domain projection exposes shared role views and exact-byte model approval without granting authority", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await mkdir(path.join(fixture.root, "docs", "design", "contexts", "execution"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "design", "receipts"), { recursive: true });
+  await writeFile(path.join(fixture.root, "docs", "design", "domain-landscape.md"), `---
+type: design
+design_kind: domain-landscape
+title: fixture-landscape
+status: review_requested
+model_revision: 1
+---
+
+# Fixture
+
+## Unknowns And Disputes
+
+- Domain expert identity must remain explicit.
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "design", "context-map.md"), `---
+type: design
+design_kind: context-map
+title: fixture-context-map
+status: review_requested
+model_revision: 1
+---
+
+# Fixture
+
+## Context Relationships
+
+| Upstream | Downstream | Relationship Pattern | Published Language / ACL | Consistency | Failure Ownership |
+| --- | --- | --- | --- | --- | --- |
+| BC-GOVERNANCE | BC-EXECUTION | Customer-Supplier | exact refs | task start | split |
+`, "utf8");
+  const modelPath = "docs/design/contexts/execution/domain-model.md";
+  const receiptPath = "docs/design/receipts/execution-r1.json";
+  const modelBytes = `---
+type: design
+design_kind: bounded-context
+title: execution-domain-model
+status: current
+bounded_context: execution
+bounded_context_id: BC-EXECUTION
+subdomain_type: core
+model_revision: 1
+validation_status: approved
+validation_ref: ${receiptPath}
+domain_expert_roles:
+  - delivery-owner
+role_views:
+  - customer
+  - planner
+  - architect
+  - developer
+  - qa
+owner: delivery-owner
+---
+
+# Execution
+
+## Domain Purpose And Customer Outcome
+
+Keep goal-locked delivery traceable.
+
+## Domain Model
+
+| Aggregate ID | Aggregate |
+| --- | --- |
+| AGG-EXEC-TASK | Task |
+
+## Business Rules And Invariants
+
+| Rule ID | Rule |
+| --- | --- |
+| BR-EXEC-001 | Current model refs are required. |
+
+## Domain Scenarios
+
+| Scenario ID | Actor |
+| --- | --- |
+| SCN-EXEC-001 | QA |
+
+## Unknowns And Disputes
+
+- Risk tier remains a domain decision.
+`;
+  await writeFile(path.join(fixture.root, modelPath), modelBytes, "utf8");
+  await writeFile(path.join(fixture.root, receiptPath), JSON.stringify({
+    schemaVersion: 1,
+    kind: "domain-design-approval",
+    receiptId: "DDD-APPROVAL-EXECUTION-1",
+    decision: "approved",
+    documentRef: modelPath,
+    documentSha256: sha256(modelBytes),
+    modelRevision: 1,
+    boundedContext: "execution",
+    decidedBy: { actorKind: "human", identifier: "fixture-domain-expert" },
+    decidedAt: "2026-07-29T00:00:00.000Z",
+    reason: "fixture review"
+  }), "utf8");
+
+  const approved = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(approved.snapshot.domain.status, "current");
+  assert.equal(approved.snapshot.summary.domainContextCount, 1);
+  assert.equal(approved.snapshot.summary.domainApprovedCount, 1);
+  assert.deepEqual(approved.snapshot.domain.contexts[0].roleViews, ["customer", "planner", "architect", "developer", "qa"]);
+  assert.equal(approved.snapshot.domain.contexts[0].counts.rules, 1);
+  assert.equal(approved.snapshot.domain.contexts[0].counts.scenarios, 1);
+  assert.equal(approved.snapshot.domain.contexts[0].validatedBy, "fixture-domain-expert");
+  assert.equal(approved.snapshot.snapshot.capabilities.approvalIntents, false);
+
+  await writeFile(path.join(fixture.root, modelPath), `${modelBytes}\nChanged after approval.\n`, "utf8");
+  const invalid = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(invalid.snapshot.domain.status, "degraded");
+  assert.equal(invalid.snapshot.domain.contexts[0].validationStatus, "invalid");
+  assert.ok(invalid.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-DESIGN-INVALID"));
 });
 
 test("an unresolvable captured base degrades the migration fence and generates attention", async (t) => {

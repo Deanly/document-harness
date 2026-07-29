@@ -1,5 +1,5 @@
 ---
-type: design
+type: architecture
 title: harness-adoption-plane
 status: current
 domain: harness-adoption
@@ -18,13 +18,13 @@ referenced_by:
   - docs/guide/repository-policy-extraction.md
 source_refs:
   - docs/releases/document-harness-v1.json
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/human-control-view-plane.md
-  - docs/design/execution-loop-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/architecture/human-control-view-plane.md
+  - docs/architecture/execution-loop-plane.md
   - https://developers.openai.com/codex/skills/
   - https://code.claude.com/docs/en/skills
 tags:
-  - docs/design
+  - docs/architecture
   - adoption
   - migration
   - governance
@@ -213,7 +213,7 @@ view:
   bind_host: 127.0.0.1
   port_mode: auto
   presentation:
-    profile: single-repository-top-tabs-v2
+    profile: single-repository-top-tabs-v3
     display_name: Board
     locale: en-US
     sort_locale: en
@@ -243,7 +243,7 @@ view:
 - stop은 repo fingerprint, instance, PID/start identity와 live health가 일치할 때만 허용합니다.
 - remote bind, privileged port, browser external exposure는 separate human decision입니다.
 - static repository identity는 runtime이 시작된 target repository에서만 계산하며 selector나 workspace switcher를 제공하지 않습니다.
-- page shell은 left sidebar 없이 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`의 exact seven horizontal tab keys를 사용합니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다.
+- page shell은 left sidebar 없이 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`의 exact eight horizontal tab keys를 사용합니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다.
 - 정책과 지침은 서로 연결되지만 독립된 first-class tab입니다. 정책 detail은 관련 지침을, 지침 detail은 관련 정책을 보여주고 각 tab의 search/filter/pagination/expanded state를 따로 유지합니다.
 - 모든 tab은 같은 snapshot/read fence를 공유하고 polling/manual refresh 뒤 active tab, tab별 filter/search/pagination과 expanded item을 유지합니다.
 - UI asset은 same-origin local file로 제공하며 external CDN, remote font와 third-party runtime fetch를 사용하지 않습니다.
@@ -252,7 +252,7 @@ view:
 
 View runtime upgrade가 새 필수 config field를 도입하면 known-safe legacy shape에 한해서 누락 field만 additive migration하고, 기존 project identity·probe·quality command·extension 값은 보존합니다. 이 mutation은 preimage-fenced rollback 대상이며, config JSON 또는 legacy shape를 안전하게 판정할 수 없으면 runtime만 먼저 교체하지 않고 plan을 `CONFLICT`로 중단합니다.
 
-View runtime은 `docs/design/human-control-view-plane.md`의 source/snapshot/freshness/security 계약을 유지합니다. alternate downstream runtime은 같은 release artifact로 간주하지 않으며 별도 profile, installation baseline과 acceptance evidence가 필요합니다.
+View runtime은 `docs/architecture/human-control-view-plane.md`의 source/snapshot/freshness/security 계약을 유지합니다. alternate downstream runtime은 같은 release artifact로 간주하지 않으며 별도 profile, installation baseline과 acceptance evidence가 필요합니다.
 
 ## Initializing Human-Readable Data
 
@@ -363,7 +363,7 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 - plan is default, apply requires exact fence, and repeat apply is idempotent.
 - governance extraction은 high-confidence candidate도 human approval로 승격하지 않습니다.
 - repo-local View는 independent loopback process와 OS-assigned port를 기본으로 합니다.
-- repo-local View presentation은 `single-repository-top-tabs-v2`로 고정하고 repository selector와 left sidebar를 두지 않습니다.
+- repo-local View presentation은 `single-repository-top-tabs-v3`로 고정하고 repository selector와 left sidebar를 두지 않습니다.
 - 사용자용 View 이름은 `presentation.displayName`이며 기본값은 `Board`입니다. 기술 command/path의 `human-view` 호환성을 유지합니다.
 - application deploy와 harness migration은 별도 failure/rollback boundary입니다.
 - document-harness operation skill은 repository-local canonical surface와 thin tool adapter로 함께 설치합니다.
@@ -384,10 +384,10 @@ bootstrap session에서 skill을 새로 추가한 경우 현재 agent는 file을
 
 ## References
 
-- `docs/design/policy-to-evidence-governance.md`
-- `docs/design/initiative-governance-plane.md`
-- `docs/design/human-control-view-plane.md`
-- `docs/design/execution-loop-plane.md`
+- `docs/governance/policy-to-evidence.md`
+- `docs/governance/initiative-governance.md`
+- `docs/architecture/human-control-view-plane.md`
+- `docs/architecture/execution-loop-plane.md`
 - [Codex Skills](https://developers.openai.com/codex/skills/)
 - [Claude Code Skills](https://code.claude.com/docs/en/skills)
 

@@ -7,16 +7,16 @@ owner:
 created: 2026-07-18
 updated: 2026-07-18
 related_design:
-  - docs/design/control-plane.md
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/initiative-governance-plane.md
+  - docs/architecture/control-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/governance/initiative-governance.md
 related_guide:
   - docs/guide/repository-policy-extraction.md
   - docs/guide/policy-proposal-and-approval.md
   - docs/guide/initiative-governance.md
 source_refs:
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/initiative-governance-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/governance/initiative-governance.md
 tags:
   - docs/guide
   - governance
@@ -31,7 +31,7 @@ tags:
 - Governance Role: operational-guidance
 - Created: 2026-07-18
 - Updated: 2026-07-18
-- Related Design: docs/design/policy-to-evidence-governance.md; docs/design/initiative-governance-plane.md
+- Related Design: docs/governance/policy-to-evidence.md; docs/governance/initiative-governance.md
 
 ## Purpose
 
@@ -206,8 +206,8 @@ AI가 제안한 부분:
 
 ## References
 
-- `docs/design/policy-to-evidence-governance.md`
-- `docs/design/initiative-governance-plane.md`
+- `docs/governance/policy-to-evidence.md`
+- `docs/governance/initiative-governance.md`
 - `docs/guide/repository-policy-extraction.md`
 - `docs/guide/policy-proposal-and-approval.md`
 - `docs/guide/initiative-governance.md`

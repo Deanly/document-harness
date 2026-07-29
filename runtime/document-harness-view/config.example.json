@@ -11,6 +11,7 @@
     "sortLocale": "en",
     "tabs": {
       "overview": "Overview",
+      "domain": "Domain",
       "policies": "Policies",
       "guidelines": "Guidelines",
       "initiatives": "Initiatives",

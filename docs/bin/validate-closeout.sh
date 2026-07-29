@@ -4,6 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXECUTION_VALIDATOR="$ROOT_DIR/bin/validate-execution-loop.sh"
+DOMAIN_LINEAGE_VALIDATOR="$ROOT_DIR/bin/validate-domain-lineage.sh"
 INITIATIVE_AUTHORITY_VALIDATOR="$ROOT_DIR/lib/initiative-authority.mjs"
 
 usage() {
@@ -24,6 +25,7 @@ Rules:
   - If Status is done/closed, every goal must be Done with non-empty evidence.
   - If Status is done/closed, WBS cannot contain Todo/In Progress/Pending/Blocked items.
   - execution_contract v1 tasks must also satisfy checkpoint, loop_state, attention, and receipt barriers.
+  - Active/terminal delivery and current QA must pin approved/current DDD models or carry an explicit human-reviewed no-domain-impact decision.
 EOF
 }
 
@@ -1064,5 +1066,6 @@ done
 if [[ ${#EXECUTION_TARGETS[@]} -gt 0 ]]; then
   "$EXECUTION_VALIDATOR" "${EXECUTION_TARGETS[@]}"
 fi
+"$DOMAIN_LINEAGE_VALIDATOR" "${TARGETS[@]}"
 
 echo "Validated ${#TARGETS[@]} doc(s)."

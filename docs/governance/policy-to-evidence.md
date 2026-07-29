@@ -1,5 +1,5 @@
 ---
-type: design
+type: governance
 title: policy-to-evidence-governance
 status: current
 domain: governance
@@ -15,15 +15,15 @@ context:
   evidence_only: false
   size_tier: small
 referenced_by:
-  - docs/design/control-plane.md
-  - docs/design/execution-loop-plane.md
-  - docs/design/human-control-view-plane.md
+  - docs/architecture/control-plane.md
+  - docs/architecture/execution-loop-plane.md
+  - docs/architecture/human-control-view-plane.md
 source_refs:
   - https://www.nist.gov/publications/nist-cybersecurity-framework-csf-20
   - https://doi.org/10.6028/NIST.SP.800-53r5
   - https://sre.google/workbook/implementing-slos/
 tags:
-  - docs/design
+  - docs/governance
   - governance
   - policy
   - traceability
@@ -38,7 +38,7 @@ tags:
 - Owner:
 - Created: 2026-07-15
 - Updated: 2026-07-15
-- Referenced By: docs/design/control-plane.md; docs/design/execution-loop-plane.md; docs/design/human-control-view-plane.md
+- Referenced By: docs/architecture/control-plane.md; docs/architecture/execution-loop-plane.md; docs/architecture/human-control-view-plane.md
 
 ## Context
 
@@ -200,7 +200,7 @@ AI는 먼저 다음 missing decision을 attention request로 만듭니다.
 
 ## View Projection Contract
 
-projector, snapshot API/SSE, freshness와 security의 canonical contract는 `docs/design/human-control-view-plane.md`가 소유합니다. 이 문서는 governance node/edge와 authority label만 소유합니다.
+projector, snapshot API/SSE, freshness와 security의 canonical contract는 `docs/architecture/human-control-view-plane.md`가 소유합니다. 이 문서는 governance node/edge와 authority label만 소유합니다.
 
 사용자 화면 `Board`(human control view)은 정책과 지침을 서로 연결하되 독립 최상위 tab으로 구분하고 다음을 표시합니다.
 

@@ -12,7 +12,7 @@ sponsor:
 created: {{DATE}}
 updated: {{DATE}}
 current_focus:
-related_control_plane: docs/design/control-plane.md
+related_control_plane: docs/architecture/control-plane.md
 policy_refs: []
 guideline_refs: []
 guideline_disposition: needs_review
@@ -43,7 +43,7 @@ tags:
 - Created: {{DATE}}
 - Updated: {{DATE}}
 - Current Focus:
-- Related Control Plane: docs/design/control-plane.md
+- Related Control Plane: docs/architecture/control-plane.md
 
 ## Purpose
 

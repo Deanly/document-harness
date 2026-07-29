@@ -4,6 +4,7 @@ doc_id: {{DOC_ID}}
 title: {{TITLE}}
 status: draft
 lineage_contract: v2
+domain_contract: v1
 owner:
 created: {{DATE}}
 updated: {{DATE}}
@@ -17,7 +18,14 @@ checkpoint_ref:
 policy_refs: []
 normative_refs: []
 exception_refs: []
-related_control_plane: docs/design/control-plane.md
+domain_impact: required
+domain_impact_reason:
+domain_review_ref:
+domain_contexts: []
+domain_model_refs: []
+actor_roles:
+  - developer
+related_control_plane: docs/architecture/control-plane.md
 related_project: {{RELATED_PROJECT}}
 related_design: []
 source_refs: []
@@ -39,12 +47,19 @@ tags:
 - Task Contract Revision: 1
 - Loop State: ready
 - Risk Tier: low
+- Domain Contract: v1
+- Domain Impact: required
+- Domain Impact Reason:
+- Domain Review Ref:
+- Domain Contexts:
+- Domain Model Refs:
+- Actor Roles: developer
 - Current Checkpoint:
 - Owner:
 - Created: {{DATE}}
 - Updated: {{DATE}}
 - Current Focus:
-- Related Control Plane: docs/design/control-plane.md
+- Related Control Plane: docs/architecture/control-plane.md
 - Related Project: {{RELATED_PROJECT}}
 - Related Design:
 
@@ -57,6 +72,13 @@ tags:
 - 이 문서 번호가 clean, up-to-date `main`에서 main-issued draft로 발급되고 즉시 commit되었는지 확인합니다.
 - 왜 이 작업이 연결 project 아래의 `task`여야 하는지 적습니다.
 - 왜 별도 `project`를 발급하지 않아도 되는지 적습니다.
+
+## Domain Model Alignment
+
+- `docs/design/context-map.md`에서 target bounded context를 확인합니다.
+- 기능·업무 의미·용어·상태·API/event를 다루면 exact approved/current `domain_model_refs`와 적용 `BR-*`, `CMD-*`, `EVT-*`, `SCN-*`를 Goal Inventory/References에 연결합니다.
+- domain 영향이 없으면 `domain_impact: none`과 구체적인 이유를 적습니다.
+- code/config 관찰만으로 domain rule을 만들지 않고 model gap은 attention으로 전환합니다.
 
 ## Whole-System Anchor
 

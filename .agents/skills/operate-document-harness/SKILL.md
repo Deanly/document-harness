@@ -1,6 +1,6 @@
 ---
 name: operate-document-harness
-description: Operate the document harness installed in the current repository. Use when initializing, migrating, or upgrading document-harness; starting, resuming, stopping, or closing loop-enabled work; extracting, authoring, reviewing, or relating policy, guideline, and initiative governance; helping a user turn plain-language direction into reviewable locale-appropriate governance drafts; or operating the repository-local Human Control View named “Board”, including requests such as “View start”, “View status”, “View refresh”, or “View stop”.
+description: Operate the document harness installed in the current repository. Use when initializing, migrating, or upgrading document-harness; discovering, authoring, reviewing, validating, or consuming DDD domain models; starting, resuming, stopping, or closing loop-enabled work; extracting, authoring, reviewing, or relating policy, guideline, and initiative governance; helping a user turn plain-language direction into reviewable locale-appropriate governance drafts; or operating the repository-local Human Control View named “Board”, including requests such as “View start”, “View status”, “View refresh”, or “View stop”.
 ---
 
 # Operate Document Harness
@@ -16,6 +16,7 @@ Treat this skill as a repository-local router, not a new authority source. Follo
 | extract or review policy/guideline candidates | `docs/guide/repository-policy-extraction.md` |
 | help a user author or revise policy, guideline, or initiative | `docs/guide/governance-authoring-assistance.md` |
 | create, review, activate, or connect an initiative | `docs/guide/initiative-governance.md` |
+| discover, author, review, or change a domain model | `docs/guide/ddd-domain-design.md`, then `docs/design/domain-landscape.md`, `docs/design/context-map.md`, and the affected context set |
 | start, inspect, refresh, or stop `Board` / the View | `docs/guide/human-control-view.md` |
 
 Read only the exact policy, design, guide, and validator refs selected by those entrypoints. Direct-read files changed in the current task or whose retrieval freshness is uncertain.
@@ -25,15 +26,16 @@ Read only the exact policy, design, guide, and validator refs selected by those 
 1. Locate the repository root and read its `AGENTS.md` plus applicable nested instructions.
 2. Identify the goal, repository revision, dirty tracked/untracked state, constraints, risk, and done criteria before writing.
 3. Before planning, issuing, or executing project/task work, run the governance preflight in `docs/guide/governance-authoring-assistance.md`: direct-read the current lineage, then require the repository-relative JSON Initiative activation receipt and current source/effective bytes to pass `docs/lib/initiative-authority.mjs`; active/approved prose alone is not authority. Also read exact effective policy/guideline refs and freshness. Delivery work may refine but never weaken or reinterpret upper governance.
-4. Stop and request attention rather than write when required governance is missing, stale, unapproved, or conflicting. Treat an explicitly marked legacy bridge separately, but never hide its initiative gap or bypass exact policy/normative refs.
-5. For adoption, classify the target as initialize, migrate, or upgrade and produce the required no-write plan before apply. Preserve project-owned files and existing changes.
-6. For initialization, migration, policy extraction, and governance authoring, write human-facing `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap wording, `approvalRule`, project description, source-reference `note`, and free-text `evidenceKind` labels in clear user-language (configured `presentation.locale`) by default. Preserve technical IDs, enum values, repository-relative paths, hashes, commands, exact source headings, and quoted source wording in their original form.
-7. Treat translation as presentation-only migration: do not change meaning, authority class/state, approval state, enforcement, evidence, source refs, source hashes, or decision receipts while localizing wording.
-8. For execution, keep lifecycle `status` separate from `loop_state`; update the current checkpoint after meaningful actions, evidence, attention, and stop/resume transitions.
-9. Never self-approve policy, standards, guidelines, initiatives, exceptions, migration conflicts, risk acceptance, or weakened quality gates.
-10. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
-11. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
-12. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
+4. Run the DDD preflight in `docs/guide/ddd-domain-design.md`: identify affected bounded contexts, load the actor-specific packet, and require approved/current exact model bytes to pass `docs/lib/domain-design-authority.mjs`. Customer, planner, architect, developer, and QA use the same model IDs through different role views; project/task/QA documents must declare their domain impact and traceability.
+5. Stop and request attention rather than write when required governance or domain truth is missing, stale, unapproved, disputed, or conflicting. Treat an explicitly marked legacy bridge separately, but never hide its initiative or domain gap or bypass exact policy/normative refs.
+6. For adoption, classify the target as initialize, migrate, or upgrade and produce the required no-write plan before apply. Preserve project-owned files and existing changes.
+7. For initialization, migration, policy extraction, and governance authoring, write human-facing `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap wording, `approvalRule`, project description, source-reference `note`, and free-text `evidenceKind` labels in clear user-language (configured `presentation.locale`) by default. Preserve technical IDs, enum values, repository-relative paths, hashes, commands, exact source headings, and quoted source wording in their original form.
+8. Treat translation as presentation-only migration: do not change meaning, authority class/state, approval state, enforcement, evidence, source refs, source hashes, or decision receipts while localizing wording.
+9. For execution, keep lifecycle `status` separate from `loop_state`; update the current checkpoint after meaningful actions, evidence, attention, and stop/resume transitions.
+10. Never self-approve policy, standards, guidelines, initiatives, domain models, exceptions, migration conflicts, risk acceptance, or weakened quality gates.
+11. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
+12. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
+13. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
 
 ## Assist Governance Authoring
 
@@ -57,7 +59,7 @@ Treat the configured `presentation.displayName` (default `Board`) as the user-fa
 | `View refresh` | run `./runtime/document-harness-view/bin/human-view refresh`, then confirm a newer snapshot sequence |
 | `View stop` | run `./runtime/document-harness-view/bin/human-view stop` |
 
-Keep `<displayName> / <repository>` visible as the fixed top-left identity. Expect configured `tabLabels` in the canonical key order `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`. Treat policy, guideline, and initiative as independent first-class surfaces. Initiative directly links policy WHY and selected guideline HOW, while projects own `related_initiative` and the View reverse-indexes their status/path without inventing progress.
+Keep `<displayName> / <repository>` visible as the fixed top-left identity. Expect configured `tabLabels` in the canonical key order `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`. The Domain tab projects the DDD landscape, context map, model validation/freshness, role views, and open questions without granting model authority. Treat domain, policy, guideline, and initiative as independent first-class surfaces. Initiative directly links policy WHY and selected guideline HOW, while projects own `related_initiative` and the View reverse-indexes their status/path without inventing progress.
 
 Do not interpret these phrases as authority to choose another repository, bind remotely, claim a fixed port, kill a foreign process, mutate governance, approve a candidate, or execute project work.
 

@@ -6,11 +6,11 @@ owner: Codex
 created: 2026-07-15
 updated: 2026-07-18
 related_design:
-  - docs/design/control-plane.md
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/initiative-governance-plane.md
-  - docs/design/execution-loop-plane.md
-  - docs/design/human-control-view-plane.md
+  - docs/architecture/control-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/governance/initiative-governance.md
+  - docs/architecture/execution-loop-plane.md
+  - docs/architecture/human-control-view-plane.md
 source_refs:
   - docs/_indexes/execution-loop-policy.yaml
   - docs/guide/governance-authoring-assistance.md
@@ -28,7 +28,7 @@ tags:
 - Owner: Codex
 - Created: 2026-07-15
 - Updated: 2026-07-18
-- Related Design: docs/design/control-plane.md; docs/design/policy-to-evidence-governance.md; docs/design/initiative-governance-plane.md; docs/design/execution-loop-plane.md; docs/design/human-control-view-plane.md
+- Related Design: docs/architecture/control-plane.md; docs/governance/policy-to-evidence.md; docs/governance/initiative-governance.md; docs/architecture/execution-loop-plane.md; docs/architecture/human-control-view-plane.md
 
 ## Purpose
 
@@ -171,14 +171,14 @@ handoff에는 최소한 goal, task/attempt/checkpoint revision, last valid evide
 
 ## References
 
-- authority와 policy promotion: `docs/design/policy-to-evidence-governance.md`
+- authority와 policy promotion: `docs/governance/policy-to-evidence.md`
 - 거버넌스 역할 분리, 사용자 작성 지원과 mandatory preflight: `docs/guide/governance-authoring-assistance.md`
-- 추진안과 project lineage: `docs/design/initiative-governance-plane.md`
+- 추진안과 project lineage: `docs/governance/initiative-governance.md`
 - machine state/stop/defaults: `docs/_indexes/execution-loop-policy.yaml`
-- state/checkpoint/receipt contract: `docs/design/execution-loop-plane.md`
+- state/checkpoint/receipt contract: `docs/architecture/execution-loop-plane.md`
 - 운영 예외와 failure response: `docs/guide/execution-loop-operations.md`
 - 사용자 projection: `docs/guide/human-control-view.md`
-- projector/API/SSE/freshness/security: `docs/design/human-control-view-plane.md`
+- projector/API/SSE/freshness/security: `docs/architecture/human-control-view-plane.md`
 
 ## Change Log
 

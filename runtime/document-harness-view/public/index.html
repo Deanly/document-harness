@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <title>Board · Document Harness</title>
-    <link rel="stylesheet" href="/styles.css?v=4">
+    <link rel="stylesheet" href="/styles.css?v=5">
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 바로가기</a>
@@ -29,6 +29,7 @@
       <nav class="tab-bar" aria-label="Board main navigation">
       <div class="tabs" role="tablist" aria-orientation="horizontal">
         <button id="tab-overview" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-overview" tabindex="-1" data-tab="overview">Overview</button>
+        <button id="tab-domain" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-domain" tabindex="-1" data-tab="domain">Domain</button>
         <button id="tab-policies" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-policies" tabindex="0" data-tab="policies">Policies</button>
         <button id="tab-guidelines" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-guidelines" tabindex="-1" data-tab="guidelines">Guidelines</button>
         <button id="tab-initiatives" class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-initiatives" tabindex="-1" data-tab="initiatives">Initiatives</button>
@@ -84,6 +85,86 @@
             <button class="text-button" type="button" data-open-tab="execution">실행 상태 보기</button>
           </div>
           <div id="overview-runtime" class="runtime-strip"></div>
+        </section>
+      </section>
+
+      <section id="panel-domain" class="tab-panel" role="tabpanel" aria-labelledby="tab-domain" hidden>
+        <div class="page-heading policy-heading">
+          <div>
+            <p class="eyebrow">DDD 도메인 모델</p>
+            <h1>도메인</h1>
+            <p class="page-description">고객·기획·설계·개발·QA가 공유하는 bounded context, ubiquitous language, business rule과 scenario를 exact-byte 승인 상태와 함께 보여줍니다.</p>
+          </div>
+          <div id="domain-summary" class="compact-metrics" aria-label="도메인 모델 현황"></div>
+        </div>
+
+        <section class="panel-card domain-authority-card" aria-labelledby="domain-authority-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">현재 모델 권한</p>
+              <h2 id="domain-authority-title">Domain expert 승인과 freshness</h2>
+            </div>
+            <span id="domain-authority-state" class="status-label warning">확인 중</span>
+          </div>
+          <p id="domain-authority-message" class="page-description">DDD 문서와 승인 receipt를 확인하고 있습니다.</p>
+          <div id="domain-authority-links" class="reference-list"></div>
+        </section>
+
+        <div class="table-toolbar domain-toolbar" role="search">
+          <label class="search-field">
+            <span class="visually-hidden">bounded context 검색</span>
+            <input id="domain-search" type="search" placeholder="context, owner, rule, scenario, 문서 검색" autocomplete="off">
+          </label>
+          <label class="select-field">
+            <span>역할 관점</span>
+            <select id="domain-role-filter">
+              <option value="all">모든 역할</option>
+              <option value="customer">고객 / 도메인 전문가</option>
+              <option value="planner">기획자</option>
+              <option value="architect">설계자</option>
+              <option value="developer">개발자</option>
+              <option value="qa">QA</option>
+            </select>
+          </label>
+          <label class="select-field">
+            <span>승인 상태</span>
+            <select id="domain-status-filter">
+              <option value="all">전체</option>
+              <option value="approved">승인된 current 모델</option>
+              <option value="review">도메인 전문가 검토 필요</option>
+              <option value="invalid">receipt / bytes 불일치</option>
+            </select>
+          </label>
+          <button id="clear-domain-filters" class="text-button" type="button">필터 초기화</button>
+        </div>
+        <div class="result-line">
+          <strong id="domain-result-count">0개 bounded context</strong>
+        </div>
+
+        <div id="domain-context-list" class="domain-context-grid"></div>
+
+        <section class="panel-card domain-map-card" aria-labelledby="domain-map-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Context Map</p>
+              <h2 id="domain-map-title">Upstream · downstream 관계</h2>
+            </div>
+          </div>
+          <div class="table-scroll" tabindex="0" aria-label="context map 관계 표">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Upstream</th>
+                  <th scope="col">Downstream</th>
+                  <th scope="col">관계 패턴</th>
+                  <th scope="col">Published language / ACL</th>
+                  <th scope="col">Consistency</th>
+                  <th scope="col">실패 소유권</th>
+                </tr>
+              </thead>
+              <tbody id="domain-map-body"></tbody>
+            </table>
+          </div>
         </section>
       </section>
 

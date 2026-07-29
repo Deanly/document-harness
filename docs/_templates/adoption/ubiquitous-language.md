@@ -1,22 +1,22 @@
 ---
-type: design
-title: ubiquitous-language
+type: architecture
+title: harness-language
 status: draft
 domain: shared-language
 owner: human
 initialization_required: true
 source_refs: []
 tags:
-  - docs/design
-  - ubiquitous-language
+  - docs/architecture
+  - harness-language
   - adoption
 ---
 
-# Ubiquitous Language
+# Harness Language
 
 ## Purpose
 
-이 문서는 repository에서 사람, AI 도구, 코드와 운영 문서가 같은 뜻으로 사용해야 하는 핵심 용어를 정의합니다. initializer는 용어를 추측하지 않으며, project source를 분석하고 사람이 검토한 뒤 채웁니다.
+이 문서는 repository의 document-harness 운영에서 사람, AI 도구, 코드와 운영 문서가 같은 뜻으로 사용해야 하는 기술 용어를 정의합니다. 실제 비즈니스 ubiquitous language는 `docs/design/contexts/<bounded-context>/ubiquitous-language.md`가 소유하며 initializer는 그 의미를 추측하지 않습니다.
 
 ## Project Terms
 

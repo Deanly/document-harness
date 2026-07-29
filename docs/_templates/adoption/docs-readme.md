@@ -9,14 +9,15 @@
 - `bin/close-doc.sh`: closes a project or task only after the closeout validator passes.
 
 Initiative terminal transitions are intentionally not automated by `close-doc.sh`. A human must update the canonical Initiative document, `docs/_indexes/initiative-register.json`, and the exact terminal decision receipt in one change set, then run `validate-closeout.sh` for the Initiative and for `--all`.
-- `design/ubiquitous-language.md`: project-owned terminology surface that must be initialized from repository evidence.
+- `architecture/harness-language.md`: project-owned harness terminology surface that must be initialized from repository evidence.
+- `design/`: DDD-only domain landscape, context map, bounded-context models, language, and executable examples.
 - `guide/`: reusable goal-lock, project/task cutting, QA, and quality guidance.
 - `_indexes/harness-installation.yaml`: release, plan, ownership, hash, and mode lock.
 - `_indexes/governance-catalog.json`: source-linked policy/guideline candidates and human-review state.
 - `receipts/`: apply, rollback, human-decision, gate, and migration evidence.
 - `../runtime/document-harness-view/`: repository-local read-only Human Control View, 사용자명 `presentation.displayName` (기본값 `Board`).
 
-View는 top bar에 `<displayName> / <repository>`로 표시하고 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`의 일곱 canonical tab key를 사용합니다. 사용자 label은 `presentation.tabLabels`에서 읽습니다. 정책/지침은 각각 독립 surface이며, 추진안은 정책·지침을 연결 프로젝트의 방향으로 전환합니다.
+View는 top bar에 `<displayName> / <repository>`로 표시하고 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`의 여덟 canonical tab key를 사용합니다. 사용자 label은 `presentation.tabLabels`에서 읽습니다. Domain은 DDD model과 exact-byte approval/freshness를 투영하고, 정책/지침은 각각 독립 surface이며, 추진안은 정책·지침을 연결 프로젝트의 방향으로 전환합니다.
 
 The View is a rebuildable projection, not an authority store. Human policy approval and required gate results must remain source-fenced receipts.
 
@@ -30,7 +31,9 @@ The View is a rebuildable projection, not an authority store. Human policy appro
 ./docs/bin/new-doc.sh task first-task P0001
 ./docs/bin/new-doc.sh qa first-test-strategy
 # Fill required QA fields and commit numbered drafts before creating unnumbered drafts.
-./docs/bin/new-doc.sh design service-boundary
+./docs/bin/new-doc.sh design bounded-context service domain-model
+./docs/bin/new-doc.sh design ubiquitous-language service ubiquitous-language
+./docs/bin/new-doc.sh design domain-examples service examples
 ./docs/bin/new-doc.sh guide operating-rule
 ./docs/bin/new-doc.sh report investigation
 ./docs/bin/validate-execution-loop.sh --all

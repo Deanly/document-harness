@@ -108,7 +108,7 @@ async function approveFixturePolicy(fixture) {
   );
 }
 
-test("server is loopback, read-only, host/origin checked, ETag-aware, and serves the exact seven-tab shell", async (t) => {
+test("server is loopback, read-only, host/origin checked, ETag-aware, and serves the exact eight-tab shell", async (t) => {
   const fixture = await createFixture({ projectId: "server-fixture" });
   await approveFixturePolicy(fixture);
   const server = await startFixtureServer(fixture);
@@ -128,7 +128,7 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.equal(health.status, 200, server.errors());
   const healthBody = await health.json();
   assert.equal(healthBody.repoId, "server-fixture");
-  assert.equal(healthBody.runtimeVersion, "1.3.1");
+  assert.equal(healthBody.runtimeVersion, "1.4.0");
 
   const first = await fetch(`${server.lease.url}/api/v1/snapshot`);
   assert.equal(first.status, 200);
@@ -147,7 +147,7 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.match(pageBody, /role="tablist"/);
   const tabLabels = [...pageBody.matchAll(/role="tab"[^>]*>([^<]+)(?:<span[^>]*>[^<]*<\/span>)?<\/button>/g)]
     .map((match) => match[1].trim());
-  assert.deepEqual(tabLabels, ["Overview", "Policies", "Guidelines", "Initiatives", "Review", "Execution", "Evidence"]);
+  assert.deepEqual(tabLabels, ["Overview", "Domain", "Policies", "Guidelines", "Initiatives", "Review", "Execution", "Evidence"]);
   assert.match(pageBody, /<strong>Board<\/strong>/);
   assert.match(pageBody, /data-tab="initiatives">Initiatives<\/button>/);
   assert.match(pageBody, /id="panel-guidelines"/);

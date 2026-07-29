@@ -10,7 +10,7 @@ DESIGN_MAP="$DOCS_DIR/_indexes/design-map.md"
 CONTEXT_PACKETS="$DOCS_DIR/_indexes/context-packets.yaml"
 RETRIEVAL_POLICY="$DOCS_DIR/_indexes/retrieval-policy.yaml"
 DESIGN_TEMPLATE="$DOCS_DIR/_templates/design.md"
-RETRIEVAL_DESIGN="$DOCS_DIR/design/retrieval-plane.md"
+RETRIEVAL_DESIGN="$DOCS_DIR/architecture/retrieval-plane.md"
 HYBRID_GUIDE="$DOCS_DIR/guide/hybrid-retrieval-and-freshness.md"
 
 error_count=0
@@ -185,7 +185,7 @@ validate_active_folder() {
   local readme="$folder/README.md"
   local active_text
   local file
-  local base
+  local relative
   local status
 
   if [[ ! -f "$readme" ]]; then
@@ -316,10 +316,8 @@ validate_design_indexes() {
   require_file "$DESIGN_MAP" || return
   require_file "$DESIGN_TEMPLATE" || return
 
-  shopt -s nullglob
-  for file in "$DOCS_DIR"/design/*.md; do
-    base="$(basename "$file")"
-    [[ "$base" == "README.md" ]] && continue
+  while IFS= read -r -d '' file; do
+    relative="${file#$DOCS_DIR/design/}"
     design_count=$((design_count + 1))
 
     if ! has_frontmatter "$file"; then
@@ -332,21 +330,21 @@ validate_design_indexes() {
       fi
     done
 
-    count="$(grep -F "$base" "$DESIGN_README" | grep -Ec '^\| \[' || true)"
+    count="$(grep -F "]($relative)" "$DESIGN_README" | grep -Ec '^\| \[' || true)"
     if [[ "$count" != "1" ]]; then
-      error "design doc must appear exactly once in docs/design/README.md: $base (found $count)"
+      error "design doc must appear exactly once in docs/design/README.md: $relative (found $count)"
       continue
     else
-      line="$(grep -F "$base" "$DESIGN_README" | grep -E '^\| \[')"
+      line="$(grep -F "]($relative)" "$DESIGN_README" | grep -E '^\| \[')"
       pipes="$(awk -F'|' '{ print NF - 1 }' <<<"$line")"
       if (( pipes < 8 )); then
-        error "design index row is missing required columns: $base"
+        error "design index row is missing required columns: $relative"
       fi
     fi
 
-    count="$(grep -F "docs/design/$base" "$DESIGN_MAP" | grep -Ec '^\|' || true)"
+    count="$(grep -F "docs/design/$relative" "$DESIGN_MAP" | grep -Ec '^\|' || true)"
     if [[ "$count" != "1" ]]; then
-      error "design doc must appear exactly once in docs/_indexes/design-map.md: $base (found $count)"
+      error "design doc must appear exactly once in docs/_indexes/design-map.md: $relative (found $count)"
       continue
     fi
 
@@ -356,26 +354,25 @@ validate_design_indexes() {
     default_load="$(frontmatter_context_scalar "$file" default_load)"
     section_load="$(frontmatter_context_scalar "$file" section_load)"
 
-    line="$(grep -F "$base" "$DESIGN_README" | grep -E '^\| \[')"
+    line="$(grep -F "]($relative)" "$DESIGN_README" | grep -E '^\| \[')"
     readme_class="$(awk -F'|' '{ value=$4; gsub(/^[[:space:]`]+|[[:space:]`]+$/, "", value); print value }' <<<"$line")"
     readme_size="$(awk -F'|' '{ value=$7; gsub(/^[[:space:]]+|[[:space:]]+$/, "", value); print value }' <<<"$line")"
 
-    line="$(grep -F "docs/design/$base" "$DESIGN_MAP" | grep -E '^\|')"
+    line="$(grep -F "docs/design/$relative" "$DESIGN_MAP" | grep -E '^\|')"
     map_class="$(awk -F'|' '{ value=$3; gsub(/^[[:space:]`]+|[[:space:]`]+$/, "", value); print value }' <<<"$line")"
     map_domain="$(awk -F'|' '{ value=$4; gsub(/^[[:space:]`]+|[[:space:]`]+$/, "", value); print value }' <<<"$line")"
     map_size="$(awk -F'|' '{ value=$5; gsub(/^[[:space:]`]+|[[:space:]`]+$/, "", value); print value }' <<<"$line")"
     map_default="$(awk -F'|' '{ value=$6; gsub(/^[[:space:]`]+|[[:space:]`]+$/, "", value); print value }' <<<"$line")"
     map_section="$(awk -F'|' '{ value=$7; gsub(/^[[:space:]`]+|[[:space:]`]+$/, "", value); print value }' <<<"$line")"
 
-    [[ "$readme_class" == "$retrieval_class" ]] || error "design README retrieval class drift for $base"
-    [[ "$readme_size" == "$size_tier" ]] || error "design README size tier drift for $base"
-    [[ "$map_class" == "$retrieval_class" ]] || error "design map retrieval class drift for $base"
-    [[ "$map_domain" == "$domain" ]] || error "design map domain drift for $base"
-    [[ "$map_size" == "$size_tier" ]] || error "design map size tier drift for $base"
-    [[ "$map_default" == "$default_load" ]] || error "design map default_load drift for $base"
-    [[ "$map_section" == "$section_load" ]] || error "design map section_load drift for $base"
-  done
-  shopt -u nullglob
+    [[ "$readme_class" == "$retrieval_class" ]] || error "design README retrieval class drift for $relative"
+    [[ "$readme_size" == "$size_tier" ]] || error "design README size tier drift for $relative"
+    [[ "$map_class" == "$retrieval_class" ]] || error "design map retrieval class drift for $relative"
+    [[ "$map_domain" == "$domain" ]] || error "design map domain drift for $relative"
+    [[ "$map_size" == "$size_tier" ]] || error "design map size tier drift for $relative"
+    [[ "$map_default" == "$default_load" ]] || error "design map default_load drift for $relative"
+    [[ "$map_section" == "$section_load" ]] || error "design map section_load drift for $relative"
+  done < <(find "$DOCS_DIR/design" -type f -name '*.md' ! -name README.md -print0 | sort -z)
 
   readme_count="$(grep -Ec '^\| \[`[^`]+\.md`\]\(' "$DESIGN_README" || true)"
   map_count="$(grep -Ec '^\| `docs/design/[^`]+\.md`' "$DESIGN_MAP" || true)"
@@ -386,24 +383,24 @@ validate_design_indexes() {
     error "docs/_indexes/design-map.md row count does not match design docs (index $map_count, source $design_count)"
   fi
 
-  for field in 'retrieval_class:' 'context:' 'default_load:' 'section_load:' 'evidence_only:' 'size_tier:'; do
+  for field in 'design_kind:' 'status: draft' 'validation_status:' 'domain_expert_roles:' 'role_views:' 'retrieval_class:' 'context:' 'default_load:' 'section_load:' 'evidence_only:' 'size_tier:'; do
     require_contains "$DESIGN_TEMPLATE" "$field"
   done
 
-  if ! grep -F "control-plane.md" "$DESIGN_README" | grep -Fq "core-start"; then
-    error "control-plane.md must be marked as core-start in docs/design/README.md"
+  if ! grep -F "domain-landscape.md" "$DESIGN_README" | grep -Fq "core-start"; then
+    error "domain-landscape.md must be marked as core-start in docs/design/README.md"
   fi
 
-  if ! grep -F "ubiquitous-language.md" "$DESIGN_README" | grep -Fq "term-excerpt"; then
-    error "ubiquitous-language.md must be marked as term-excerpt in docs/design/README.md"
+  if ! grep -F "context-map.md" "$DESIGN_README" | grep -Fq "context-map"; then
+    error "context-map.md must be marked as context-map in docs/design/README.md"
   fi
 
-  if ! grep -F "retrieval-plane.md" "$DESIGN_README" | grep -Fq "domain-current"; then
-    error "retrieval-plane.md must be marked as domain-current in docs/design/README.md"
+  if ! grep -F "contexts/retrieval/domain-model.md" "$DESIGN_README" | grep -Fq "domain-current"; then
+    error "retrieval bounded-context model must be marked as domain-current in docs/design/README.md"
   fi
 
-  if ! grep -Fq "section-load" "$DESIGN_README"; then
-    error "docs/design/README.md must document section-load behavior for ubiquitous-language.md"
+  if ! grep -Fq "term section" "$DESIGN_README"; then
+    error "docs/design/README.md must document bounded-context term section loading"
   fi
 }
 
@@ -455,7 +452,7 @@ validate_context_packets() {
   ' "$CONTEXT_PACKETS" || error "context packet manifest has forbidden default load entries"
 
   require_contains "$CONTEXT_PACKETS" "retrieval_incident:"
-  require_contains "$CONTEXT_PACKETS" "docs/design/retrieval-plane.md"
+  require_contains "$CONTEXT_PACKETS" "docs/architecture/retrieval-plane.md"
   require_contains "$CONTEXT_PACKETS" "docs/guide/hybrid-retrieval-and-freshness.md"
   require_contains "$CONTEXT_PACKETS" "docs/_indexes/retrieval-policy.yaml"
 

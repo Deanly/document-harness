@@ -36,15 +36,18 @@ require_contains() {
 
 DOCS_README="$ROOT_DIR/README.md"
 EXECUTION_ENTRY="$ROOT_DIR/EXECUTE.md"
-CONTROL_PLANE="$ROOT_DIR/design/control-plane.md"
+CONTROL_PLANE="$ROOT_DIR/architecture/control-plane.md"
 QUALITY_AXES="$ROOT_DIR/guide/quality-axes.md"
 ARTIFACT_CONTRACTS="$ROOT_DIR/guide/artifact-contracts.md"
-UBIQUITOUS_LANGUAGE="$ROOT_DIR/design/ubiquitous-language.md"
-RETRIEVAL_PLANE="$ROOT_DIR/design/retrieval-plane.md"
-POLICY_GOVERNANCE="$ROOT_DIR/design/policy-to-evidence-governance.md"
-INITIATIVE_GOVERNANCE="$ROOT_DIR/design/initiative-governance-plane.md"
-EXECUTION_LOOP="$ROOT_DIR/design/execution-loop-plane.md"
-HUMAN_VIEW_DESIGN="$ROOT_DIR/design/human-control-view-plane.md"
+HARNESS_LANGUAGE="$ROOT_DIR/architecture/harness-language.md"
+RETRIEVAL_PLANE="$ROOT_DIR/architecture/retrieval-plane.md"
+POLICY_GOVERNANCE="$ROOT_DIR/governance/policy-to-evidence.md"
+INITIATIVE_GOVERNANCE="$ROOT_DIR/governance/initiative-governance.md"
+EXECUTION_LOOP="$ROOT_DIR/architecture/execution-loop-plane.md"
+HUMAN_VIEW_DESIGN="$ROOT_DIR/architecture/human-control-view-plane.md"
+DOMAIN_LANDSCAPE="$ROOT_DIR/design/domain-landscape.md"
+DOMAIN_CONTEXT_MAP="$ROOT_DIR/design/context-map.md"
+DOMAIN_DESIGN_GUIDE="$ROOT_DIR/guide/ddd-domain-design.md"
 LLM_WIKI_OPERATIONS="$ROOT_DIR/guide/llm-wiki-operations.md"
 HYBRID_RETRIEVAL="$ROOT_DIR/guide/hybrid-retrieval-and-freshness.md"
 POLICY_GUIDE="$ROOT_DIR/guide/policy-proposal-and-approval.md"
@@ -63,6 +66,8 @@ RETRIEVAL_POLICY="$ROOT_DIR/_indexes/retrieval-policy.yaml"
 EXECUTION_POLICY="$ROOT_DIR/_indexes/execution-loop-policy.yaml"
 EXECUTION_CHECKPOINT_TEMPLATE="$ROOT_DIR/_templates/execution-checkpoint.md"
 EXECUTION_VALIDATOR="$ROOT_DIR/bin/validate-execution-loop.sh"
+DOMAIN_DESIGN_VALIDATOR="$ROOT_DIR/bin/validate-domain-design.sh"
+DOMAIN_LINEAGE_VALIDATOR="$ROOT_DIR/bin/validate-domain-lineage.sh"
 TASK_TEMPLATE="$ROOT_DIR/_templates/task.md"
 PROJECT_TEMPLATE="$ROOT_DIR/_templates/project.md"
 INITIATIVE_TEMPLATE="$ROOT_DIR/_templates/initiative.md"
@@ -77,12 +82,15 @@ require_file "$AGENTS_TEMPLATE"
 require_file "$CONTROL_PLANE"
 require_file "$QUALITY_AXES"
 require_file "$ARTIFACT_CONTRACTS"
-require_file "$UBIQUITOUS_LANGUAGE"
+require_file "$HARNESS_LANGUAGE"
 require_file "$RETRIEVAL_PLANE"
 require_file "$POLICY_GOVERNANCE"
 require_file "$INITIATIVE_GOVERNANCE"
 require_file "$EXECUTION_LOOP"
 require_file "$HUMAN_VIEW_DESIGN"
+require_file "$DOMAIN_LANDSCAPE"
+require_file "$DOMAIN_CONTEXT_MAP"
+require_file "$DOMAIN_DESIGN_GUIDE"
 require_file "$LLM_WIKI_OPERATIONS"
 require_file "$HYBRID_RETRIEVAL"
 require_file "$POLICY_GUIDE"
@@ -99,12 +107,51 @@ require_file "$RETRIEVAL_POLICY"
 require_file "$EXECUTION_POLICY"
 require_file "$EXECUTION_CHECKPOINT_TEMPLATE"
 require_file "$EXECUTION_VALIDATOR"
+require_file "$DOMAIN_DESIGN_VALIDATOR"
+require_file "$DOMAIN_LINEAGE_VALIDATOR"
 require_file "$TASK_TEMPLATE"
 require_file "$PROJECT_TEMPLATE"
 require_file "$INITIATIVE_TEMPLATE"
 require_file "$INITIATIVE_README"
 require_file "$REPORT_TEMPLATE"
 require_file "$QA_TEMPLATE"
+
+for header in \
+  "## Purpose" \
+  "## Authority Boundary" \
+  "## Design Surface Contract" \
+  "## Authoring Workflow" \
+  "## Stable Model IDs" \
+  "## Role Loading Contract" \
+  "## Change And Freshness Contract" \
+  "## Validation" \
+  "## Migration"
+do
+  require_section "$DOMAIN_DESIGN_GUIDE" "$header"
+done
+
+for header in \
+  "## Domain Vision And Customer Outcomes" \
+  "## Domain Experts And Sources" \
+  "## Subdomain Portfolio" \
+  "## Core Domain Differentiation" \
+  "## Cross-Context Business Flows" \
+  "## Role Consumer Contract" \
+  "## Unknowns And Disputes"
+do
+  require_section "$DOMAIN_LANDSCAPE" "$header"
+done
+
+for header in \
+  "## Bounded Context Registry" \
+  "## Context Relationships" \
+  "## Cross-Context Flows" \
+  "## Translation And Ambiguity Rules" \
+  "## Role Consumer Contract" \
+  "## Unknowns And Disputes"
+do
+  require_section "$DOMAIN_CONTEXT_MAP" "$header"
+done
 
 for header in \
   '## Purpose' '## Load Order' '## Start Gate' '## Execute Loop' \
@@ -325,7 +372,10 @@ require_contains "$INITIATIVE_TEMPLATE" '## Policy Alignment'
 require_contains "$INITIATIVE_TEMPLATE" '## Guideline Disposition'
 require_contains "$INITIATIVE_TEMPLATE" '## Success Signals'
 require_contains "$REPORT_TEMPLATE" 'proposal_status:'
-require_contains "$QA_TEMPLATE" 'Policy Clause'
+require_contains "$QA_TEMPLATE" '| Rule ID | Scenario ID |'
+require_contains "$PROJECT_TEMPLATE" 'domain_contract: v1'
+require_contains "$TASK_TEMPLATE" 'domain_contract: v1'
+require_contains "$QA_TEMPLATE" 'domain_contract: v1'
 require_contains "$NEW_DOC_SCRIPT" "require_numbered_doc_issue_context"
 require_contains "$NEW_DOC_SCRIPT" "commit_numbered_doc_draft"
 require_contains "$NEW_DOC_SCRIPT" "validate_issuance_approval_ref"
@@ -337,6 +387,8 @@ require_contains "$DOCS_README" './docs/bin/new-doc.sh project <slug> <initiativ
 require_contains "$DOCS_README" './docs/bin/new-doc.sh task <slug> <project-id>'
 
 "$DOC_RETRIEVAL"
+"$DOMAIN_DESIGN_VALIDATOR" --all
+"$DOMAIN_LINEAGE_VALIDATOR" --all
 "$EXECUTION_VALIDATOR" --all
 
 echo "Validated harness foundation."

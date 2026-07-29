@@ -1,0 +1,17 @@
+{
+  "$schema": "../schemas/domain-design-approval-receipt.schema.json",
+  "schemaVersion": 1,
+  "kind": "domain-design-approval",
+  "receiptId": "DDD-APPROVAL-{{BOUNDED_CONTEXT}}-{{MODEL_REVISION}}",
+  "decision": "approved",
+  "documentRef": "docs/design/contexts/{{BOUNDED_CONTEXT}}/domain-model.md",
+  "documentSha256": "{{DOCUMENT_SHA256}}",
+  "modelRevision": 1,
+  "boundedContext": "{{BOUNDED_CONTEXT}}",
+  "decidedBy": {
+    "actorKind": "human",
+    "identifier": "{{DOMAIN_EXPERT_IDENTIFIER}}"
+  },
+  "decidedAt": "{{RFC3339_TIMESTAMP}}",
+  "reason": "{{REVIEW_REASON}}"
+}

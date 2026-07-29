@@ -1,5 +1,5 @@
 ---
-type: design
+type: architecture
 title: retrieval-plane
 status: current
 domain: retrieval
@@ -14,7 +14,7 @@ context:
   evidence_only: false
   size_tier: medium
 referenced_by:
-  - docs/design/control-plane.md
+  - docs/architecture/control-plane.md
   - docs/guide/hybrid-retrieval-and-freshness.md
 related_task: []
 source_refs:
@@ -25,7 +25,7 @@ source_refs:
   - https://arxiv.org/abs/2402.03216
   - https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/FSEvents_ProgGuide/UsingtheFSEventsFramework/UsingtheFSEventsFramework.html
 tags:
-  - docs/design
+  - docs/architecture
   - retrieval
   - freshness
 ---
@@ -38,7 +38,7 @@ tags:
 - Created: 2026-07-15
 - Updated: 2026-07-15
 - Referenced By:
-  - `docs/design/control-plane.md`
+  - `docs/architecture/control-plane.md`
   - `docs/guide/hybrid-retrieval-and-freshness.md`
 
 ## Purpose

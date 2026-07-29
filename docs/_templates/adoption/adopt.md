@@ -4,9 +4,9 @@ title: adopt-document-harness
 status: current
 owner: document-harness
 related_design:
-  - docs/design/harness-adoption-plane.md
-  - docs/design/policy-to-evidence-governance.md
-  - docs/design/human-control-view-plane.md
+  - docs/architecture/harness-adoption-plane.md
+  - docs/governance/policy-to-evidence.md
+  - docs/architecture/human-control-view-plane.md
 source_refs:
   - docs/releases/document-harness-v1.json
 tags:
@@ -66,7 +66,7 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다.
 - stable technical ID, enum, repository-relative path, hash, command와 exact source heading/quote는 원형을 보존하고 사용자 표시 언어 설명 옆의 보조 metadata로 표시합니다.
 - 기존 영어 사용자 문구의 번역은 presentation-only localization입니다. 의미·범위·authority·approval·enforcement·effective ref·receipt·evidence freshness를 바꾸지 않으며, 의미 보존이 불확실하면 review attention을 남깁니다.
 - long ID, path와 hash는 자기 cell/card 안에서 줄바꿈하고 인접 제목·badge·column과 겹치지 않게 desktop과 narrow viewport에서 검증합니다.
-- canonical tab key는 `overview`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` 순서입니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 정책/지침/추진안은 각각 독립 search/filter/pagination/detail을 가지며 추진안은 Project의 `related_initiative`를 역색인합니다.
+- canonical tab key는 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` 순서입니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. Domain은 DDD model approval과 역할 관점을 투영하고, 정책/지침/추진안은 각각 독립 search/filter/pagination/detail을 가지며 추진안은 Project의 `related_initiative`를 역색인합니다.
 
 ## Mature Repository Governance Bootstrap
 
@@ -88,14 +88,16 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다.
 ./docs/bin/new-doc.sh task first-task P0001
 ./docs/bin/new-doc.sh qa first-test-strategy
 # Fill the generated QA type/owner fields and commit the numbered drafts before continuing.
-./docs/bin/new-doc.sh design service-boundary
+./docs/bin/new-doc.sh design bounded-context service domain-model
+./docs/bin/new-doc.sh design ubiquitous-language service ubiquitous-language
+./docs/bin/new-doc.sh design domain-examples service examples
 ./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 ```
 
 `DECISION-EXAMPLE`은 실제 human issuance-approval ref로 교체합니다. Project는 active/approved Initiative를, Task는 그 lineage로 해소되는 Project를 명시하며 기본 `I0001`/`P0001`을 추론하지 않습니다. 완전한 legacy lineage field를 가진 기존 Project만 migration 동안 Task parent로 grandfathering합니다.
 
-generated placeholder와 project-owned `docs/design/ubiquitous-language.md`를 실제 source에 맞게 채운 뒤 commit합니다.
+generated placeholder와 project-owned `docs/architecture/harness-language.md`를 실제 source에 맞게 채운 뒤 commit합니다.
 
 ## Verification
 
@@ -120,11 +122,11 @@ View freshness나 apply success만으로 migration을 verified 처리하지 않�
 
 ## References
 
-- `docs/design/harness-adoption-plane.md`
+- `docs/architecture/harness-adoption-plane.md`
 - `docs/guide/repository-policy-extraction.md`
 - `docs/guide/initiative-governance.md`
-- `docs/design/policy-to-evidence-governance.md`
-- `docs/design/human-control-view-plane.md`
+- `docs/governance/policy-to-evidence.md`
+- `docs/architecture/human-control-view-plane.md`
 - `docs/EXECUTE.md`
 
 ## Change Log

@@ -9,7 +9,7 @@
 
 이 문서는 별도 `initiative` 계층 도입 전에 human-facing initiative를 umbrella project가 겸하던 저장소를 안전하게 유지하고 점진적으로 migration하는 compatibility 규칙을 고정합니다.
 
-새 authoring의 canonical model은 `docs/design/initiative-governance-plane.md`와 `docs/guide/initiative-governance.md`의 `추진안(I####) → Project(P####) → Task(T####)`입니다.
+새 authoring의 canonical model은 `docs/governance/initiative-governance.md`와 `docs/guide/initiative-governance.md`의 `추진안(I####) → Project(P####) → Task(T####)`입니다.
 
 ## Legacy Shape
 

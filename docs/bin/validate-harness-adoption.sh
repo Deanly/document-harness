@@ -28,9 +28,9 @@ require_contains() {
 
 ADOPT="${DOCS_DIR}/ADOPT.md"
 ADOPT_TEMPLATE="${DOCS_DIR}/_templates/adoption/adopt.md"
-DESIGN="${DOCS_DIR}/design/harness-adoption-plane.md"
+DESIGN="${DOCS_DIR}/architecture/harness-adoption-plane.md"
 GUIDE="${DOCS_DIR}/guide/repository-policy-extraction.md"
-HUMAN_VIEW_DESIGN="${DOCS_DIR}/design/human-control-view-plane.md"
+HUMAN_VIEW_DESIGN="${DOCS_DIR}/architecture/human-control-view-plane.md"
 HUMAN_VIEW_GUIDE="${DOCS_DIR}/guide/human-control-view.md"
 PROFILE="${DOCS_DIR}/_templates/document-harness.yaml"
 PLAN_TEMPLATE="${DOCS_DIR}/_templates/adoption/adoption-plan.json"
@@ -139,7 +139,7 @@ for value in \
   require_contains "$HUMAN_VIEW_GUIDE" "$value"
 done
 
-for value in "displayName" "locale" "tabLabels" "overview" "policies" "guidelines" "initiatives" "review" "execution" "evidence"; do
+for value in "displayName" "locale" "tabLabels" "overview" "domain" "policies" "guidelines" "initiatives" "review" "execution" "evidence"; do
   require_contains "$HUMAN_VIEW_DESIGN" "$value"
   require_contains "$HUMAN_VIEW_GUIDE" "$value"
 done
@@ -156,7 +156,7 @@ for value in \
   "global_install: false" \
   "bind_host: 127.0.0.1" \
   "port_mode: auto" \
-  "profile: single-repository-top-tabs-v2" \
+  "profile: single-repository-top-tabs-v3" \
   "repository_identity: static" \
   "repository_selector: false" \
   "sidebar: false" \
@@ -306,7 +306,7 @@ for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint
 
 const release = readJson(releaseFile);
 assert.equal(release.releaseId, "document-harness-public-v1");
-assert.equal(release.version, "1.3.1");
+assert.equal(release.version, "1.4.0");
 assert.deepEqual(release.profileDependencies, {
   core: [],
   governance: ["core"],
@@ -325,7 +325,7 @@ for (const requiredPath of release.verification.requiredInstalledPaths) {
 for (const target of [
   "docs/bin/harness-adopt", "docs/lib/harness-adopt.mjs", "docs/lib/harness-adopt-cli.mjs",
   "docs/bin/validate-execution-loop.sh", "docs/_indexes/execution-loop-policy.yaml",
-  "docs/_templates/execution-checkpoint.md", "docs/design/control-plane.md",
+  "docs/_templates/execution-checkpoint.md", "docs/architecture/control-plane.md",
   "docs/schemas/governance-catalog.schema.json", "runtime/document-harness-view/bin/human-view",
   "docs/schemas/initiative-register.schema.json", "docs/_indexes/initiative-register.json",
   "runtime/document-harness-view/lib/projection.mjs", "runtime/document-harness-view/lib/runtime-state.mjs",

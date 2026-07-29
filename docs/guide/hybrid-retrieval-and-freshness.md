@@ -8,8 +8,8 @@ updated: 2026-07-15
 related_project: []
 related_task: []
 related_design:
-  - docs/design/control-plane.md
-  - docs/design/retrieval-plane.md
+  - docs/architecture/control-plane.md
+  - docs/architecture/retrieval-plane.md
 source_refs:
   - https://arxiv.org/abs/2104.08663
   - https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf
@@ -29,7 +29,7 @@ tags:
 - Created: 2026-07-15
 - Updated: 2026-07-15
 - Related Task:
-- Related Design: docs/design/control-plane.md; docs/design/retrieval-plane.md
+- Related Design: docs/architecture/control-plane.md; docs/architecture/retrieval-plane.md
 
 ## Purpose
 

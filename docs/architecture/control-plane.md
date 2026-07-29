@@ -1,5 +1,5 @@
 ---
-type: design
+type: architecture
 title: control-plane
 status: current
 domain: control-plane
@@ -19,7 +19,7 @@ related_task:
   - docs/tasks/T0001-retrieval-plane-baseline.md
 source_refs: []
 tags:
-  - docs/design
+  - docs/architecture
   - control-plane
 ---
 
@@ -49,8 +49,8 @@ tags:
 
 ### Whole-System Control
 
-- `docs/design/control-plane.md`
-- `docs/design/ubiquitous-language.md`
+- `docs/architecture/control-plane.md`
+- `docs/architecture/harness-language.md`
 - root `AGENTS.md`
 - 현재 시스템 경계를 정의하는 핵심 `design` 문서
 
@@ -63,8 +63,8 @@ tags:
 
 ### Human Governance
 
-- `docs/design/policy-to-evidence-governance.md`
-- `docs/design/harness-adoption-plane.md`
+- `docs/governance/policy-to-evidence.md`
+- `docs/architecture/harness-adoption-plane.md`
 - `governance_role: human-policy` 또는 `normative-standard` design
 - `governance_role: proposal` report
 - exact revision에 묶인 human approval / exception receipt
@@ -102,20 +102,20 @@ tags:
 - generated markdown surfaces with `source_refs`
 - folder README files as lightweight indexes
 - `Status` and `Change Log` sections as chronological logs
-- `docs/design/retrieval-plane.md` as the scalable retrieval and freshness contract
+- `docs/architecture/retrieval-plane.md` as the scalable retrieval and freshness contract
 
 ## Active Design Surfaces
 
 | Surface | Purpose | Status | Notes |
 | --- | --- | --- | --- |
-| `docs/design/control-plane.md` | 전체 목표, pipeline, validator 정렬 | Active | |
-| `docs/design/retrieval-plane.md` | hybrid 검색, revision, freshness, 복구 계약 | Active | 규모/freshness trigger가 있을 때 선택 |
-| `docs/design/policy-to-evidence-governance.md` | human policy, AI proposal, approval, exception, evidence traceability | Active | governance-sensitive work에서 선택 |
-| `docs/design/initiative-governance-plane.md` | policy/guideline → 추진안 → project/task hierarchy, approval, legacy bridge | Active | initiative authoring, project linkage, umbrella migration에서 선택 |
-| `docs/design/execution-loop-plane.md` | checkpoint, attention, stop/resume, evidence barrier | Active | loop-enabled task 실행에서 선택 |
-| `docs/design/human-control-view-plane.md` | projector, snapshot API/SSE, freshness, read-only security/runtime | Active | human view runtime 설계에서 선택 |
-| `docs/design/harness-adoption-plane.md` | executable ownership-aware initialize/migrate/upgrade/verify/rollback, policy extraction, versioned repo-local View/quality handoff | Active | public v1 CLI/schema/release/status contract; existing repository adoption에서 선택 |
-| `docs/design/ubiquitous-language.md` | canonical term 정렬 | Active | |
+| `docs/architecture/control-plane.md` | 전체 목표, pipeline, validator 정렬 | Active | |
+| `docs/architecture/retrieval-plane.md` | hybrid 검색, revision, freshness, 복구 계약 | Active | 규모/freshness trigger가 있을 때 선택 |
+| `docs/governance/policy-to-evidence.md` | human policy, AI proposal, approval, exception, evidence traceability | Active | governance-sensitive work에서 선택 |
+| `docs/governance/initiative-governance.md` | policy/guideline → 추진안 → project/task hierarchy, approval, legacy bridge | Active | initiative authoring, project linkage, umbrella migration에서 선택 |
+| `docs/architecture/execution-loop-plane.md` | checkpoint, attention, stop/resume, evidence barrier | Active | loop-enabled task 실행에서 선택 |
+| `docs/architecture/human-control-view-plane.md` | projector, snapshot API/SSE, freshness, read-only security/runtime | Active | human view runtime 설계에서 선택 |
+| `docs/architecture/harness-adoption-plane.md` | executable ownership-aware initialize/migrate/upgrade/verify/rollback, policy extraction, versioned repo-local View/quality handoff | Active | public v1 CLI/schema/release/status contract; existing repository adoption에서 선택 |
+| `docs/architecture/harness-language.md` | canonical term 정렬 | Active | |
 | `docs/design/<domain>.md` | 현재 시스템 경계와 계약 | Add | 필요한 도메인 설계를 추가합니다. |
 
 ## Initiative Portfolio Policy
