@@ -6,6 +6,7 @@ DOCS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(dirname "$DOCS_DIR")"
 DESIGN_ROOT="$DOCS_DIR/design"
 AUTHORITY_VALIDATOR="$DOCS_DIR/lib/domain-design-authority.mjs"
+PRESENTATION_VALIDATOR="$DOCS_DIR/lib/human-presentation-authority.mjs"
 CONTEXT_MAP="$DESIGN_ROOT/context-map.md"
 error_count=0
 TARGETS=()
@@ -90,6 +91,7 @@ validate_common() {
   local validation_status
   local model_revision
   local bounded_context_id
+  local presentation_status
 
   [[ "$(head -n 1 "$file")" == "---" ]] || error "$relative missing YAML frontmatter"
   type="$(frontmatter_scalar "$file" type)"
@@ -98,6 +100,7 @@ validate_common() {
   validation_status="$(frontmatter_scalar "$file" validation_status)"
   model_revision="$(frontmatter_scalar "$file" model_revision)"
   bounded_context_id="$(frontmatter_scalar "$file" bounded_context_id)"
+  presentation_status="$(frontmatter_scalar "$file" presentation_status)"
 
   [[ "$type" == "design" ]] || error "$relative must declare type: design"
   case "$kind" in
@@ -128,6 +131,22 @@ validate_common() {
   fi
   if grep -Eq '\{\{[^}]+\}\}|(TERM|BC|AGG|ENT|VO|CMD|EVT|POL|BR|SCN)-\.\.\.' "$file"; then
     error "$relative contains unresolved placeholders"
+  fi
+  if [[ -n "$presentation_status" ]]; then
+    case "$presentation_status" in
+      missing|review_requested|ready) ;;
+      *) error "$relative has unsupported presentation_status: $presentation_status" ;;
+    esac
+  fi
+  if ! node "$PRESENTATION_VALIDATOR" --root "$REPO_ROOT" --document "$relative" --allow-review >/dev/null; then
+    error "$relative human-facing presentation is invalid"
+  fi
+  if [[ "$presentation_status" == "review_requested" || "$presentation_status" == "ready" ]]; then
+    case "$kind" in
+      domain-landscape|context-map|bounded-context)
+        require_section "$file" "Human Review Summary"
+        ;;
+    esac
   fi
 
   case "$status" in

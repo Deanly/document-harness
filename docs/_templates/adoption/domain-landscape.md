@@ -2,6 +2,10 @@
 type: design
 design_kind: domain-landscape
 title: repository-domain-landscape
+display_title: 먼저 실제 업무 영역과 담당자를 확인해 주세요
+human_summary: 초기 설치는 저장소 구조만으로 업무 영역을 확정하지 않습니다. 담당자가 고객 결과와 업무 경계를 확인하기 전까지 이 문서는 발견이 필요하다는 사실만 보여줍니다.
+presentation_status: review_requested
+presentation_ref:
 status: draft
 domain: repository-domain
 bounded_context: all
@@ -30,6 +34,12 @@ tags:
 ---
 
 # Repository Domain Landscape
+
+## Human Review Summary
+
+- 보호하거나 만들 결과: 저장소 구조를 업무 진실로 오해하지 않고 실제 담당자와 근거를 찾습니다.
+- 이 구분이 필요한 이유: 디렉터리나 서비스 이름만으로 업무 경계를 확정하면 잘못된 모델이 실행 기준이 될 수 있습니다.
+- 지금 결정할 것: 실제 고객 결과, 업무 담당자, 핵심 업무 영역과 근거 문서를 정해야 합니다.
 
 ## Domain Vision And Customer Outcomes
 

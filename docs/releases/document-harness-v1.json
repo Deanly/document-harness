@@ -2,7 +2,7 @@
   "$schema": "../schemas/release-manifest.schema.json",
   "schemaVersion": 1,
   "releaseId": "document-harness-public-v1",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "profiles": [
     "core",
     "governance",
@@ -178,6 +178,12 @@
     {
       "sourcePath": "docs/_templates/domain-design-approval-receipt.json",
       "targetPath": "docs/_templates/domain-design-approval-receipt.json",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/human-presentation-review-receipt.json",
+      "targetPath": "docs/_templates/human-presentation-review-receipt.json",
       "profiles": ["core"],
       "artifactType": "template"
     },
@@ -435,6 +441,11 @@
       "profiles": ["core"]
     },
     {
+      "sourcePath": "docs/lib/human-presentation-authority.mjs",
+      "targetPath": "docs/lib/human-presentation-authority.mjs",
+      "profiles": ["core"]
+    },
+    {
       "sourcePath": "docs/releases/document-harness-v1.json",
       "targetPath": "docs/releases/document-harness-v1.json",
       "profiles": ["core"]
@@ -467,6 +478,11 @@
     {
       "sourcePath": "docs/schemas/domain-design-approval-receipt.schema.json",
       "targetPath": "docs/schemas/domain-design-approval-receipt.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/human-presentation-review-receipt.schema.json",
+      "targetPath": "docs/schemas/human-presentation-review-receipt.schema.json",
       "profiles": ["core"]
     },
     {
@@ -577,6 +593,11 @@
       "profiles": ["view"]
     },
     {
+      "sourcePath": "runtime/document-harness-view/test/human-presentation-authority.test.mjs",
+      "targetPath": "runtime/document-harness-view/test/human-presentation-authority.test.mjs",
+      "profiles": ["view"]
+    },
+    {
       "sourcePath": "runtime/document-harness-view/test/projection.test.mjs",
       "targetPath": "runtime/document-harness-view/test/projection.test.mjs",
       "profiles": ["view"]
@@ -623,6 +644,7 @@
       "docs/_templates/design-ubiquitous-language.md",
       "docs/_templates/design-examples.md",
       "docs/_templates/domain-design-approval-receipt.json",
+      "docs/_templates/human-presentation-review-receipt.json",
       "docs/_templates/guide.md",
       "docs/_templates/report.md",
       "docs/_templates/qa.md",
@@ -658,7 +680,9 @@
       "docs/initiatives/README.md",
       "docs/lib/initiative-authority.mjs",
       "docs/lib/domain-design-authority.mjs",
+      "docs/lib/human-presentation-authority.mjs",
       "docs/schemas/domain-design-approval-receipt.schema.json",
+      "docs/schemas/human-presentation-review-receipt.schema.json",
       "docs/schemas/initiative-activation-receipt.schema.json",
       "docs/schemas/initiative-register.schema.json",
       "runtime/document-harness-view/bin/human-view",

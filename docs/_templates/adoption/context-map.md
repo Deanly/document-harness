@@ -2,6 +2,10 @@
 type: design
 design_kind: context-map
 title: repository-context-map
+display_title: 업무 영역 사이의 관계를 확인해 주세요
+human_summary: 초기 설치는 실제 업무 관계를 추측하지 않습니다. 담당자가 어떤 영역이 어떤 정보를 주고받으며 실패를 누가 책임지는지 확인할 때까지 발견 대기 상태로 표시합니다.
+presentation_status: review_requested
+presentation_ref:
 status: draft
 domain: repository-domain
 bounded_context: all
@@ -31,6 +35,12 @@ tags:
 
 # Repository Context Map
 
+## Human Review Summary
+
+- 이 지도가 필요한 이유: 서로 다른 업무 책임과 정보 전달 경계를 같은 구조로 오해하지 않기 위해서입니다.
+- 사람이 먼저 이해할 관계: 실제 업무 담당자가 upstream, downstream과 실패 책임을 확인해야 합니다.
+- 지금 결정할 것: 각 업무 영역의 이름, 전달 정보, 책임자와 실패 처리 경계를 정해야 합니다.
+
 ## Purpose
 
 This draft makes the missing domain discovery explicit. It must not be treated as a map of actual business boundaries.
@@ -43,9 +53,9 @@ This draft makes the missing domain discovery explicit. It must not be treated a
 
 ## Context Relationships
 
-| Upstream | Downstream | Relationship Pattern | Published Language / ACL | Consistency | Failure Ownership |
-| --- | --- | --- | --- | --- | --- |
-| BC-DISCOVERY | BC-DISCOVERY | discovery-only | no published language yet | not established | repository-domain-owner |
+| Upstream | Downstream | Human Meaning | Failure Ownership | Relationship Pattern | Published Language / ACL | Consistency |
+| --- | --- | --- | --- | --- | --- | --- |
+| BC-DISCOVERY | BC-DISCOVERY | 실제 업무 관계를 아직 확인하지 않았습니다. | repository-domain-owner가 발견과 확인 요청을 소유합니다. | discovery-only | no published language yet | not established |
 
 ## Cross-Context Flows
 

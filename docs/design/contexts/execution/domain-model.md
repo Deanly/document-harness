@@ -2,6 +2,10 @@
 type: design
 design_kind: bounded-context
 title: execution-domain-model
+display_title: 목표가 잠긴 작업을 끝까지 실행하기
+human_summary: 합의한 목표와 중단 조건을 지키며 작업 상태, 검토 요청, 근거와 완료 판단을 이어 가는 업무입니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: execution
@@ -21,7 +25,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - domain-current
 context:
@@ -46,6 +50,13 @@ tags:
 ## Domain Purpose And Customer Outcome
 
 승인된 방향과 domain model을 목표가 잠긴 delivery로 수행하고, 다음 actor가 대화 history 없이도 현재 위치를 복구하며, 근거 없는 완료와 목표 축소를 막습니다.
+
+## Human Review Summary
+
+- 이 영역의 책임: 합의한 목표와 중단 조건을 지키며 작업 상태, 검토 요청, 근거와 완료 판단을 이어 갑니다.
+- 포함하지 않는 것: 목표를 임의로 넓히거나 사람의 승인과 위험 수용을 대신하지 않습니다.
+- 사용자에게 보이는 실패: 작업이 멈춘 이유, 필요한 결정, 확인한 근거를 다음 사람이 이어서 볼 수 있게 남깁니다.
+- 아직 결정할 것: 작업 종류별 위험 등급과 자동 실행 한계는 저장소 소유자가 확정해야 합니다.
 
 ## Domain Experts And Sources
 
@@ -187,4 +198,5 @@ tags:
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 책임 요약과 보드 표현을 추가했다.
 - 2026-07-29: execution bounded-context model 초안을 작성했다.

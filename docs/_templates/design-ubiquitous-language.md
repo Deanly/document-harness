@@ -2,6 +2,10 @@
 type: design
 design_kind: ubiquitous-language
 title: {{TITLE}}
+display_title:
+human_summary:
+presentation_status: missing
+presentation_ref:
 status: draft
 domain:
 bounded_context: {{BOUNDED_CONTEXT}}
@@ -41,7 +45,7 @@ tags:
 
 ## Terms
 
-| Term ID | Term | Meaning In This Context | Examples | Counterexamples | Avoid / Alias | Source / Expert |
+| Term ID | Canonical Term | 사람말 풀이 | 올바른 예 | 잘못된 예 | 헷갈리기 쉬운 말 | Source / Expert |
 | --- | --- | --- | --- | --- | --- | --- |
 | TERM-... | | | | | | |
 

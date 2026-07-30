@@ -73,6 +73,8 @@
         "kind": { "const": "initiative" },
         "title": { "type": "string", "minLength": 1 },
         "humanSummary": { "type": "string", "minLength": 1 },
+        "presentationStatus": { "enum": ["missing", "review_requested", "ready"] },
+        "presentationRef": { "anyOf": [{ "$ref": "#/$defs/safePath" }, { "type": "null" }] },
         "outcome": { "type": "string", "minLength": 1 },
         "whyNow": { "type": "string", "minLength": 1 },
         "lifecycleState": { "enum": ["draft", "active", "blocked", "done", "cancelled", "superseded"] },
@@ -147,6 +149,15 @@
             "properties": {
               "effectiveRef": { "$ref": "#/$defs/safePath" },
               "decisionReceiptRef": { "$ref": "#/$defs/safePath" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "presentationStatus": { "const": "ready" } }, "required": ["presentationStatus"] },
+          "then": {
+            "required": ["presentationRef"],
+            "properties": {
+              "presentationRef": { "$ref": "#/$defs/safePath" }
             }
           }
         },

@@ -35,6 +35,7 @@ function uniqueSorted(values) {
 export function filterDomainContexts({ contexts = [], query = "", role = "all", filter = "all" }) {
   const needle = normalized(query);
   return contexts.filter((context) => {
+    if (context.visibleOnBoard === false) return false;
     const roleMatch = role === "all" || (context.roleViews ?? []).includes(role);
     if (!roleMatch) return false;
     const statusMatch = filter === "all"
@@ -47,9 +48,15 @@ export function filterDomainContexts({ contexts = [], query = "", role = "all", 
       context.id,
       context.name,
       context.title,
+      context.displayTitle,
       context.subdomainType,
       context.owner,
       context.summary,
+      context.humanSummary,
+      context.responsibility,
+      context.outOfScope,
+      context.userVisibleFailure,
+      context.pendingDecision,
       context.modelRef,
       context.languageRef,
       context.examplesRef,
@@ -82,6 +89,7 @@ export function reviewStats(attention = []) {
 export function guidelineMap(guidelines = []) {
   const byPolicy = new Map();
   for (const guideline of guidelines) {
+    if (guideline.visibleOnBoard === false) continue;
     for (const policyRef of guideline.policyRefs ?? []) {
       const linked = byPolicy.get(policyRef) ?? [];
       linked.push(guideline);
@@ -114,6 +122,7 @@ export function filterPolicies({ policies = [], guidelines = [], attention = [],
   const needle = normalized(query);
 
   return policies.filter((policy) => {
+    if (policy.visibleOnBoard === false) return false;
     const relatedGuides = guidesByPolicy.get(policy.id) ?? [];
     const relatedAttention = attentionByRef.get(policy.id) ?? [];
     const severity = relatedAttention[0]?.severity ?? "none";
@@ -146,11 +155,14 @@ export function filterPolicies({ policies = [], guidelines = [], attention = [],
 }
 
 export function filterGuidelines({ guidelines = [], policies = [], attention = [], query = "", filter = "all" }) {
-  const policiesById = new Map(policies.map((policy) => [policy.id, policy]));
+  const policiesById = new Map(
+    policies.filter((policy) => policy.visibleOnBoard !== false).map((policy) => [policy.id, policy])
+  );
   const attentionByRef = attentionMap(attention);
   const needle = normalized(query);
 
   return guidelines.filter((guideline) => {
+    if (guideline.visibleOnBoard === false) return false;
     const relatedPolicies = (guideline.policyRefs ?? [])
       .map((policyRef) => policiesById.get(policyRef))
       .filter(Boolean);
@@ -177,7 +189,6 @@ export function filterGuidelines({ guidelines = [], policies = [], attention = [
       guideline.authorityState,
       guideline.approvalState,
       guideline.enforcement,
-      ...(guideline.policyRefs ?? []),
       ...relatedPolicies.flatMap((policy) => [policy.id, policy.title, policy.humanSummary, policy.risk]),
       ...relatedAttention.flatMap((item) => [item.id, item.title, item.humanSummary]),
       ...(guideline.sourceRefs ?? []).flatMap((ref) => [ref.path, ref.heading, ref.evidenceKind])
@@ -187,14 +198,21 @@ export function filterGuidelines({ guidelines = [], policies = [], attention = [
 }
 
 export function filterInitiatives({ initiatives = [], policies = [], guidelines = [], attention = [], query = "", filter = "all" }) {
-  const policiesById = new Map(policies.map((policy) => [policy.id, policy]));
-  const guidelinesById = new Map(guidelines.map((guideline) => [guideline.id, guideline]));
+  const policiesById = new Map(
+    policies.filter((policy) => policy.visibleOnBoard !== false).map((policy) => [policy.id, policy])
+  );
+  const guidelinesById = new Map(
+    guidelines.filter((guideline) => guideline.visibleOnBoard !== false).map((guideline) => [guideline.id, guideline])
+  );
   const attentionByRef = attentionMap(attention);
   const needle = normalized(query);
 
   return initiatives.filter((initiative) => {
+    if (initiative.visibleOnBoard === false) return false;
     const linkedPolicies = (initiative.policyRefs ?? []).map((ref) => policiesById.get(ref)).filter(Boolean);
     const linkedGuidelines = (initiative.guidelineRefs ?? []).map((ref) => guidelinesById.get(ref)).filter(Boolean);
+    const visiblePolicyIds = new Set(linkedPolicies.map((item) => item.id));
+    const visibleGuidelineIds = new Set(linkedGuidelines.map((item) => item.id));
     const guidelineNeedsReview = initiative.guidelineDisposition === "needs_review"
       || linkedGuidelines.some((item) => item.approvalState !== "approved" || item.authorityState !== "effective");
     const matchesFilter = filter === "all"
@@ -219,8 +237,12 @@ export function filterInitiatives({ initiatives = [], policies = [], guidelines 
       initiative.lifecycleState,
       initiative.approvalState,
       initiative.guidelineDispositionReason,
-      ...(initiative.policyRelationships ?? []).flatMap((item) => [item.policyId, item.relation, item.rationale, item.exceptionRef]),
-      ...(initiative.guidelineRelationships ?? []).flatMap((item) => [item.guidelineId, item.adoption, item.rationale, item.verification]),
+      ...(initiative.policyRelationships ?? [])
+        .filter((item) => visiblePolicyIds.has(item.policyId))
+        .flatMap((item) => [item.policyId, item.relation, item.rationale, item.exceptionRef]),
+      ...(initiative.guidelineRelationships ?? [])
+        .filter((item) => visibleGuidelineIds.has(item.guidelineId))
+        .flatMap((item) => [item.guidelineId, item.adoption, item.rationale, item.verification]),
       ...(initiative.successSignals ?? []),
       ...(initiative.risks ?? []),
       ...linkedPolicies.flatMap((item) => [item.id, item.title, item.humanSummary]),

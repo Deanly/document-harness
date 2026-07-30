@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { lstat, readFile, readdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
+import {
+  assessHumanPresentation,
+  validateHumanPresentationReceipt
+} from "../../../docs/lib/human-presentation-authority.mjs";
 import { REFERENCE_VIEW_VERSION } from "../version.mjs";
 
 export const VIEW_RUNTIME_CONTRACT = Object.freeze({
@@ -69,6 +73,7 @@ const ALLOWED_INITIATIVE_LIFECYCLE = new Set([
   "cancelled",
   "superseded"
 ]);
+const ALLOWED_PRESENTATION_STATUS = new Set(["missing", "review_requested", "ready"]);
 
 const TAB_KEYS = ["overview", "domain", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
 const DEFAULT_PRESENTATION = Object.freeze({
@@ -290,6 +295,82 @@ function parseCapturedJson(captured, label) {
   }
 }
 
+async function inspectHumanPresentation({
+  repoRoot,
+  documentInput,
+  subjectKind,
+  subjectId,
+  displayTitle,
+  humanSummary,
+  declaredStatus,
+  receiptRef,
+  locale
+}) {
+  const effectiveStatus = declaredStatus
+    ?? ((typeof displayTitle === "string" && displayTitle.trim() !== ""
+      && typeof humanSummary === "string" && humanSummary.trim() !== "")
+      ? "review_requested"
+      : "missing");
+  const assessment = assessHumanPresentation({
+    displayTitle,
+    humanSummary,
+    declaredStatus: effectiveStatus
+  });
+  const base = {
+    presentationStatus: assessment.state,
+    presentationRef: receiptRef ?? null,
+    presentationError: assessment.reason ?? null,
+    displayTitle: assessment.displayTitle ?? null,
+    humanSummary: assessment.humanSummary ?? null,
+    presentationReviewedBy: null,
+    presentationReviewedAt: null,
+    visibleOnBoard: ["review_requested", "ready"].includes(assessment.state),
+    input: null
+  };
+  if (assessment.state !== "ready") return base;
+  if (typeof receiptRef !== "string" || receiptRef.trim() === "") {
+    return {
+      ...base,
+      presentationStatus: "invalid",
+      presentationError: "ready presentation에는 human presentation receipt가 필요합니다.",
+      visibleOnBoard: false
+    };
+  }
+  const receiptInput = await captureRepositoryFile(repoRoot, receiptRef, "human presentation review receipt");
+  const input = {
+    label: "human presentation review receipt",
+    relativePath: receiptRef,
+    fence: receiptInput.fence
+  };
+  try {
+    const receipt = parseCapturedJson(receiptInput, "human presentation review receipt");
+    const reviewed = validateHumanPresentationReceipt(receipt, {
+      documentRef: documentInput.relativePath,
+      documentSha256: documentInput.digest,
+      subjectKind,
+      subjectId,
+      expectedLocale: locale
+    });
+    return {
+      ...base,
+      presentationStatus: "ready",
+      presentationError: null,
+      presentationReviewedBy: reviewed.decidedBy,
+      presentationReviewedAt: reviewed.decidedAt,
+      visibleOnBoard: true,
+      input
+    };
+  } catch (error) {
+    return {
+      ...base,
+      presentationStatus: "invalid",
+      presentationError: error.message,
+      visibleOnBoard: false,
+      input
+    };
+  }
+}
+
 function validateItem(item, kind, index, capturedRepositoryRevision) {
   const prefix = `${kind}[${index}]`;
   requireString(item.id, `${prefix}.id`);
@@ -301,6 +382,15 @@ function validateItem(item, kind, index, capturedRepositoryRevision) {
   requireString(item.enforcement, `${prefix}.enforcement`);
   requireString(item.confidence, `${prefix}.confidence`);
   requireArray(item.sourceRefs, `${prefix}.sourceRefs`);
+  if (item.presentationStatus !== undefined && !ALLOWED_PRESENTATION_STATUS.has(item.presentationStatus)) {
+    throw new Error(`${prefix}.presentationStatus 값이 지원되지 않습니다: ${item.presentationStatus}`);
+  }
+  if (item.presentationStatus === "ready") {
+    requireString(item.presentationRef, `${prefix}.presentationRef`);
+    assertPublicEvidencePath(item.presentationRef, `${prefix}.presentationRef`);
+  } else if (item.presentationRef !== undefined && item.presentationRef !== null) {
+    throw new Error(`${prefix}.presentationRef는 ready 상태에서만 사용할 수 있습니다.`);
+  }
   if (item.sourceRefs.length === 0) {
     throw new Error(`${prefix}.sourceRefs는 최소 한 건의 근거를 포함해야 합니다.`);
   }
@@ -575,8 +665,9 @@ async function verifyStableInputs(repoRoot, inputs) {
   }
 }
 
-async function inspectItems(repoRoot, items, kind, capturedRepositoryRevision) {
+async function inspectItems(repoRoot, items, kind, capturedRepositoryRevision, documentInput, locale) {
   const approvalInputs = [];
+  const presentationInputs = [];
   const inspected = await Promise.all(items.map(async (item, index) => {
     validateItem(item, kind, index, capturedRepositoryRevision);
     const sourceRefs = await Promise.all(item.sourceRefs.map((sourceRef) =>
@@ -595,9 +686,31 @@ async function inspectItems(repoRoot, items, kind, capturedRepositoryRevision) {
         evidenceState
       ));
     }
-    return { ...item, sourceRefs, evidenceState };
+    const presentation = await inspectHumanPresentation({
+      repoRoot,
+      documentInput,
+      subjectKind: item.kind === "observation" ? (kind === "policies" ? "policy" : "guideline") : item.kind,
+      subjectId: item.id,
+      displayTitle: item.title,
+      humanSummary: item.humanSummary,
+      declaredStatus: item.presentationStatus,
+      receiptRef: item.presentationRef,
+      locale
+    });
+    if (presentation.input) presentationInputs.push(presentation.input);
+    return {
+      ...item,
+      sourceRefs,
+      evidenceState,
+      presentationStatus: presentation.presentationStatus,
+      presentationRef: presentation.presentationRef,
+      presentationError: presentation.presentationError,
+      presentationReviewedBy: presentation.presentationReviewedBy,
+      presentationReviewedAt: presentation.presentationReviewedAt,
+      visibleOnBoard: presentation.visibleOnBoard
+    };
   }));
-  return { items: inspected, approvalInputs };
+  return { items: inspected, approvalInputs, presentationInputs };
 }
 
 function validateInitiative(initiative, index) {
@@ -605,7 +718,8 @@ function validateInitiative(initiative, index) {
   assertAllowedKeys(initiative, new Set([
     "id", "kind", "title", "humanSummary", "outcome", "whyNow", "lifecycleState", "approvalState", "owner", "currentFocus",
     "policyRefs", "policyRelationships", "guidelineRefs", "guidelineRelationships", "guidelineDisposition", "guidelineDispositionReason", "legacyProjectRefs",
-    "successSignals", "risks", "documentRef", "effectiveRef", "decisionReceiptRef", "sourceRevision", "sourceRefs"
+    "successSignals", "risks", "documentRef", "effectiveRef", "decisionReceiptRef", "sourceRevision", "sourceRefs",
+    "presentationStatus", "presentationRef"
   ]), prefix);
   for (const field of ["id", "kind", "title", "humanSummary", "outcome", "whyNow", "lifecycleState", "approvalState", "owner", "currentFocus", "guidelineDisposition", "guidelineDispositionReason", "sourceRevision"]) {
     requireString(initiative[field], `${prefix}.${field}`);
@@ -623,6 +737,15 @@ function validateInitiative(initiative, index) {
   }
   if (!ALLOWED_APPROVAL_STATES.has(initiative.approvalState)) {
     throw new Error(`${prefix}.approvalState 값이 지원되지 않습니다: ${initiative.approvalState}`);
+  }
+  if (initiative.presentationStatus !== undefined && !ALLOWED_PRESENTATION_STATUS.has(initiative.presentationStatus)) {
+    throw new Error(`${prefix}.presentationStatus 값이 지원되지 않습니다: ${initiative.presentationStatus}`);
+  }
+  if (initiative.presentationStatus === "ready") {
+    requireString(initiative.presentationRef, `${prefix}.presentationRef`);
+    assertPublicEvidencePath(initiative.presentationRef, `${prefix}.presentationRef`);
+  } else if (initiative.presentationRef !== undefined && initiative.presentationRef !== null) {
+    throw new Error(`${prefix}.presentationRef는 ready 상태에서만 사용할 수 있습니다.`);
   }
   if (!/^[a-f0-9]{40}$/.test(initiative.sourceRevision)) {
     throw new Error(`${prefix}.sourceRevision이 Git commit 형식이 아닙니다.`);
@@ -825,7 +948,7 @@ async function inspectInitiativeProjects(repoRoot, projectRoot, initiativeIds) {
   return { byInitiative, orphaned, inputs };
 }
 
-async function inspectInitiatives(repoRoot, initiatives, policies, guidelines, projectRoot) {
+async function inspectInitiatives(repoRoot, initiatives, policies, guidelines, projectRoot, documentInput, locale) {
   const policyIds = new Set(policies.map((item) => item.id));
   const guidelineIds = new Set(guidelines.map((item) => item.id));
   const policiesById = new Map(policies.map((item) => [item.id, item]));
@@ -893,6 +1016,18 @@ async function inspectInitiatives(repoRoot, initiatives, policies, guidelines, p
         evidenceState
       ));
     }
+    const presentation = await inspectHumanPresentation({
+      repoRoot,
+      documentInput,
+      subjectKind: "initiative",
+      subjectId: initiative.id,
+      displayTitle: initiative.title,
+      humanSummary: initiative.humanSummary,
+      declaredStatus: initiative.presentationStatus,
+      receiptRef: initiative.presentationRef,
+      locale
+    });
+    if (presentation.input) stableInputs.push(presentation.input);
 
     let documentState = "migration_candidate";
     if (initiative.documentRef) {
@@ -954,7 +1089,19 @@ async function inspectInitiatives(repoRoot, initiatives, policies, guidelines, p
         lineageContract: "legacy"
       });
     }
-    inspected.push({ ...initiative, sourceRefs, evidenceState, documentState, projects: legacyProjects });
+    inspected.push({
+      ...initiative,
+      sourceRefs,
+      evidenceState,
+      documentState,
+      projects: legacyProjects,
+      presentationStatus: presentation.presentationStatus,
+      presentationRef: presentation.presentationRef,
+      presentationError: presentation.presentationError,
+      presentationReviewedBy: presentation.presentationReviewedBy,
+      presentationReviewedAt: presentation.presentationReviewedAt,
+      visibleOnBoard: presentation.visibleOnBoard
+    });
   }
   const projectInspection = await inspectInitiativeProjects(repoRoot, projectRoot, initiativeIds);
   stableInputs.push(...projectInspection.inputs);
@@ -1165,18 +1312,20 @@ function markdownSectionLines(captured, heading) {
   return section;
 }
 
-function markdownSectionSummary(captured, heading) {
-  return markdownSectionLines(captured, heading)
-    .map((line) => line.trim())
-    .find((line) => line !== "" && !line.startsWith("|") && !line.startsWith("- ")) ?? null;
-}
-
 function markdownSectionBullets(captured, heading) {
   return markdownSectionLines(captured, heading)
     .map((line) => line.trim())
     .filter((line) => line.startsWith("- "))
     .map((line) => line.slice(2).trim())
     .filter(Boolean);
+}
+
+function markdownSectionLabels(captured, heading) {
+  return Object.fromEntries(markdownSectionBullets(captured, heading).flatMap((line) => {
+    const separator = line.indexOf(":");
+    if (separator < 1) return [];
+    return [[line.slice(0, separator).trim(), line.slice(separator + 1).trim()]];
+  }));
 }
 
 function markdownTableRows(captured, heading) {
@@ -1281,7 +1430,7 @@ async function inspectDomainDesignApproval(repoRoot, captured, design) {
   }
 }
 
-async function readDomainDesign(repoRoot, domainRoot) {
+async function readDomainDesign(repoRoot, domainRoot, locale) {
   const resolved = await resolveInsideRoot(repoRoot, domainRoot);
   let rootStat;
   try {
@@ -1382,10 +1531,23 @@ async function readDomainDesign(repoRoot, domainRoot) {
     const contextMapEntry = parsed.find(({ design }) => design.design_kind === "context-map") ?? null;
     const modelEntries = parsed.filter(({ design }) => design.design_kind === "bounded-context");
     const approvalInputs = [];
+    const presentationInputs = [];
     const contexts = [];
     for (const { captured, design } of modelEntries) {
       const approval = await inspectDomainDesignApproval(repoRoot, captured, design);
       if (approval.input) approvalInputs.push(approval.input);
+      const presentation = await inspectHumanPresentation({
+        repoRoot,
+        documentInput: captured,
+        subjectKind: design.design_kind,
+        subjectId: design.bounded_context_id,
+        displayTitle: design.display_title,
+        humanSummary: design.human_summary,
+        declaredStatus: design.presentation_status,
+        receiptRef: design.presentation_ref,
+        locale
+      });
+      if (presentation.input) presentationInputs.push(presentation.input);
       const contextRoot = path.posix.dirname(captured.relativePath);
       const language = parsed.find(({ captured: item, design: itemDesign }) =>
         path.posix.dirname(item.relativePath) === contextRoot && itemDesign.design_kind === "ubiquitous-language"
@@ -1393,10 +1555,23 @@ async function readDomainDesign(repoRoot, domainRoot) {
       const examples = parsed.find(({ captured: item, design: itemDesign }) =>
         path.posix.dirname(item.relativePath) === contextRoot && itemDesign.design_kind === "domain-examples"
       );
+      const humanReview = markdownSectionLabels(captured, "Human Review Summary");
       contexts.push({
         id: design.bounded_context_id,
         name: design.bounded_context,
         title: design.title,
+        displayTitle: presentation.displayTitle,
+        humanSummary: presentation.humanSummary,
+        presentationStatus: presentation.presentationStatus,
+        presentationRef: presentation.presentationRef,
+        presentationError: presentation.presentationError,
+        presentationReviewedBy: presentation.presentationReviewedBy,
+        presentationReviewedAt: presentation.presentationReviewedAt,
+        visibleOnBoard: presentation.visibleOnBoard,
+        responsibility: humanReview["이 영역의 책임"] ?? null,
+        outOfScope: humanReview["포함하지 않는 것"] ?? null,
+        userVisibleFailure: humanReview["사용자에게 보이는 실패"] ?? null,
+        pendingDecision: humanReview["아직 결정할 것"] ?? null,
         subdomainType: design.subdomain_type,
         owner: design.owner ?? null,
         status: design.status,
@@ -1408,7 +1583,6 @@ async function readDomainDesign(repoRoot, domainRoot) {
         validationError: approval.error ?? null,
         domainExpertRoles: Array.isArray(design.domain_expert_roles) ? design.domain_expert_roles : [],
         roleViews: Array.isArray(design.role_views) ? design.role_views : [],
-        summary: markdownSectionSummary(captured, "Domain Purpose And Customer Outcome"),
         openQuestions: markdownSectionBullets(captured, "Unknowns And Disputes"),
         counts: domainModelCounts(captured),
         modelRef: captured.relativePath,
@@ -1418,15 +1592,55 @@ async function readDomainDesign(repoRoot, domainRoot) {
       });
     }
     contexts.sort((left, right) => String(left.id).localeCompare(String(right.id), "en"));
+    const landscapePresentation = landscapeEntry ? await inspectHumanPresentation({
+      repoRoot,
+      documentInput: landscapeEntry.captured,
+      subjectKind: landscapeEntry.design.design_kind,
+      subjectId: landscapeEntry.design.bounded_context_id,
+      displayTitle: landscapeEntry.design.display_title,
+      humanSummary: landscapeEntry.design.human_summary,
+      declaredStatus: landscapeEntry.design.presentation_status,
+      receiptRef: landscapeEntry.design.presentation_ref,
+      locale
+    }) : null;
+    if (landscapePresentation?.input) presentationInputs.push(landscapePresentation.input);
+    const contextMapPresentation = contextMapEntry ? await inspectHumanPresentation({
+      repoRoot,
+      documentInput: contextMapEntry.captured,
+      subjectKind: contextMapEntry.design.design_kind,
+      subjectId: contextMapEntry.design.bounded_context_id,
+      displayTitle: contextMapEntry.design.display_title,
+      humanSummary: contextMapEntry.design.human_summary,
+      declaredStatus: contextMapEntry.design.presentation_status,
+      receiptRef: contextMapEntry.design.presentation_ref,
+      locale
+    }) : null;
+    if (contextMapPresentation?.input) presentationInputs.push(contextMapPresentation.input);
+    const contextTitleById = new Map(contexts
+      .filter((context) => context.visibleOnBoard)
+      .map((context) => [context.id, context.displayTitle]));
     const relationships = contextMapEntry
-      ? markdownTableRows(contextMapEntry.captured, "Context Relationships").map((cells) => ({
-          upstream: cells[0] ?? null,
-          downstream: cells[1] ?? null,
-          pattern: cells[2] ?? null,
-          contract: cells[3] ?? null,
-          consistency: cells[4] ?? null,
-          failureOwner: cells[5] ?? null
-        }))
+      ? markdownTableRows(contextMapEntry.captured, "Context Relationships").map((cells) => {
+          const humanShape = cells.length >= 7;
+          const humanMeaning = humanShape ? cells[2] : null;
+          const failureOwner = humanShape ? cells[3] : cells[5] ?? null;
+          return {
+            upstream: cells[0] ?? null,
+            downstream: cells[1] ?? null,
+            upstreamDisplayTitle: contextTitleById.get(cells[0]) ?? null,
+            downstreamDisplayTitle: contextTitleById.get(cells[1]) ?? null,
+            humanMeaning,
+            failureOwner,
+            pattern: humanShape ? cells[4] : cells[2] ?? null,
+            contract: humanShape ? cells[5] : cells[3] ?? null,
+            consistency: humanShape ? cells[6] : cells[4] ?? null,
+            visibleOnBoard: Boolean(
+              contextMapPresentation?.visibleOnBoard
+              && typeof humanMeaning === "string"
+              && humanMeaning.trim().length >= 12
+            )
+          };
+        })
       : [];
     const reviewCount = contexts.filter((item) => item.validationStatus !== "approved_current").length;
     const invalidCount = contexts.filter((item) => item.validationStatus === "invalid").length;
@@ -1437,6 +1651,12 @@ async function readDomainDesign(repoRoot, domainRoot) {
         sourceRoot: domainRoot,
         landscape: landscapeEntry ? {
           title: landscapeEntry.design.title,
+          displayTitle: landscapePresentation.displayTitle,
+          humanSummary: landscapePresentation.humanSummary,
+          presentationStatus: landscapePresentation.presentationStatus,
+          presentationRef: landscapePresentation.presentationRef,
+          presentationError: landscapePresentation.presentationError,
+          visibleOnBoard: landscapePresentation.visibleOnBoard,
           status: landscapeEntry.design.status,
           modelRevision: landscapeEntry.design.model_revision,
           source: landscapeEntry.captured.relativePath,
@@ -1444,6 +1664,12 @@ async function readDomainDesign(repoRoot, domainRoot) {
         } : null,
         contextMap: contextMapEntry ? {
           title: contextMapEntry.design.title,
+          displayTitle: contextMapPresentation.displayTitle,
+          humanSummary: contextMapPresentation.humanSummary,
+          presentationStatus: contextMapPresentation.presentationStatus,
+          presentationRef: contextMapPresentation.presentationRef,
+          presentationError: contextMapPresentation.presentationError,
+          visibleOnBoard: contextMapPresentation.visibleOnBoard,
           status: contextMapEntry.design.status,
           modelRevision: contextMapEntry.design.model_revision,
           source: contextMapEntry.captured.relativePath,
@@ -1458,7 +1684,8 @@ async function readDomainDesign(repoRoot, domainRoot) {
           relativePath: captured.relativePath,
           fence: captured.fence
         })),
-        ...approvalInputs
+        ...approvalInputs,
+        ...presentationInputs
       ]
     };
   } catch (error) {
@@ -1847,6 +2074,35 @@ function createGeneratedAttention(register, policies, guidelines, initiatives, o
   const attention = [...(register.attention ?? [])];
   const staleItems = [...policies, ...guidelines, ...initiatives].filter((item) => item.evidenceState !== "current");
   const initiativeReviews = initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState));
+  const hiddenGovernance = [...policies, ...guidelines, ...initiatives].filter((item) => !item.visibleOnBoard);
+  const hiddenDomain = [
+    ...(domain.landscape && !domain.landscape.visibleOnBoard ? [domain.landscape.source] : []),
+    ...(domain.contextMap && !domain.contextMap.visibleOnBoard ? [domain.contextMap.source] : []),
+    ...domain.contexts.filter((item) => !item.visibleOnBoard).map((item) => item.modelRef),
+    ...(domain.relationships.some((item) => !item.visibleOnBoard) && domain.contextMap?.source
+      ? [domain.contextMap.source]
+      : [])
+  ].filter(Boolean);
+
+  if (hiddenGovernance.length > 0) {
+    attention.unshift({
+      id: "ATTN-HUMAN-PRESENTATION",
+      severity: "decision",
+      title: "사람용 설명이 필요합니다",
+      humanSummary: `${hiddenGovernance.length}개 정책·지침·추진안은 사람이 바로 이해할 제목과 설명이 없거나 검토 근거가 올바르지 않습니다. 기술 ID나 경로를 대신 표시하지 않고 원문에서 사람용 문구를 작성해 달라고 요청합니다.`,
+      relatedRefs: hiddenGovernance.map((item) => item.id)
+    });
+  }
+
+  if (hiddenDomain.length > 0) {
+    attention.unshift({
+      id: "ATTN-DOMAIN-PRESENTATION",
+      severity: "decision",
+      title: "도메인에 사람용 설명이 필요합니다",
+      humanSummary: `${new Set(hiddenDomain).size}개 도메인 원문은 사람이 바로 이해할 제목·요약 또는 관계 설명이 없습니다. 정상 Domain 목록에는 올리지 않고 exact source에서 문구 검토를 요청합니다.`,
+      relatedRefs: [...new Set(hiddenDomain)]
+    });
+  }
 
   if (register.migration?.status === "awaiting_human_review") {
     attention.unshift({
@@ -1999,8 +2255,22 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
   const currentRepository = inspectCurrentRepository(config.resolvedRoot, config.stateDir ?? ".document-harness/runtime/view");
   const migrationFence = await inspectMigrationFence(config.resolvedRoot, register.migration, currentRepository, registerInput);
   const capturedRepositoryRevision = register.migration?.capturedRepository?.baseCommit ?? null;
-  const policyInspection = await inspectItems(config.resolvedRoot, register.policies, "policies", capturedRepositoryRevision);
-  const guidelineInspection = await inspectItems(config.resolvedRoot, register.guidelines, "guidelines", capturedRepositoryRevision);
+  const policyInspection = await inspectItems(
+    config.resolvedRoot,
+    register.policies,
+    "policies",
+    capturedRepositoryRevision,
+    registerInput,
+    config.presentation.locale
+  );
+  const guidelineInspection = await inspectItems(
+    config.resolvedRoot,
+    register.guidelines,
+    "guidelines",
+    capturedRepositoryRevision,
+    registerInput,
+    config.presentation.locale
+  );
   const policies = policyInspection.items;
   const guidelines = guidelineInspection.items;
   const initiativeInspection = await inspectInitiatives(
@@ -2008,13 +2278,15 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     initiativeRegister.initiatives,
     policies,
     guidelines,
-    config.projectRoot
+    config.projectRoot,
+    initiativeRegisterInput,
+    config.presentation.locale
   );
   const initiatives = initiativeInspection.items;
   const runtime = await readRuntimeProbes(config.resolvedRoot, config.runtimeProbes);
   const executionInspection = await readExecutionCheckpoint(config.resolvedRoot, config.executionCheckpointRoot);
   const execution = executionInspection.execution;
-  const domainInspection = await readDomainDesign(config.resolvedRoot, config.domainDesignRoot);
+  const domainInspection = await readDomainDesign(config.resolvedRoot, config.domainDesignRoot, config.presentation.locale);
   const domain = domainInspection.domain;
   const attention = createGeneratedAttention(
     register,
@@ -2091,9 +2363,11 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
       initiativeCount: initiatives.length,
       initiativeActiveCount: initiatives.filter((item) => item.lifecycleState === "active").length,
       initiativeReviewCount: initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState)).length,
+      presentationMissingCount: [...policies, ...guidelines, ...initiatives].filter((item) => !item.visibleOnBoard).length,
       domainContextCount: domain.contexts.length,
       domainApprovedCount: domain.contexts.filter((item) => item.validationStatus === "approved_current").length,
       domainReviewCount: domain.contexts.filter((item) => item.validationStatus !== "approved_current").length,
+      domainPresentationMissingCount: domain.contexts.filter((item) => !item.visibleOnBoard).length,
       linkedProjectCount: new Set(initiatives.flatMap((item) => item.projects.map((project) => project.id))).size,
       approvedCount: [...policies, ...guidelines].filter((item) => item.approvalState === "approved").length,
       reviewCount: [...policies, ...guidelines].filter((item) => item.approvalState === "unreviewed" || item.approvalState === "review_requested").length,
@@ -2136,7 +2410,9 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     },
     ...sourceInputs,
     ...policyInspection.approvalInputs,
+    ...policyInspection.presentationInputs,
     ...guidelineInspection.approvalInputs,
+    ...guidelineInspection.presentationInputs,
     ...initiativeInspection.approvalInputs,
     ...initiativeInspection.stableInputs,
     ...domainInspection.inputs,

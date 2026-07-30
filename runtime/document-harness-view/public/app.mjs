@@ -13,7 +13,7 @@ import {
   reviewStats,
   runtimeSummary,
   sortAttention
-} from "/view-model.mjs?v=5";
+} from "/view-model.mjs?v=6";
 
 const tabNames = ["overview", "domain", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
 const defaultPresentation = {
@@ -225,6 +225,12 @@ function statusLabel(value, tone = toneFor(value), text = labels[value] ?? value
   return element("span", { className: `status-label ${tone}`, text });
 }
 
+function presentationStatusLabel(value) {
+  if (value === "ready") return statusLabel(value, "success", "사람 검토 완료");
+  if (value === "review_requested") return statusLabel(value, "warning", "사람 설명 검토 중");
+  return statusLabel(value ?? "missing", "danger", "사람용 설명 필요");
+}
+
 function localized(value, fallback = "확인 필요") {
   if (value === null || value === undefined || value === "") return fallback;
   return labels[value] ?? String(value);
@@ -416,13 +422,16 @@ function renderDomain(snapshot) {
     relationships: []
   };
   const contexts = domain.contexts ?? [];
-  const totalRules = contexts.reduce((sum, context) => sum + Number(context.counts?.rules ?? 0), 0);
-  const totalScenarios = contexts.reduce((sum, context) => sum + Number(context.counts?.scenarios ?? 0), 0);
+  const visibleContexts = contexts.filter((context) => context.visibleOnBoard !== false);
+  const presentationMissing = contexts.length - visibleContexts.length;
+  const totalRules = visibleContexts.reduce((sum, context) => sum + Number(context.counts?.rules ?? 0), 0);
+  const totalScenarios = visibleContexts.reduce((sum, context) => sum + Number(context.counts?.scenarios ?? 0), 0);
   renderMetricSet($("#domain-summary"), [
-    ["Bounded context", number(contexts.length)],
-    ["핵심 도메인", number(contexts.filter((context) => context.subdomainType === "core").length)],
-    ["승인된 current", number(contexts.filter((context) => context.validationStatus === "approved_current").length)],
-    ["전문가 검토 필요", number(contexts.filter((context) => context.validationStatus !== "approved_current").length)],
+    ["보드에 표시", number(visibleContexts.length)],
+    ["사람용 설명 필요", number(presentationMissing)],
+    ["핵심 도메인", number(visibleContexts.filter((context) => context.subdomainType === "core").length)],
+    ["의미 승인 완료", number(visibleContexts.filter((context) => context.validationStatus === "approved_current").length)],
+    ["도메인 검토 필요", number(visibleContexts.filter((context) => context.validationStatus !== "approved_current").length)],
     ["Rule / Scenario", `${number(totalRules)} / ${number(totalScenarios)}`]
   ], "compact-metric");
 
@@ -450,12 +459,12 @@ function renderDomain(snapshot) {
   }
 
   const filtered = filterDomainContexts({
-    contexts,
+    contexts: visibleContexts,
     query: state.domainQuery,
     role: state.domainRole,
     filter: state.domainFilter
   });
-  $("#domain-result-count").textContent = `${number(filtered.length)}개 bounded context`;
+  $("#domain-result-count").textContent = `업무 영역 ${number(filtered.length)}개 표시`;
   const contextList = $("#domain-context-list");
   clear(contextList);
   if (filtered.length === 0) {
@@ -469,20 +478,39 @@ function renderDomain(snapshot) {
     card.append(element("div", { className: "domain-context-head" }, [
       element("div", {}, [
         element("p", { className: "item-id", text: context.id }),
-        element("h2", { text: context.name }),
-        element("p", { className: "page-description", text: context.summary ?? context.title })
+        element("h2", { text: context.displayTitle }),
+        element("p", { className: "page-description", text: context.humanSummary })
       ]),
       element("div", { className: "status-stack" }, [
         statusLabel(context.subdomainType, "neutral", localized(context.subdomainType)),
+        presentationStatusLabel(context.presentationStatus),
         statusLabel(status, toneFor(status), localized(status))
       ])
     ]));
+
+    const humanReview = element("div", { className: "domain-card-section domain-human-summary" }, [
+      element("h3", { text: "이 업무 영역을 읽는 데 필요한 설명" })
+    ]);
+    const humanFacts = element("dl", { className: "domain-facts domain-human-facts" });
+    const humanFactValues = [
+      ["책임", context.responsibility],
+      ["포함하지 않는 것", context.outOfScope],
+      ["사용자에게 보이는 실패", context.userVisibleFailure],
+      ["아직 결정할 것", context.pendingDecision]
+    ];
+    for (const [label, value] of humanFactValues) {
+      if (value) humanFacts.append(element("dt", { text: label }), element("dd", { text: value }));
+    }
+    humanReview.append(humanFacts);
+    card.append(humanReview);
+
     const counts = element("div", { className: "domain-counts" });
     for (const [label, value] of domainCountSet(context)) counts.append(metric(label, number(value), null, "domain-count"));
     card.append(counts);
 
     const facts = element("dl", { className: "domain-facts" });
     const factValues = [
+      ["기술 이름", context.name],
       ["모델 revision", context.modelRevision],
       ["Owner", context.owner],
       ["Domain expert", (context.domainExpertRoles ?? []).join(", ") || "확인 필요"],
@@ -526,19 +554,28 @@ function renderDomain(snapshot) {
 
   const mapBody = $("#domain-map-body");
   clear(mapBody);
-  if ((domain.relationships ?? []).length === 0) {
+  const visibleRelationships = (domain.relationships ?? []).filter((relation) => relation.visibleOnBoard !== false);
+  if (visibleRelationships.length === 0) {
     const row = element("tr");
-    row.append(element("td", { attrs: { colspan: "6" } }, [$("#empty-template").content.cloneNode(true)]));
+    row.append(element("td", { attrs: { colspan: "5" } }, [$("#empty-template").content.cloneNode(true)]));
     mapBody.append(row);
   }
-  for (const relation of domain.relationships ?? []) {
+  for (const relation of visibleRelationships) {
     mapBody.append(element("tr", {}, [
-      element("td", { text: relation.upstream ?? "-" }),
-      element("td", { text: relation.downstream ?? "-" }),
-      element("td", { text: relation.pattern ?? "-" }),
-      element("td", { text: relation.contract ?? "-" }),
-      element("td", { text: relation.consistency ?? "-" }),
-      element("td", { text: relation.failureOwner ?? "-" })
+      element("td", {}, [
+        element("strong", { text: relation.upstreamDisplayTitle }),
+        element("code", { text: relation.upstream })
+      ]),
+      element("td", {}, [
+        element("strong", { text: relation.downstreamDisplayTitle }),
+        element("code", { text: relation.downstream })
+      ]),
+      element("td", { text: relation.humanMeaning }),
+      element("td", { text: relation.failureOwner }),
+      element("td", {}, [
+        element("span", { text: relation.pattern ?? "-" }),
+        element("small", { text: `${relation.contract ?? "-"} · ${relation.consistency ?? "-"}` })
+      ])
     ]));
   }
 }
@@ -666,7 +703,9 @@ function linkedGuideList(policy, snapshot) {
 }
 
 function linkedPolicyList(guideline, snapshot) {
-  const policies = new Map(snapshot.policies.map((policy) => [policy.id, policy]));
+  const policies = new Map(
+    snapshot.policies.filter((policy) => policy.visibleOnBoard !== false).map((policy) => [policy.id, policy])
+  );
   return (guideline.policyRefs ?? []).map((policyRef) => policies.get(policyRef)).filter(Boolean);
 }
 
@@ -825,7 +864,8 @@ function renderPolicyTable(snapshot) {
       element("td", {}, [element("span", { className: "item-id", text: policy.id })]),
       element("td", {}, [
         element("span", { className: "policy-title", text: policy.title }),
-        element("span", { className: "policy-summary", text: policy.humanSummary })
+        element("span", { className: "policy-summary", text: policy.humanSummary }),
+        presentationStatusLabel(policy.presentationStatus)
       ]),
       element("td", {}, [
         element("div", { className: "linked-refs" }, linkedGuides.length
@@ -902,11 +942,12 @@ function renderGuidelineTable(snapshot) {
       element("td", {}, [element("span", { className: "item-id", text: guideline.id })]),
       element("td", {}, [
         element("span", { className: "policy-title", text: guideline.title }),
-        element("span", { className: "policy-summary", text: guideline.humanSummary })
+        element("span", { className: "policy-summary", text: guideline.humanSummary }),
+        presentationStatusLabel(guideline.presentationStatus)
       ]),
       element("td", {}, [
-        element("div", { className: "linked-refs" }, (guideline.policyRefs?.length
-          ? guideline.policyRefs.map((policyRef) => element("code", { text: policyRef }))
+        element("div", { className: "linked-refs" }, (linkedPolicies.length
+          ? linkedPolicies.map((policy) => element("code", { text: policy.id }))
           : [element("span", { text: "연결 없음" })]))
       ]),
       element("td", {}, [governanceRiskLabel(guideline, snapshot)]),
@@ -941,8 +982,12 @@ function guidelineDispositionText(value) {
 }
 
 function initiativeLinkedItems(initiative, snapshot) {
-  const policies = new Map(snapshot.policies.map((item) => [item.id, item]));
-  const guidelines = new Map(snapshot.guidelines.map((item) => [item.id, item]));
+  const policies = new Map(
+    snapshot.policies.filter((item) => item.visibleOnBoard !== false).map((item) => [item.id, item])
+  );
+  const guidelines = new Map(
+    snapshot.guidelines.filter((item) => item.visibleOnBoard !== false).map((item) => [item.id, item])
+  );
   const policyRelationships = new Map((initiative.policyRelationships ?? []).map((item) => [item.policyId, item]));
   const guidelineRelationships = new Map((initiative.guidelineRelationships ?? []).map((item) => [item.guidelineId, item]));
   return {
@@ -1087,7 +1132,8 @@ function renderInitiativeTable(snapshot) {
       element("td", {}, [element("span", { className: "item-id", text: initiative.id })]),
       element("td", {}, [
         element("span", { className: "policy-title", text: initiative.title }),
-        element("span", { className: "policy-summary", text: initiative.humanSummary })
+        element("span", { className: "policy-summary", text: initiative.humanSummary }),
+        presentationStatusLabel(initiative.presentationStatus)
       ]),
       element("td", {}, [initiativeLifecycleLabel(initiative)]),
       element("td", {}, [element("div", { className: "linked-refs" }, linked.policies.map(({ item, relationship }) => element("span", { className: "linked-ref-relationship" }, [
@@ -1215,17 +1261,20 @@ function renderReviewRail(snapshot, selector, relatedIds) {
 
 function governanceMetrics(items, snapshot, kindLabel) {
   const unverified = snapshot.summary.state === "last_known_unverified";
-  const verified = items.filter((item) => item.projectionState !== "last_known_unverified");
+  const visible = items.filter((item) => item.visibleOnBoard !== false);
+  const presentationMissing = items.length - visible.length;
+  const verified = visible.filter((item) => item.projectionState !== "last_known_unverified");
   const approved = verified.filter((item) => item.approvalState === "approved").length;
   const review = verified.filter((item) => item.approvalState !== "approved").length;
   const enforced = verified.filter((item) => item.enforcement === "enforced").length;
-  const lastApproved = items.filter((item) => item.lastKnown?.approvalState === "approved").length;
-  const lastReview = items.filter((item) => item.lastKnown && item.lastKnown.approvalState !== "approved").length;
-  const lastEnforced = items.filter((item) => item.lastKnown?.enforcement === "enforced").length;
+  const lastApproved = visible.filter((item) => item.lastKnown?.approvalState === "approved").length;
+  const lastReview = visible.filter((item) => item.lastKnown && item.lastKnown.approvalState !== "approved").length;
+  const lastEnforced = visible.filter((item) => item.lastKnown?.enforcement === "enforced").length;
   const evidenceIssues = verified.filter((item) => item.evidenceState !== "current").length;
-  const unverifiedCount = items.length - verified.length;
+  const unverifiedCount = visible.length - verified.length;
   return [
-    [kindLabel, number(items.length)],
+    [kindLabel, number(visible.length)],
+    ["사람용 설명 필요", number(presentationMissing)],
     [unverified ? "현재 확인된 승인" : "승인", number(approved), unverified ? `마지막 ${number(lastApproved)}` : null],
     [unverified ? "현재 확인된 검토" : "검토 필요", number(review), unverified ? `마지막 ${number(lastReview)}` : null],
     [unverified ? "현재 확인된 강제" : "코드로 강제", number(enforced), unverified ? `마지막 ${number(lastEnforced)}` : null],
@@ -1249,13 +1298,15 @@ function renderPolicies(snapshot) {
 function renderInitiatives(snapshot) {
   const initiatives = snapshot.initiatives ?? [];
   const unverified = snapshot.summary.state === "last_known_unverified";
-  const verified = initiatives.filter((item) => item.projectionState !== "last_known_unverified");
+  const visible = initiatives.filter((item) => item.visibleOnBoard !== false);
+  const verified = visible.filter((item) => item.projectionState !== "last_known_unverified");
   renderMetricSet($("#initiative-summary"), [
-    ["추진안", number(initiatives.length)],
+    ["추진안", number(visible.length)],
+    ["사람용 설명 필요", number(initiatives.length - visible.length)],
     [unverified ? "현재 확인된 진행" : "진행 중", number(verified.filter((item) => item.lifecycleState === "active").length)],
     [unverified ? "현재 확인된 검토" : "검토 필요", number(verified.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState)).length)],
-    [unverified ? "마지막 연결 프로젝트" : "연결 프로젝트", number(new Set(initiatives.flatMap((item) => item.projects.map((project) => project.id))).size)],
-    [unverified ? "현재 미검증" : "근거 변경", number(unverified ? initiatives.length - verified.length : verified.filter((item) => item.evidenceState !== "current").length)]
+    [unverified ? "마지막 연결 프로젝트" : "연결 프로젝트", number(new Set(visible.flatMap((item) => item.projects.map((project) => project.id))).size)],
+    [unverified ? "현재 미검증" : "근거 변경", number(unverified ? visible.length - verified.length : verified.filter((item) => item.evidenceState !== "current").length)]
   ], "compact-metric");
   renderInitiativeFilters(snapshot);
   renderInitiativeTable(snapshot);

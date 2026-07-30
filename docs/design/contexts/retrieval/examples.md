@@ -2,6 +2,10 @@
 type: design
 design_kind: domain-examples
 title: retrieval-domain-examples
+display_title: 원문 찾기와 최신성 확인 사례
+human_summary: 필요한 문서를 찾고 현재 원문과 일치하는지 확인하며 오래된 근거를 구분하는 대표 상황을 설명합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: retrieval
@@ -19,7 +23,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - domain-examples
 context:
@@ -77,4 +81,5 @@ same-session write, delete, rename과 incompatible generation의 freshness examp
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 제목과 요약, 보드 검토 상태를 추가했다.
 - 2026-07-29: retrieval examples 초안을 작성했다.

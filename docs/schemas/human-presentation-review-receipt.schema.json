@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.local/schemas/human-presentation-review-receipt.schema.json",
+  "title": "Human Presentation Review Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "receiptId",
+    "decision",
+    "subjectKind",
+    "subjectId",
+    "documentRef",
+    "documentSha256",
+    "locale",
+    "decidedBy",
+    "decidedAt",
+    "reason"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "human-presentation-review" },
+    "receiptId": { "type": "string", "minLength": 1 },
+    "decision": { "const": "ready" },
+    "subjectKind": {
+      "enum": [
+        "policy",
+        "guideline",
+        "initiative",
+        "domain-landscape",
+        "context-map",
+        "bounded-context",
+        "ubiquitous-language",
+        "domain-examples"
+      ]
+    },
+    "subjectId": { "type": "string", "minLength": 1 },
+    "documentRef": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "documentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "locale": { "type": "string", "minLength": 2 },
+    "decidedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorKind", "identifier"],
+      "properties": {
+        "actorKind": { "const": "human" },
+        "identifier": { "type": "string", "minLength": 1 }
+      }
+    },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "reason": { "type": "string", "minLength": 1 }
+  }
+}

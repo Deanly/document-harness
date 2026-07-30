@@ -1447,6 +1447,17 @@ footer p {
   overflow-wrap: anywhere;
 }
 
+.domain-human-summary {
+  padding: 12px;
+  background: var(--pf-t--global--background--color--secondary--default);
+  border-left: 3px solid var(--pf-t--global--color--brand--default);
+  border-radius: var(--pf-t--global--radius--small);
+}
+
+.domain-human-facts {
+  font-size: 13px;
+}
+
 .domain-card-section {
   margin-top: 14px;
 }
@@ -1474,6 +1485,17 @@ footer p {
 
 .domain-map-card .section-heading {
   padding: 18px 18px 4px;
+}
+
+.domain-map-card td strong,
+.domain-map-card td code,
+.domain-map-card td small {
+  display: block;
+}
+
+.domain-map-card td code,
+.domain-map-card td small {
+  margin-top: 4px;
 }
 
 .domain-empty {

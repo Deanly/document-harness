@@ -2,6 +2,10 @@
 type: design
 design_kind: domain-examples
 title: adoption-domain-examples
+display_title: 안전한 도입 사례
+human_summary: 기존 저장소를 훼손하지 않고 문서 하네스를 설치하고 검증하는 대표 상황을 사례로 설명합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: adoption
@@ -19,7 +23,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - domain-examples
 context:
@@ -78,4 +82,5 @@ fresh initialize, mature conflict, stale apply와 safe rollback을 같은 exampl
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 제목과 요약, 보드 검토 상태를 추가했다.
 - 2026-07-29: adoption examples 초안을 작성했다.

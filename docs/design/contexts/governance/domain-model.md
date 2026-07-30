@@ -2,6 +2,10 @@
 type: design
 design_kind: bounded-context
 title: governance-domain-model
+display_title: 정책과 추진 결정을 사람에게 맡기기
+human_summary: 정책, 지침, 추진안의 근거와 상태를 분리하고 승인과 예외 수용은 사람이 결정하게 하는 업무입니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: governance
@@ -21,7 +25,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - domain-current
 context:
@@ -46,6 +50,13 @@ tags:
 ## Domain Purpose And Customer Outcome
 
 사람의 정책적 의도와 위험 결정이 AI의 제안, 추진안과 delivery 과정에서 왜곡되지 않고 exact authority와 근거를 가진 상태로 전달되게 합니다.
+
+## Human Review Summary
+
+- 이 영역의 책임: 정책, 지침, 추진안의 근거와 상태를 분리하고 사람의 결정을 추적합니다.
+- 포함하지 않는 것: 코드에서 관찰한 사실을 정책으로 승격하거나 AI가 승인과 예외 수용을 대신하지 않습니다.
+- 사용자에게 보이는 실패: 설명이나 근거가 부족한 후보는 확정 문서처럼 보이지 않고 검토 필요로 나타납니다.
+- 아직 결정할 것: 후보를 승인, 수정, 보류할 권한과 검토자는 조직과 저장소 소유자가 지정해야 합니다.
 
 ## Domain Experts And Sources
 
@@ -181,4 +192,5 @@ tags:
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 책임 요약과 보드 표현을 추가했다.
 - 2026-07-29: governance bounded-context model 초안을 작성했다.

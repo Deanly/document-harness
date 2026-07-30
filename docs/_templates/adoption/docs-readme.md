@@ -19,6 +19,11 @@ Initiative terminal transitions are intentionally not automated by `close-doc.sh
 
 View는 top bar에 `<displayName> / <repository>`로 표시하고 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`의 여덟 canonical tab key를 사용합니다. 사용자 label은 `presentation.tabLabels`에서 읽습니다. Domain은 DDD model과 exact-byte approval/freshness를 투영하고, 정책/지침은 각각 독립 surface이며, 추진안은 정책·지침을 연결 프로젝트의 방향으로 전환합니다.
 
+정책·지침·추진안·도메인의 사람용 제목과 설명이 없거나 invalid이면 Board의 정상
+목록에 기술 원문을 대신 올리지 않습니다. `사람용 설명 필요` 검토 항목과 exact
+source ref를 표시하며 authority/meaning, presentation readiness와 freshness를
+각각 별도 상태로 유지합니다.
+
 The View is a rebuildable projection, not an authority store. Human policy approval and required gate results must remain source-fenced receipts.
 
 ## Authoring Quick Start

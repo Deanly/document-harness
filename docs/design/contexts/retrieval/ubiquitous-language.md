@@ -2,6 +2,10 @@
 type: design
 design_kind: ubiquitous-language
 title: retrieval-ubiquitous-language
+display_title: 원문 찾기와 최신성 확인에서 함께 쓰는 말
+human_summary: 검색하는 사람과 도구가 원문, 위치, 버전, 최신성, 변경을 같은 뜻으로 이해하도록 정리합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: retrieval
@@ -20,7 +24,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - term-excerpt
 context:
@@ -81,4 +85,5 @@ Retrieval의 source, revision, head와 freshness는 domain 의미나 execution c
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 제목과 요약, 보드 검토 상태를 추가했다.
 - 2026-07-29: retrieval context language 초안을 작성했다.

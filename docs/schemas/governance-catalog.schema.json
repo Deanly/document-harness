@@ -50,6 +50,8 @@
         "kind": { "enum": ["policy", "guideline", "observation"] },
         "title": { "type": "string", "minLength": 1 },
         "humanSummary": { "type": "string", "minLength": 1 },
+        "presentationStatus": { "enum": ["missing", "review_requested", "ready"] },
+        "presentationRef": { "type": ["string", "null"] },
         "why": { "type": "string" },
         "scope": { "type": "string" },
         "risk": { "type": "string" },
@@ -83,6 +85,15 @@
             "properties": {
               "effectiveRef": { "type": "string", "minLength": 1 },
               "decisionReceiptRef": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "presentationStatus": { "const": "ready" } }, "required": ["presentationStatus"] },
+          "then": {
+            "required": ["presentationRef"],
+            "properties": {
+              "presentationRef": { "type": "string", "minLength": 1 }
             }
           }
         },

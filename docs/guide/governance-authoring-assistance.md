@@ -136,6 +136,25 @@ proposal, 검색 결과, View badge, code/config observation, AI가 쓴 `approve
 5. 검증 방법, 위험, 충돌과 아직 모르는 것
 6. 사용자에게 필요한 exact 결정: `수정`, `선택`, `거절`, `발급 승인`, `활성화 승인`, `추가 근거 요청`
 
+#### Board-facing 작성 계약
+
+Board의 정책·지침·추진안 정상 목록에는 사람이 읽을 제목과 온전한 요약이 있는
+항목만 올립니다. 정책은 보호할 결과·경계·적용 범위·예외 위험, 지침은 적용
+순서·검증 근거·금지할 지름길·사람 판단 시점, 추진안은 기대 결과·왜 지금인지·
+범위·성공 신호·남은 결정을 첫 화면에서 답해야 합니다.
+
+catalog/register는 기존 `title`, `humanSummary`와 함께
+`presentationStatus: missing|review_requested|ready`, `presentationRef`를
+선택적으로 사용합니다. 기존 항목에 상태가 없고 제목·요약이 검토 가능한
+문장이라면 호환 기간 동안 `review_requested`로 투영합니다. `ready`는 exact
+catalog/register bytes, subject ID와 locale을 고정한 human presentation receipt가
+필요합니다.
+
+필수 사람용 문구가 없거나 식별자·경로·기술 토큰 나열뿐이면 기술 값을 제목으로
+대체하지 않습니다. 정상 목록에서는 제외하고 `사람용 설명 필요` attention과
+source ref를 제공합니다. presentation review는 policy/guideline approval,
+initiative issuance/activation 또는 enforcement를 부여하지 않습니다.
+
 ### 4. 관계와 근거를 확인합니다
 
 - 각 정책은 stable ID와 source/owner를 가집니다.
@@ -215,3 +234,4 @@ AI가 제안한 부분:
 ## Change Log
 
 - 2026-07-18: 정책·지침·추진안의 역할 분리, 초보 사용자를 위한 질문·사용자 표시 언어 초안·품질 rubric·승인 handoff와 AI 실행 preflight를 정의했다.
+- 2026-07-30: Board 정상 표시를 위한 사람용 문구, presentation 상태·receipt와 기술 fallback 차단 규칙을 추가했다.

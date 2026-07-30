@@ -2,6 +2,10 @@
 type: design
 design_kind: domain-landscape
 title: document-harness-domain-landscape
+display_title: 문서 하네스가 맡는 업무의 전체 모습
+human_summary: 문서 하네스가 다루는 정책, 실행, 설치, 검색 업무의 책임과 경계를 한눈에 설명합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: all
@@ -20,7 +24,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - core-start
 context:
@@ -45,6 +49,13 @@ tags:
 ## Domain Vision And Customer Outcomes
 
 document-harness는 여러 역할이 같은 업무 의미와 검증 가능한 현재 truth를 공유하면서 정책 방향, delivery와 실행을 분리해 안전하게 이어가도록 돕습니다. 핵심 고객 결과는 “무엇을 왜 해야 하고 어떤 의미와 규칙을 지키며 언제 완료됐는지”를 문서와 근거만으로 재구성할 수 있는 상태입니다.
+
+## Human Review Summary
+
+- 이 영역의 책임: 정책과 지침, 작업 실행, 안전한 도입, 원문 검색이 어떤 책임으로 나뉘는지 보여 줍니다.
+- 포함하지 않는 것: 각 저장소의 실제 사업 규칙이나 사람의 승인 결정을 대신하지 않습니다.
+- 사용자에게 보이는 실패: 설명이 없거나 승인 근거가 맞지 않는 영역은 일반 보드에서 숨기고 검토 필요로 알립니다.
+- 아직 결정할 것: 문서 하네스를 도입한 각 저장소의 사업 업무 영역은 해당 도메인 전문가와 추가해야 합니다.
 
 ## Domain Experts And Sources
 
@@ -101,4 +112,5 @@ document-harness는 여러 역할이 같은 업무 의미와 검증 가능한 �
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 제목, 요약과 보드 검토 상태를 추가했다.
 - 2026-07-29: governance, execution, adoption, retrieval subdomain portfolio 초안을 작성했다.

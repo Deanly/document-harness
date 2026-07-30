@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.4.0");
+  assert.equal(result.snapshot.runtimeVersion, "1.5.0");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -67,6 +67,10 @@ model_revision: 1
 type: design
 design_kind: bounded-context
 title: execution-domain-model
+display_title: 목표가 잠긴 실행
+human_summary: 승인된 목표와 현재 작업 상태를 연결해 실행 결과를 추적할 수 있게 합니다.
+presentation_status: review_requested
+presentation_ref:
 status: current
 bounded_context: execution
 bounded_context_id: BC-EXECUTION
@@ -90,6 +94,13 @@ owner: delivery-owner
 ## Domain Purpose And Customer Outcome
 
 Keep goal-locked delivery traceable.
+
+## Human Review Summary
+
+- 이 영역의 책임: 승인된 목표를 실행 가능한 작업과 결과로 연결합니다.
+- 포함하지 않는 것: 정책 승인과 도메인 모델 승인을 대신하지 않습니다.
+- 사용자에게 보이는 실패: 실행이 멈춘 이유와 다음 확인 대상을 보여 줍니다.
+- 아직 결정할 것: 위험 등급별 중단 조건을 도메인 전문가가 확정해야 합니다.
 
 ## Domain Model
 
@@ -136,6 +147,11 @@ Keep goal-locked delivery traceable.
   assert.equal(approved.snapshot.domain.contexts[0].counts.rules, 1);
   assert.equal(approved.snapshot.domain.contexts[0].counts.scenarios, 1);
   assert.equal(approved.snapshot.domain.contexts[0].validatedBy, "fixture-domain-expert");
+  assert.equal(approved.snapshot.domain.contexts[0].presentationStatus, "review_requested");
+  assert.equal(approved.snapshot.domain.contexts[0].visibleOnBoard, true);
+  assert.equal(approved.snapshot.domain.contexts[0].displayTitle, "목표가 잠긴 실행");
+  assert.equal(approved.snapshot.summary.domainPresentationMissingCount, 0);
+  assert.ok(approved.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-PRESENTATION"));
   assert.equal(approved.snapshot.snapshot.capabilities.approvalIntents, false);
 
   await writeFile(path.join(fixture.root, modelPath), `${modelBytes}\nChanged after approval.\n`, "utf8");
@@ -143,6 +159,26 @@ Keep goal-locked delivery traceable.
   assert.equal(invalid.snapshot.domain.status, "degraded");
   assert.equal(invalid.snapshot.domain.contexts[0].validationStatus, "invalid");
   assert.ok(invalid.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-DESIGN-INVALID"));
+});
+
+test("governance entries without a declared human presentation appear only as review attention", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  fixture.catalog.policies[0].presentationStatus = "missing";
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "catalog.json"),
+    `${JSON.stringify(fixture.catalog, null, 2)}\n`,
+    "utf8"
+  );
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.policies[0].presentationStatus, "missing");
+  assert.equal(result.snapshot.policies[0].visibleOnBoard, false);
+  assert.equal(result.snapshot.summary.presentationMissingCount, 1);
+  const presentationAttention = result.snapshot.attention.find((item) => item.id === "ATTN-HUMAN-PRESENTATION");
+  assert.ok(presentationAttention);
+  assert.match(presentationAttention.humanSummary, /사람이 바로 이해할 제목과 설명/);
+  assert.ok(presentationAttention.relatedRefs.includes("POL-1"));
 });
 
 test("an unresolvable captured base degrades the migration fence and generates attention", async (t) => {

@@ -30,12 +30,14 @@ Read only the exact policy, design, guide, and validator refs selected by those 
 5. Stop and request attention rather than write when required governance or domain truth is missing, stale, unapproved, disputed, or conflicting. Treat an explicitly marked legacy bridge separately, but never hide its initiative or domain gap or bypass exact policy/normative refs.
 6. For adoption, classify the target as initialize, migrate, or upgrade and produce the required no-write plan before apply. Preserve project-owned files and existing changes.
 7. For initialization, migration, policy extraction, and governance authoring, write human-facing `direction`, `title`, `humanSummary`, `why`, `scope`, `risk`, attention/gap wording, `approvalRule`, project description, source-reference `note`, and free-text `evidenceKind` labels in clear user-language (configured `presentation.locale`) by default. Preserve technical IDs, enum values, repository-relative paths, hashes, commands, exact source headings, and quoted source wording in their original form.
-8. Treat translation as presentation-only migration: do not change meaning, authority class/state, approval state, enforcement, evidence, source refs, source hashes, or decision receipts while localizing wording.
-9. For execution, keep lifecycle `status` separate from `loop_state`; update the current checkpoint after meaningful actions, evidence, attention, and stop/resume transitions.
-10. Never self-approve policy, standards, guidelines, initiatives, domain models, exceptions, migration conflicts, risk acceptance, or weakened quality gates.
-11. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
-12. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
-13. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
+8. Before treating a policy, guideline, initiative, or domain item as normal Board content, require a short human-facing title and complete summary in the configured `presentation.locale`. Keep IDs, paths, revisions, hashes, commands, events, and exact source text as lower-level evidence. Missing or invalid human-facing presentation produces only a `사람용 설명 필요` attention with the exact source ref; never substitute technical metadata as the normal card.
+9. Treat presentation readiness as independent from governance/domain approval and evidence freshness. Translation or readable wording cannot promote authority, approval, enforcement, domain truth, or freshness. `ready` presentation requires an exact human review receipt.
+10. Treat translation as presentation-only migration: do not change meaning, authority class/state, approval state, enforcement, evidence, source refs, source hashes, or decision receipts while localizing wording.
+11. For execution, keep lifecycle `status` separate from `loop_state`; update the current checkpoint after meaningful actions, evidence, attention, and stop/resume transitions.
+12. Never self-approve policy, standards, guidelines, initiatives, domain models, human-facing presentation, exceptions, migration conflicts, risk acceptance, or weakened quality gates.
+13. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
+14. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
+15. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
 
 ## Assist Governance Authoring
 
@@ -60,6 +62,8 @@ Treat the configured `presentation.displayName` (default `Board`) as the user-fa
 | `View stop` | run `./runtime/document-harness-view/bin/human-view stop` |
 
 Keep `<displayName> / <repository>` visible as the fixed top-left identity. Expect configured `tabLabels` in the canonical key order `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`. The Domain tab projects the DDD landscape, context map, model validation/freshness, role views, and open questions without granting model authority. Treat domain, policy, guideline, and initiative as independent first-class surfaces. Initiative directly links policy WHY and selected guideline HOW, while projects own `related_initiative` and the View reverse-indexes their status/path without inventing progress.
+
+Normal Board cards use only verified human-facing presentation fields. A missing or invalid presentation remains available through review attention and exact source evidence, but technical IDs or Markdown section fallbacks must not become the visible title or summary.
 
 Do not interpret these phrases as authority to choose another repository, bind remotely, claim a fixed port, kill a foreign process, mutate governance, approve a candidate, or execute project work.
 

@@ -1,0 +1,18 @@
+{
+  "$schema": "../schemas/human-presentation-review-receipt.schema.json",
+  "schemaVersion": 1,
+  "kind": "human-presentation-review",
+  "receiptId": "PRESENTATION-{{SUBJECT_ID}}-{{REVISION}}",
+  "decision": "ready",
+  "subjectKind": "{{SUBJECT_KIND}}",
+  "subjectId": "{{SUBJECT_ID}}",
+  "documentRef": "{{DOCUMENT_REF}}",
+  "documentSha256": "{{DOCUMENT_SHA256}}",
+  "locale": "{{PRESENTATION_LOCALE}}",
+  "decidedBy": {
+    "actorKind": "human",
+    "identifier": "{{PRESENTATION_REVIEWER_IDENTIFIER}}"
+  },
+  "decidedAt": "{{RFC3339_TIMESTAMP}}",
+  "reason": "{{REVIEW_REASON}}"
+}

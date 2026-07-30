@@ -2,6 +2,10 @@
 type: design
 design_kind: context-map
 title: document-harness-context-map
+display_title: 문서 하네스 업무 영역의 연결 관계
+human_summary: 각 업무 영역이 무엇을 주고받고 실패했을 때 누가 책임지는지 사람이 읽는 말로 설명합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: all
@@ -20,7 +24,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - context-map
 context:
@@ -45,6 +49,13 @@ tags:
 
 이 map은 역할과 AI가 작업 전에 정확한 bounded context, 책임 소유자, upstream/downstream와 translation boundary를 선택하도록 합니다.
 
+## Human Review Summary
+
+- 이 영역의 책임: 업무 영역 사이에 무엇을 전달하고 실패했을 때 누가 책임지는지 설명합니다.
+- 포함하지 않는 것: 한 업무 영역의 승인 권한이나 내부 업무 규칙을 다른 영역으로 넘기지 않습니다.
+- 사용자에게 보이는 실패: 관계 설명이 없는 연결은 기술 표로 대신 보여 주지 않고 검토 필요로 알립니다.
+- 아직 결정할 것: 도입 대상 저장소의 실제 사업 업무 관계는 저장소 소유자와 도메인 전문가가 확정해야 합니다.
+
 ## Bounded Context Registry
 
 | Bounded Context ID | Name | Responsibility | Subdomain Type | Owner / Expert | Model Ref |
@@ -56,12 +67,12 @@ tags:
 
 ## Context Relationships
 
-| Upstream | Downstream | Relationship Pattern | Published Language / ACL | Consistency | Failure Ownership |
-| --- | --- | --- | --- | --- | --- |
-| BC-ADOPTION | BC-GOVERNANCE | Customer-Supplier + Published Language | governance catalog candidate schema; approval meaning은 Governance가 소유 | captured revision/hash fence | Adoption은 extraction/freshness, Governance는 의미/승인 |
-| BC-GOVERNANCE | BC-EXECUTION | Customer-Supplier + Published Language | exact policy/rule/initiative IDs와 approval refs | task start/closeout에서 pin | Governance는 authority, Execution은 적용·증거 |
-| BC-RETRIEVAL | BC-GOVERNANCE | Open Host Service + ACL | source revision/hash와 freshness state | read fence | Retrieval은 visibility, Governance는 해석 |
-| BC-RETRIEVAL | BC-EXECUTION | Open Host Service + ACL | direct-read/current revision contract | task context load | Retrieval은 freshness, Execution은 action |
+| Upstream | Downstream | Human Meaning | Failure Ownership | Relationship Pattern | Published Language / ACL | Consistency |
+| --- | --- | --- | --- | --- | --- | --- |
+| BC-ADOPTION | BC-GOVERNANCE | 기존 저장소에서 찾은 정책 후보와 근거를 사람의 검토 대상으로 넘깁니다. | 도입은 추출과 최신성, 거버넌스는 의미와 승인을 책임집니다. | Customer-Supplier + Published Language | governance catalog candidate schema; approval meaning은 Governance가 소유 | captured revision/hash fence |
+| BC-GOVERNANCE | BC-EXECUTION | 사람이 승인한 방향과 정확한 근거를 실행할 작업에 전달합니다. | 거버넌스는 승인 권한, 실행은 적용 결과와 증거를 책임집니다. | Customer-Supplier + Published Language | exact policy/rule/initiative IDs와 approval refs | task start/closeout에서 pin |
+| BC-RETRIEVAL | BC-GOVERNANCE | 찾은 원문의 위치와 변경 여부를 정책 검토에 제공합니다. | 검색은 원문 발견과 최신성, 거버넌스는 의미 해석을 책임집니다. | Open Host Service + ACL | source revision/hash와 freshness state | read fence |
+| BC-RETRIEVAL | BC-EXECUTION | 현재 작업에 필요한 최신 원문을 정확한 위치와 함께 제공합니다. | 검색은 원문 최신성, 실행은 원문을 사용한 행동을 책임집니다. | Open Host Service + ACL | direct-read/current revision contract | task context load |
 
 ## Cross-Context Flows
 
@@ -97,4 +108,5 @@ tags:
 
 ## Change Log
 
+- 2026-07-30: 업무 관계 설명과 사람용 보드 표현을 추가했다.
 - 2026-07-29: 네 bounded context와 translation/failure ownership을 정의했다.

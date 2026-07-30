@@ -113,7 +113,7 @@ Overview | Domain | Policies | Guidelines | Initiatives | Review | Execution | E
 
 - 한 개의 큰 page shell과 상단 horizontal tab list를 사용합니다.
 - canonical tab key와 순서는 정확히 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`입니다. 사용자에게 보이는 label은 `presentation.tabLabels`에서 읽고, reference 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 기존 `#policies` deep link는 policies tab을 계속 가리킵니다.
-- Domain tab은 `docs/design/`의 DDD landscape, context map과 bounded-context sets를 투영하고, role filter와 exact-byte approval/freshness를 표시합니다. 이 projection은 model authority나 approval intent를 생성하지 않습니다.
+- Domain tab은 `docs/design/`의 DDD landscape, context map과 bounded-context sets를 투영하고, role filter, exact-byte approval, presentation readiness와 freshness를 표시합니다. 이 projection은 model authority나 approval intent를 생성하지 않습니다.
 - left sidebar, collapsible navigation rail, repository selector와 workspace switcher는 제공하지 않습니다.
 - 좁은 화면에서도 tab list를 horizontal scroll 또는 overflow control로 유지하며 sidebar로 변환하지 않습니다.
 - 한 시점에는 선택된 tab panel 하나만 primary content로 표시하되 `displayName`, repository identity와 freshness는 모든 tab과 스크롤 위치에서 유지합니다.
@@ -149,6 +149,8 @@ reference profile의 기본 표시 언어는 configured `presentation.locale`입
 - 영어 source를 사용자 표시 언어로 설명하는 것은 derived presentation 변경입니다. 번역만으로 source 의미, authority class/state, approval state, enforcement, evidence freshness, source ref/hash, effective ref 또는 decision receipt를 바꾸거나 새 정책을 만들지 않습니다.
 - 이미 영어로 생성된 project-owned catalog를 옮길 때는 stable ID와 모든 fence를 유지한 채 human-facing field만 사용자 표시 언어로 고치고, 사람이 의미 보존을 검토할 수 있도록 migration attention 또는 diff evidence를 남깁니다.
 - 기술 ID는 제목보다 낮은 시각적 위계의 보조 metadata로 표시합니다. ID, source path와 hash처럼 긴 끊김 없는 값은 자신의 cell/container 안에서 `overflow-wrap: anywhere` 또는 동등한 방식으로 줄바꿈하고, 인접 제목·상태 cell 위로 겹치거나 page 폭을 강제로 늘리지 않습니다. 좁은 화면에서는 의미 있는 column을 우선하고 기술 metadata는 detail로 이동할 수 있습니다.
+- 정책·지침·추진안·도메인의 normal list projection은 configured locale의 검토 가능한 제목과 요약이 있는 항목만 포함합니다. missing/invalid presentation은 기술 title, ID, path 또는 Markdown 첫 문장으로 대체하지 않고 `사람용 설명 필요` attention과 exact source ref로만 투영합니다.
+- authority/meaning, presentation readiness와 evidence freshness는 서로 독립된 축입니다. `ready` presentation은 exact document bytes, subject ID와 locale을 고정한 human receipt가 필요하고 governance/domain approval을 부여하지 않습니다.
 
 ## Interaction Stability Contract
 
@@ -361,6 +363,8 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 | HV-22 | configurable user-facing identity | top-left의 `<displayName> / <repository>`가 모든 tab과 scroll 위치에서 보이고 profile config에서 유래함 |
 | HV-23 | first-class guideline surface | `guidelines` tab이 독립 search/filter/pagination/detail을 제공하고 관련 정책을 역방향으로 연결함 |
 | HV-24 | initiative planning trace | `initiatives` tab이 정책 WHY, 선택 지침 HOW와 Project의 `related_initiative` 역색인을 보여주며 실행 진척을 추정하지 않음 |
+| HV-25 | human presentation gate | missing/invalid 사람용 설명은 정상 목록에서 제외되고 exact source를 가진 review attention으로만 표시 |
+| HV-26 | presentation authority split | domain/governance approval, presentation readiness와 evidence freshness가 독립적으로 계산되고 표시 |
 
 ## Decisions
 
@@ -373,6 +377,7 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - v1 presentation은 repository별 독립 server, `presentation.displayName` 기본값 `Board`, 정적 repository identity와 seven-tab single-page profile을 사용합니다.
 - repository selector와 left sidebar는 이 profile에 포함하지 않습니다.
 - 기본 human projection은 configured `presentation.locale`이며 localization은 authority/approval/evidence를 바꾸지 않습니다.
+- normal Board content에는 검토 가능한 사람용 제목·요약이 필요하며 missing/invalid 기술 원문 fallback은 금지합니다.
 - technical ID와 provenance는 보조 metadata로 원형 보존하고 container 밖으로 넘치지 않게 합니다.
 - PatternFly-inspired semantics는 local semantic tokens와 accessible interaction으로 구현하며 external asset dependency를 만들지 않습니다.
 - `runtime/document-harness-view/`는 release manifest가 byte set을 pin하는 public versioned reference distribution이고 adopter가 design을 재생성하지 않습니다.
@@ -406,3 +411,4 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - 2026-07-17: approved/effective projection을 complete source fence와 real decision/effective evidence에 묶고, Execution Status 입력을 canonical `docs/checkpoints/*.md`의 deterministic fail-closed selection으로 정렬했다.
 - 2026-07-17: configured `presentation.locale` human projection, localization authority fence와 긴 technical metadata containment를 고정했다.
 - 2026-07-17: displayName 기반 사용자용 이름을 `Board`로 정하고 정책과 지침을 상호 연결된 독립 최상위 tab으로 분리했다.
+- 2026-07-30: 사람용 설명 projection gate, exact human presentation receipt와 authority/presentation/freshness 상태 분리를 추가했다.

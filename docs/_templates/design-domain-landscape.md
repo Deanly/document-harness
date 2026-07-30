@@ -2,6 +2,10 @@
 type: design
 design_kind: domain-landscape
 title: {{TITLE}}
+display_title:
+human_summary:
+presentation_status: missing
+presentation_ref:
 status: draft
 domain:
 bounded_context: all
@@ -36,6 +40,12 @@ tags:
 ---
 
 # {{TITLE}}
+
+## Human Review Summary
+
+- 보호하거나 만들 결과:
+- 이 구분이 필요한 이유:
+- 지금 결정할 것:
 
 ## Domain Vision And Customer Outcomes
 

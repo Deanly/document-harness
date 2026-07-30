@@ -138,7 +138,7 @@
           <button id="clear-domain-filters" class="text-button" type="button">필터 초기화</button>
         </div>
         <div class="result-line">
-          <strong id="domain-result-count">0개 bounded context</strong>
+          <strong id="domain-result-count">업무 영역 0개 표시</strong>
         </div>
 
         <div id="domain-context-list" class="domain-context-grid"></div>
@@ -146,20 +146,19 @@
         <section class="panel-card domain-map-card" aria-labelledby="domain-map-title">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Context Map</p>
-              <h2 id="domain-map-title">Upstream · downstream 관계</h2>
+              <p class="eyebrow">업무 관계</p>
+              <h2 id="domain-map-title">업무 영역이 서로 주고받는 것</h2>
             </div>
           </div>
           <div class="table-scroll" tabindex="0" aria-label="context map 관계 표">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th scope="col">Upstream</th>
-                  <th scope="col">Downstream</th>
-                  <th scope="col">관계 패턴</th>
-                  <th scope="col">Published language / ACL</th>
-                  <th scope="col">Consistency</th>
-                  <th scope="col">실패 소유권</th>
+                  <th scope="col">보내는 업무</th>
+                  <th scope="col">받는 업무</th>
+                  <th scope="col">관계 설명</th>
+                  <th scope="col">실패 책임</th>
+                  <th scope="col">기술 상세</th>
                 </tr>
               </thead>
               <tbody id="domain-map-body"></tbody>

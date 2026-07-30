@@ -84,6 +84,37 @@ ID는 의미 있는 revision 간 유지합니다. 이름이 바뀌어도 같은 
 
 역할별 화면과 context packet은 하나의 domain source에서 파생합니다. 역할별 truth 문서를 따로 복제하지 않습니다.
 
+## Human Presentation Contract
+
+DDD 문서의 업무 의미 승인과 Board에서 읽을 수 있는 표현은 별도 상태입니다. 모든
+design kind는 다음 frontmatter를 사용할 수 있습니다.
+
+| Field | 의미 |
+| --- | --- |
+| `display_title` | configured `presentation.locale`의 짧은 사람용 제목 |
+| `human_summary` | 누가 어떤 결과를 얻고 무엇을 판단해야 하는지 설명하는 2~4문장 |
+| `presentation_status` | `missing`, `review_requested`, `ready` |
+| `presentation_ref` | `ready` 문구의 exact bytes와 locale을 확인한 human receipt |
+
+`domain-landscape`, `context-map`, `bounded-context`가 `review_requested` 또는
+`ready`라면 `Human Review Summary`에 보호할 결과나 책임, 제외 범위, 사용자에게
+보이는 실패와 미결정을 먼저 적습니다. 용어 표는 canonical term과 사람말 풀이,
+올바른 예, 잘못된 예, 헷갈리기 쉬운 말을 분리합니다. scenario는 actor, 상황,
+요청, 사용자 결과와 거절 이유를 먼저 보여주고 `TERM-*`, `BR-*`, `SCN-*`,
+command/event는 추적 정보로 유지합니다.
+
+Board와 validator는 다음 세 축을 합치지 않습니다.
+
+- domain meaning: `draft`, `review_requested`, `current`
+- presentation: `missing`, `review_requested`, `ready`
+- evidence freshness: `fresh`, `stale`, `degraded`
+
+`ready` presentation은 domain model을 승인하지 않습니다. 반대로 exact-byte 승인된
+domain model도 사람용 설명이 `missing` 또는 invalid이면 정상 Board card에
+표시하지 않고 `사람용 설명 필요` attention과 exact source ref만 제공합니다.
+기존 repository upgrade는 문서를 자동 번역하거나 승인하지 않고 누락 상태를
+attention으로 드러냅니다.
+
 ## Change And Freshness Contract
 
 - current document가 바뀌면 기존 approval receipt는 stale입니다.
@@ -97,7 +128,12 @@ ID는 의미 있는 revision 간 유지합니다. 이름이 바뀌어도 같은 
 ./docs/bin/validate-domain-design.sh --all
 ```
 
-validator는 허용된 design kind, metadata, 필수 section, placeholder, stable ID, context registry, role view와 current approval receipt를 검사합니다. 의미 품질은 domain expert review가 담당하며 validator 통과로 사람 승인을 대체하지 않습니다.
+validator는 허용된 design kind, metadata, 필수 section, placeholder, stable ID,
+context registry, role view, presentation shape와 current approval receipt를
+검사합니다. `presentation_status: ready`는 별도 human presentation receipt가
+current document bytes와 일치해야 합니다. 의미 품질은 domain expert review가
+담당하며 validator 통과나 presentation review로 사람의 domain 승인을 대체하지
+않습니다.
 
 ## Migration
 
@@ -106,3 +142,4 @@ validator는 허용된 design kind, metadata, 필수 section, placeholder, stabl
 ## Change Log
 
 - 2026-07-29: DDD-only design surface, expert approval, role loading, traceability와 migration 계약을 추가했다.
+- 2026-07-30: 사람용 제목·요약, presentation review receipt, 세 상태 분리와 Board 차단 계약을 추가했다.

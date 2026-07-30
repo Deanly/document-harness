@@ -65,6 +65,8 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다.
 - 사용자용 View chrome과 AI가 합성하는 project description, direction, policy/guideline title·summary·why·scope·risk, attention/gap, approval rule, source note와 자유 서술 evidence kind label은 configured `presentation.locale`를 기본으로 합니다.
 - stable technical ID, enum, repository-relative path, hash, command와 exact source heading/quote는 원형을 보존하고 사용자 표시 언어 설명 옆의 보조 metadata로 표시합니다.
 - 기존 영어 사용자 문구의 번역은 presentation-only localization입니다. 의미·범위·authority·approval·enforcement·effective ref·receipt·evidence freshness를 바꾸지 않으며, 의미 보존이 불확실하면 review attention을 남깁니다.
+- 정책·지침·추진안·도메인의 normal Board 항목은 검토 가능한 사람용 제목과 요약이 있어야 합니다. 누락되거나 기술 token 나열뿐이면 기술 title/path를 fallback하지 않고 `사람용 설명 필요` attention과 exact source ref로만 표시합니다.
+- domain/governance authority, presentation readiness와 evidence freshness는 별도 상태입니다. `ready` presentation에는 exact source bytes, subject ID와 locale을 고정한 human receipt가 필요합니다.
 - long ID, path와 hash는 자기 cell/card 안에서 줄바꿈하고 인접 제목·badge·column과 겹치지 않게 desktop과 narrow viewport에서 검증합니다.
 - canonical tab key는 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` 순서입니다. 사용자 label은 `presentation.tabLabels`에서 읽고 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. Domain은 DDD model approval과 역할 관점을 투영하고, 정책/지침/추진안은 각각 독립 search/filter/pagination/detail을 가지며 추진안은 Project의 `related_initiative`를 역색인합니다.
 

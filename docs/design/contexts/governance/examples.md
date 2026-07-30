@@ -2,6 +2,10 @@
 type: design
 design_kind: domain-examples
 title: governance-domain-examples
+display_title: 정책과 추진 결정 사례
+human_summary: 정책 후보를 근거와 함께 검토하고 승인, 보류, 예외를 사람이 결정하는 대표 상황을 설명합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: governance
@@ -19,7 +23,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - domain-examples
 context:
@@ -76,4 +80,5 @@ approval과 activation의 정상·stale·unauthorized 의미를 역할과 QA가 
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 제목과 요약, 보드 검토 상태를 추가했다.
 - 2026-07-29: governance examples 초안을 작성했다.

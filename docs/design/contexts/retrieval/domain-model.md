@@ -2,6 +2,10 @@
 type: design
 design_kind: bounded-context
 title: retrieval-domain-model
+display_title: 필요한 원문을 최신 상태로 찾기
+human_summary: 역할과 작업에 필요한 원문을 정확한 위치와 버전으로 찾고 변경 여부를 알리는 업무입니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: retrieval
@@ -21,7 +25,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - domain-current
 context:
@@ -46,6 +50,13 @@ tags:
 ## Domain Purpose And Customer Outcome
 
 사람과 AI가 필요한 authoritative source revision을 찾고, 변경·삭제·rename 이후에도 stale 결과를 current truth로 오인하지 않도록 합니다.
+
+## Human Review Summary
+
+- 이 영역의 책임: 필요한 원문의 위치와 버전을 찾고 현재 내용과 달라졌는지 알려 줍니다.
+- 포함하지 않는 것: 검색 결과를 원문 자체로 취급하거나 원문의 의미와 승인 상태를 새로 만들지 않습니다.
+- 사용자에게 보이는 실패: 원문을 찾지 못했거나 오래된 근거이면 최신 사실처럼 보여 주지 않고 확인 필요로 알립니다.
+- 아직 결정할 것: 저장소별 기본 검색 범위와 민감 문서 접근 경계는 지식 소유자가 확정해야 합니다.
 
 ## Domain Experts And Sources
 
@@ -187,4 +198,5 @@ tags:
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 책임 요약과 보드 표현을 추가했다.
 - 2026-07-29: retrieval bounded-context model 초안을 작성했다.

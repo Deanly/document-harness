@@ -44,6 +44,7 @@
 - human-governed policy: AI는 policy/standard/exception proposal을 작성할 수 있지만 human approval 없이 effective로 만들지 않습니다.
 - observable execution: loop-enabled task는 current checkpoint, next actor/action, attention, evidence receipt, stop/resume 상태를 외부화합니다.
 - human-view projection: Markdown/Git은 authority로 유지하고 사용자를 위한 화면은 freshness가 보이는 rebuildable read-only projection으로 만듭니다.
+- human-readable Board gate: 정책·지침·추진안·도메인의 사람용 제목과 설명이 없으면 기술 원문을 정상 항목으로 대신 표시하지 않고 검토 attention으로 돌립니다.
 - ownership-aware adoption: mature repository는 파일 복사가 아니라 project-owned surface와 dirty state를 보존하는 plan/apply migration으로 도입합니다.
 - evidence-backed: 완료, 위험, 운영 판단은 실제 관찰 결과와 연결합니다.
 - goal-locked completion: 발급 시점의 목적과 완료 기준은 나중에 더 작은 조각으로 쪼개도 약해지지 않습니다.
@@ -158,6 +159,8 @@
   - 고객·기획자·설계자·개발자·QA는 동일한 stable ID를 role-specific packet으로 읽습니다.
   - AI는 `draft`/`review_requested` 모델을 제안할 수 있지만 domain expert를 대신해 승인할 수 없습니다.
   - `current` 모델은 repository-relative JSON approval receipt가 human actor와 exact source bytes를 고정하고 freshness 검증을 통과해야 합니다.
+  - `display_title`, `human_summary`, `presentation_status`, `presentation_ref`는 Board 가독성 상태이며 domain meaning approval와 별도입니다.
+  - 사람용 설명이 `missing` 또는 invalid이면 technical title/ID를 정상 Board card로 대체하지 않습니다.
   - 자세한 계약은 `docs/guide/ddd-domain-design.md`를 따릅니다.
 
 ### Architecture
@@ -254,7 +257,7 @@
 - `task`: `doc_id`, `related_project`, `completion_mode`, `related_control_plane`, `quality_axes`
 - legacy bridge: 기존 `project_role`, `umbrella_initiative`, `parent_umbrella_project`, `related_umbrella_project`는 migration 전까지 허용하지만 새 template 기본값은 아닙니다.
 - `task` execution: `execution_contract`, `task_contract_revision`, `loop_state`, `risk_tier`, `checkpoint_ref`, `policy_refs`, `normative_refs`, `exception_refs`
-- `design`: `domain`, `referenced_by`, optional `governance_role`, `governance_id`, `normative_version`, `approval_ref`
+- `design`: `domain`, `referenced_by`, optional `governance_role`, `governance_id`, `normative_version`, `approval_ref`, `display_title`, `human_summary`, `presentation_status`, `presentation_ref`
 - `design` retrieval hints: `retrieval_class`, `context.default_load`, `context.section_load`, `context.size_tier`
 - `guide` / `report`: `related_project`, `related_task`, `related_design`
 - governance proposal: `governance_role`, `proposal_kind`, `proposal_status`, `policy_refs`, `standard_refs`

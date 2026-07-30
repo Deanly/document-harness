@@ -3,6 +3,10 @@ type: initiative
 doc_id: {{DOC_ID}}
 initiative_contract: v1
 title: {{TITLE}}
+display_title:
+human_summary:
+presentation_status: missing
+presentation_ref:
 status: draft
 approval_status: unreviewed
 issuance_approval_ref: {{ISSUANCE_APPROVAL_REF}}
@@ -33,6 +37,9 @@ tags:
 - 사용자 유형: 추진안
 - Document ID: {{DOC_ID}}
 - Status: draft
+- 사람용 제목:
+- 사람용 요약:
+- 사람용 설명 상태 / 검토 근거: missing /
 - Approval Status: unreviewed
 - Issuance Approval Ref: {{ISSUANCE_APPROVAL_REF}}
 - Approval Ref:

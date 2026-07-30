@@ -2,13 +2,13 @@
 
 This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. Its configurable user-facing name is `Board`; the technical executable remains `human-view` for compatibility. It is copied as a unit; an adopter does not regenerate its design.
 
-Reference View distribution version: `1.4.0`. The public release manifest pins the byte hashes for this complete tree.
+Reference View distribution version: `1.5.0`. The public release manifest pins the byte hashes for this complete tree.
 
 ## Installed surfaces
 
 - `bin/human-view`: safe operator entrypoint
 - `control.mjs`: start/status/url/refresh/test/stop control
-- `lib/projection.mjs`: catalog, source, approval-receipt, migration-fence, canonical Markdown checkpoint, and torn-input-safe runtime projection
+- `lib/projection.mjs`: catalog, source, approval-receipt, human-presentation-receipt, migration-fence, canonical Markdown checkpoint, and torn-input-safe runtime projection
 - `lib/process-identity.mjs`: OS process start identity plus exact managed command/start-token verification
 - `lib/runtime-state.mjs`: repository-contained state directory and self-ignoring marker enforcement
 - `server.mjs`: exact-loopback, read-only HTTP runtime with OS-assigned port
@@ -73,7 +73,9 @@ The governance catalog records the historical capture independently from current
 - one independent server and static repository identity
 - fixed top-left identity `<displayName> / <repository>`, visible across every tab and scroll position; `displayName` is repository-configurable
 - exact horizontal tab keys: `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` (labels come from `presentation.tabLabels`, defaulting to English)
-- `domain` projects `docs/design/` DDD landscape, context map, bounded-context models, role views, open questions, and exact-byte approval/freshness without granting model authority
+- `domain` projects only human-readable `docs/design/` DDD landscape, context map, bounded-context models, role views, open questions, and exact-byte approval/freshness without granting model authority
+- policy, guideline, initiative, and domain records without a valid human title and complete summary are hidden from normal Board content and appear only as `사람용 설명 필요` review attention; technical IDs and paths never replace missing narrative
+- domain meaning approval, human presentation review, and source freshness remain independent states; a presentation review cannot approve domain meaning
 - policy and guideline are independent first-class surfaces with reciprocal related-item links and separate search/filter/pagination/expanded state
 - locale-configured (configured `presentation.locale`) UI chrome and synthesized project/governance wording by default; technical IDs, enum values, paths, hashes, commands, exact source headings, and exact quotes remain unchanged
 - translation is presentation-only and never changes meaning, authority, approval, enforcement, evidence freshness, source refs/hashes, effective refs, or decision receipts

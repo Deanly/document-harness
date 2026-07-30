@@ -2,6 +2,10 @@
 type: design
 design_kind: domain-examples
 title: execution-domain-examples
+display_title: 목표 중심 실행 사례
+human_summary: 목표를 잠그고 작업을 진행하며 중단, 재개, 검토 요청, 완료를 판단하는 대표 상황을 설명합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: execution
@@ -19,7 +23,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - domain-examples
 context:
@@ -76,4 +80,5 @@ task 시작, attention, closeout과 목표 축소 거절을 같은 example로 �
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 제목과 요약, 보드 검토 상태를 추가했다.
 - 2026-07-29: execution examples 초안을 작성했다.

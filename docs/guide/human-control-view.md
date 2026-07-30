@@ -84,6 +84,9 @@ Selected Tab Panel
 
 Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context model, ubiquitous language와 executable examples를 읽기 전용으로 투영합니다.
 
+- 정상 card는 `display_title`과 `human_summary`를 사용하며 technical `title`, bounded-context name, ID 또는 section 첫 줄을 사람용 설명의 fallback으로 사용하지 않습니다.
+- `presentation_status: missing` 또는 invalid인 context는 정상 목록에서 제외하고 `사람용 설명 필요` attention과 exact source ref로만 제공합니다. `review_requested`는 후보 badge와 함께, exact human receipt가 있는 `ready`는 정상 표시합니다.
+- domain meaning status, presentation status와 evidence freshness를 각각 표시하며 어느 하나로 다른 상태를 추론하지 않습니다.
 - bounded context별 core/supporting/generic 구분, owner와 domain expert를 표시합니다.
 - model revision, exact-byte approval receipt, validation/freshness를 분리해 보여줍니다.
 - 고객/domain expert, 기획자, 설계자, 개발자, QA role filter는 같은 stable model ID를 역할 관점별로 좁힐 뿐 별도 모델을 만들지 않습니다.
@@ -136,6 +139,8 @@ reference View의 기본 locale은 configured `presentation.locale`입니다.
 - ID는 정책 제목보다 낮은 위계의 보조 정보입니다. 긴 ID와 source ref는 자기 cell/card 안에서 줄바꿈하고 인접 제목, badge 또는 column 위로 겹치지 않아야 합니다. 작은 화면에서는 ID를 detail 영역으로 이동할 수 있지만 복사 가능한 원문을 잃지 않습니다.
 - 기존 영어 catalog의 human-facing field를 다른 표시 언어로 바꾸는 migration은 presentation-only입니다. stable ID, source ref/hash, authority, approval, enforcement, effective ref, receipt와 evidence freshness를 그대로 유지하고, 번역만으로 의미나 승인 상태를 바꾸지 않습니다.
 - source heading이나 exact quote가 영어이면 provenance는 그대로 보여주되 별도의 사용자 표시 언어 summary를 제공합니다. 출처 문구를 번역한 값을 exact source라고 표시하지 않습니다.
+- 정책·지침·추진안·도메인의 정상 목록은 검토 가능한 사람용 제목과 요약이 있는 항목만 포함합니다. 누락·invalid 항목은 원문을 숨기지 않되 기술 metadata를 정상 제목으로 올리지 않고 review attention에서 exact source로 연결합니다.
+- `presentationStatus`는 authority/approval와 별도입니다. `ready`는 exact source bytes, subject ID와 locale을 고정한 human presentation receipt가 필요하며 번역·문장 다듬기만으로 승인이나 효력을 바꾸지 않습니다.
 
 `View start`, `View screen`은 현재 repository의 View를 뜻합니다. `target board`, hardware board selection, board-porting처럼 하드웨어 문맥이 함께 있으면 View 명령으로 해석하지 않습니다.
 
@@ -511,6 +516,8 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] external CDN/font/script request가 없고 same-origin local asset만 사용한다.
 - [ ] keyboard와 screen reader로 tab, filter, table expansion과 live freshness를 조작·이해할 수 있다.
 - [ ] 사용자용 chrome과 synthesized governance/project wording이 configured `presentation.locale`이고 기술 ID·enum·path·hash·command·source heading은 원형을 유지한다.
+- [ ] 사람용 설명이 missing/invalid인 정책·지침·추진안·도메인은 정상 목록에서 제외되고 `사람용 설명 필요` attention과 exact source ref만 표시된다.
+- [ ] domain/governance approval, presentation readiness와 evidence freshness가 독립 상태로 표시된다.
 - [ ] 긴 ID와 source ref가 자기 cell/card 안에서 줄바꿈되며 인접 content와 겹치지 않는다.
 - [ ] migration fence, current repository와 source evidence freshness가 독립 상태다.
 - [ ] View runtime/controller byte set이 release manifest와 installation lock에 pin되어 있다.
@@ -538,3 +545,4 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - 2026-07-17: locale-configured 표시, 기술 식별자 원형 보존, presentation-only localization과 긴 ID containment 계약을 추가했다.
 - 2026-07-17: 화면의 displayName 기반 사용자명을 `Board`로 정하고 정책과 지침을 독립 최상위 tab과 양방향 관계로 분리했다.
 - 2026-07-17: 정책·지침과 프로젝트 사이에 별도 `I####` 추진안 계층과 일곱 번째 top tab을 추가했다.
+- 2026-07-30: 사람용 설명이 없는 governance/domain 항목의 정상 표시 차단, presentation receipt와 세 상태 분리 계약을 추가했다.

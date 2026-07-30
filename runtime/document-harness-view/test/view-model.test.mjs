@@ -124,6 +124,66 @@ test("domain filters keep one shared model and narrow it by actor role, review s
   }).map((item) => item.id), ["BC-EXECUTION"]);
 });
 
+test("normal Board filters never replace missing human presentation with technical identifiers", () => {
+  const hiddenDomain = {
+    ...domainContext,
+    displayTitle: null,
+    humanSummary: null,
+    presentationStatus: "missing",
+    visibleOnBoard: false
+  };
+  assert.deepEqual(filterDomainContexts({ contexts: [hiddenDomain] }), []);
+
+  const hiddenPolicy = { ...policy, presentationStatus: "invalid", visibleOnBoard: false };
+  const hiddenGuideline = { ...guideline, presentationStatus: "missing", visibleOnBoard: false };
+  const hiddenInitiative = { ...initiative, presentationStatus: "missing", visibleOnBoard: false };
+  assert.deepEqual(filterPolicies({ policies: [hiddenPolicy], guidelines: [guideline], attention }), []);
+  assert.deepEqual(filterGuidelines({ guidelines: [hiddenGuideline], policies: [policy], attention }), []);
+  assert.deepEqual(filterInitiatives({
+    initiatives: [hiddenInitiative],
+    policies: [policy],
+    guidelines: [guideline],
+    attention
+  }), []);
+});
+
+test("hidden governance items are not exposed through a visible item's linked-item search", () => {
+  const hiddenGuideline = {
+    ...guideline,
+    title: "SECRET-TECHNICAL-GUIDE",
+    humanSummary: "이 문장은 일반 보드 검색 결과에 섞이면 안 됩니다.",
+    visibleOnBoard: false
+  };
+  assert.deepEqual(filterPolicies({
+    policies: [policy],
+    guidelines: [hiddenGuideline],
+    attention,
+    query: "SECRET-TECHNICAL-GUIDE"
+  }), []);
+  assert.deepEqual(filterGuidelines({
+    guidelines: [{ ...guideline, policyRefs: ["POL-HIDDEN"] }],
+    policies: [{ ...policy, id: "POL-HIDDEN", visibleOnBoard: false }],
+    attention,
+    query: "POL-HIDDEN"
+  }), []);
+  assert.deepEqual(filterInitiatives({
+    initiatives: [{
+      ...initiative,
+      policyRefs: ["POL-HIDDEN"],
+      policyRelationships: [{
+        policyId: "POL-HIDDEN",
+        relation: "advances",
+        rationale: "숨겨진 정책 관계입니다.",
+        exceptionRef: null
+      }]
+    }],
+    policies: [{ ...policy, id: "POL-HIDDEN", visibleOnBoard: false }],
+    guidelines: [guideline],
+    attention,
+    query: "POL-HIDDEN"
+  }), []);
+});
+
 test("policy search includes linked guideline content and attention severity", () => {
   const linked = filterPolicies({
     policies: [policy],

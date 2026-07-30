@@ -2,6 +2,10 @@
 type: design
 design_kind: domain-examples
 title: {{TITLE}}
+display_title:
+human_summary:
+presentation_status: missing
+presentation_ref:
 status: draft
 domain:
 bounded_context: {{BOUNDED_CONTEXT}}
@@ -40,9 +44,9 @@ tags:
 
 ## Business Examples
 
-| Scenario ID | Kind | Actor / Goal | Given | When / Command | Then / Event | Rule |
-| --- | --- | --- | --- | --- | --- | --- |
-| SCN-... | normal / boundary / rejection / exception | | | CMD-... | EVT-... | BR-... |
+| Scenario ID | Kind | 누가 / 원하는 결과 | 어떤 상황에서 | 무엇을 요청하고 | 어떤 결과를 보는가 | 왜 거절되는가 | Rule / Command / Event |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| SCN-... | normal / boundary / rejection / exception | | | | | | BR-... / CMD-... / EVT-... |
 
 ## Counterexamples
 

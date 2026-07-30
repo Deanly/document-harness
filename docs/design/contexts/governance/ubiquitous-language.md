@@ -2,6 +2,10 @@
 type: design
 design_kind: ubiquitous-language
 title: governance-ubiquitous-language
+display_title: 정책과 추진 결정에서 함께 쓰는 말
+human_summary: 정책, 지침, 추진안, 승인, 근거, 예외를 작성자와 검토자가 같은 뜻으로 이해하도록 정리합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: governance
@@ -20,7 +24,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - term-excerpt
 context:
@@ -82,4 +86,5 @@ tags:
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 제목과 요약, 보드 검토 상태를 추가했다.
 - 2026-07-29: governance context language 초안을 작성했다.

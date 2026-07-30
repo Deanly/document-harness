@@ -2,6 +2,10 @@
 type: design
 design_kind: bounded-context
 title: {{TITLE}}
+display_title:
+human_summary:
+presentation_status: missing
+presentation_ref:
 status: draft
 domain:
 bounded_context: {{BOUNDED_CONTEXT}}
@@ -40,6 +44,9 @@ tags:
 - Type: design
 - Design Kind: bounded-context
 - Status: draft
+- 사람용 제목:
+- 사람용 요약:
+- 사람용 설명 상태 / 검토 근거: missing /
 - Domain:
 - Bounded Context: {{BOUNDED_CONTEXT}}
 - Bounded Context ID:
@@ -50,6 +57,13 @@ tags:
 - Owner:
 - Created: {{DATE}}
 - Updated: {{DATE}}
+
+## Human Review Summary
+
+- 이 영역의 책임:
+- 포함하지 않는 것:
+- 사용자에게 보이는 실패:
+- 아직 결정할 것:
 
 ## Domain Purpose And Customer Outcome
 

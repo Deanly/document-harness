@@ -2,6 +2,10 @@
 type: design
 design_kind: bounded-context
 title: adoption-domain-model
+display_title: 기존 저장소에 안전하게 도입하기
+human_summary: 기존 문서와 작업 중인 변경을 보존하면서 문서 하네스를 설치하고 검증하고 되돌리는 업무입니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 domain: document-harness
 bounded_context: adoption
@@ -21,7 +25,7 @@ role_views:
   - qa
 owner: document-harness-maintainer
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-07-30
 retrieval_class:
   - domain-current
 context:
@@ -46,6 +50,13 @@ tags:
 ## Domain Purpose And Customer Outcome
 
 새 repository와 mature repository에 document-harness를 도입·업그레이드하면서 project-owned bytes와 dirty state를 보존하고 모든 mutation을 exact plan과 rollback evidence로 설명할 수 있게 합니다.
+
+## Human Review Summary
+
+- 이 영역의 책임: 기존 파일과 작업 중인 변경을 보존하며 설치, 이관, 검증, 되돌리기를 관리합니다.
+- 포함하지 않는 것: 이관한 정책 후보를 승인하거나 저장소 소유자의 파일을 임의로 덮어쓰지 않습니다.
+- 사용자에게 보이는 실패: 소유권 충돌이나 검증 실패를 설치 성공으로 숨기지 않고 다음 확인 대상으로 보여 줍니다.
+- 아직 결정할 것: 대상 저장소마다 보존할 파일과 사람이 승인할 이관 경계를 소유자가 확정해야 합니다.
 
 ## Domain Experts And Sources
 
@@ -189,4 +200,5 @@ tags:
 
 ## Change Log
 
+- 2026-07-30: 사람이 읽을 책임 요약과 보드 표현을 추가했다.
 - 2026-07-29: adoption bounded-context model 초안을 작성했다.
