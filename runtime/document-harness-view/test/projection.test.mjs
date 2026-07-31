@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.5.2");
+  assert.equal(result.snapshot.runtimeVersion, "1.5.3");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -24,6 +24,49 @@ test("projection keeps approval, migration fence, current repository, and source
   assert.equal(result.snapshot.summary.approvedCount, 0);
   assert.equal(result.snapshot.execution.status, "not_configured");
   assert.equal(result.snapshot.snapshot.capabilities.write, false);
+});
+
+test("domain projection keeps discovery-only documents under review when no bounded context exists", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await mkdir(path.join(fixture.root, "docs", "design"), { recursive: true });
+  await writeFile(path.join(fixture.root, "docs", "design", "domain-landscape.md"), `---
+type: design
+design_kind: domain-landscape
+title: discovery-landscape
+status: draft
+model_revision: 1
+validation_status: unreviewed
+---
+
+# Discovery Landscape
+
+## Unknowns And Disputes
+
+- Actual bounded contexts require domain-expert review.
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "design", "context-map.md"), `---
+type: design
+design_kind: context-map
+title: discovery-context-map
+status: draft
+model_revision: 1
+validation_status: unreviewed
+---
+
+# Discovery Context Map
+
+## Context Relationships
+
+| Upstream | Downstream | Relationship Pattern | Published Language / ACL | Consistency | Failure Ownership |
+| --- | --- | --- | --- | --- | --- |
+| BC-DISCOVERY | BC-DISCOVERY | discovery-only | not established | not established | repository-domain-owner |
+`, "utf8");
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.domain.contexts.length, 0);
+  assert.equal(result.snapshot.domain.status, "review_requested");
+  assert.equal(result.snapshot.summary.domainApprovedCount, 0);
 });
 
 test("domain projection exposes shared role views and exact-byte model approval without granting authority", async (t) => {

@@ -1764,7 +1764,9 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
           };
         })
       : [];
-    const reviewCount = contexts.filter((item) => item.validationStatus !== "approved_current").length;
+    const reviewCount = contexts.length === 0
+      ? 1
+      : contexts.filter((item) => item.validationStatus !== "approved_current").length;
     const invalidCount = contexts.filter((item) => item.validationStatus === "invalid").length;
     return {
       domain: {

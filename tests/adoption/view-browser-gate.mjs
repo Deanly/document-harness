@@ -301,9 +301,9 @@ async function assertResponsive(page) {
       bodyOverflow: document.documentElement.scrollWidth > innerWidth,
       tabCount: document.querySelectorAll('[role="tab"]').length,
       visiblePanels: [...document.querySelectorAll('[role="tabpanel"]')].filter((panel) => !panel.hidden).length,
-      tableClientWidth: document.querySelector(".table-scroll")?.clientWidth ?? 0,
-      tableScrollWidth: document.querySelector(".table-scroll")?.scrollWidth ?? 0,
-      scrollHintVisible: getComputedStyle(document.querySelector(".table-scroll-hint")).display !== "none",
+      tableClientWidth: document.querySelector("#panel-policies .table-scroll")?.clientWidth ?? 0,
+      tableScrollWidth: document.querySelector("#panel-policies .table-scroll")?.scrollWidth ?? 0,
+      scrollHintVisible: getComputedStyle(document.querySelector("#panel-policies .table-scroll-hint")).display !== "none",
       rawMigrationReasonVisible: /captured_head_current|missing_captured_base|invalid_captured_working_tree_state/.test(
         document.querySelector("#panel-policies")?.innerText ?? ""
       ),
@@ -314,7 +314,7 @@ async function assertResponsive(page) {
         })
     }));
     assert.equal(layout.bodyOverflow, false, `body overflow at ${size.width}px`);
-    assert.equal(layout.tabCount, 7);
+    assert.equal(layout.tabCount, 8);
     assert.equal(layout.visiblePanels, 1);
     assert.equal(layout.chromeContained, true, `policy summary or filter control clipped at ${size.width}px`);
     assert.equal(layout.scrollHintVisible, size.width <= 1199, `table scroll hint visibility mismatch at ${size.width}px`);
