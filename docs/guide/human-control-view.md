@@ -4,7 +4,7 @@ title: human-control-view
 status: current
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-17
+updated: 2026-07-31
 related_project: []
 related_task: []
 related_design:
@@ -90,7 +90,10 @@ Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context mode
 - bounded context별 core/supporting/generic 구분, owner와 domain expert를 표시합니다.
 - model revision, exact-byte approval receipt, validation/freshness를 분리해 보여줍니다.
 - 고객/domain expert, 기획자, 설계자, 개발자, QA role filter는 같은 stable model ID를 역할 관점별로 좁힐 뿐 별도 모델을 만들지 않습니다.
-- aggregate, business rule, scenario, command, event count와 open question을 표시합니다.
+- 카드 첫 화면은 여러 줄로 작성된 purpose, 책임, 제외 범위, 사용자에게 보이는 실패와 미결정을 생략 없이 보여줍니다.
+- 용어의 뜻·올바른 예·잘못된 예, business rule 전문, 정상·거절·장애 scenario와 counterexample을 추적 ID와 분리해 사람이 읽는 순서로 보여줍니다.
+- 업무 경계, failure semantics, state transition, 결정 사항과 역할별 판단 기준은 접을 수 있는 상세 영역에서 원문 의미를 보존합니다.
+- aggregate, business rule, scenario, command, event count는 탐색용 요약이며 실제 본문을 대신하지 않습니다.
 - Board의 표시나 필터 조작은 모델 승인, 변경 또는 delivery 실행 권한을 만들지 않습니다.
 
 상단 bar의 `connected` 표시는 freshness를 의미하지 않습니다. `fresh`, `updating`, `direct`, `degraded`, `unknown`을 별도 badge로 표시합니다.

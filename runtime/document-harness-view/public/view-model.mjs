@@ -63,7 +63,17 @@ export function filterDomainContexts({ contexts = [], query = "", role = "all", 
       context.validationStatus,
       ...(context.domainExpertRoles ?? []),
       ...(context.roleViews ?? []),
-      ...(context.openQuestions ?? [])
+      ...(context.openQuestions ?? []),
+      ...(context.boundaries ?? []),
+      ...(context.integrations ?? []),
+      ...(context.failureSemantics ?? []),
+      ...(context.counterexamples ?? []),
+      ...(context.decisions ?? []),
+      ...(context.terms ?? []).flatMap((item) => Object.values(item ?? {})),
+      ...(context.businessRules ?? []).flatMap((item) => Object.values(item ?? {})),
+      ...(context.scenarios ?? []).flatMap((item) => Object.values(item ?? {})),
+      ...(context.stateTransitions ?? []).flatMap((item) => Object.values(item ?? {})),
+      ...(context.roleContracts ?? []).flatMap((item) => Object.values(item ?? {}))
     ].filter(Boolean).join(" ").toLocaleLowerCase();
     return haystack.includes(needle);
   });

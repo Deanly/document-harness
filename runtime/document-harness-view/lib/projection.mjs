@@ -1313,11 +1313,36 @@ function markdownSectionLines(captured, heading) {
 }
 
 function markdownSectionBullets(captured, heading) {
-  return markdownSectionLines(captured, heading)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("- "))
-    .map((line) => line.slice(2).trim())
-    .filter(Boolean);
+  const bullets = [];
+  for (const sourceLine of markdownSectionLines(captured, heading)) {
+    const line = sourceLine.trim();
+    if (line.startsWith("- ")) {
+      const value = line.slice(2).trim();
+      if (value) bullets.push(value);
+      continue;
+    }
+    if (line && bullets.length > 0 && !line.startsWith("|") && !/^#{1,6}\s/.test(line)) {
+      bullets[bullets.length - 1] = `${bullets.at(-1)} ${line}`;
+    }
+  }
+  return bullets;
+}
+
+function markdownSectionNarrative(captured, heading) {
+  const paragraphs = [];
+  let current = [];
+  for (const sourceLine of markdownSectionLines(captured, heading)) {
+    const line = sourceLine.trim();
+    if (!line) {
+      if (current.length > 0) paragraphs.push(current.join(" "));
+      current = [];
+      continue;
+    }
+    if (line.startsWith("|") || line.startsWith("- ") || /^#{1,6}\s/.test(line)) continue;
+    current.push(line);
+  }
+  if (current.length > 0) paragraphs.push(current.join(" "));
+  return paragraphs.join("\n\n") || null;
 }
 
 function markdownSectionLabels(captured, heading) {
@@ -1337,6 +1362,75 @@ function markdownTableRows(captured, heading) {
     .split("|")
     .slice(1, -1)
     .map((cell) => cell.trim().replaceAll("`", "")));
+}
+
+function trackedSectionItems(captured, heading, idPrefix) {
+  const fromBullets = markdownSectionBullets(captured, heading).flatMap((line) => {
+    const match = line.match(new RegExp(`^\\\`?(${idPrefix}-[A-Z0-9-]+)\\\`?\\s*:\\s*(.+)$`));
+    return match ? [{ id: match[1], text: match[2] }] : [];
+  });
+  if (fromBullets.length > 0) return fromBullets;
+  return markdownTableRows(captured, heading).flatMap((cells) =>
+    String(cells[0] ?? "").startsWith(`${idPrefix}-`) && cells[1]
+      ? [{ id: cells[0], text: cells[1] }]
+      : []
+  );
+}
+
+function domainTerms(model, language) {
+  const rows = language
+    ? markdownTableRows(language.captured, "Terms")
+    : markdownTableRows(model, "Ubiquitous Language");
+  return rows.map((cells) => ({
+    id: cells[0] ?? null,
+    term: cells[1] ?? null,
+    meaning: cells[2] ?? null,
+    examples: cells[3] ?? null,
+    counterexamples: cells.length >= 7 ? cells[4] ?? null : null,
+    avoid: cells.length >= 7 ? cells[5] ?? null : cells[4] ?? null,
+    source: cells.length >= 7 ? cells[6] ?? null : cells[5] ?? null
+  }));
+}
+
+function domainScenarios(model, examples) {
+  if (examples) {
+    return markdownTableRows(examples.captured, "Business Examples").map((cells) => ({
+      id: cells[0] ?? null,
+      kind: cells[1] ?? null,
+      actorGoal: cells[2] ?? null,
+      given: cells[3] ?? null,
+      request: cells[4] ?? null,
+      outcome: cells[5] ?? null,
+      rejectionReason: cells.length >= 8 ? cells[6] ?? null : null,
+      trace: cells.length >= 8 ? cells[7] ?? null : cells[6] ?? null
+    }));
+  }
+  return markdownTableRows(model, "Domain Scenarios").map((cells) => ({
+    id: cells[0] ?? null,
+    kind: null,
+    actorGoal: cells[1] ?? null,
+    given: cells[2] ?? null,
+    request: cells[3] ?? null,
+    outcome: cells[4] ?? null,
+    rejectionReason: null,
+    trace: cells[5] ?? null
+  }));
+}
+
+function domainStateTransitions(captured) {
+  return markdownTableRows(captured, "State Transitions").map((cells) => ({
+    current: cells[0] ?? null,
+    command: cells[1] ?? null,
+    next: cells[2] ?? null,
+    event: cells[3] ?? null
+  }));
+}
+
+function domainRoleContracts(captured) {
+  return markdownTableRows(captured, "Role Consumer Contract").map((cells) => ({
+    role: cells[0] ?? null,
+    decision: cells[1] ?? null
+  }));
 }
 
 function domainModelCounts(captured) {
@@ -1572,6 +1666,17 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
         outOfScope: humanReview["포함하지 않는 것"] ?? null,
         userVisibleFailure: humanReview["사용자에게 보이는 실패"] ?? null,
         pendingDecision: humanReview["아직 결정할 것"] ?? null,
+        purpose: markdownSectionNarrative(captured, "Domain Purpose And Customer Outcome"),
+        boundaries: markdownSectionBullets(captured, "Bounded Context Boundary"),
+        terms: domainTerms(captured, language),
+        businessRules: trackedSectionItems(captured, "Business Rules And Invariants", "BR"),
+        scenarios: domainScenarios(captured, examples),
+        counterexamples: examples ? markdownSectionBullets(examples.captured, "Counterexamples") : [],
+        stateTransitions: domainStateTransitions(captured),
+        integrations: markdownSectionBullets(captured, "Context Relationships And Integration"),
+        failureSemantics: markdownSectionBullets(captured, "Failure And Exception Semantics"),
+        roleContracts: domainRoleContracts(captured),
+        decisions: markdownSectionBullets(captured, "Decisions"),
         subdomainType: design.subdomain_type,
         owner: design.owner ?? null,
         status: design.status,

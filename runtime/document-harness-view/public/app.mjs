@@ -13,7 +13,7 @@ import {
   reviewStats,
   runtimeSummary,
   sortAttention
-} from "/view-model.mjs?v=6";
+} from "/view-model.mjs?v=7";
 
 const tabNames = ["overview", "domain", "policies", "guidelines", "initiatives", "review", "execution", "evidence"];
 const defaultPresentation = {
@@ -414,6 +414,37 @@ function domainCountSet(context) {
   ];
 }
 
+function domainBulletList(items = []) {
+  const list = element("ul", { className: "domain-readable-list" });
+  for (const item of items) list.append(element("li", { text: item }));
+  return list;
+}
+
+function domainDataTable(headers, rows) {
+  const table = element("table", { className: "domain-detail-table" });
+  const headerRow = element("tr");
+  for (const header of headers) headerRow.append(element("th", { text: header }));
+  table.append(element("thead", {}, [headerRow]));
+  const body = element("tbody");
+  for (const row of rows) {
+    const tableRow = element("tr");
+    for (const cell of row) tableRow.append(element("td", { text: cell ?? "-" }));
+    body.append(tableRow);
+  }
+  table.append(body);
+  return element("div", { className: "domain-table-scroll" }, [table]);
+}
+
+function domainDisclosure(title, children, open = false) {
+  return element("details", {
+    className: "domain-disclosure",
+    ...(open ? { attrs: { open: "" } } : {})
+  }, [
+    element("summary", { text: title }),
+    element("div", { className: "domain-disclosure-body" }, children)
+  ]);
+}
+
 function renderDomain(snapshot) {
   const domain = snapshot.domain ?? {
     configured: false,
@@ -504,6 +535,54 @@ function renderDomain(snapshot) {
     humanReview.append(humanFacts);
     card.append(humanReview);
 
+    if (context.purpose) {
+      card.append(element("div", { className: "domain-card-section domain-purpose" }, [
+        element("h3", { text: "이 영역이 만드는 결과" }),
+        ...String(context.purpose).split("\n\n").map((paragraph) => element("p", { text: paragraph }))
+      ]));
+    }
+
+    const languageAndRules = [];
+    if ((context.terms ?? []).length > 0) {
+      languageAndRules.push(element("h4", { text: "같은 뜻으로 사용해야 할 용어" }));
+      languageAndRules.push(domainDataTable(
+        ["용어", "이 영역에서의 뜻", "올바른 예", "잘못된 예 / 피할 말", "추적 ID"],
+        context.terms.map((item) => [
+          item.term,
+          item.meaning,
+          item.examples,
+          [item.counterexamples, item.avoid].filter(Boolean).join(" / "),
+          item.id
+        ])
+      ));
+    }
+    if ((context.businessRules ?? []).length > 0) {
+      languageAndRules.push(element("h4", { text: "반드시 지켜야 할 업무 규칙" }));
+      languageAndRules.push(domainDataTable(
+        ["규칙", "업무 의미"],
+        context.businessRules.map((item) => [item.id, item.text])
+      ));
+    }
+    if (languageAndRules.length > 0) card.append(domainDisclosure("핵심 용어와 업무 규칙", languageAndRules, true));
+
+    const examplesAndFailures = [];
+    if ((context.scenarios ?? []).length > 0) {
+      examplesAndFailures.push(element("h4", { text: "정상·거절·장애 상황에서 기대하는 결과" }));
+      examplesAndFailures.push(domainDataTable(
+        ["누가 / 원하는 결과", "어떤 상황에서", "무엇을 요청하고", "어떤 결과를 보는가", "추적"],
+        context.scenarios.map((item) => [item.actorGoal, item.given, item.request, item.outcome, item.id])
+      ));
+    }
+    if ((context.counterexamples ?? []).length > 0) {
+      examplesAndFailures.push(element("h4", { text: "이렇게 동작하면 안 됩니다" }));
+      examplesAndFailures.push(domainBulletList(context.counterexamples));
+    }
+    if ((context.failureSemantics ?? []).length > 0) {
+      examplesAndFailures.push(element("h4", { text: "실패를 해석하는 기준" }));
+      examplesAndFailures.push(domainBulletList(context.failureSemantics));
+    }
+    if (examplesAndFailures.length > 0) card.append(domainDisclosure("업무 시나리오와 실패 기준", examplesAndFailures, true));
+
     const counts = element("div", { className: "domain-counts" });
     for (const [label, value] of domainCountSet(context)) counts.append(metric(label, number(value), null, "domain-count"));
     card.append(counts);
@@ -527,6 +606,38 @@ function renderDomain(snapshot) {
     for (const role of context.roleViews ?? []) roleList.append(statusLabel(role, "info", localized(role)));
     roleSection.append(roleList);
     card.append(roleSection);
+
+    const boundaryAndDecision = [];
+    if ((context.boundaries ?? []).length > 0) {
+      boundaryAndDecision.push(element("h4", { text: "업무 경계" }));
+      boundaryAndDecision.push(domainBulletList(context.boundaries));
+    }
+    if ((context.integrations ?? []).length > 0) {
+      boundaryAndDecision.push(element("h4", { text: "다른 업무 영역과 주고받는 것" }));
+      boundaryAndDecision.push(domainBulletList(context.integrations));
+    }
+    if ((context.decisions ?? []).length > 0) {
+      boundaryAndDecision.push(element("h4", { text: "현재 설계 후보에서 결정한 것" }));
+      boundaryAndDecision.push(domainBulletList(context.decisions));
+    }
+    if ((context.stateTransitions ?? []).length > 0) {
+      boundaryAndDecision.push(element("h4", { text: "상태 변화" }));
+      boundaryAndDecision.push(domainDataTable(
+        ["현재 상태", "요청", "다음 상태", "기록되는 사건"],
+        context.stateTransitions.map((item) => [item.current, item.command, item.next, item.event])
+      ));
+    }
+    if ((context.roleContracts ?? []).length > 0) {
+      const relevantRoleContracts = state.domainRole === "all"
+        ? context.roleContracts
+        : context.roleContracts.filter((item) => item.role === state.domainRole);
+      boundaryAndDecision.push(element("h4", { text: state.domainRole === "all" ? "역할별로 확인할 내용" : `${localized(state.domainRole)}가 확인할 내용` }));
+      boundaryAndDecision.push(domainDataTable(
+        ["역할", "이 모델로 판단할 내용"],
+        relevantRoleContracts.map((item) => [localized(item.role), item.decision])
+      ));
+    }
+    if (boundaryAndDecision.length > 0) card.append(domainDisclosure("업무 경계·상태 변화·역할별 검토", boundaryAndDecision));
 
     const referenceSection = element("div", { className: "domain-card-section" }, [
       element("h3", { text: "공통 source set" })

@@ -100,6 +100,7 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
     "governance-catalog.schema.json",
     "harness-installation-lock.schema.json",
     "human-policy-decision-receipt.schema.json",
+    "human-presentation-review-receipt.schema.json",
     "initiative-activation-receipt.schema.json",
     "initiative-register.schema.json",
     "migration-evidence-pack.schema.json",

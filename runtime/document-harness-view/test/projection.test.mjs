@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.5.0");
+  assert.equal(result.snapshot.runtimeVersion, "1.5.1");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -93,7 +93,8 @@ owner: delivery-owner
 
 ## Domain Purpose And Customer Outcome
 
-Keep goal-locked delivery traceable.
+Keep goal-locked delivery traceable across the full lifecycle.
+The Board must preserve this wrapped explanation.
 
 ## Human Review Summary
 
@@ -122,9 +123,49 @@ Keep goal-locked delivery traceable.
 
 ## Unknowns And Disputes
 
-- Risk tier remains a domain decision.
+- Risk tier remains a domain decision and the complete explanation
+  must remain visible on the Board.
 `;
   await writeFile(path.join(fixture.root, modelPath), modelBytes, "utf8");
+  await writeFile(path.join(fixture.root, "docs/design/contexts/execution/ubiquitous-language.md"), `---
+type: design
+design_kind: ubiquitous-language
+title: execution-language
+status: review_requested
+bounded_context: execution
+bounded_context_id: BC-EXECUTION
+---
+
+# Language
+
+## Terms
+
+| Term ID | Term | Meaning | Example | Counterexample | Avoid | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| TERM-EXEC-TASK | Goal-locked Task | 승인된 목표와 연결된 실행 단위 | current model ref | 임의 작업 | generic task | expert |
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs/design/contexts/execution/examples.md"), `---
+type: design
+design_kind: domain-examples
+title: execution-examples
+status: review_requested
+bounded_context: execution
+bounded_context_id: BC-EXECUTION
+---
+
+# Examples
+
+## Business Examples
+
+| Scenario ID | Kind | Actor / Goal | Given | When / Command | Then / Event | Rule |
+| --- | --- | --- | --- | --- | --- | --- |
+| SCN-EXEC-001 | normal | QA / 결과 추적 | approved model | CMD-EXEC-RUN | EVT-EXEC-DONE | BR-EXEC-001 |
+
+## Counterexamples
+
+- 승인되지 않은 model을 current truth로 사용하고
+  성공으로 표시한다.
+`, "utf8");
   await writeFile(path.join(fixture.root, receiptPath), JSON.stringify({
     schemaVersion: 1,
     kind: "domain-design-approval",
@@ -150,6 +191,12 @@ Keep goal-locked delivery traceable.
   assert.equal(approved.snapshot.domain.contexts[0].presentationStatus, "review_requested");
   assert.equal(approved.snapshot.domain.contexts[0].visibleOnBoard, true);
   assert.equal(approved.snapshot.domain.contexts[0].displayTitle, "목표가 잠긴 실행");
+  assert.equal(approved.snapshot.domain.contexts[0].purpose, "Keep goal-locked delivery traceable across the full lifecycle. The Board must preserve this wrapped explanation.");
+  assert.equal(approved.snapshot.domain.contexts[0].openQuestions[0], "Risk tier remains a domain decision and the complete explanation must remain visible on the Board.");
+  assert.equal(approved.snapshot.domain.contexts[0].terms[0].term, "Goal-locked Task");
+  assert.equal(approved.snapshot.domain.contexts[0].businessRules[0].id, "BR-EXEC-001");
+  assert.equal(approved.snapshot.domain.contexts[0].scenarios[0].actorGoal, "QA / 결과 추적");
+  assert.equal(approved.snapshot.domain.contexts[0].counterexamples[0], "승인되지 않은 model을 current truth로 사용하고 성공으로 표시한다.");
   assert.equal(approved.snapshot.summary.domainPresentationMissingCount, 0);
   assert.ok(approved.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-PRESENTATION"));
   assert.equal(approved.snapshot.snapshot.capabilities.approvalIntents, false);

@@ -5,7 +5,7 @@ status: current
 domain: human-view
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-17
+updated: 2026-07-31
 retrieval_class:
   - domain-current
 context:
@@ -114,6 +114,8 @@ Overview | Domain | Policies | Guidelines | Initiatives | Review | Execution | E
 - 한 개의 큰 page shell과 상단 horizontal tab list를 사용합니다.
 - canonical tab key와 순서는 정확히 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`입니다. 사용자에게 보이는 label은 `presentation.tabLabels`에서 읽고, reference 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 기존 `#policies` deep link는 policies tab을 계속 가리킵니다.
 - Domain tab은 `docs/design/`의 DDD landscape, context map과 bounded-context sets를 투영하고, role filter, exact-byte approval, presentation readiness와 freshness를 표시합니다. 이 projection은 model authority나 approval intent를 생성하지 않습니다.
+- Domain card는 wrapped paragraph와 bullet continuation을 보존하며 제목·첫 줄·count만으로 설명을 축약하지 않습니다. purpose와 human review summary 다음에 canonical term, business rule, scenario/counterexample, boundary/failure/state/decision/role contract를 단계적으로 제공합니다.
+- domain table은 작은 화면에서 가로 스크롤할 수 있지만 cell을 잘라내거나 인접 column 위로 겹치지 않습니다. technical ID와 source path는 사람용 설명보다 낮은 위계의 추적 정보로 둡니다.
 - left sidebar, collapsible navigation rail, repository selector와 workspace switcher는 제공하지 않습니다.
 - 좁은 화면에서도 tab list를 horizontal scroll 또는 overflow control로 유지하며 sidebar로 변환하지 않습니다.
 - 한 시점에는 선택된 tab panel 하나만 primary content로 표시하되 `displayName`, repository identity와 freshness는 모든 tab과 스크롤 위치에서 유지합니다.

@@ -98,6 +98,10 @@ const domainContext = {
   modelRef: "docs/design/contexts/execution/domain-model.md",
   languageRef: "docs/design/contexts/execution/ubiquitous-language.md",
   examplesRef: "docs/design/contexts/execution/examples.md",
+  terms: [{ id: "TERM-EXEC-TASK", term: "Goal-locked Task", meaning: "승인 목표와 연결된 실행 단위" }],
+  businessRules: [{ id: "BR-EXEC-001", text: "current model reference가 필요합니다." }],
+  scenarios: [{ id: "SCN-EXEC-001", actorGoal: "QA / 결과 추적", outcome: "완료 근거를 봅니다." }],
+  counterexamples: ["승인되지 않은 model을 current truth로 사용합니다."],
   openQuestions: ["risk tier를 확정해야 합니다."]
 };
 
@@ -111,6 +115,11 @@ test("domain filters keep one shared model and narrow it by actor role, review s
     contexts: [domainContext],
     role: "developer",
     query: "risk tier"
+  }), [domainContext]);
+  assert.deepEqual(filterDomainContexts({
+    contexts: [domainContext],
+    role: "qa",
+    query: "완료 근거"
   }), [domainContext]);
   assert.deepEqual(filterDomainContexts({
     contexts: [domainContext],

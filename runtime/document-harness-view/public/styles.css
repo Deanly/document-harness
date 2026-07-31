@@ -1356,7 +1356,7 @@ footer p {
 
 .domain-context-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin: 16px 0;
 }
@@ -1456,6 +1456,69 @@ footer p {
 
 .domain-human-facts {
   font-size: 13px;
+}
+
+.domain-purpose p {
+  margin: 6px 0 0;
+  max-width: 90ch;
+  line-height: 1.65;
+}
+
+.domain-disclosure {
+  margin-top: 14px;
+  border: 1px solid var(--pf-t--global--border--color--subtle);
+  border-radius: var(--pf-t--global--radius--small);
+  background: #fff;
+}
+
+.domain-disclosure > summary {
+  padding: 11px 13px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.domain-disclosure[open] > summary {
+  border-bottom: 1px solid var(--pf-t--global--border--color--subtle);
+  background: var(--pf-t--global--background--color--secondary--default);
+}
+
+.domain-disclosure-body {
+  padding: 12px 13px;
+}
+
+.domain-disclosure-body h4 {
+  margin: 14px 0 7px;
+}
+
+.domain-disclosure-body h4:first-child {
+  margin-top: 0;
+}
+
+.domain-readable-list {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.55;
+}
+
+.domain-readable-list li + li {
+  margin-top: 6px;
+}
+
+.domain-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.domain-detail-table {
+  min-width: 760px;
+}
+
+.domain-detail-table th,
+.domain-detail-table td {
+  min-width: 130px;
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .domain-card-section {
