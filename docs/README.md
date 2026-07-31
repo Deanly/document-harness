@@ -4,7 +4,7 @@
 
 좋은 문서의 기준은 아래와 같습니다.
 
-- DDD design 문서는 domain expert가 검토한 현재 도메인 진실값을 담습니다.
+- DDD design 문서는 AI Domain Expert가 지속적으로 관리하고, 위임 범위 또는 중요한 사람 결정으로 권위가 확인된 현재 도메인 진실값을 담습니다.
 - `task`와 `project`는 append-only 상태 이력을 남깁니다.
 - `guide`는 반복되는 판단을 재사용 가능한 규칙으로 압축합니다.
 - 모든 문서는 서로를 명시적으로 참조합니다.
@@ -35,7 +35,8 @@
 ## Harness Philosophy
 
 - boundary-first: 구현보다 먼저 책임 경계와 비범위를 고정합니다.
-- domain-model authority: `design`은 DDD 도메인 모델만 담고, domain expert가 승인한 exact bytes만 current authority가 됩니다.
+- domain-model authority: `design`은 DDD 도메인 모델만 담고, exact delegated-AI 또는 human-confirmed receipt가 있는 bytes만 current authority가 됩니다.
+- AI domain expertise: `ai-domain-expert`가 역할 AI 사이의 domain modeling과 ubiquitous language를 통제하고, routine 변경 비용은 AI가 감당하며 중요한 의미 결정만 Board로 올립니다.
 - whole-system control: 기술 목표, pipeline, runtime invariant, handoff는 `architecture` control surface가 붙잡습니다.
 - strategy-to-delivery lineage: `initiative`는 정책·지침을 portfolio outcome으로, `project`는 bounded delivery로, `task`는 실행 slice로 연결합니다.
 - focused execution: `project`와 `task`는 승인된 추진안의 방향을 잃지 않은 채 delivery와 실행에 집중하게 만드는 focus surface여야 합니다.
@@ -157,8 +158,9 @@
   - 각 context set은 model, ubiquitous language, executable examples를 함께 가집니다.
   - aggregate, entity, value object, command, event, policy, business rule, scenario에 stable ID를 부여합니다.
   - 고객·기획자·설계자·개발자·QA는 동일한 stable ID를 role-specific packet으로 읽습니다.
-  - AI는 `draft`/`review_requested` 모델을 제안할 수 있지만 domain expert를 대신해 승인할 수 없습니다.
-  - `current` 모델은 repository-relative JSON approval receipt가 human actor와 exact source bytes를 고정하고 freshness 검증을 통과해야 합니다.
+  - AI Domain Expert는 source·example·반례·semantic diff를 종합하고 routine·가역 변경을 exact delegation 안에서 current로 만들 수 있습니다.
+  - `current` 모델은 repository-relative JSON authority receipt가 human-confirmed 또는 delegated-AI actor, exact source bytes와 authority fence를 고정하고 freshness 검증을 통과해야 합니다.
+  - 중요한 변경은 AI Domain Expert가 `bounded-context`, `aggregate`, `entity`, `value-object`, `business-rule`, `state-transition`, `ubiquitous-language`, `scenario` 중 사람이 결정하기 위한 최소 충분 수준을 선택해 Board에 제시합니다.
   - `display_title`, `human_summary`, `presentation_status`, `presentation_ref`는 Board 가독성 상태이며 domain meaning approval와 별도입니다.
   - 사람용 설명이 `missing` 또는 invalid이면 technical title/ID를 정상 Board card로 대체하지 않습니다.
   - 자세한 계약은 `docs/guide/ddd-domain-design.md`를 따릅니다.
@@ -297,7 +299,7 @@
 - `initiative`, `task`, `project`의 `Status` 섹션은 append-only로 운영합니다.
 - 새 이력은 문서 하단에 계속 추가합니다.
 - WBS와 진행률은 현재 상태를 반영하도록 갱신합니다.
-- `task`와 `project`는 `domain_impact`, affected bounded context, actor role, approved/current domain model ref를 명시합니다. `domain_impact: none`도 사유와 human review ref 없이는 허용하지 않습니다.
+- `task`와 `project`는 `domain_impact`, affected bounded context, actor role, authoritative/current domain model ref를 명시합니다. `domain_impact: none`도 사유와 AI Domain Expert review ref 없이는 허용하지 않습니다.
 - QA는 source model뿐 아니라 covered business rule ID와 scenario ID를 명시합니다.
 - `task`와 `project`는 `Related Control Plane`을 통해 whole-system 기준 문서를 명시적으로 참조합니다.
 - human-facing strategy/portfolio owner는 별도 `initiative`로 유지하고 project는 bounded delivery만 소유합니다.
@@ -322,7 +324,7 @@
 - whole-system control surface의 기본 구조는 `./docs/bin/validate-harness-foundation.sh`를 통과해야 합니다.
 - Codex-facing surface의 기본 구조는 `./docs/bin/validate-codex-readiness.sh`를 통과해야 합니다.
 - retrieval-plane surface의 기본 구조는 `./docs/bin/validate-doc-retrieval.sh`를 통과해야 합니다.
-- DDD structure와 exact-byte approval/freshness는 `./docs/bin/validate-domain-design.sh --all`을 통과해야 합니다.
+- DDD structure, Board review package와 exact-byte authority/freshness는 `./docs/bin/validate-domain-design.sh --all`을 통과해야 합니다.
 - project/task/QA domain traceability는 `./docs/bin/validate-domain-lineage.sh --all`을 통과해야 합니다.
 - hybrid runtime을 쓰더라도 filesystem source가 authoritative하며, 현재 작업에서 바뀐 파일이나 freshness가 불확실한 결과는 source를 직접 읽습니다.
 - retrieval runtime은 `docs/_indexes/retrieval-policy.yaml`의 revision, tombstone, direct-read fallback 계약을 따릅니다.
@@ -342,7 +344,7 @@
 - 설계가 변경되면:
   - 먼저 affected bounded context의 domain model, ubiquitous language, examples를 같은 변경 셋에서 수정합니다.
   - 경계나 upstream/downstream 관계가 바뀌면 landscape와 context map도 함께 수정합니다.
-  - AI 초안은 `review_requested`로 두고 domain expert에게 exact model bytes 검토를 요청합니다.
+  - AI Domain Expert는 routine 변경은 delegation 안에서 검증하고, 중요한 초안은 최소 충분 모델링 수준의 Board review package와 함께 `review_requested`로 둡니다.
   - 승인 receipt와 freshness 검증 뒤 관련 `task`, `project`, `qa`, `guide`, architecture 참조를 갱신합니다.
 
 ## Writing Bar
@@ -389,7 +391,7 @@
 3. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.
 4. Codex가 작업할 프로젝트라면 루트 `AGENTS.md`와 repository-local `operate-document-harness` skill을 실제 repo 기준으로 조정합니다.
 5. 정책·지침을 검토한 뒤 사람의 exact approval로 첫 `I####` 추진안을 발급합니다.
-6. domain expert와 함께 bounded context별 model·ubiquitous language·examples를 작성하고 exact-byte approval receipt를 만든 뒤, 승인된 추진안 아래 첫 bounded `project`를 발급합니다.
+6. AI Domain Expert가 bounded context별 model·ubiquitous language·examples를 작성·검토하고 exact-byte authority receipt 또는 중요한 Board 결정을 연결한 뒤, 승인된 추진안 아래 첫 bounded `project`를 발급합니다.
 7. 새 source를 ingest할 때는 `source_refs`, 관련 `design`/`guide`/`report`, 폴더 README를 함께 갱신합니다.
 8. 실제 작업 단위가 생기면 먼저 현재 project 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
 9. 별도 delivery boundary가 명확하고 사람이 승인할 때만 새 `project`를 발급하고 issuance check에 그 이유를 남깁니다.

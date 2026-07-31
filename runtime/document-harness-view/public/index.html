@@ -93,7 +93,7 @@
           <div>
             <p class="eyebrow">DDD 도메인 모델</p>
             <h1>도메인</h1>
-            <p class="page-description">고객·기획·설계·개발·QA가 공유하는 bounded context, ubiquitous language, business rule과 scenario를 exact-byte 승인 상태와 함께 보여줍니다.</p>
+            <p class="page-description">AI Domain Expert가 근거와 반례를 종합하고 사람이 결정하기 좋은 최소 충분 모델링 수준을 선택한 결과를 먼저 보여줍니다.</p>
           </div>
           <div id="domain-summary" class="compact-metrics" aria-label="도메인 모델 현황"></div>
         </div>
@@ -102,11 +102,11 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">현재 모델 권한</p>
-              <h2 id="domain-authority-title">Domain expert 승인과 freshness</h2>
+              <h2 id="domain-authority-title">AI Domain Expert 권위와 freshness</h2>
             </div>
             <span id="domain-authority-state" class="status-label warning">확인 중</span>
           </div>
-          <p id="domain-authority-message" class="page-description">DDD 문서와 승인 receipt를 확인하고 있습니다.</p>
+          <p id="domain-authority-message" class="page-description">DDD 문서와 human-confirmed/delegated-AI authority receipt를 확인하고 있습니다.</p>
           <div id="domain-authority-links" class="reference-list"></div>
         </section>
 
@@ -130,8 +130,8 @@
             <span>승인 상태</span>
             <select id="domain-status-filter">
               <option value="all">전체</option>
-              <option value="approved">승인된 current 모델</option>
-              <option value="review">도메인 전문가 검토 필요</option>
+              <option value="approved">권위가 확인된 current 모델</option>
+              <option value="review">Board 결정 또는 AI 권위 필요</option>
               <option value="invalid">receipt / bytes 불일치</option>
             </select>
           </label>

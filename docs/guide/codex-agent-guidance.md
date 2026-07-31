@@ -104,7 +104,7 @@ Root guidance also states that AI-authored policy/standard/exception proposals c
 
 It also states that a new `I####` requires explicit human issuance authority and an exact approval ref. AI may draft an unnumbered initiative proposal, but it must not infer issuance or activation approval from an existing umbrella project, code, or chat context.
 
-`docs/design/` is reserved for DDD domain-model truth. Root guidance requires the agent to identify affected bounded contexts, load the actor-specific packet, and verify approved/current exact model bytes before delivery. Architecture mechanics belong in `docs/architecture/`; governance authority mechanics belong in `docs/governance/`. An AI-authored model remains `draft` or `review_requested` until a domain expert approves the exact bytes through a validation receipt.
+`docs/design/` is reserved for DDD domain-model truth. Root guidance requires the agent to identify affected bounded contexts, load the actor-specific packet, route semantic changes through `ai-domain-expert`, and verify authoritative/current exact model bytes before delivery. Architecture mechanics belong in `docs/architecture/`; governance authority mechanics belong in `docs/governance/`. Routine, reversible changes may become current only through an exact human-defined delegated-AI fence; material, strategic, conflicted, low-confidence, organizational, regulated, customer-rights, money, security, context split/merge, or irreversible meaning remains `review_requested` until the AI Domain Expert's minimum-sufficient Board model receives a human decision.
 
 For Claude Code, keep a short root `CLAUDE.md` that imports `AGENTS.md` with `@AGENTS.md` and adds only Claude-specific routing. It must point adoption work to `docs/ADOPT.md` and execution work to `docs/EXECUTE.md`; it must not copy the policy, ownership, stop, or verification rules into a competing instruction set.
 
@@ -153,7 +153,7 @@ That command should check:
 - Codex guidance is part of the foundation.
 - markdown templates still include frontmatter properties.
 - design templates include retrieval metadata and the agent surfaces require direct source reads for uncertain freshness.
-- DDD templates contain bounded-context semantics, stable model IDs, actor views, domain-expert ownership, and exact-byte validation metadata.
+- DDD templates contain bounded-context semantics, stable model IDs, actor views, AI Domain Expert authority/Board review metadata, and exact-byte validation metadata.
 - domain design and delivery lineage validators pass, including role-specific project/task/QA traceability.
 - foundation and closeout validators still pass.
 - governance/execution design, guide, policy index, checkpoint template, and execution validator stay aligned.
@@ -182,4 +182,5 @@ Codex can run multiple threads, but two concurrent tasks should not modify the s
 - 2026-07-16: repository-local `operate-document-harness` canonical skill, thin Claude project adapter, no-global-install and bootstrap reload contract added.
 - 2026-07-17: `Board` 사용자명과 사용자 표시 언어 View operation phrase routing을 repository-local skill contract에 추가했다.
 - 2026-07-18: explicit human-approved `I####` issuance, initiative→project→task hierarchy와 legacy umbrella non-promotion rule을 추가했다.
-- 2026-07-29: `docs/design/`을 DDD 전용 authority surface로 고정하고 역할별 로딩, exact-byte domain-expert approval, delivery lineage 검증 계약을 추가했다.
+- 2026-07-29: `docs/design/`을 DDD 전용 authority surface로 고정하고 역할별 로딩, exact-byte domain authority, delivery lineage 검증 계약을 추가했다.
+- 2026-07-31: AI Domain Expert의 delegated routine authority와 최소 충분 Board modeling-level escalation을 추가했다.

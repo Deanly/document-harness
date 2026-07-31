@@ -76,7 +76,7 @@ tags:
 ## Domain Model Alignment
 
 - `docs/design/context-map.md`에서 target bounded context를 확인합니다.
-- 기능·업무 의미·용어·상태·API/event를 다루면 exact approved/current `domain_model_refs`와 적용 `BR-*`, `CMD-*`, `EVT-*`, `SCN-*`를 Goal Inventory/References에 연결합니다.
+- 기능·업무 의미·용어·상태·API/event를 다루면 exact authoritative/current `domain_model_refs`와 적용 `BR-*`, `CMD-*`, `EVT-*`, `SCN-*`를 Goal Inventory/References에 연결합니다.
 - domain 영향이 없으면 `domain_impact: none`과 구체적인 이유를 적습니다.
 - code/config 관찰만으로 domain rule을 만들지 않고 model gap은 attention으로 전환합니다.
 

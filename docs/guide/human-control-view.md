@@ -82,20 +82,23 @@ Selected Tab Panel
 
 ### Domain Tab
 
-Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context model, ubiquitous language와 executable examples를 읽기 전용으로 투영합니다.
+Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context model, ubiquitous language와 executable examples를 읽기 전용으로 투영합니다. 첫 화면의 주인공은 문서 목록이나 승인 metadata가 아니라 AI Domain Expert가 종합한 사람용 도메인 모델링 결과입니다.
 
 - 정상 card는 `display_title`과 `human_summary`를 사용하며 technical `title`, bounded-context name, ID 또는 section 첫 줄을 사람용 설명의 fallback으로 사용하지 않습니다.
+- AI Domain Expert는 `bounded-context`, `aggregate`, `entity`, `value-object`, `business-rule`, `state-transition`, `ubiquitous-language`, `scenario` 중 이번 사람 결정에 필요한 최소 충분 수준을 하나 선택합니다. 서로 독립된 판단은 `mixed`로 숨기지 않고 별도 review package로 분리합니다.
+- card 첫 화면은 AI Domain Expert의 권고 결정, 선택한 모델링 수준과 이유, 사람이 확인할 핵심, 승인으로 보호되는 결과, 반대·수정 조건, 그 수준에서 선택된 실제 모델을 순서대로 보여줍니다.
+- 선택 수준보다 상세한 entity, technical ID, command/event, 전체 rule/scenario는 접을 수 있는 근거로 내립니다. 다만 선택된 수준 자체의 모델 요소와 의미는 count나 요약 문장으로 대체하지 않습니다.
 - 승인된 bounded-context model의 bytes를 presentation-only 변경으로 무효화하면 안 되는 경우, 같은 context의 `domain-examples` 또는 `ubiquitous-language`에 명시된 검토용 presentation을 사용할 수 있습니다. 이때 Board는 model approval과 companion presentation 상태를 계속 분리합니다.
 - `presentation_status: missing` 또는 invalid인 context는 정상 목록에서 제외하고 `사람용 설명 필요` attention과 exact source ref로만 제공합니다. `review_requested`는 후보 badge와 함께, exact human receipt가 있는 `ready`는 정상 표시합니다.
 - domain meaning status, presentation status와 evidence freshness를 각각 표시하며 어느 하나로 다른 상태를 추론하지 않습니다.
-- bounded context별 core/supporting/generic 구분, owner와 domain expert를 표시합니다.
-- model revision, exact-byte approval receipt, validation/freshness를 분리해 보여줍니다.
+- bounded context별 core/supporting/generic 구분, owner, `ai-domain-expert`, authority mode와 decision tier를 표시합니다.
+- model revision, exact-byte human-confirmed/delegated-AI receipt, validation/freshness를 분리해 보여줍니다.
 - 고객/domain expert, 기획자, 설계자, 개발자, QA role filter는 같은 stable model ID를 역할 관점별로 좁힐 뿐 별도 모델을 만들지 않습니다.
 - 카드 첫 화면은 여러 줄로 작성된 purpose, 책임, 제외 범위, 사용자에게 보이는 실패와 미결정을 생략 없이 보여줍니다.
 - 용어의 뜻·올바른 예·잘못된 예, business rule 전문, 정상·거절·장애 scenario와 counterexample을 추적 ID와 분리해 사람이 읽는 순서로 보여줍니다.
 - 업무 경계, failure semantics, state transition, 결정 사항과 역할별 판단 기준은 접을 수 있는 상세 영역에서 원문 의미를 보존합니다.
 - aggregate, business rule, scenario, command, event count는 탐색용 요약이며 실제 본문을 대신하지 않습니다.
-- Board의 표시나 필터 조작은 모델 승인, 변경 또는 delivery 실행 권한을 만들지 않습니다.
+- Board의 표시나 필터 조작은 모델 승인, 변경 또는 delivery 실행 권한을 만들지 않습니다. 중요한 판단은 별도 broker가 exact model/review bytes를 묶은 receipt로 기록한 후 projection이 다시 읽습니다.
 
 상단 bar의 `connected` 표시는 freshness를 의미하지 않습니다. `fresh`, `updating`, `direct`, `degraded`, `unknown`을 별도 badge로 표시합니다.
 
@@ -522,6 +525,7 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] 사용자용 chrome과 synthesized governance/project wording이 configured `presentation.locale`이고 기술 ID·enum·path·hash·command·source heading은 원형을 유지한다.
 - [ ] 사람용 설명이 missing/invalid인 정책·지침·추진안·도메인은 정상 목록에서 제외되고 `사람용 설명 필요` attention과 exact source ref만 표시된다.
 - [ ] domain/governance approval, presentation readiness와 evidence freshness가 독립 상태로 표시된다.
+- [ ] Domain card 첫 화면에 AI Domain Expert의 권고, 선택 수준과 이유, 사람 결정 질문, 보호 결과, 수정 조건과 그 수준의 실제 model slice가 표시된다.
 - [ ] 긴 ID와 source ref가 자기 cell/card 안에서 줄바꿈되며 인접 content와 겹치지 않는다.
 - [ ] migration fence, current repository와 source evidence freshness가 독립 상태다.
 - [ ] View runtime/controller byte set이 release manifest와 installation lock에 pin되어 있다.
@@ -550,3 +554,4 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - 2026-07-17: 화면의 displayName 기반 사용자명을 `Board`로 정하고 정책과 지침을 독립 최상위 tab과 양방향 관계로 분리했다.
 - 2026-07-17: 정책·지침과 프로젝트 사이에 별도 `I####` 추진안 계층과 일곱 번째 top tab을 추가했다.
 - 2026-07-30: 사람용 설명이 없는 governance/domain 항목의 정상 표시 차단, presentation receipt와 세 상태 분리 계약을 추가했다.
+- 2026-07-31: AI Domain Expert의 최소 충분 모델링 수준 선택과 실제 domain model review package를 Domain 첫 화면 계약으로 추가했다.

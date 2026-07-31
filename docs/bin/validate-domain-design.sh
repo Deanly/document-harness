@@ -92,6 +92,11 @@ validate_common() {
   local model_revision
   local bounded_context_id
   local presentation_status
+  local domain_expert_agent
+  local authority_mode
+  local decision_tier
+  local board_review_level
+  local board_review_status
 
   [[ "$(head -n 1 "$file")" == "---" ]] || error "$relative missing YAML frontmatter"
   type="$(frontmatter_scalar "$file" type)"
@@ -101,6 +106,11 @@ validate_common() {
   model_revision="$(frontmatter_scalar "$file" model_revision)"
   bounded_context_id="$(frontmatter_scalar "$file" bounded_context_id)"
   presentation_status="$(frontmatter_scalar "$file" presentation_status)"
+  domain_expert_agent="$(frontmatter_scalar "$file" domain_expert_agent)"
+  authority_mode="$(frontmatter_scalar "$file" authority_mode)"
+  decision_tier="$(frontmatter_scalar "$file" decision_tier)"
+  board_review_level="$(frontmatter_scalar "$file" board_review_level)"
+  board_review_status="$(frontmatter_scalar "$file" board_review_status)"
 
   [[ "$type" == "design" ]] || error "$relative must declare type: design"
   case "$kind" in
@@ -112,7 +122,7 @@ validate_common() {
     *) error "$relative has unsupported status: ${status:-missing}" ;;
   esac
   case "$validation_status" in
-    unreviewed|review_requested|approved|superseded) ;;
+    unreviewed|review_requested|ai-validated|approved|superseded) ;;
     *) error "$relative has unsupported validation_status: ${validation_status:-missing}" ;;
   esac
   [[ "$model_revision" =~ ^[1-9][0-9]*$ ]] || error "$relative model_revision must be a positive integer"
@@ -149,6 +159,58 @@ validate_common() {
     esac
   fi
 
+  if [[ "$kind" == "bounded-context" ]]; then
+    [[ "$domain_expert_agent" == "ai-domain-expert" ]] || error "$relative bounded-context must declare domain_expert_agent: ai-domain-expert"
+    case "$authority_mode" in
+      delegated-ai|human-required|human-confirmed) ;;
+      *) error "$relative has unsupported authority_mode: ${authority_mode:-missing}" ;;
+    esac
+    case "$decision_tier" in
+      routine|material|strategic) ;;
+      *) error "$relative has unsupported decision_tier: ${decision_tier:-missing}" ;;
+    esac
+    case "$board_review_level" in
+      bounded-context|aggregate|entity|value-object|business-rule|state-transition|ubiquitous-language|scenario) ;;
+      *) error "$relative has unsupported board_review_level: ${board_review_level:-missing}" ;;
+    esac
+    case "$board_review_status" in
+      not_required|review_requested|confirmed) ;;
+      *) error "$relative has unsupported board_review_status: ${board_review_status:-missing}" ;;
+    esac
+    require_section "$file" "AI Domain Expert Board Review"
+    require_pattern "$file" '^- 권고 결정:[[:space:]]*[^[:space:]].*$' "AI Domain Expert recommendation"
+    require_pattern "$file" "^- 선택한 모델링 수준:[[:space:]]*$board_review_level[[:space:]]*$" "matching Board modeling level"
+    require_pattern "$file" '^- 이 수준을 선택한 이유:[[:space:]]*[^[:space:]].*$' "Board level rationale"
+    require_pattern "$file" '^- 사람이 확인할 핵심:[[:space:]]*[^[:space:]].*$' "human decision question"
+    require_pattern "$file" '^- 승인하면 보호되는 결과:[[:space:]]*[^[:space:]].*$' "protected outcome"
+    require_pattern "$file" '^- 반대하거나 수정해야 하는 조건:[[:space:]]*[^[:space:]].*$' "counter-condition"
+    case "$board_review_level" in
+      bounded-context) require_pattern "$file" '^- (포함|제외)(:|하는)[[:space:]]*[^[:space:]].*$' "bounded-context model slice" ;;
+      aggregate) require_pattern "$file" '^\|[[:space:]]*AGG-[A-Z0-9-]+[[:space:]]*\|' "aggregate Board model slice" ;;
+      entity) require_pattern "$file" '^\|[[:space:]]*ENT-[A-Z0-9-]+[[:space:]]*\|' "entity Board model slice" ;;
+      value-object) require_pattern "$file" '^\|[[:space:]]*VO-[A-Z0-9-]+[[:space:]]*\|' "value-object Board model slice" ;;
+      business-rule) require_pattern "$file" '^\|[[:space:]]*BR-[A-Z0-9-]+[[:space:]]*\|' "business-rule Board model slice" ;;
+      state-transition) require_pattern "$file" '^\|[[:space:]]*[^|]+\|[[:space:]]*[^|]+\|[[:space:]]*CMD-[A-Z0-9-]+' "state-transition Board model slice" ;;
+      ubiquitous-language) require_pattern "$file" '^\|[[:space:]]*TERM-[A-Z0-9-]+[[:space:]]*\|' "ubiquitous-language Board model slice" ;;
+      scenario) require_pattern "$file" '^\|[[:space:]]*SCN-[A-Z0-9-]+[[:space:]]*\|' "scenario Board model slice" ;;
+    esac
+    if [[ "$decision_tier" == "routine" && "$board_review_status" != "not_required" ]]; then
+      error "$relative routine decision must use board_review_status: not_required"
+    fi
+    if [[ "$decision_tier" != "routine" && "$board_review_status" == "not_required" ]]; then
+      error "$relative material/strategic decision must be review_requested or confirmed on the Board"
+    fi
+    if [[ "$authority_mode" == "delegated-ai" && "$decision_tier" != "routine" ]]; then
+      error "$relative delegated-ai authority is limited to decision_tier: routine"
+    fi
+    if [[ "$authority_mode" == "human-required" && "$board_review_status" != "review_requested" ]]; then
+      error "$relative human-required authority must use board_review_status: review_requested"
+    fi
+    if [[ "$authority_mode" == "human-confirmed" && "$board_review_status" != "confirmed" ]]; then
+      error "$relative human-confirmed authority must use board_review_status: confirmed"
+    fi
+  fi
+
   case "$status" in
     draft)
       [[ "$validation_status" == "unreviewed" || "$validation_status" == "review_requested" ]] || error "$relative draft has incompatible validation_status"
@@ -157,9 +219,9 @@ validate_common() {
       [[ "$validation_status" == "review_requested" ]] || error "$relative review_requested must use validation_status: review_requested"
       ;;
     current)
-      [[ "$validation_status" == "approved" ]] || error "$relative current must use validation_status: approved"
+      [[ "$validation_status" == "approved" || "$validation_status" == "ai-validated" ]] || error "$relative current must use validation_status: approved|ai-validated"
       if ! node "$AUTHORITY_VALIDATOR" --root "$REPO_ROOT" --document "$relative" >/dev/null; then
-        error "$relative has no current human domain-expert approval receipt"
+        error "$relative has no valid exact-byte domain authority receipt"
       fi
       ;;
     superseded)

@@ -10,7 +10,7 @@
 - `docs/ADOPT.md` is the single entrypoint for initializing, migrating, or upgrading the harness in a target repository.
 - `docs/EXECUTE.md` is the single orchestration index for starting or resuming a loop-enabled task.
 - `docs/design/` is reserved for DDD domain-model truth: landscape, context map, bounded-context models, ubiquitous language, and executable domain examples.
-- `docs/guide/ddd-domain-design.md` defines domain-expert authorship, stable model IDs, role-based loading, validation receipts, freshness, and delivery traceability.
+- `docs/guide/ddd-domain-design.md` defines the provider-neutral AI Domain Expert, delegated authority, Board modeling-level selection, stable model IDs, validation receipts, freshness, and delivery traceability.
 - `docs/architecture/control-plane.md` is the top-level control surface for goals, pipeline, validators, and handoff rules.
 - `docs/architecture/harness-adoption-plane.md` defines ownership-aware plan/apply migration, policy extraction, repo-local View, and quality handoff contracts.
 - `docs/architecture/retrieval-plane.md` defines scalable search, revision, and freshness contracts.
@@ -38,7 +38,7 @@
 - Prefer `rg` and the scripts in `docs/bin/` for navigation and verification.
 - If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.
 - Treat policy, guideline, and initiative as mandatory upper governance for project/task work. Before planning, issuing, or executing delivery, direct-read the current project lineage, active approved initiative, exact effective policy/guideline refs, approval receipts, and freshness. Project/task text may refine delivery but must not weaken or reinterpret them; stop with attention on missing, stale, unapproved-required, or conflicting governance.
-- Treat the approved current DDD model as the shared business contract for customers, planners, architects, developers, and QA. Before delivery work, identify affected bounded contexts, load the role packet from `docs/_indexes/context-packets.yaml`, and verify exact model bytes through `docs/lib/domain-design-authority.mjs`. Stop on missing, stale, disputed, or unapproved-required domain truth; AI may draft a model but cannot approve its own bytes.
+- Treat the authoritative current DDD model as the shared business contract for customers, planners, architects, developers, and QA. Before delivery work, identify affected bounded contexts, load the role packet from `docs/_indexes/context-packets.yaml`, and verify exact model bytes through `docs/lib/domain-design-authority.mjs`. Route semantic changes through the provider-neutral `ai-domain-expert` role. It may promote routine, reversible, evidence-backed changes only within an exact delegated-authority fence; it cannot create or widen that fence. Escalate material, strategic, conflicted, low-confidence, customer-rights, money, legal, security, organizational ownership, context split/merge, or irreversible decisions to the Board as a human-readable minimum-sufficient domain model.
 - When a user needs help expressing governance, follow `docs/guide/governance-authoring-assistance.md`: ask the smallest useful questions, draft human-facing wording in clear user-language, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence and unknowns, and request exact human review. Never turn assistance into self-approval.
 - Every policy, guideline, initiative, and domain item projected as normal Board content must provide a short title and complete human-facing summary in the configured `presentation.locale`. Keep IDs, paths, revisions, hashes, commands, events, and exact source text as lower-level evidence. If the human-facing presentation is missing or invalid, project only a `사람용 설명 필요` attention with the exact source ref; never substitute technical metadata as the normal card.
 - Before loop-enabled execution, read the effective policy/standard refs, current task contract, and current checkpoint; keep lifecycle `status` separate from `loop_state`.
@@ -58,7 +58,7 @@
 - Keep frontmatter properties and first-screen bullet metadata in sync.
 - Keep `source_refs` populated when a claim depends on raw source material, external docs, transcripts, datasets, or official references.
 - `docs/design/` is reserved for DDD domain truth. Put technical topology and mechanisms in `docs/architecture/`, and approval/governance systems in `docs/governance/`.
-- DDD design documents hold current truth only after domain-expert review and an exact-byte approval receipt; `initiative`, `task`, and `project` status sections hold append-only lifecycle or execution history.
+- DDD design documents hold current truth only after an exact-byte human-confirmed or delegated-AI authority receipt. A delegated-AI receipt must bind the approved delegation source and may cover only routine, reversible changes. `initiative`, `task`, and `project` status sections hold append-only lifecycle or execution history.
 - If a reusable answer emerges from a report or conversation, promote it into `guide`, `design`, `initiative`, `project`, or `task` as appropriate.
 - Prefer adding a narrow guide over expanding `docs/README.md` when a rule needs detailed explanation.
 
@@ -89,7 +89,7 @@ A harness change is done only when:
 - Codex and Claude entrypoints delegate to the same durable contracts rather than defining competing rules.
 - Validators pass or any skipped validator is explicitly explained.
 - Human-owned policy and approval state are not inferred from AI-authored prose alone.
-- DDD model authority is human-owned, exact-byte approved, current, and traceable into affected project/task/QA documents.
+- DDD model authority is exact-byte current, source-bounded, and traceable into affected project/task/QA documents; delegated AI authority remains inside a human-defined fence, while material and strategic meaning is human-confirmed through the Board.
 - Applicable governance lineage and freshness are verified before delivery work, and unresolved conflicts stop execution.
 - Existing repository ownership, migration conflicts, and runtime-local state remain explicit and reversible.
 - The final response names the changed surfaces and the verification result.

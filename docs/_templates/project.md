@@ -66,7 +66,7 @@ tags:
 ## Domain Model Alignment
 
 - `docs/design/context-map.md`에서 이 delivery가 바꾸거나 사용하는 bounded context를 선택합니다.
-- 기능·업무 의미·용어·상태·API/event가 바뀌면 `domain_impact: required`와 exact approved/current `domain_model_refs`를 채웁니다.
+- 기능·업무 의미·용어·상태·API/event가 바뀌면 `domain_impact: required`와 exact authoritative/current `domain_model_refs`를 채웁니다.
 - domain 영향이 정말 없으면 `domain_impact: none`과 사람이 검토할 수 있는 이유를 적습니다.
 - project가 domain model을 약화하거나 새로운 업무 rule을 독자적으로 만들지 않습니다.
 

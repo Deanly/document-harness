@@ -14,6 +14,7 @@ subdomain_type: portfolio
 model_revision: 1
 validation_status: review_requested
 validation_ref:
+domain_expert_agent: ai-domain-expert
 domain_expert_roles:
   - document-harness-maintainer
 role_views:

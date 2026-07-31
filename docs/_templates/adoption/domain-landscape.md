@@ -14,6 +14,7 @@ subdomain_type: portfolio
 model_revision: 1
 validation_status: unreviewed
 validation_ref:
+domain_expert_agent: ai-domain-expert
 domain_expert_roles:
   - repository-domain-owner
 role_views:
@@ -43,12 +44,12 @@ tags:
 
 ## Domain Vision And Customer Outcomes
 
-Initialization does not infer the business domain. The repository owner and domain experts must replace this discovery boundary with source-backed customer outcomes.
+Initialization does not infer the business domain. The AI Domain Expert must replace this discovery boundary with source-backed customer outcomes and escalate only important or uncertain meaning to the repository owner through the Board.
 
 ## Domain Experts And Sources
 
 - `repository-domain-owner` is a placeholder role, not an inferred person or approval.
-- Identify customer/domain experts and authoritative business sources before promoting any model to `current`.
+- Identify business decision owners, authoritative business sources, AI Domain Expert delegation and Board escalation rules before promoting any model to `current`.
 
 ## Subdomain Portfolio
 
@@ -76,7 +77,7 @@ Core, supporting, and generic subdomains are not established by initialization.
 
 ## Unknowns And Disputes
 
-- Actual domain experts, bounded contexts, core domain, business rules, and examples require human review.
+- Actual bounded contexts, core domain, business rules, examples, AI delegation scope and important human decisions remain to be modeled from repository evidence.
 
 ## Change Impact
 

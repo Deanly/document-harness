@@ -186,7 +186,12 @@ done
 
 require_contains "$DOCS_DIR/_templates/design.md" 'design_kind: bounded-context'
 require_contains "$DOCS_DIR/_templates/design.md" 'domain_expert_roles:'
+require_contains "$DOCS_DIR/_templates/design.md" 'domain_expert_agent: ai-domain-expert'
+require_contains "$DOCS_DIR/_templates/design.md" 'board_review_level:'
+require_contains "$DOCS_DIR/_templates/design.md" '## AI Domain Expert Board Review'
 require_contains "$DOCS_DIR/_templates/design.md" 'role_views:'
+require_contains "$DOMAIN_DESIGN_GUIDE" '## AI Domain Expert Contract'
+require_contains "$DOMAIN_DESIGN_GUIDE" '## Board Review Contract'
 require_contains "$DOCS_DIR/_templates/report.md" 'proposal_status:'
 require_contains "$DOCS_DIR/_templates/task.md" 'execution_contract: v1'
 require_contains "$DOCS_DIR/_templates/task.md" 'loop_state: ready'

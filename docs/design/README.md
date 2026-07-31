@@ -7,7 +7,7 @@
 - 먼저 [`domain-landscape.md`](domain-landscape.md)에서 domain vision과 subdomain을 확인합니다.
 - 다음으로 [`context-map.md`](context-map.md)에서 대상 bounded context와 upstream/downstream 관계를 선택합니다.
 - 역할에 맞는 target context의 `domain-model.md`, `ubiquitous-language.md`, `examples.md` section을 읽습니다.
-- `current` model은 exact human domain-expert approval receipt가 current bytes와 일치할 때만 authoritative합니다.
+- `current` model은 exact human-confirmed 또는 delegated-AI authority receipt가 current bytes와 일치할 때만 authoritative합니다. AI Domain Expert는 routine 위임 범위를 스스로 만들거나 넓힐 수 없습니다.
 - `draft`와 `review_requested`는 유용한 candidate이지만 구현·QA의 current truth로 사용할 수 없습니다.
 - 같은 용어가 context마다 다른 뜻이면 하나로 합치지 않고 context map translation을 명시합니다.
 - 상세 authoring과 validation은 `docs/guide/ddd-domain-design.md`를 따릅니다.

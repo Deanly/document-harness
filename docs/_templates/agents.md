@@ -10,7 +10,7 @@
 - `docs/ADOPT.md`: single entrypoint for initialize/migrate/upgrade work.
 - `docs/EXECUTE.md`: single orchestration index for starting or resuming a loop-enabled task.
 - `docs/design/`: DDD-only domain landscape, context map, bounded-context models, ubiquitous language, and executable domain examples.
-- `docs/guide/ddd-domain-design.md`: domain-expert authorship, stable model IDs, role loading, exact-byte validation, freshness, and delivery traceability.
+- `docs/guide/ddd-domain-design.md`: AI Domain Expert semantics control, delegated authority, Board modeling-level selection, stable model IDs, exact-byte validation, freshness, and delivery traceability.
 - `docs/architecture/control-plane.md`: whole-system goal, active surfaces, validators, and handoff rules.
 - `docs/architecture/harness-adoption-plane.md`: ownership-aware migration, policy extraction, repo-local View, and quality handoff.
 - `docs/architecture/retrieval-plane.md`: scalable search, revision, and freshness contracts.
@@ -41,7 +41,7 @@
 - Keep changes narrow and aligned with the existing document contracts.
 - If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.
 - Treat policy, guideline, and initiative as mandatory upper governance. Before planning, issuing, or executing project/task work, direct-read the current lineage, active approved initiative, exact effective policy/guideline refs, approval receipts, and freshness. Delivery documents may refine but never weaken or reinterpret them; stop with attention on missing, stale, unapproved-required, or conflicting governance.
-- Treat the approved current DDD model as the shared business contract for customers, planners, architects, developers, and QA. Before delivery work, identify affected bounded contexts, load the role packet from `docs/_indexes/context-packets.yaml`, and verify exact model bytes through `docs/lib/domain-design-authority.mjs`. Stop on missing, stale, disputed, or unapproved-required domain truth; AI may draft a model but cannot approve its own bytes.
+- Treat the authoritative current DDD model as the shared business contract for customers, planners, architects, developers, and QA. Route semantic changes through `ai-domain-expert` and verify exact model bytes through `docs/lib/domain-design-authority.mjs`. It may promote routine, reversible changes only inside an exact human-defined delegation fence; important, conflicted, low-confidence, organizational, regulated, customer-rights, money, security, context split/merge, or irreversible decisions require a minimum-sufficient Board model and human decision.
 - When helping a user author governance, follow `docs/guide/governance-authoring-assistance.md`: ask small decision-focused questions, draft clear user-language, keep policy WHY/boundary, guideline HOW/verification, and initiative outcome/portfolio separate, expose evidence/unknowns, and leave approval to the human.
 - Before loop-enabled execution, read effective policy/standard refs, the current task contract, and the current checkpoint; keep lifecycle `status` separate from `loop_state`.
 - AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.

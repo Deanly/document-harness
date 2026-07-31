@@ -96,6 +96,7 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   assert.deepEqual(schemaFiles.sort(), [
     "adoption-plan.schema.json",
     "apply-receipt.schema.json",
+    "domain-authority-delegation-receipt.schema.json",
     "domain-design-approval-receipt.schema.json",
     "governance-catalog.schema.json",
     "harness-installation-lock.schema.json",

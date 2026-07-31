@@ -14,6 +14,12 @@ subdomain_type:
 model_revision: 1
 validation_status: unreviewed
 validation_ref:
+domain_expert_agent: ai-domain-expert
+authority_mode:
+decision_tier:
+board_review_level:
+board_review_status:
+board_decision_ref:
 domain_expert_roles: []
 role_views:
   - customer
@@ -53,6 +59,9 @@ tags:
 - Subdomain Type:
 - Model Revision: 1
 - Validation Status / Reference: unreviewed /
+- AI Domain Expert: ai-domain-expert
+- Authority / Decision Tier: /
+- Board Review Level / Status: /
 - Domain Expert Roles:
 - Owner:
 - Created: {{DATE}}
@@ -64,6 +73,15 @@ tags:
 - 포함하지 않는 것:
 - 사용자에게 보이는 실패:
 - 아직 결정할 것:
+
+## AI Domain Expert Board Review
+
+- 권고 결정:
+- 선택한 모델링 수준:
+- 이 수준을 선택한 이유:
+- 사람이 확인할 핵심:
+- 승인하면 보호되는 결과:
+- 반대하거나 수정해야 하는 조건:
 
 ## Domain Purpose And Customer Outcome
 

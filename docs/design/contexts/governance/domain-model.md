@@ -14,6 +14,12 @@ subdomain_type: core
 model_revision: 1
 validation_status: review_requested
 validation_ref:
+domain_expert_agent: ai-domain-expert
+authority_mode: human-required
+decision_tier: strategic
+board_review_level: bounded-context
+board_review_status: review_requested
+board_decision_ref:
 domain_expert_roles:
   - governance-owner
   - document-harness-maintainer
@@ -57,6 +63,15 @@ tags:
 - 포함하지 않는 것: 코드에서 관찰한 사실을 정책으로 승격하거나 AI가 승인과 예외 수용을 대신하지 않습니다.
 - 사용자에게 보이는 실패: 설명이나 근거가 부족한 후보는 확정 문서처럼 보이지 않고 검토 필요로 나타납니다.
 - 아직 결정할 것: 후보를 승인, 수정, 보류할 권한과 검토자는 조직과 저장소 소유자가 지정해야 합니다.
+
+## AI Domain Expert Board Review
+
+- 권고 결정: Governance는 policy·guideline·initiative·exception과 조직의 승인 권한을 소유하고, AI Domain Expert의 routine modeling delegation은 허용하되 정책 승인·위험 수용·조직 책임은 위임 대상에서 제외합니다.
+- 선택한 모델링 수준: bounded-context
+- 이 수준을 선택한 이유: 이번 판단은 개별 approval entity보다 AI가 맡을 도메인 의미 관리와 사람이 보유할 조직·정책 권한의 책임 경계를 확정하는 문제이기 때문입니다.
+- 사람이 확인할 핵심: AI Domain Expert가 routine 모델을 현행화해도 policy, initiative activation, exception, 조직 ownership과 strategic domain decision을 스스로 승인할 수 없다는 경계를 확인합니다.
+- 승인하면 보호되는 결과: 사람 승인 비용을 모든 모델 변경에 부과하지 않으면서도 AI가 자신의 권한을 만들거나 중요한 사업·조직 결정을 우회하지 못합니다.
+- 반대하거나 수정해야 하는 조건: 특정 정책·위험·조직 결정까지 AI에 위임하려면 별도의 명시적 governance 변경과 책임 설계가 필요합니다.
 
 ## Domain Experts And Sources
 

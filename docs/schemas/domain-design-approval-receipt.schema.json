@@ -1,32 +1,83 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://document-harness.local/schemas/domain-design-approval-receipt.schema.json",
-  "title": "Domain Design Approval Receipt",
+  "title": "Domain Design Authority Receipt",
   "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "schemaVersion",
-    "kind",
-    "receiptId",
-    "decision",
-    "documentRef",
-    "documentSha256",
-    "modelRevision",
-    "boundedContext",
-    "decidedBy",
-    "decidedAt",
-    "reason"
+  "oneOf": [
+    {
+      "title": "Legacy human-confirmed receipt",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "receiptId", "decision", "documentRef", "documentSha256", "modelRevision", "boundedContext", "decidedBy", "decidedAt", "reason"],
+      "properties": {
+        "$schema": { "type": "string" },
+        "schemaVersion": { "const": 1 },
+        "kind": { "const": "domain-design-approval" },
+        "receiptId": { "type": "string", "minLength": 1 },
+        "decision": { "const": "approved" },
+        "documentRef": { "type": "string", "pattern": "^docs/design/.+\\.md$" },
+        "documentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "modelRevision": { "type": "integer", "minimum": 1 },
+        "boundedContext": { "type": "string", "minLength": 1 },
+        "decidedBy": { "$ref": "#/$defs/humanActor" },
+        "decidedAt": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    {
+      "title": "Human-confirmed or delegated-AI receipt",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "receiptId", "decision", "documentRef", "documentSha256", "modelRevision", "boundedContext", "authorityMode", "decisionTier", "modelingLevel", "decidedBy", "decidedAt", "reason", "evidenceRefs", "challengeSummary"],
+      "properties": {
+        "$schema": { "type": "string" },
+        "schemaVersion": { "const": 2 },
+        "kind": { "const": "domain-design-approval" },
+        "receiptId": { "type": "string", "minLength": 1 },
+        "decision": { "const": "approved" },
+        "documentRef": { "type": "string", "pattern": "^docs/design/.+\\.md$" },
+        "documentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "modelRevision": { "type": "integer", "minimum": 1 },
+        "boundedContext": { "type": "string", "minLength": 1 },
+        "authorityMode": { "enum": ["human-confirmed", "delegated-ai"] },
+        "decisionTier": { "enum": ["routine", "material", "strategic"] },
+        "modelingLevel": { "enum": ["bounded-context", "aggregate", "entity", "value-object", "business-rule", "state-transition", "ubiquitous-language", "scenario"] },
+        "decidedBy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["actorKind", "identifier"],
+          "properties": {
+            "actorKind": { "enum": ["human", "ai-agent"] },
+            "identifier": { "type": "string", "minLength": 1 }
+          }
+        },
+        "decidedAt": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string", "minLength": 1 },
+        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "challengeSummary": { "type": "string", "minLength": 1 },
+        "delegatedAuthorityRef": { "type": "string", "pattern": "^docs/governance/.+\\.json$" },
+        "delegationSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "decidedBy": { "properties": { "actorKind": { "const": "human" } } } } },
+          "then": { "properties": { "authorityMode": { "const": "human-confirmed" } } }
+        },
+        {
+          "if": { "properties": { "decidedBy": { "properties": { "actorKind": { "const": "ai-agent" } } } } },
+          "then": {
+            "required": ["delegatedAuthorityRef", "delegationSha256"],
+            "properties": {
+              "authorityMode": { "const": "delegated-ai" },
+              "decisionTier": { "const": "routine" }
+            }
+          }
+        }
+      ]
+    }
   ],
-  "properties": {
-    "schemaVersion": { "const": 1 },
-    "kind": { "const": "domain-design-approval" },
-    "receiptId": { "type": "string", "minLength": 1 },
-    "decision": { "const": "approved" },
-    "documentRef": { "type": "string", "pattern": "^docs/design/.+\\.md$" },
-    "documentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "modelRevision": { "type": "integer", "minimum": 1 },
-    "boundedContext": { "type": "string", "minLength": 1 },
-    "decidedBy": {
+  "$defs": {
+    "humanActor": {
       "type": "object",
       "additionalProperties": false,
       "required": ["actorKind", "identifier"],
@@ -34,8 +85,6 @@
         "actorKind": { "const": "human" },
         "identifier": { "type": "string", "minLength": 1 }
       }
-    },
-    "decidedAt": { "type": "string", "format": "date-time" },
-    "reason": { "type": "string", "minLength": 1 }
+    }
   }
 }

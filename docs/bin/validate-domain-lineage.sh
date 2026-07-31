@@ -83,7 +83,7 @@ validate_model_ref() {
   model_context="$(frontmatter_scalar "$resolved" bounded_context)"
   [[ "$model_context" == "$context" ]] || error "$owner domain context/ref mismatch: $context != $model_context"
   if ! node "$AUTHORITY_VALIDATOR" --root "$REPO_ROOT" --document "$model_ref" >/dev/null; then
-    error "$owner domain model is not approved/current at its exact bytes: $model_ref"
+    error "$owner domain model is not authoritative/current at its exact bytes: $model_ref"
   fi
 }
 
@@ -155,7 +155,7 @@ validate_file() {
 
   if [[ "$impact" == "none" ]]; then
     meaningful "$(frontmatter_scalar "$file" domain_impact_reason)" || error "$relative domain_impact none requires domain_impact_reason"
-    meaningful "$(frontmatter_scalar "$file" domain_review_ref)" || error "$relative domain_impact none requires human domain_review_ref"
+    meaningful "$(frontmatter_scalar "$file" domain_review_ref)" || error "$relative domain_impact none requires an AI Domain Expert review ref"
     return
   fi
 

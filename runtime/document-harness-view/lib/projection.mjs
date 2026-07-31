@@ -1312,6 +1312,21 @@ function markdownSectionLines(captured, heading) {
   return section;
 }
 
+function markdownHeadingSectionLines(captured, heading) {
+  const lines = captured.bytes.toString("utf8").split(/\r?\n/);
+  const headingPattern = new RegExp(`^(#{2,6})\\s+${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`);
+  const start = lines.findIndex((line) => headingPattern.test(line.trim()));
+  if (start < 0) return [];
+  const level = lines[start].trim().match(/^#+/)[0].length;
+  const section = [];
+  for (const line of lines.slice(start + 1)) {
+    const next = line.match(/^(#{2,6})\s+/);
+    if (next && next[1].length <= level) break;
+    section.push(line);
+  }
+  return section;
+}
+
 function markdownSectionBullets(captured, heading) {
   const bullets = [];
   for (const sourceLine of markdownSectionLines(captured, heading)) {
@@ -1355,6 +1370,17 @@ function markdownSectionLabels(captured, heading) {
 
 function markdownTableRows(captured, heading) {
   const rows = markdownSectionLines(captured, heading)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|") && line.endsWith("|"));
+  if (rows.length < 3) return [];
+  return rows.slice(2).map((line) => line
+    .split("|")
+    .slice(1, -1)
+    .map((cell) => cell.trim().replaceAll("`", "")));
+}
+
+function markdownHeadingTableRows(captured, heading) {
+  const rows = markdownHeadingSectionLines(captured, heading)
     .map((line) => line.trim())
     .filter((line) => line.startsWith("|") && line.endsWith("|"));
   if (rows.length < 3) return [];
@@ -1419,10 +1445,13 @@ function domainScenarios(model, examples) {
 
 function domainStateTransitions(captured) {
   return markdownTableRows(captured, "State Transitions").map((cells) => ({
-    current: cells[0] ?? null,
-    command: cells[1] ?? null,
-    next: cells[2] ?? null,
-    event: cells[3] ?? null
+    model: cells.length >= 7 ? cells[0] ?? null : null,
+    current: cells.length >= 7 ? cells[1] ?? null : cells[0] ?? null,
+    command: cells.length >= 7 ? cells[2] ?? null : cells[1] ?? null,
+    guard: cells.length >= 7 ? cells[3] ?? null : null,
+    next: cells.length >= 7 ? cells[4] ?? null : cells[2] ?? null,
+    event: cells.length >= 7 ? cells[5] ?? null : cells[3] ?? null,
+    rejection: cells.length >= 7 ? cells[6] ?? null : null
   }));
 }
 
@@ -1450,24 +1479,81 @@ function domainModelCounts(captured) {
   };
 }
 
+function domainBoardModel(level, values) {
+  switch (level) {
+    case "bounded-context":
+      return {
+        columns: ["판단할 경계", "도메인 모델"],
+        rows: [
+          ["이 영역의 책임", values.responsibility],
+          ["이 영역 밖의 책임", values.outOfScope],
+          ...(values.boundaries ?? []).map((item) => ["경계", item]),
+          ...(values.integrations ?? []).map((item) => ["다른 영역과의 관계", item])
+        ].filter((row) => row[1])
+      };
+    case "aggregate":
+      return {
+        columns: ["Aggregate", "책임", "불변 조건", "일관성 경계", "추적 ID"],
+        rows: markdownHeadingTableRows(values.captured, "Aggregates").map((cells) => [cells[1], cells[2], cells[3], cells[6], cells[0]])
+      };
+    case "entity":
+      return {
+        columns: ["Entity", "식별 기준", "수명주기", "소유 Aggregate", "추적 ID"],
+        rows: markdownHeadingTableRows(values.captured, "Entities").map((cells) => [cells[1], cells[2], cells[3], cells[4], cells[0]])
+      };
+    case "value-object":
+      return {
+        columns: ["Value Object", "업무 의미", "유효성 / 불변성", "사용 위치", "추적 ID"],
+        rows: markdownHeadingTableRows(values.captured, "Value Objects").map((cells) => [cells[1], cells[2], cells[3], cells[4], cells[0]])
+      };
+    case "business-rule":
+      return {
+        columns: ["업무 규칙", "업무 의미"],
+        rows: (values.businessRules ?? []).map((item) => [item.id, item.text])
+      };
+    case "state-transition":
+      return {
+        columns: ["대상", "현재 상태", "요청", "조건", "다음 상태", "기록", "거절"],
+        rows: (values.stateTransitions ?? []).map((item) => [item.model, item.current, item.command, item.guard, item.next, item.event, item.rejection])
+      };
+    case "ubiquitous-language":
+      return {
+        columns: ["용어", "이 영역에서의 뜻", "올바른 예", "잘못된 예 / 피할 말", "추적 ID"],
+        rows: (values.terms ?? []).map((item) => [item.term, item.meaning, item.examples, [item.counterexamples, item.avoid].filter(Boolean).join(" / "), item.id])
+      };
+    case "scenario":
+      return {
+        columns: ["누가 / 원하는 결과", "상황", "요청", "결과", "거절 이유", "추적 ID"],
+        rows: (values.scenarios ?? []).map((item) => [item.actorGoal, item.given, item.request, item.outcome, item.rejectionReason, item.id])
+      };
+    default:
+      return { columns: [], rows: [] };
+  }
+}
+
 async function inspectDomainDesignApproval(repoRoot, captured, design) {
-  if (design.status !== "current" && design.validation_status !== "approved") {
+  const authorityValidation = ["approved", "ai-validated"].includes(design.validation_status);
+  if (design.status !== "current" && !authorityValidation) {
     return {
       state: design.validation_status ?? design.status ?? "review_requested",
       receiptRef: design.validation_ref ?? null,
       decidedBy: null,
       decidedAt: null,
+      actorKind: null,
+      authorityMode: design.authority_mode ?? null,
       input: null
     };
   }
-  if (design.status !== "current" || design.validation_status !== "approved"
+  if (design.status !== "current" || !authorityValidation
     || typeof design.validation_ref !== "string" || design.validation_ref.trim() === "") {
     return {
       state: "invalid",
       receiptRef: design.validation_ref ?? null,
       decidedBy: null,
       decidedAt: null,
-      error: "current/approved domain design metadata and validation_ref must be present",
+      actorKind: null,
+      authorityMode: design.authority_mode ?? null,
+      error: "current domain design metadata, approved|ai-validated state, and validation_ref must be present",
       input: null
     };
   }
@@ -1479,29 +1565,82 @@ async function inspectDomainDesignApproval(repoRoot, captured, design) {
       receiptRef: design.validation_ref,
       decidedBy: null,
       decidedAt: null,
+      actorKind: null,
+      authorityMode: design.authority_mode ?? null,
       error: `approval receipt is not a safe repository file: ${design.validation_ref}`,
       input: null
     };
   }
   try {
     const receipt = parseCapturedJson(receiptInput, "domain design approval receipt");
-    const valid = receipt.schemaVersion === 1
+    const valid = [1, 2].includes(receipt.schemaVersion)
       && receipt.kind === "domain-design-approval"
       && receipt.decision === "approved"
       && receipt.documentRef === captured.relativePath
       && receipt.documentSha256 === captured.digest
       && receipt.modelRevision === design.model_revision
       && receipt.boundedContext === design.bounded_context
-      && receipt.decidedBy?.actorKind === "human"
+      && ["human", "ai-agent"].includes(receipt.decidedBy?.actorKind)
       && typeof receipt.decidedBy?.identifier === "string"
       && receipt.decidedBy.identifier.trim() !== ""
       && !Number.isNaN(Date.parse(receipt.decidedAt ?? ""));
     if (!valid) throw new Error("receipt does not approve the current model bytes and identity");
+    let state = "approved_current";
+    let authorityMode = "human-confirmed";
+    let delegationInput = null;
+    if (receipt.schemaVersion === 1) {
+      if (receipt.decidedBy.actorKind !== "human") throw new Error("legacy receipt requires a human actor");
+    } else {
+      const levels = new Set(["bounded-context", "aggregate", "entity", "value-object", "business-rule", "state-transition", "ubiquitous-language", "scenario"]);
+      if (!levels.has(receipt.modelingLevel) || receipt.modelingLevel !== design.board_review_level) {
+        throw new Error("receipt modeling level does not match the Board review level");
+      }
+      if (receipt.authorityMode !== design.authority_mode || receipt.decisionTier !== design.decision_tier
+        || !Array.isArray(receipt.evidenceRefs) || receipt.evidenceRefs.length === 0
+        || typeof receipt.challengeSummary !== "string" || receipt.challengeSummary.trim() === "") {
+        throw new Error("receipt authority, evidence, or challenge does not match the model");
+      }
+      authorityMode = receipt.authorityMode;
+      if (receipt.decidedBy.actorKind === "human") {
+        if (authorityMode !== "human-confirmed" || design.validation_status !== "approved" || design.board_review_status !== "confirmed") {
+          throw new Error("human-confirmed authority does not match model/Board state");
+        }
+      } else {
+        if (authorityMode !== "delegated-ai" || receipt.decisionTier !== "routine"
+          || design.validation_status !== "ai-validated" || design.board_review_status !== "not_required") {
+          throw new Error("delegated AI authority is limited to routine ai-validated models without Board review");
+        }
+        const delegation = await captureRepositoryFile(repoRoot, receipt.delegatedAuthorityRef, "domain authority delegation receipt");
+        if (delegation.state !== "file" || delegation.digest !== receipt.delegationSha256) {
+          throw new Error("delegated authority receipt is missing, unsafe, or stale");
+        }
+        const delegationReceipt = parseCapturedJson(delegation, "domain authority delegation receipt");
+        const delegated = delegationReceipt.schemaVersion === 1
+          && delegationReceipt.kind === "domain-authority-delegation"
+          && delegationReceipt.decision === "approved"
+          && delegationReceipt.allowedDecisionTier === "routine"
+          && delegationReceipt.decidedBy?.actorKind === "human"
+          && typeof delegationReceipt.decidedBy?.identifier === "string"
+          && delegationReceipt.decidedBy.identifier.trim() !== ""
+          && !Number.isNaN(Date.parse(delegationReceipt.decidedAt ?? ""));
+        if (!delegated) throw new Error("delegated authority is not a human-approved routine fence");
+        delegationInput = {
+          label: "domain authority delegation receipt",
+          relativePath: delegation.relativePath,
+          fence: delegation.fence
+        };
+        state = "ai_current";
+      }
+    }
     return {
-      state: "approved_current",
+      state,
       receiptRef: design.validation_ref,
       decidedBy: receipt.decidedBy.identifier,
       decidedAt: receipt.decidedAt,
+      actorKind: receipt.decidedBy.actorKind,
+      authorityMode,
+      decisionTier: receipt.decisionTier ?? design.decision_tier ?? null,
+      delegationInput,
       input: {
         label: "domain design approval receipt",
         relativePath: receiptInput.relativePath,
@@ -1514,6 +1653,8 @@ async function inspectDomainDesignApproval(repoRoot, captured, design) {
       receiptRef: design.validation_ref,
       decidedBy: null,
       decidedAt: null,
+      actorKind: null,
+      authorityMode: design.authority_mode ?? null,
       error: error.message,
       input: {
         label: "domain design approval receipt",
@@ -1630,6 +1771,7 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
     for (const { captured, design } of modelEntries) {
       const approval = await inspectDomainDesignApproval(repoRoot, captured, design);
       if (approval.input) approvalInputs.push(approval.input);
+      if (approval.delegationInput) approvalInputs.push(approval.delegationInput);
       const contextRoot = path.posix.dirname(captured.relativePath);
       const language = parsed.find(({ captured: item, design: itemDesign }) =>
         path.posix.dirname(item.relativePath) === contextRoot && itemDesign.design_kind === "ubiquitous-language"
@@ -1659,12 +1801,51 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
       });
       if (presentation.input) presentationInputs.push(presentation.input);
       const humanReview = markdownSectionLabels(captured, "Human Review Summary");
+      const boardReview = markdownSectionLabels(captured, "AI Domain Expert Board Review");
       const boundaries = markdownSectionBullets(captured, "Bounded Context Boundary");
       const failureSemantics = markdownSectionBullets(captured, "Failure And Exception Semantics");
       const openQuestions = markdownSectionBullets(captured, "Unknowns And Disputes");
       const withoutPrefix = (value, prefix) => value?.startsWith(prefix)
         ? value.slice(prefix.length).trim()
         : value ?? null;
+      const responsibility = humanReview["이 영역의 책임"]
+        ?? withoutPrefix(boundaries.find((item) => item.startsWith("포함:")), "포함:");
+      const outOfScope = humanReview["포함하지 않는 것"]
+        ?? withoutPrefix(boundaries.find((item) => item.startsWith("제외:")), "제외:");
+      const terms = domainTerms(captured, language);
+      const businessRules = trackedSectionItems(captured, "Business Rules And Invariants", "BR");
+      const scenarios = domainScenarios(captured, examples);
+      const stateTransitions = domainStateTransitions(captured);
+      const integrations = markdownSectionBullets(captured, "Context Relationships And Integration");
+      const boardReviewLevel = design.board_review_level ?? null;
+      const boardModel = boardReviewLevel ? domainBoardModel(boardReviewLevel, {
+        captured,
+        responsibility,
+        outOfScope,
+        boundaries,
+        integrations,
+        terms,
+        businessRules,
+        scenarios,
+        stateTransitions
+      }) : { columns: [], rows: [] };
+      const boardReviewShape = {
+        recommendation: boardReview["권고 결정"] ?? null,
+        level: boardReview["선택한 모델링 수준"] ?? boardReviewLevel,
+        levelReason: boardReview["이 수준을 선택한 이유"] ?? null,
+        humanDecision: boardReview["사람이 확인할 핵심"] ?? null,
+        protectedOutcome: boardReview["승인하면 보호되는 결과"] ?? null,
+        counterCondition: boardReview["반대하거나 수정해야 하는 조건"] ?? null
+      };
+      const declaredBoardReviewStatus = design.board_review_status ?? null;
+      const boardReviewRequired = ["review_requested", "confirmed"].includes(declaredBoardReviewStatus);
+      const boardReviewComplete = !boardReviewRequired || (
+        boardReviewLevel
+        && boardReviewShape.level === boardReviewLevel
+        && Object.values(boardReviewShape).every((value) => typeof value === "string" && value.trim() !== "")
+        && boardModel.rows.length > 0
+      );
+      const boardReviewStatus = boardReviewComplete ? declaredBoardReviewStatus : "invalid";
       contexts.push({
         id: design.bounded_context_id,
         name: design.bounded_context,
@@ -1677,20 +1858,18 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
         presentationReviewedBy: presentation.presentationReviewedBy,
         presentationReviewedAt: presentation.presentationReviewedAt,
         visibleOnBoard: presentation.visibleOnBoard,
-        responsibility: humanReview["이 영역의 책임"]
-          ?? withoutPrefix(boundaries.find((item) => item.startsWith("포함:")), "포함:"),
-        outOfScope: humanReview["포함하지 않는 것"]
-          ?? withoutPrefix(boundaries.find((item) => item.startsWith("제외:")), "제외:"),
+        responsibility,
+        outOfScope,
         userVisibleFailure: humanReview["사용자에게 보이는 실패"] ?? failureSemantics[0] ?? null,
         pendingDecision: humanReview["아직 결정할 것"] ?? openQuestions[0] ?? null,
         purpose: markdownSectionNarrative(captured, "Domain Purpose And Customer Outcome"),
         boundaries,
-        terms: domainTerms(captured, language),
-        businessRules: trackedSectionItems(captured, "Business Rules And Invariants", "BR"),
-        scenarios: domainScenarios(captured, examples),
+        terms,
+        businessRules,
+        scenarios,
         counterexamples: examples ? markdownSectionBullets(examples.captured, "Counterexamples") : [],
-        stateTransitions: domainStateTransitions(captured),
-        integrations: markdownSectionBullets(captured, "Context Relationships And Integration"),
+        stateTransitions,
+        integrations,
         failureSemantics,
         roleContracts: domainRoleContracts(captured),
         decisions: markdownSectionBullets(captured, "Decisions"),
@@ -1702,7 +1881,17 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
         validationRef: approval.receiptRef,
         validatedBy: approval.decidedBy,
         validatedAt: approval.decidedAt,
+        validatedActorKind: approval.actorKind,
         validationError: approval.error ?? null,
+        domainExpertAgent: design.domain_expert_agent ?? null,
+        authorityMode: approval.authorityMode ?? design.authority_mode ?? null,
+        decisionTier: approval.decisionTier ?? design.decision_tier ?? null,
+        boardReviewLevel,
+        boardReviewStatus,
+        boardDecisionRef: design.board_decision_ref ?? null,
+        boardReviewError: boardReviewComplete ? null : "AI Domain Expert Board review package is incomplete or its selected model slice is empty",
+        boardReview: boardReviewShape,
+        boardModel,
         domainExpertRoles: Array.isArray(design.domain_expert_roles) ? design.domain_expert_roles : [],
         roleViews: Array.isArray(design.role_views) ? design.role_views : [],
         openQuestions,
@@ -1764,10 +1953,11 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
           };
         })
       : [];
+    const currentAuthorityStates = new Set(["approved_current", "ai_current"]);
     const reviewCount = contexts.length === 0
       ? 1
-      : contexts.filter((item) => item.validationStatus !== "approved_current").length;
-    const invalidCount = contexts.filter((item) => item.validationStatus === "invalid").length;
+      : contexts.filter((item) => !currentAuthorityStates.has(item.validationStatus)).length;
+    const invalidCount = contexts.filter((item) => item.validationStatus === "invalid" || item.boardReviewStatus === "invalid").length;
     return {
       domain: {
         configured: true,
@@ -2310,17 +2500,28 @@ function createGeneratedAttention(register, policies, guidelines, initiatives, o
       severity: "warning",
       title: "DDD 도메인 모델을 신뢰할 수 없습니다",
       humanSummary: domain.error
-        ?? `${domain.contexts.filter((item) => item.validationStatus === "invalid").length}개 bounded context의 승인 receipt 또는 current model bytes가 일치하지 않습니다.`,
-      relatedRefs: domain.contexts.filter((item) => item.validationStatus === "invalid").map((item) => item.modelRef)
+        ?? `${domain.contexts.filter((item) => item.validationStatus === "invalid" || item.boardReviewStatus === "invalid").length}개 bounded context의 authority receipt, current model bytes 또는 AI Domain Expert Board package가 올바르지 않습니다.`,
+      relatedRefs: domain.contexts
+        .filter((item) => item.validationStatus === "invalid" || item.boardReviewStatus === "invalid")
+        .map((item) => item.modelRef)
     });
   } else if (domain.configured) {
-    const reviewContexts = domain.contexts.filter((item) => item.validationStatus !== "approved_current");
-    if (reviewContexts.length > 0) {
+    const reviewContexts = domain.contexts.filter((item) => !["approved_current", "ai_current"].includes(item.validationStatus));
+    const boardReviewContexts = reviewContexts.filter((item) => item.boardReviewStatus === "review_requested");
+    if (boardReviewContexts.length > 0) {
       attention.unshift({
         id: "ATTN-DOMAIN-DESIGN-REVIEW",
         severity: "decision",
-        title: "도메인 전문가의 모델 검토가 필요합니다",
-        humanSummary: `${reviewContexts.length}개 bounded context가 exact-byte 승인을 기다립니다. 고객·기획·설계·개발·QA가 이 모델을 current truth로 사용하기 전에 domain expert가 검토해야 합니다.`,
+        title: "AI Domain Expert의 도메인 모델 결정을 확인해 주세요",
+        humanSummary: `${boardReviewContexts.length}개 중요한 모델링 판단을 AI Domain Expert가 사람이 읽을 최소 충분 수준으로 종합했습니다. 선택된 실제 모델, 이유, 보호 결과와 수정 조건을 읽고 승인·수정·거절을 결정해야 합니다.`,
+        relatedRefs: boardReviewContexts.map((item) => item.modelRef)
+      });
+    } else if (reviewContexts.length > 0) {
+      attention.unshift({
+        id: "ATTN-DOMAIN-AUTHORITY",
+        severity: "warning",
+        title: "도메인 모델 권위를 완성해야 합니다",
+        humanSummary: `${reviewContexts.length}개 bounded context가 current authority를 갖지 못했습니다. AI Domain Expert가 delegated-AI receipt 또는 필요한 Board package를 완성해야 합니다.`,
         relatedRefs: reviewContexts.map((item) => item.modelRef)
       });
     }
@@ -2489,8 +2690,8 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
       initiativeReviewCount: initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState)).length,
       presentationMissingCount: [...policies, ...guidelines, ...initiatives].filter((item) => !item.visibleOnBoard).length,
       domainContextCount: domain.contexts.length,
-      domainApprovedCount: domain.contexts.filter((item) => item.validationStatus === "approved_current").length,
-      domainReviewCount: domain.contexts.filter((item) => item.validationStatus !== "approved_current").length,
+      domainApprovedCount: domain.contexts.filter((item) => ["approved_current", "ai_current"].includes(item.validationStatus)).length,
+      domainReviewCount: domain.contexts.filter((item) => !["approved_current", "ai_current"].includes(item.validationStatus)).length,
       domainPresentationMissingCount: domain.contexts.filter((item) => !item.visibleOnBoard).length,
       linkedProjectCount: new Set(initiatives.flatMap((item) => item.projects.map((project) => project.id))).size,
       approvedCount: [...policies, ...guidelines].filter((item) => item.approvalState === "approved").length,

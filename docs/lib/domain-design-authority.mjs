@@ -58,8 +58,8 @@ export async function validateDomainDesignAuthority({ root, documentPath }) {
   const documentBytes = await readSafeRepositoryFile(resolvedRoot, documentPath, "domain design");
   const design = parseFrontmatter(documentBytes, documentPath);
   if (design.type !== "design") throw new Error(`domain design type이 design이 아닙니다: ${documentPath}`);
-  if (design.status !== "current" || design.validation_status !== "approved") {
-    throw new Error(`current domain design은 status: current와 validation_status: approved가 필요합니다: ${documentPath}`);
+  if (design.status !== "current" || !["approved", "ai-validated"].includes(design.validation_status)) {
+    throw new Error(`current domain design은 status: current와 validation_status: approved|ai-validated가 필요합니다: ${documentPath}`);
   }
   if (!Number.isInteger(design.model_revision) || design.model_revision < 1) {
     throw new Error(`domain design model_revision이 positive integer가 아닙니다: ${documentPath}`);
@@ -72,7 +72,7 @@ export async function validateDomainDesignAuthority({ root, documentPath }) {
   } catch (error) {
     throw new Error(`domain design approval receipt JSON이 올바르지 않습니다: ${receiptPath} (${error.message})`);
   }
-  if (receipt.schemaVersion !== 1 || receipt.kind !== "domain-design-approval") {
+  if (![1, 2].includes(receipt.schemaVersion) || receipt.kind !== "domain-design-approval") {
     throw new Error(`지원하지 않는 domain design approval receipt입니다: ${receiptPath}`);
   }
   if (receipt.decision !== "approved") throw new Error(`domain design receipt decision이 approved가 아닙니다: ${receiptPath}`);
@@ -80,16 +80,76 @@ export async function validateDomainDesignAuthority({ root, documentPath }) {
   if (receipt.documentSha256 !== sha256(documentBytes)) throw new Error(`domain design receipt가 current document bytes를 승인하지 않습니다: ${documentPath}`);
   if (receipt.modelRevision !== design.model_revision) throw new Error(`domain design receipt modelRevision이 일치하지 않습니다: ${receiptPath}`);
   if (receipt.boundedContext !== design.bounded_context) throw new Error(`domain design receipt boundedContext가 일치하지 않습니다: ${receiptPath}`);
-  if (receipt.decidedBy?.actorKind !== "human" || typeof receipt.decidedBy?.identifier !== "string" || receipt.decidedBy.identifier.trim() === "") {
-    throw new Error(`domain design approval은 식별 가능한 human actor가 필요합니다: ${receiptPath}`);
+  const actorKind = receipt.decidedBy?.actorKind;
+  if (!new Set(["human", "ai-agent"]).has(actorKind)
+    || typeof receipt.decidedBy?.identifier !== "string"
+    || receipt.decidedBy.identifier.trim() === "") {
+    throw new Error(`domain design authority는 식별 가능한 human 또는 ai-agent actor가 필요합니다: ${receiptPath}`);
   }
   if (Number.isNaN(Date.parse(receipt.decidedAt ?? ""))) throw new Error(`domain design receipt decidedAt이 RFC3339가 아닙니다: ${receiptPath}`);
+  let authorityMode = "human-confirmed";
+  if (receipt.schemaVersion === 2) {
+    if (!new Set(["human-confirmed", "delegated-ai"]).has(receipt.authorityMode)) {
+      throw new Error(`domain design receipt authorityMode이 올바르지 않습니다: ${receiptPath}`);
+    }
+    if (!new Set(["routine", "material", "strategic"]).has(receipt.decisionTier)) {
+      throw new Error(`domain design receipt decisionTier가 올바르지 않습니다: ${receiptPath}`);
+    }
+    if (!new Set(["bounded-context", "aggregate", "entity", "value-object", "business-rule", "state-transition", "ubiquitous-language", "scenario"]).has(receipt.modelingLevel)) {
+      throw new Error(`domain design receipt modelingLevel이 올바르지 않습니다: ${receiptPath}`);
+    }
+    if (receipt.modelingLevel !== design.board_review_level) {
+      throw new Error(`domain design receipt modelingLevel이 Board review level과 일치하지 않습니다: ${receiptPath}`);
+    }
+    if (receipt.authorityMode !== design.authority_mode || receipt.decisionTier !== design.decision_tier) {
+      throw new Error(`domain design receipt authority mode/tier가 document와 일치하지 않습니다: ${receiptPath}`);
+    }
+    if (!Array.isArray(receipt.evidenceRefs) || receipt.evidenceRefs.length === 0
+      || typeof receipt.challengeSummary !== "string" || receipt.challengeSummary.trim() === "") {
+      throw new Error(`domain design receipt는 evidenceRefs와 challengeSummary가 필요합니다: ${receiptPath}`);
+    }
+    if (actorKind === "human") {
+      if (receipt.authorityMode !== "human-confirmed" || design.validation_status !== "approved" || design.board_review_status !== "confirmed") {
+        throw new Error(`human-confirmed model의 authority/validation/Board 상태가 일치하지 않습니다: ${receiptPath}`);
+      }
+    } else {
+      if (receipt.authorityMode !== "delegated-ai" || receipt.decisionTier !== "routine"
+        || design.validation_status !== "ai-validated" || design.board_review_status !== "not_required") {
+        throw new Error(`delegated-ai model은 routine/ai-validated/not_required만 허용합니다: ${receiptPath}`);
+      }
+      const delegationPath = receipt.delegatedAuthorityRef;
+      const delegationBytes = await readSafeRepositoryFile(resolvedRoot, delegationPath, "domain authority delegation receipt");
+      if (receipt.delegationSha256 !== sha256(delegationBytes)) {
+        throw new Error(`domain authority delegation bytes가 receipt와 일치하지 않습니다: ${delegationPath}`);
+      }
+      let delegation;
+      try {
+        delegation = JSON.parse(delegationBytes.toString("utf8"));
+      } catch (error) {
+        throw new Error(`domain authority delegation receipt JSON이 올바르지 않습니다: ${delegationPath} (${error.message})`);
+      }
+      const delegated = delegation.schemaVersion === 1
+        && delegation.kind === "domain-authority-delegation"
+        && delegation.decision === "approved"
+        && delegation.allowedDecisionTier === "routine"
+        && delegation.decidedBy?.actorKind === "human"
+        && typeof delegation.decidedBy?.identifier === "string"
+        && delegation.decidedBy.identifier.trim() !== ""
+        && !Number.isNaN(Date.parse(delegation.decidedAt ?? ""));
+      if (!delegated) throw new Error(`delegated AI authority는 식별 가능한 human의 routine 위임 receipt가 필요합니다: ${delegationPath}`);
+    }
+    authorityMode = receipt.authorityMode;
+  } else if (actorKind !== "human") {
+    throw new Error(`schemaVersion 1 domain design approval은 human actor만 허용합니다: ${receiptPath}`);
+  }
   return {
     documentRef: documentPath,
     documentSha256: receipt.documentSha256,
     modelRevision: receipt.modelRevision,
     boundedContext: receipt.boundedContext,
-    receiptRef: receiptPath
+    receiptRef: receiptPath,
+    authorityMode,
+    decidedBy: receipt.decidedBy.identifier
   };
 }
 

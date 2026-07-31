@@ -128,7 +128,7 @@ test("server is loopback, read-only, host/origin checked, ETag-aware, and serves
   assert.equal(health.status, 200, server.errors());
   const healthBody = await health.json();
   assert.equal(healthBody.repoId, "server-fixture");
-  assert.equal(healthBody.runtimeVersion, "1.5.3");
+  assert.equal(healthBody.runtimeVersion, "1.6.0");
 
   const first = await fetch(`${server.lease.url}/api/v1/snapshot`);
   assert.equal(first.status, 200);

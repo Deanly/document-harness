@@ -14,6 +14,12 @@ subdomain_type: core
 model_revision: 1
 validation_status: review_requested
 validation_ref:
+domain_expert_agent: ai-domain-expert
+authority_mode: human-required
+decision_tier: material
+board_review_level: state-transition
+board_review_status: review_requested
+board_decision_ref:
 domain_expert_roles:
   - delivery-owner
   - document-harness-maintainer
@@ -57,6 +63,15 @@ tags:
 - 포함하지 않는 것: 목표를 임의로 넓히거나 사람의 승인과 위험 수용을 대신하지 않습니다.
 - 사용자에게 보이는 실패: 작업이 멈춘 이유, 필요한 결정, 확인한 근거를 다음 사람이 이어서 볼 수 있게 남깁니다.
 - 아직 결정할 것: 작업 종류별 위험 등급과 자동 실행 한계는 저장소 소유자가 확정해야 합니다.
+
+## AI Domain Expert Board Review
+
+- 권고 결정: task와 execution attempt의 상태를 분리하고, current domain/governance refs가 있을 때만 시작하며, bounded attention과 완료 근거가 없으면 다음 상태로 진행하지 않도록 확정합니다.
+- 선택한 모델링 수준: state-transition
+- 이 수준을 선택한 이유: 사람이 승인해야 할 의미는 내부 entity 구조보다 작업이 언제 시작·중단·재개·종료되고 어떤 거절을 보이는지에 있기 때문입니다.
+- 사람이 확인할 핵심: missing/stale ref는 시작을 막고, 모호한 요청은 attention이 될 수 없으며, 미완료 목표나 열린 attention이 있으면 done이 될 수 없다는 상태 변화를 확인합니다.
+- 승인하면 보호되는 결과: AI가 진행 중인 일을 완료로 보이게 하거나 사람의 결정을 기다리는 상태를 정상 실행 상태와 섞지 않습니다.
+- 반대하거나 수정해야 하는 조건: 증거 없이 종료할 수 있거나 attention 없이 장기간 멈춰야 하는 합법적 업무 상태가 있다면 전이 모델을 수정해야 합니다.
 
 ## Domain Experts And Sources
 

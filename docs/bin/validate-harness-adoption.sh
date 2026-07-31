@@ -66,7 +66,7 @@ for file in \
 done
 
 for schema in \
-  adoption-plan apply-receipt governance-catalog harness-installation-lock \
+  adoption-plan apply-receipt domain-authority-delegation-receipt domain-design-approval-receipt governance-catalog harness-installation-lock \
   human-policy-decision-receipt initiative-activation-receipt initiative-register migration-evidence-pack release-manifest \
   rollback-receipt verification-receipt; do
   require_file "$SCHEMA_DIR/${schema}.schema.json"
@@ -306,7 +306,7 @@ for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint
 
 const release = readJson(releaseFile);
 assert.equal(release.releaseId, "document-harness-public-v1");
-assert.equal(release.version, "1.5.3");
+assert.equal(release.version, "1.6.0");
 assert.deepEqual(release.profileDependencies, {
   core: [],
   governance: ["core"],

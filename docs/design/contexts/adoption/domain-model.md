@@ -14,6 +14,12 @@ subdomain_type: supporting
 model_revision: 1
 validation_status: review_requested
 validation_ref:
+domain_expert_agent: ai-domain-expert
+authority_mode: human-required
+decision_tier: strategic
+board_review_level: bounded-context
+board_review_status: review_requested
+board_decision_ref:
 domain_expert_roles:
   - repository-owner
   - document-harness-maintainer
@@ -57,6 +63,15 @@ tags:
 - 포함하지 않는 것: 이관한 정책 후보를 승인하거나 저장소 소유자의 파일을 임의로 덮어쓰지 않습니다.
 - 사용자에게 보이는 실패: 소유권 충돌이나 검증 실패를 설치 성공으로 숨기지 않고 다음 확인 대상으로 보여 줍니다.
 - 아직 결정할 것: 대상 저장소마다 보존할 파일과 사람이 승인할 이관 경계를 소유자가 확정해야 합니다.
+
+## AI Domain Expert Board Review
+
+- 권고 결정: 도입 영역은 기존 저장소의 소유권을 판정하고 plan/apply/verify/rollback을 책임지되, 정책 의미 승인과 작업 실행은 소유하지 않도록 경계를 확정합니다.
+- 선택한 모델링 수준: bounded-context
+- 이 수준을 선택한 이유: 이번 판단의 핵심은 entity 내부 구조가 아니라 어떤 책임을 도입 영역에 맡기고 어떤 책임을 사람·Governance·Execution에 남길지이기 때문입니다.
+- 사람이 확인할 핵심: 기존 파일과 dirty state의 보존 책임, 충돌 시 중단 책임, 정책 후보 승인과 실행 상태를 이 영역 밖에 두는 경계가 맞는지 확인합니다.
+- 승인하면 보호되는 결과: 하네스 도입이 저장소 소유자의 파일을 자동 덮어쓰거나 이관 후보를 승인된 정책으로 가장하지 않습니다.
+- 반대하거나 수정해야 하는 조건: 도입 도구가 정책 의미를 결정해야 하거나 plan 없이 mutation해야 하는 실제 업무가 있다면 이 경계를 수정해야 합니다.
 
 ## Domain Experts And Sources
 

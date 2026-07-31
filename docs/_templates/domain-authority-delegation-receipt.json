@@ -1,0 +1,31 @@
+{
+  "$schema": "../schemas/domain-authority-delegation-receipt.schema.json",
+  "schemaVersion": 1,
+  "kind": "domain-authority-delegation",
+  "receiptId": "DDD-DELEGATION-{{REPOSITORY}}",
+  "decision": "approved",
+  "allowedDecisionTier": "routine",
+  "allowedChangeClasses": [
+    "traceability",
+    "example-coverage",
+    "terminology-clarification",
+    "reversible-model-clarification"
+  ],
+  "forbiddenChangeClasses": [
+    "customer-rights",
+    "money",
+    "legal-compliance",
+    "security",
+    "organizational-ownership",
+    "bounded-context-split-merge",
+    "core-domain-classification",
+    "irreversible-migration",
+    "conflicted-or-low-confidence-meaning"
+  ],
+  "decidedBy": {
+    "actorKind": "human",
+    "identifier": "{{AUTHORITY_OWNER_IDENTIFIER}}"
+  },
+  "decidedAt": "{{RFC3339_TIMESTAMP}}",
+  "reason": "{{DELEGATION_REASON}}"
+}

@@ -146,7 +146,24 @@ const labels = {
   explores: "탐색",
   migration_candidate: "전환 후보",
   confirmed: "연결됨",
-  approved_current: "승인 · current bytes",
+  approved_current: "사람 확인 · current",
+  ai_current: "AI 위임 · current",
+  "delegated-ai": "AI 위임 권위",
+  "human-required": "사람 결정 필요",
+  "human-confirmed": "사람 확인 권위",
+  routine: "일상 변경",
+  material: "중요 변경",
+  strategic: "전략 변경",
+  not_required: "Board 결정 불필요",
+  review_requested: "검토 요청",
+  "bounded-context": "업무 책임 경계",
+  aggregate: "일관성 단위",
+  entity: "식별 대상과 수명주기",
+  "value-object": "값의 의미와 유효성",
+  "business-rule": "업무 규칙",
+  "state-transition": "상태 변화",
+  "ubiquitous-language": "공통 업무 언어",
+  scenario: "업무 시나리오",
   core: "핵심 도메인",
   supporting: "지원 도메인",
   generic: "일반 도메인",
@@ -214,7 +231,7 @@ function number(value) {
 }
 
 function toneFor(value) {
-  if (["effective", "approved", "approved_current", "active", "completed", "enforced", "fresh", "current", "clean", "UP", "confirmed"].includes(value)) return "success";
+  if (["effective", "approved", "approved_current", "ai_current", "active", "completed", "enforced", "fresh", "current", "clean", "UP", "confirmed", "not_required"].includes(value)) return "success";
   if (["not_implemented", "stale", "degraded", "rejected", "missing", "invalid", "changed", "DOWN", "critical"].includes(value)) return "danger";
   if (["partially_enforced", "review_requested", "proposed", "advisory", "dirty", "warning", "unverified", "last_known_unverified"].includes(value)) return "warning";
   if (["decision"].includes(value)) return "info";
@@ -457,29 +474,30 @@ function renderDomain(snapshot) {
   const presentationMissing = contexts.length - visibleContexts.length;
   const totalRules = visibleContexts.reduce((sum, context) => sum + Number(context.counts?.rules ?? 0), 0);
   const totalScenarios = visibleContexts.reduce((sum, context) => sum + Number(context.counts?.scenarios ?? 0), 0);
+  const currentAuthority = (context) => ["approved_current", "ai_current"].includes(context.validationStatus);
   renderMetricSet($("#domain-summary"), [
     ["보드에 표시", number(visibleContexts.length)],
     ["사람용 설명 필요", number(presentationMissing)],
     ["핵심 도메인", number(visibleContexts.filter((context) => context.subdomainType === "core").length)],
-    ["의미 승인 완료", number(visibleContexts.filter((context) => context.validationStatus === "approved_current").length)],
-    ["도메인 검토 필요", number(visibleContexts.filter((context) => context.validationStatus !== "approved_current").length)],
+    ["현재 권위 모델", number(visibleContexts.filter(currentAuthority).length)],
+    ["Board 결정 필요", number(visibleContexts.filter((context) => context.boardReviewStatus === "review_requested").length)],
     ["Rule / Scenario", `${number(totalRules)} / ${number(totalScenarios)}`]
   ], "compact-metric");
 
   const authorityState = $("#domain-authority-state");
   authorityState.className = `status-label ${domain.status === "current" ? "success" : domain.status === "degraded" ? "danger" : "warning"}`;
   authorityState.textContent = domain.status === "current"
-    ? "모든 모델 exact-byte 승인"
+    ? "모든 모델 exact-byte 권위 확인"
     : domain.status === "review_requested"
-      ? "Domain expert 검토 대기"
+      ? "AI Domain Expert 종합안 검토"
       : domain.status === "degraded"
-        ? "승인 / freshness 오류"
+        ? "권위 / freshness 오류"
         : "DDD 모델 미설정";
   $("#domain-authority-message").textContent = domain.error
     ?? (domain.status === "current"
-      ? "표시된 모든 bounded-context model은 식별 가능한 domain expert가 current bytes를 승인한 receipt와 일치합니다."
+      ? "표시된 모든 bounded-context model은 exact human-confirmed 또는 delegated-AI receipt와 현재 bytes가 일치합니다."
       : domain.status === "review_requested"
-        ? "현재 모델은 구조화된 review candidate입니다. 고객·기획·설계·개발·QA의 공통 truth로 확정하기 전에 domain expert의 exact-byte 승인이 필요합니다."
+        ? "AI Domain Expert가 중요한 의미를 사람이 읽을 최소 충분 모델링 수준으로 종합했습니다. 선택된 실제 모델과 영향·반례를 읽고 필요한 결정만 내려 주세요."
         : "이 repository에 DDD domain landscape와 bounded-context model을 먼저 작성해야 합니다.");
   const authorityLinks = $("#domain-authority-links");
   clear(authorityLinks);
@@ -514,10 +532,38 @@ function renderDomain(snapshot) {
       ]),
       element("div", { className: "status-stack" }, [
         statusLabel(context.subdomainType, "neutral", localized(context.subdomainType)),
+        context.boardReviewStatus ? statusLabel(context.boardReviewStatus, toneFor(context.boardReviewStatus), localized(context.boardReviewStatus)) : null,
         presentationStatusLabel(context.presentationStatus),
         statusLabel(status, toneFor(status), localized(status))
       ])
     ]));
+
+    const boardReview = context.boardReview ?? {};
+    const boardModel = context.boardModel ?? { columns: [], rows: [] };
+    if (boardReview.recommendation || boardModel.rows.length > 0) {
+      const expertReview = element("div", { className: "domain-card-section domain-human-summary" }, [
+        element("p", { className: "eyebrow", text: "AI DOMAIN EXPERT 종합안" }),
+        element("h3", { text: "사람이 판단할 도메인 모델" })
+      ]);
+      const expertFacts = element("dl", { className: "domain-facts domain-human-facts" });
+      const expertFactValues = [
+        ["권고", boardReview.recommendation],
+        ["선택한 모델링 수준", localized(context.boardReviewLevel ?? boardReview.level)],
+        ["이 수준을 선택한 이유", boardReview.levelReason],
+        ["사람이 확인할 핵심", boardReview.humanDecision],
+        ["승인하면 보호되는 결과", boardReview.protectedOutcome],
+        ["반대하거나 수정해야 하는 조건", boardReview.counterCondition]
+      ];
+      for (const [label, value] of expertFactValues) {
+        if (value) expertFacts.append(element("dt", { text: label }), element("dd", { text: value }));
+      }
+      expertReview.append(expertFacts);
+      if (boardModel.rows.length > 0) {
+        expertReview.append(element("h4", { text: `${localized(context.boardReviewLevel)} 모델` }));
+        expertReview.append(domainDataTable(boardModel.columns, boardModel.rows));
+      }
+      card.append(expertReview);
+    }
 
     const humanReview = element("div", { className: "domain-card-section domain-human-summary" }, [
       element("h3", { text: "이 업무 영역을 읽는 데 필요한 설명" })
@@ -592,9 +638,12 @@ function renderDomain(snapshot) {
       ["기술 이름", context.name],
       ["모델 revision", context.modelRevision],
       ["Owner", context.owner],
-      ["Domain expert", (context.domainExpertRoles ?? []).join(", ") || "확인 필요"],
-      ["승인자", context.validatedBy ?? "승인 대기"],
-      ["승인 시각", context.validatedAt ? formatTime(context.validatedAt, true) : "기록 없음"]
+      ["AI Domain Expert", context.domainExpertAgent ?? "확인 필요"],
+      ["권위 방식", localized(context.authorityMode)],
+      ["결정 등급", localized(context.decisionTier)],
+      ["업무 근거 역할", (context.domainExpertRoles ?? []).join(", ") || "확인 필요"],
+      ["권위 확인 주체", context.validatedBy ?? "결정 대기"],
+      ["확인 시각", context.validatedAt ? formatTime(context.validatedAt, true) : "기록 없음"]
     ];
     for (const [label, value] of factValues) facts.append(element("dt", { text: label }), element("dd", { text: value ?? "-" }));
     card.append(facts);
@@ -623,8 +672,8 @@ function renderDomain(snapshot) {
     if ((context.stateTransitions ?? []).length > 0) {
       boundaryAndDecision.push(element("h4", { text: "상태 변화" }));
       boundaryAndDecision.push(domainDataTable(
-        ["현재 상태", "요청", "다음 상태", "기록되는 사건"],
-        context.stateTransitions.map((item) => [item.current, item.command, item.next, item.event])
+        ["대상", "현재 상태", "요청", "조건", "다음 상태", "기록되는 사건", "거절"],
+        context.stateTransitions.map((item) => [item.model, item.current, item.command, item.guard, item.next, item.event, item.rejection])
       ));
     }
     if ((context.roleContracts ?? []).length > 0) {
@@ -646,16 +695,18 @@ function renderDomain(snapshot) {
     references.append(domainReference(context.modelRef, "Domain model"));
     if (context.languageRef) references.append(domainReference(context.languageRef, "Ubiquitous language"));
     if (context.examplesRef) references.append(domainReference(context.examplesRef, "Executable examples"));
-    if (context.validationRef) references.append(domainReference(context.validationRef, "Approval receipt"));
+    if (context.validationRef) references.append(domainReference(context.validationRef, "Authority receipt"));
+    if (context.boardDecisionRef) references.append(domainReference(context.boardDecisionRef, "Board decision receipt"));
     referenceSection.append(references);
     card.append(referenceSection);
 
-    if ((context.openQuestions ?? []).length > 0 || context.validationError) {
+    if ((context.openQuestions ?? []).length > 0 || context.validationError || context.boardReviewError) {
       const unknowns = element("div", { className: "domain-card-section domain-open-questions" }, [
         element("h3", { text: "미결정 / 검토 항목" })
       ]);
       const list = element("ul");
       if (context.validationError) list.append(element("li", { text: context.validationError }));
+      if (context.boardReviewError) list.append(element("li", { text: context.boardReviewError }));
       for (const item of context.openQuestions ?? []) list.append(element("li", { text: item }));
       unknowns.append(list);
       card.append(unknowns);

@@ -63,7 +63,7 @@ packets:
       - target_bounded_context_language_sections
       - target_bounded_context_examples
       - related_project_task_and_qa
-      - exact_domain_expert_sources_and_current_approval_receipt
+      - exact_domain_sources_semantic_diff_and_current_authority_receipt
     avoid_by_default:
       - docs/design/*.md
       - docs/tasks/*.md
@@ -78,7 +78,7 @@ packets:
       - docs/design/context-map.md
       - docs/guide/ddd-domain-design.md
     dynamic_load:
-      - human_domain_expert_sources
+      - human_business_sources_and_decision_owners
       - business_examples_and_counterexamples
       - target_context_candidate_model
       - disputed_terms_and_open_questions
@@ -103,6 +103,24 @@ packets:
       - unrelated_contexts
     section_only:
       - customer_role_consumer_contract
+
+  role_ai_domain_expert:
+    default_load:
+      - docs/design/domain-landscape.md
+      - docs/design/context-map.md
+      - docs/guide/ddd-domain-design.md
+    dynamic_load:
+      - affected_context_model_language_and_examples
+      - exact_source_authority_and_freshness
+      - semantic_diff_counterexamples_and_challenge
+      - current_delegation_or_board_decision_receipt
+      - affected_project_task_qa_and_published_contracts
+    avoid_by_default:
+      - code_behavior_as_business_truth
+      - self_granted_authority
+      - unrelated_contexts
+    section_only:
+      - ai_domain_expert_board_review
 
   role_planner:
     default_load:
@@ -139,7 +157,7 @@ packets:
       - docs/design/context-map.md
       - current_task_doc
     dynamic_load:
-      - exact_approved_target_domain_models
+      - exact_authoritative_target_domain_models
       - target_language_commands_events_rules_and_examples
       - directly_related_architecture_and_guides
       - current_qa_checks
@@ -155,7 +173,7 @@ packets:
       - current_qa_doc
       - docs/guide/qa-document-system.md
     dynamic_load:
-      - exact_approved_target_domain_models
+      - exact_authoritative_target_domain_models
       - target_rules_state_transitions_and_examples
       - related_task_goals
       - linked_test_evidence
@@ -174,7 +192,7 @@ packets:
       - docs/architecture/control-plane.md
       - docs/design/context-map.md
     dynamic_load:
-      - exact_approved_domain_model_refs
+      - exact_authoritative_domain_model_refs
       - relevant_domain_language_and_examples
       - directly_referenced_architecture_docs
       - relevant_guide_or_validator_docs

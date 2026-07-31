@@ -38,9 +38,10 @@ export function filterDomainContexts({ contexts = [], query = "", role = "all", 
     if (context.visibleOnBoard === false) return false;
     const roleMatch = role === "all" || (context.roleViews ?? []).includes(role);
     if (!roleMatch) return false;
+    const currentAuthority = ["approved_current", "ai_current"].includes(context.validationStatus);
     const statusMatch = filter === "all"
-      || (filter === "approved" && context.validationStatus === "approved_current")
-      || (filter === "review" && context.validationStatus !== "approved_current" && context.validationStatus !== "invalid")
+      || (filter === "approved" && currentAuthority)
+      || (filter === "review" && !currentAuthority && context.validationStatus !== "invalid")
       || (filter === "invalid" && context.validationStatus === "invalid");
     if (!statusMatch) return false;
     if (!needle) return true;
@@ -61,6 +62,13 @@ export function filterDomainContexts({ contexts = [], query = "", role = "all", 
       context.languageRef,
       context.examplesRef,
       context.validationStatus,
+      context.domainExpertAgent,
+      context.authorityMode,
+      context.decisionTier,
+      context.boardReviewLevel,
+      context.boardReviewStatus,
+      ...(Object.values(context.boardReview ?? {})),
+      ...(context.boardModel?.rows ?? []).flat(),
       ...(context.domainExpertRoles ?? []),
       ...(context.roleViews ?? []),
       ...(context.openQuestions ?? []),

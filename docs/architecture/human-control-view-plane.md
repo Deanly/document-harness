@@ -113,8 +113,8 @@ Overview | Domain | Policies | Guidelines | Initiatives | Review | Execution | E
 
 - 한 개의 큰 page shell과 상단 horizontal tab list를 사용합니다.
 - canonical tab key와 순서는 정확히 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`입니다. 사용자에게 보이는 label은 `presentation.tabLabels`에서 읽고, reference 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 기존 `#policies` deep link는 policies tab을 계속 가리킵니다.
-- Domain tab은 `docs/design/`의 DDD landscape, context map과 bounded-context sets를 투영하고, role filter, exact-byte approval, presentation readiness와 freshness를 표시합니다. 이 projection은 model authority나 approval intent를 생성하지 않습니다.
-- Domain card는 wrapped paragraph와 bullet continuation을 보존하며 제목·첫 줄·count만으로 설명을 축약하지 않습니다. purpose와 human review summary 다음에 canonical term, business rule, scenario/counterexample, boundary/failure/state/decision/role contract를 단계적으로 제공합니다.
+- Domain tab은 `docs/design/`의 DDD landscape, context map과 bounded-context sets를 투영하고, role filter, exact-byte human-confirmed/delegated-AI authority, presentation readiness와 freshness를 표시합니다. 이 projection은 model authority나 approval intent를 생성하지 않습니다.
+- Domain card는 AI Domain Expert의 권고, 최소 충분 모델링 수준, 선택 이유, 사람 결정, 보호 결과, 수정 조건과 선택된 실제 model slice를 첫 화면에 제공합니다. wrapped paragraph와 bullet continuation을 보존하며 제목·첫 줄·count·approval metadata만으로 모델링 결과를 대체하지 않습니다. 나머지 canonical term, business rule, scenario/counterexample, boundary/failure/state/decision/role contract는 단계적 근거로 제공합니다.
 - bounded-context model bytes가 이미 다른 approval/source fence에 고정된 경우 presentation-only 문구는 같은 context의 `domain-examples`, 그다음 `ubiquitous-language`에서 명시적으로 제공할 수 있습니다. 이 companion source는 model authority를 얻지 않으며 receipt는 실제 presentation document bytes와 design kind를 고정합니다.
 - domain table은 작은 화면에서 가로 스크롤할 수 있지만 cell을 잘라내거나 인접 column 위로 겹치지 않습니다. technical ID와 source path는 사람용 설명보다 낮은 위계의 추적 정보로 둡니다.
 - left sidebar, collapsible navigation rail, repository selector와 workspace switcher는 제공하지 않습니다.
@@ -355,7 +355,7 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 | HV-12 | source scope security | traversal, symlink escape, secret, permissive CORS 차단 |
 | HV-13 | repository presentation | static identity가 보이고 repository selector와 left sidebar가 없음 |
 | HV-14 | canonical tabs | `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`가 순서대로 있고 configured label과 keyboard navigation 가능 |
-| HV-15 | DDD Domain projection | landscape/context map/context sets와 model revision, role views, open questions, exact-byte approval/freshness가 source-derived read-only 상태로 보임 |
+| HV-15 | DDD Domain projection | AI Domain Expert가 선택한 최소 충분 모델링 수준의 실제 model slice, 권고·결정 질문·근거와 landscape/context map/context sets, model revision, role views, open questions, exact-byte authority/freshness가 source-derived read-only 상태로 보임 |
 | HV-15 | cross-tab consistency | 모든 tab이 같은 snapshot/read fence를 사용하고 mixed generation이 없음 |
 | HV-16 | refresh continuity | polling/manual refresh 후 tab, filter, search, expansion과 focus가 유지됨 |
 | HV-17 | local asset boundary | external CDN/font/script request가 0이고 local-only/read-only가 유지됨 |
@@ -410,6 +410,7 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 - 2026-07-15: execution-loop-plane에서 projector, snapshot API, SSE, freshness, security, runtime, observability와 view acceptance 책임을 분리했다.
 - 2026-07-16: repository별 정적 identity, five top tabs, cross-tab snapshot fence, refresh-stable interaction과 local semantic asset profile을 고정했다.
 - 2026-07-29: DDD Domain projection과 canonical eight-tab profile v3를 추가하고 approval/freshness를 source-derived read-only 상태로 고정했다.
+- 2026-07-31: AI Domain Expert의 최소 충분 모델링 수준 선택과 사람용 domain decision package를 Domain 첫 화면 계약으로 추가했다.
 - 2026-07-16: shipped Node/ETag reference View distribution, exact read endpoints, migration/current/source fence separation과 lease-safe no-DB runtime profile을 current contract로 정렬했다.
 - 2026-07-17: approved/effective projection을 complete source fence와 real decision/effective evidence에 묶고, Execution Status 입력을 canonical `docs/checkpoints/*.md`의 deterministic fail-closed selection으로 정렬했다.
 - 2026-07-17: configured `presentation.locale` human projection, localization authority fence와 긴 technical metadata containment를 고정했다.

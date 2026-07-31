@@ -376,6 +376,11 @@ require_contains "$QA_TEMPLATE" '| Rule ID | Scenario ID |'
 require_contains "$PROJECT_TEMPLATE" 'domain_contract: v1'
 require_contains "$TASK_TEMPLATE" 'domain_contract: v1'
 require_contains "$QA_TEMPLATE" 'domain_contract: v1'
+require_contains "$ROOT_DIR/_templates/design.md" 'domain_expert_agent: ai-domain-expert'
+require_contains "$ROOT_DIR/_templates/design.md" 'board_review_level:'
+require_contains "$ROOT_DIR/_templates/design.md" '## AI Domain Expert Board Review'
+require_contains "$DOMAIN_DESIGN_GUIDE" '## AI Domain Expert Contract'
+require_contains "$DOMAIN_DESIGN_GUIDE" '## Board Review Contract'
 require_contains "$NEW_DOC_SCRIPT" "require_numbered_doc_issue_context"
 require_contains "$NEW_DOC_SCRIPT" "commit_numbered_doc_draft"
 require_contains "$NEW_DOC_SCRIPT" "validate_issuance_approval_ref"

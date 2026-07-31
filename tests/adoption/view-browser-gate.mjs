@@ -159,6 +159,99 @@ async function buildBrowserFixture() {
     `---\ntype: initiative\ndoc_id: I0001\ninitiative_contract: v1\nstatus: draft\napproval_status: review_requested\nissuance_approval_ref: DECISION-FIXTURE\napproval_ref:\npolicy_refs:\n  - ${LONG_POLICY_ID}\nguideline_refs:\n  - ${LONG_GUIDELINE_ID}\nguideline_disposition: needs_review\nguideline_disposition_reason: 연결 지침이 아직 검토 요청 상태이므로 적용 여부를 사람이 결정해야 합니다.\n---\n\n# I0001 Fixture\n\n## Policy Alignment\n\n| Policy Ref | Relation | Rationale | Exception Ref |\n| --- | --- | --- | --- |\n| ${LONG_POLICY_ID} | constrained-by | 읽기 전용 차량 제어 경계를 추진안의 비가역 제약으로 유지합니다. | |\n\n## Guideline Disposition\n\n| Guideline Ref | Adoption | Rationale | Verification |\n| --- | --- | --- | --- |\n| ${LONG_GUIDELINE_ID} | recommended | 재현 가능한 하드웨어 근거 수집 방식을 검토 후보로 연결합니다. | 연결 프로젝트가 제출한 점검 결과와 source hash를 사람이 검토합니다. |\n`,
     "utf8"
   );
+  await mkdir(path.join(fixture.root, "docs", "design", "contexts", "execution"), { recursive: true });
+  await writeFile(path.join(fixture.root, "docs", "design", "domain-landscape.md"), `---
+type: design
+design_kind: domain-landscape
+title: browser-domain-landscape
+status: review_requested
+model_revision: 1
+---
+
+# Browser Domain Landscape
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "design", "context-map.md"), `---
+type: design
+design_kind: context-map
+title: browser-context-map
+status: review_requested
+model_revision: 1
+---
+
+# Browser Context Map
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "design", "contexts", "execution", "domain-model.md"), `---
+type: design
+design_kind: bounded-context
+title: browser-execution-domain-model
+display_title: 목표가 잠긴 작업 상태
+human_summary: 작업이 언제 실행되고 사람의 결정이나 근거를 기다리며 언제 완료되는지 설명합니다.
+presentation_status: review_requested
+presentation_ref:
+status: review_requested
+bounded_context: execution
+bounded_context_id: BC-EXECUTION
+subdomain_type: core
+model_revision: 1
+validation_status: review_requested
+validation_ref:
+domain_expert_agent: ai-domain-expert
+authority_mode: human-required
+decision_tier: material
+board_review_level: state-transition
+board_review_status: review_requested
+board_decision_ref:
+domain_expert_roles:
+  - delivery-owner
+role_views:
+  - customer
+  - planner
+  - architect
+  - developer
+  - qa
+owner: delivery-owner
+---
+
+# Browser Execution Domain
+
+## Human Review Summary
+
+- 이 영역의 책임: 목표와 근거가 연결된 작업 상태를 관리합니다.
+- 포함하지 않는 것: 정책 승인과 위험 수용을 대신하지 않습니다.
+- 사용자에게 보이는 실패: 중단 이유나 완료 근거가 보이지 않습니다.
+- 아직 결정할 것: 작업 중단과 완료 전이를 확인해야 합니다.
+
+## AI Domain Expert Board Review
+
+- 권고 결정: 근거가 없거나 사람의 결정이 필요하면 작업을 완료 상태로 전이하지 않습니다.
+- 선택한 모델링 수준: state-transition
+- 이 수준을 선택한 이유: 작업이 언제 중단되고 다시 이어지는지가 이번 사람 결정의 핵심이기 때문입니다.
+- 사람이 확인할 핵심: running에서 awaiting_user로, 근거가 갖춰진 뒤에만 done으로 이동하는 전이가 맞는지 확인합니다.
+- 승인하면 보호되는 결과: AI가 대기 중인 작업을 완료로 보이게 하지 않습니다.
+- 반대하거나 수정해야 하는 조건: 근거 없이 완료해야 하는 합법적 업무가 있다면 전이를 수정합니다.
+
+## Domain Purpose And Customer Outcome
+
+사람과 AI가 작업의 현재 상태와 다음 결정을 같은 의미로 이해합니다.
+
+## Bounded Context Boundary
+
+- 포함: task lifecycle, attention, completion evidence
+- 제외: policy approval
+
+## Business Rules And Invariants
+
+| Rule ID | Rule |
+| --- | --- |
+| BR-EXEC-001 | 열린 attention이나 누락된 근거가 있으면 done이 될 수 없습니다. |
+
+## State Transitions
+
+| State Model | From | Command | Guard / Rule | To | Domain Event | Rejection |
+| --- | --- | --- | --- | --- | --- | --- |
+| Task | running | RequestAttention | BR-EXEC-001 | awaiting_user | AttentionOpened | vague request |
+| Task | running | CloseTask | evidence complete | done | TaskClosed | incomplete evidence |
+`, "utf8");
   return fixture;
 }
 
@@ -235,6 +328,26 @@ async function assertStateContinuity(page, fixture) {
   assert.equal(await page.getByRole("tab", { name: /^Policies$/ }).getAttribute("aria-selected"), "true");
   assert.equal(await page.getByRole("button", { name: `${LONG_POLICY_ID} 상세 닫기` }).getAttribute("aria-expanded"), "true");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "refresh-button");
+}
+
+async function assertDomainSurface(page) {
+  await page.getByRole("tab", { name: /^Domain$/ }).click();
+  const card = page.locator("#domain-context-list .domain-context-card").first();
+  await card.waitFor();
+  const copy = await card.innerText();
+  assert.match(copy, /AI DOMAIN EXPERT 종합안/);
+  assert.match(copy, /사람이 판단할 도메인 모델/);
+  assert.match(copy, /상태 변화 모델/);
+  assert.match(copy, /작업이 언제 중단되고 다시 이어지는지가 이번 사람 결정의 핵심/);
+  assert.match(copy, /running/);
+  assert.match(copy, /awaiting_user/);
+  assert.match(copy, /incomplete evidence/);
+  assert.match(copy, /AI Domain Expert\s+ai-domain-expert/);
+  assert.match(copy, /권위 방식\s+사람 결정 필요/);
+  await page.locator("#refresh-button").click();
+  await page.waitForTimeout(150);
+  assert.equal(await page.getByRole("tab", { name: /^Domain$/ }).getAttribute("aria-selected"), "true");
+  await page.getByRole("tab", { name: /^Policies$/ }).click();
 }
 
 async function assertGuidelineSurface(page) {
@@ -561,6 +674,7 @@ async function main() {
       throw new Error(`${error.message}\nconsole=${consoleProblems.join(" | ")}\nbody=${body}`);
     }
     await assertTabs(page);
+    await assertDomainSurface(page);
     await assertStateContinuity(page, fixture);
     await assertGuidelineSurface(page);
     await assertInitiativeSurface(page);

@@ -95,6 +95,16 @@ const domainContext = {
   validationStatus: "review_requested",
   roleViews: ["customer", "planner", "architect", "developer", "qa"],
   domainExpertRoles: ["delivery-owner"],
+  domainExpertAgent: "ai-domain-expert",
+  authorityMode: "human-required",
+  decisionTier: "material",
+  boardReviewLevel: "state-transition",
+  boardReviewStatus: "review_requested",
+  boardReview: {
+    recommendation: "완료 근거가 없으면 done으로 전이하지 않습니다.",
+    humanDecision: "작업 종료 조건을 확인합니다."
+  },
+  boardModel: { columns: ["현재", "다음"], rows: [["active", "done"]] },
   modelRef: "docs/design/contexts/execution/domain-model.md",
   languageRef: "docs/design/contexts/execution/ubiquitous-language.md",
   examplesRef: "docs/design/contexts/execution/examples.md",
@@ -130,6 +140,12 @@ test("domain filters keep one shared model and narrow it by actor role, review s
     contexts: [{ ...domainContext, validationStatus: "approved_current" }],
     role: "customer",
     filter: "approved"
+  }).map((item) => item.id), ["BC-EXECUTION"]);
+  assert.deepEqual(filterDomainContexts({
+    contexts: [{ ...domainContext, validationStatus: "ai_current" }],
+    role: "developer",
+    filter: "approved",
+    query: "완료 근거"
   }).map((item) => item.id), ["BC-EXECUTION"]);
 });
 

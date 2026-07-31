@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.5.3");
+  assert.equal(result.snapshot.runtimeVersion, "1.6.0");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -69,6 +69,82 @@ validation_status: unreviewed
   assert.equal(result.snapshot.summary.domainApprovedCount, 0);
 });
 
+test("domain projection fails closed when the AI Domain Expert selects an empty Board model level", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await mkdir(path.join(fixture.root, "docs", "design", "contexts", "catalog"), { recursive: true });
+  await writeFile(path.join(fixture.root, "docs", "design", "domain-landscape.md"), `---
+type: design
+design_kind: domain-landscape
+title: fixture-landscape
+status: review_requested
+model_revision: 1
+---
+
+# Fixture
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "design", "context-map.md"), `---
+type: design
+design_kind: context-map
+title: fixture-map
+status: review_requested
+model_revision: 1
+---
+
+# Fixture
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "design", "contexts", "catalog", "domain-model.md"), `---
+type: design
+design_kind: bounded-context
+title: catalog-model
+display_title: 상품 모델 검토
+human_summary: 상품의 업무 의미를 사람이 확인할 수 있게 설명합니다.
+presentation_status: review_requested
+status: review_requested
+bounded_context: catalog
+bounded_context_id: BC-CATALOG
+subdomain_type: core
+model_revision: 1
+validation_status: review_requested
+domain_expert_agent: ai-domain-expert
+authority_mode: human-required
+decision_tier: material
+board_review_level: aggregate
+board_review_status: review_requested
+domain_expert_roles:
+  - catalog-owner
+role_views:
+  - customer
+  - planner
+  - architect
+  - developer
+  - qa
+owner: catalog-owner
+---
+
+# Catalog
+
+## Human Review Summary
+
+- 이 영역의 책임: 상품 의미를 관리합니다.
+
+## AI Domain Expert Board Review
+
+- 권고 결정: 상품 일관성 단위를 확인합니다.
+- 선택한 모델링 수준: aggregate
+- 이 수준을 선택한 이유: 함께 지킬 규칙을 판단해야 합니다.
+- 사람이 확인할 핵심: 일관성 범위를 확인합니다.
+- 승인하면 보호되는 결과: 부분 상태를 막습니다.
+- 반대하거나 수정해야 하는 조건: 분리 저장이 필요하면 수정합니다.
+`, "utf8");
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.domain.status, "degraded");
+  assert.equal(result.snapshot.domain.contexts[0].boardReviewStatus, "invalid");
+  assert.match(result.snapshot.domain.contexts[0].boardReviewError, /selected model slice is empty/);
+  assert.ok(result.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-DESIGN-INVALID"));
+});
+
 test("domain projection exposes shared role views and exact-byte model approval without granting authority", async (t) => {
   const fixture = await createFixture();
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
@@ -117,6 +193,12 @@ subdomain_type: core
 model_revision: 1
 validation_status: approved
 validation_ref: ${receiptPath}
+domain_expert_agent: ai-domain-expert
+authority_mode: human-confirmed
+decision_tier: material
+board_review_level: business-rule
+board_review_status: confirmed
+board_decision_ref: ${receiptPath}
 domain_expert_roles:
   - delivery-owner
 role_views:
@@ -141,6 +223,15 @@ The Board must preserve this wrapped explanation.
 - 포함하지 않는 것: 정책 승인과 도메인 모델 승인을 대신하지 않습니다.
 - 사용자에게 보이는 실패: 실행이 멈춘 이유와 다음 확인 대상을 보여 줍니다.
 - 아직 결정할 것: 위험 등급별 중단 조건을 도메인 전문가가 확정해야 합니다.
+
+## AI Domain Expert Board Review
+
+- 권고 결정: current model reference가 없는 실행은 시작하지 않습니다.
+- 선택한 모델링 수준: business-rule
+- 이 수준을 선택한 이유: 사람이 판단할 내용이 실행 허용 조건이기 때문입니다.
+- 사람이 확인할 핵심: current model reference를 필수로 둘지 결정합니다.
+- 승인하면 보호되는 결과: 오래된 모델로 작업하지 않습니다.
+- 반대하거나 수정해야 하는 조건: 모델 없이 허용해야 하는 실행이 있다면 수정합니다.
 
 ## Domain Model
 
@@ -241,6 +332,11 @@ bounded_context_id: BC-EXECUTION
   assert.equal(approved.snapshot.domain.contexts[0].businessRules[0].id, "BR-EXEC-001");
   assert.equal(approved.snapshot.domain.contexts[0].scenarios[0].actorGoal, "QA / 결과 추적");
   assert.equal(approved.snapshot.domain.contexts[0].counterexamples[0], "승인되지 않은 model을 current truth로 사용하고 성공으로 표시한다.");
+  assert.equal(approved.snapshot.domain.contexts[0].domainExpertAgent, "ai-domain-expert");
+  assert.equal(approved.snapshot.domain.contexts[0].boardReviewLevel, "business-rule");
+  assert.equal(approved.snapshot.domain.contexts[0].boardReview.humanDecision, "current model reference를 필수로 둘지 결정합니다.");
+  assert.deepEqual(approved.snapshot.domain.contexts[0].boardModel.columns, ["업무 규칙", "업무 의미"]);
+  assert.deepEqual(approved.snapshot.domain.contexts[0].boardModel.rows[0], ["BR-EXEC-001", "Current model refs are required."]);
   assert.equal(approved.snapshot.summary.domainPresentationMissingCount, 0);
   assert.ok(approved.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-PRESENTATION"));
   assert.equal(approved.snapshot.snapshot.capabilities.approvalIntents, false);
@@ -250,6 +346,151 @@ bounded_context_id: BC-EXECUTION
   assert.equal(invalid.snapshot.domain.status, "degraded");
   assert.equal(invalid.snapshot.domain.contexts[0].validationStatus, "invalid");
   assert.ok(invalid.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-DESIGN-INVALID"));
+});
+
+test("domain projection accepts routine AI modeling only through an exact human delegation fence", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await mkdir(path.join(fixture.root, "docs", "design", "contexts", "catalog"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "design", "receipts"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "governance", "receipts"), { recursive: true });
+  await writeFile(path.join(fixture.root, "docs", "design", "domain-landscape.md"), `---
+type: design
+design_kind: domain-landscape
+title: fixture-landscape
+status: review_requested
+model_revision: 1
+---
+
+# Fixture
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "design", "context-map.md"), `---
+type: design
+design_kind: context-map
+title: fixture-context-map
+status: review_requested
+model_revision: 1
+---
+
+# Fixture
+
+## Context Relationships
+
+| Upstream | Downstream | Human Meaning | Failure Ownership | Relationship Pattern | Contract | Consistency |
+| --- | --- | --- | --- | --- | --- | --- |
+| BC-CATALOG | BC-CATALOG | 같은 영역의 용어를 정리합니다. | catalog | Published Language | terms | current |
+`, "utf8");
+
+  const delegationPath = "docs/governance/receipts/domain-authority-delegation.json";
+  const delegation = JSON.stringify({
+    schemaVersion: 1,
+    kind: "domain-authority-delegation",
+    receiptId: "DDD-DELEGATION-FIXTURE",
+    decision: "approved",
+    allowedDecisionTier: "routine",
+    allowedChangeClasses: ["terminology-clarification"],
+    forbiddenChangeClasses: ["customer-rights"],
+    decidedBy: { actorKind: "human", identifier: "fixture-owner" },
+    decidedAt: "2026-07-31T00:00:00.000Z",
+    reason: "AI may maintain reversible terminology clarifications."
+  });
+  await writeFile(path.join(fixture.root, delegationPath), delegation, "utf8");
+
+  const modelPath = "docs/design/contexts/catalog/domain-model.md";
+  const receiptPath = "docs/design/receipts/catalog-ai-r1.json";
+  const modelBytes = `---
+type: design
+design_kind: bounded-context
+title: catalog-domain-model
+display_title: 상품 용어를 한 뜻으로 유지하기
+human_summary: 여러 역할이 상품 상태를 같은 뜻으로 사용하도록 관리합니다.
+presentation_status: review_requested
+presentation_ref:
+status: current
+bounded_context: catalog
+bounded_context_id: BC-CATALOG
+subdomain_type: supporting
+model_revision: 1
+validation_status: ai-validated
+validation_ref: ${receiptPath}
+domain_expert_agent: ai-domain-expert
+authority_mode: delegated-ai
+decision_tier: routine
+board_review_level: ubiquitous-language
+board_review_status: not_required
+board_decision_ref:
+domain_expert_roles:
+  - catalog-owner
+role_views:
+  - customer
+  - planner
+  - architect
+  - developer
+  - qa
+owner: catalog-owner
+---
+
+# Catalog
+
+## Human Review Summary
+
+- 이 영역의 책임: 상품 용어를 같은 뜻으로 유지합니다.
+- 포함하지 않는 것: 가격 정책을 결정하지 않습니다.
+- 사용자에게 보이는 실패: 같은 상태가 서로 다른 뜻으로 보입니다.
+- 아직 결정할 것: 없음
+
+## AI Domain Expert Board Review
+
+- 권고 결정: 기존 의미를 바꾸지 않는 용어 설명을 현행화합니다.
+- 선택한 모델링 수준: ubiquitous-language
+- 이 수준을 선택한 이유: 행동 변경이 아니라 같은 용어의 뜻을 명확히 하는 routine 변경입니다.
+- 사람이 확인할 핵심: Board 결정 대상이 아닙니다.
+- 승인하면 보호되는 결과: 역할별 용어가 갈라지지 않습니다.
+- 반대하거나 수정해야 하는 조건: 고객 권리나 가격 의미가 바뀌면 Board로 올립니다.
+
+## Bounded Context Boundary
+
+- 포함: 상품 용어
+- 제외: 가격 정책
+
+## Business Rules And Invariants
+
+| Rule ID | Rule |
+| --- | --- |
+| BR-CATALOG-001 | 같은 상품 상태는 한 canonical term을 사용합니다. |
+`;
+  await writeFile(path.join(fixture.root, modelPath), modelBytes, "utf8");
+  await writeFile(path.join(fixture.root, receiptPath), JSON.stringify({
+    schemaVersion: 2,
+    kind: "domain-design-approval",
+    receiptId: "DDD-AI-AUTHORITY-CATALOG-1",
+    decision: "approved",
+    documentRef: modelPath,
+    documentSha256: sha256(modelBytes),
+    modelRevision: 1,
+    boundedContext: "catalog",
+    authorityMode: "delegated-ai",
+    decisionTier: "routine",
+    modelingLevel: "ubiquitous-language",
+    decidedBy: { actorKind: "ai-agent", identifier: "ai-domain-expert" },
+    decidedAt: "2026-07-31T00:01:00.000Z",
+    reason: "Clarified existing terminology without changing behavior.",
+    evidenceRefs: ["docs/design/contexts/catalog/domain-model.md"],
+    challengeSummary: "No rule, boundary, customer-right, or lifecycle change was found.",
+    delegatedAuthorityRef: delegationPath,
+    delegationSha256: sha256(delegation)
+  }), "utf8");
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.domain.status, "current");
+  assert.equal(result.snapshot.domain.contexts[0].validationStatus, "ai_current");
+  assert.equal(result.snapshot.domain.contexts[0].authorityMode, "delegated-ai");
+  assert.equal(result.snapshot.domain.contexts[0].validatedActorKind, "ai-agent");
+  assert.equal(result.snapshot.summary.domainApprovedCount, 1);
+
+  await writeFile(path.join(fixture.root, delegationPath), `${delegation}\n`, "utf8");
+  const stale = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(stale.snapshot.domain.contexts[0].validationStatus, "invalid");
 });
 
 test("governance entries without a declared human presentation appear only as review attention", async (t) => {

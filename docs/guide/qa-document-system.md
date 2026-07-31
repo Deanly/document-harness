@@ -50,7 +50,7 @@ design (불변식·위험)  →  strategy (레벨·원칙)  →  plan (스위트
 2. **신규 방어 테스트는 `cases`의 갭 백로그에서만 파생**된다 — "무작정 테스트 작성"을 구조적으로 차단한다.
 3. 새 기능은 수용 케이스를 `cases`에 먼저 등재한 뒤 구현한다.
 
-QA의 primary source는 affected bounded context의 approved/current DDD model, ubiquitous language와 executable examples입니다. `domain_contexts`, `domain_model_refs`, `covered_rule_ids`, `covered_scenario_ids`를 채우고 `docs/lib/domain-design-authority.mjs`로 exact model bytes를 확인합니다. `review_requested` model이나 architecture/code behavior를 business requirement로 승격하지 않습니다.
+QA의 primary source는 affected bounded context의 authoritative/current DDD model, ubiquitous language와 executable examples입니다. `domain_contexts`, `domain_model_refs`, `covered_rule_ids`, `covered_scenario_ids`를 채우고 `docs/lib/domain-design-authority.mjs`로 exact model bytes를 확인합니다. `review_requested` model이나 architecture/code behavior를 business requirement로 승격하지 않습니다.
 
 ```text
 Domain Scenario → Business Rule → Task / Goal → Check → Evidence → Verdict
@@ -70,7 +70,7 @@ Policy Clause → Standard Rule → Task / Goal → Check → Evidence → Excep
 
 문서 체계의 실패 모드는 부패다. 세 장치로 막는다:
 
-1. **Validator 강제**: `validate-domain-design.sh`, `validate-domain-lineage.sh`, `validate-closeout.sh`가 approved/current model, rule/scenario coverage와 qa 문서의 타입·필수 섹션을 기계 검증한다. `--all`에 포함된다.
+1. **Validator 강제**: `validate-domain-design.sh`, `validate-domain-lineage.sh`, `validate-closeout.sh`가 authoritative/current model, rule/scenario coverage와 qa 문서의 타입·필수 섹션을 기계 검증한다. `--all`에 포함된다.
 2. **갱신 트리거 명문화**: 각 qa 문서의 `Maintenance Rules`가 "언제 갱신해야 하는가"를 선언한다. 최소 규칙 — Source Documents의 design이 바뀌면 같은 변경에서 갱신, 관련 task가 닫히면 같은 커밋에서 케이스의 자동화/증거 컬럼 갱신, 갭 구현 시 백로그에서 본표로 승격.
 3. **중복 금지**: 이미 진실인 실행 자산(시나리오 manifest, 체크리스트 등)은 참조만 한다. 같은 정보가 두 곳이면 한쪽은 반드시 썩는다.
 
@@ -82,7 +82,7 @@ Policy Clause → Standard Rule → Task / Goal → Check → Evidence → Excep
 
 ## Adoption Checklist
 
-1. domain expert가 approved/current로 확정한 bounded-context model에서 invariant/rule/scenario가 stable ID로 식별돼 있는가 (없으면 DDD design부터).
+1. AI Domain Expert의 exact authority receipt로 current가 된 bounded-context model에서 invariant/rule/scenario가 stable ID로 식별돼 있는가 (없으면 DDD design부터).
 2. `new-doc.sh qa`로 strategy → plan → cases → (필요 시) runbook 순으로 발급.
 3. 기존 일회성 테스트 문서(스냅샷)가 있으면 승계 표기를 남기고 `cases`로 이관.
 4. task closeout 절차에 "관련 케이스 갱신"을 포함.

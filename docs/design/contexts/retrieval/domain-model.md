@@ -14,6 +14,12 @@ subdomain_type: generic
 model_revision: 1
 validation_status: review_requested
 validation_ref:
+domain_expert_agent: ai-domain-expert
+authority_mode: human-required
+decision_tier: material
+board_review_level: business-rule
+board_review_status: review_requested
+board_decision_ref:
 domain_expert_roles:
   - knowledge-owner
   - retrieval-operator
@@ -57,6 +63,15 @@ tags:
 - 포함하지 않는 것: 검색 결과를 원문 자체로 취급하거나 원문의 의미와 승인 상태를 새로 만들지 않습니다.
 - 사용자에게 보이는 실패: 원문을 찾지 못했거나 오래된 근거이면 최신 사실처럼 보여 주지 않고 확인 필요로 알립니다.
 - 아직 결정할 것: 저장소별 기본 검색 범위와 민감 문서 접근 경계는 지식 소유자가 확정해야 합니다.
+
+## AI Domain Expert Board Review
+
+- 권고 결정: 검색 index는 source truth를 대체하지 않으며 required revision을 증명하지 못하면 direct-read, wait 또는 degraded를 반환하고 current 결과로 가장하지 않도록 확정합니다.
+- 선택한 모델링 수준: business-rule
+- 이 수준을 선택한 이유: 사람이 판단해야 할 핵심은 document entity의 내부 구조가 아니라 어떤 조건에서 검색 결과를 현재 사실로 인정하거나 거절할지이기 때문입니다.
+- 사람이 확인할 핵심: stale index, confirmed deletion, rename, incompatible index arms를 current truth로 섞지 않는 네 가지 규칙이 실제 업무 기대와 맞는지 확인합니다.
+- 승인하면 보호되는 결과: AI와 사람이 오래되거나 삭제된 문서를 최신 근거로 오인해 잘못된 모델과 결정을 만드는 일을 막습니다.
+- 반대하거나 수정해야 하는 조건: source보다 index가 authoritative하거나 stale 결과를 정상값으로 허용해야 하는 업무가 있다면 규칙과 책임을 수정해야 합니다.
 
 ## Domain Experts And Sources
 

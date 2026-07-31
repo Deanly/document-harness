@@ -14,6 +14,7 @@ subdomain_type: portfolio
 model_revision: 1
 validation_status: unreviewed
 validation_ref:
+domain_expert_agent: ai-domain-expert
 domain_expert_roles:
   - repository-domain-owner
 role_views:
@@ -71,7 +72,7 @@ This draft makes the missing domain discovery explicit. It must not be treated a
 
 ## Unknowns And Disputes
 
-- Actual upstream/downstream, relationship pattern, translation, consistency, and failure ownership require domain-expert review.
+- Actual upstream/downstream, relationship pattern, translation, consistency, and failure ownership require AI Domain Expert synthesis; material or uncertain boundaries require a Board decision.
 
 ## Change Impact
 

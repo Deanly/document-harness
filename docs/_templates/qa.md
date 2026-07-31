@@ -60,7 +60,7 @@ tags:
 
 ## Source Documents
 
-케이스/전략의 파생 근거가 되는 approved/current DDD model과 기획 문서만 나열합니다. **여기 없는 근거로 케이스를 추가하지 않습니다.**
+케이스/전략의 파생 근거가 되는 authoritative/current DDD model과 기획 문서만 나열합니다. **여기 없는 근거로 케이스를 추가하지 않습니다.**
 
 - docs/design/contexts/<bounded-context>/domain-model.md
 - docs/design/contexts/<bounded-context>/examples.md

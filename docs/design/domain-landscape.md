@@ -14,6 +14,7 @@ subdomain_type: portfolio
 model_revision: 1
 validation_status: review_requested
 validation_ref:
+domain_expert_agent: ai-domain-expert
 domain_expert_roles:
   - document-harness-maintainer
 role_views:
@@ -59,10 +60,11 @@ document-harness는 여러 역할이 같은 업무 의미와 검증 가능한 �
 
 ## Domain Experts And Sources
 
-- Domain expert role: document-harness maintainer와 실제 적용 repository의 업무 책임자
+- AI Domain Expert role: `ai-domain-expert`가 역할 AI 사이의 domain modeling, ubiquitous language, rule, scenario와 boundary 변경을 지속적으로 통제합니다.
+- Human decision role: 실제 적용 repository의 업무 책임자는 상시 모델링 작업자가 아니라 AI가 Board에 올린 material/strategic 의미, 정책, 조직 책임과 위험을 결정합니다.
 - Customer roles: 고객/업무 전문가, 기획자, 설계자, 개발자, QA, 운영자
 - Sources: repository의 human-owned policy, current DDD design, initiative/project/task, QA와 evidence
-- 이 초안은 구조 적용 승인을 근거로 작성됐으며 exact model bytes는 별도 domain-expert review가 필요합니다.
+- AI Domain Expert는 routine하고 가역적인 변경만 exact delegation 안에서 current로 만들며, 자신의 권한을 만들거나 넓히지 않습니다.
 
 ## Subdomain Portfolio
 
@@ -77,7 +79,8 @@ document-harness는 여러 역할이 같은 업무 의미와 검증 가능한 �
 
 - Governance는 AI 제안과 사람 권한을 분리하고 exact approval fence를 delivery까지 잇습니다.
 - Execution은 목표 축소, stale instruction과 근거 없는 완료를 차단합니다.
-- 두 core context가 결합해 “그럴듯한 문서”가 아니라 사람의 의미와 증거가 연결된 실행을 만듭니다.
+- AI Domain Expert는 두 core context와 supporting context 사이의 언어·규칙·경계가 역할 AI마다 갈라지지 않도록 의미 통제면을 제공합니다.
+- 이 결합은 DDD 비용의 대부분을 사람에게 다시 청구하지 않으면서 “그럴듯한 문서”가 아니라 사람의 중요한 결정과 증거가 연결된 실행을 만듭니다.
 
 ## Cross-Context Business Flows
 
@@ -100,7 +103,7 @@ document-harness는 여러 역할이 같은 업무 의미와 검증 가능한 �
 ## Unknowns And Disputes
 
 - 개별 downstream repository에서 실제 core domain은 이 reusable harness의 context가 아니라 해당 사업 domain입니다.
-- 각 repository의 domain expert identity와 approval mechanism은 adoption 중 사람이 확정해야 합니다.
+- 각 repository는 AI Domain Expert의 routine delegation 범위와 Board escalation 기준을 adoption 중 명시해야 합니다. 별도 Domain Expert 직군의 존재를 전제하지 않습니다.
 
 ## Change Impact
 
@@ -113,4 +116,5 @@ document-harness는 여러 역할이 같은 업무 의미와 검증 가능한 �
 ## Change Log
 
 - 2026-07-30: 사람이 읽을 제목, 요약과 보드 검토 상태를 추가했다.
+- 2026-07-31: AI Domain Expert를 기본 의미 통제 역할로 정의하고 사람을 중요한 Board 결정의 최종 권위자로 재배치했다.
 - 2026-07-29: governance, execution, adoption, retrieval subdomain portfolio 초안을 작성했다.

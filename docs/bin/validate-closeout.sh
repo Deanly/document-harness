@@ -25,7 +25,7 @@ Rules:
   - If Status is done/closed, every goal must be Done with non-empty evidence.
   - If Status is done/closed, WBS cannot contain Todo/In Progress/Pending/Blocked items.
   - execution_contract v1 tasks must also satisfy checkpoint, loop_state, attention, and receipt barriers.
-  - Active/terminal delivery and current QA must pin approved/current DDD models or carry an explicit human-reviewed no-domain-impact decision.
+  - Active/terminal delivery and current QA must pin authoritative/current DDD models or carry an explicit AI Domain Expert no-domain-impact review.
 EOF
 }
 

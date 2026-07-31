@@ -119,7 +119,7 @@ List validators run and state that runtime verification was not needed for docs-
 - `docs/design/README.md`
 - target bounded-context model
 - target ubiquitous-language sections and executable examples
-- exact domain-expert sources, approval receipt, and current model bytes
+- exact business sources, AI Domain Expert semantic review, authority receipt, and current model bytes
 - related task/project if delivery state changes
 
 ### Avoid By Default
@@ -143,11 +143,12 @@ Name the context and stable model IDs changed, exact approval/freshness state, r
 
 | Role | Load | Required Output |
 | --- | --- | --- |
-| customer / domain expert | landscape, context language/examples, customer outcome, unknowns, exact review diff | meaning correction or exact-byte approval decision |
+| customer / business decision owner | AI Domain Expert Board package, selected model slice, customer outcome, unknowns, exact review diff | important meaning approval, correction, or rejection |
+| ai-domain-expert | landscape, context map, affected model/language/examples, source authority, semantic diff and challenge | aligned, model_updated, board_attention, or blocked_conflict |
 | planner | scenarios, business rules, state transitions, target language, active initiative/project | outcome and acceptance criteria using SCN/BR IDs |
 | architect | context map, aggregates/consistency, relationships/integration, published contracts | architecture that preserves context ownership |
-| developer | approved/current model, commands/events/rules/examples, current task and QA | implementation/tests traced to CMD/EVT/BR IDs |
-| QA | approved/current rules/state/examples, task goals, evidence | covered_rule_ids, covered_scenario_ids and verdict evidence |
+| developer | authoritative/current model, commands/events/rules/examples, current task and QA | implementation/tests traced to CMD/EVT/BR IDs |
+| QA | authoritative/current rules/state/examples, task goals, evidence | covered_rule_ids, covered_scenario_ids and verdict evidence |
 
 ## Work Type: project_task_execution
 
@@ -157,7 +158,7 @@ Name the context and stable model IDs changed, exact approval/freshness state, r
 - parent/reference project doc
 - `docs/architecture/control-plane.md`
 - directly referenced design docs
-- exact approved/current domain model refs declared by the task/project
+- exact authoritative/current domain model refs declared by the task/project
 - target context language/examples and actor-specific model sections
 - relevant guide or validator docs
 - effective policy/standard refs and active exception, when present
@@ -173,7 +174,7 @@ Name the context and stable model IDs changed, exact approval/freshness state, r
 
 1. current task
 2. parent/reference project
-3. exact approved/current domain models and role packet
+3. exact authoritative/current domain models and role packet
 4. sibling tasks only if WBS/evidence depends on them
 5. current checkpoint and latest referenced receipts; do not load full chat history
 
@@ -315,7 +316,7 @@ List source_refs and state whether follow-up promotion is needed.
 
 1. target doc
 2. goal inventory and verification sections
-3. related approved/current domain model and architecture control-plane
+3. related authoritative/current domain model and architecture control-plane
 4. required validators
 
 ### Context Used Output

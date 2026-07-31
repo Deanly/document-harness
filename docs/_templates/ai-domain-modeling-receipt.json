@@ -2,21 +2,23 @@
   "$schema": "../schemas/domain-design-approval-receipt.schema.json",
   "schemaVersion": 2,
   "kind": "domain-design-approval",
-  "receiptId": "DDD-APPROVAL-{{BOUNDED_CONTEXT}}-{{MODEL_REVISION}}",
+  "receiptId": "DDD-AI-AUTHORITY-{{BOUNDED_CONTEXT}}-{{MODEL_REVISION}}",
   "decision": "approved",
   "documentRef": "docs/design/contexts/{{BOUNDED_CONTEXT}}/domain-model.md",
   "documentSha256": "{{DOCUMENT_SHA256}}",
   "modelRevision": 1,
   "boundedContext": "{{BOUNDED_CONTEXT}}",
-  "authorityMode": "human-confirmed",
-  "decisionTier": "material",
+  "authorityMode": "delegated-ai",
+  "decisionTier": "routine",
   "modelingLevel": "{{BOARD_REVIEW_LEVEL}}",
   "decidedBy": {
-    "actorKind": "human",
-    "identifier": "{{DOMAIN_EXPERT_IDENTIFIER}}"
+    "actorKind": "ai-agent",
+    "identifier": "ai-domain-expert"
   },
   "decidedAt": "{{RFC3339_TIMESTAMP}}",
-  "reason": "{{REVIEW_REASON}}",
+  "reason": "{{ROUTINE_MODELING_REASON}}",
   "evidenceRefs": ["{{EVIDENCE_REF}}"],
-  "challengeSummary": "{{CHALLENGE_SUMMARY}}"
+  "challengeSummary": "{{INDEPENDENT_CHALLENGE_SUMMARY}}",
+  "delegatedAuthorityRef": "docs/governance/receipts/domain-authority-delegation.json",
+  "delegationSha256": "{{DELEGATION_SHA256}}"
 }
