@@ -1630,18 +1630,6 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
     for (const { captured, design } of modelEntries) {
       const approval = await inspectDomainDesignApproval(repoRoot, captured, design);
       if (approval.input) approvalInputs.push(approval.input);
-      const presentation = await inspectHumanPresentation({
-        repoRoot,
-        documentInput: captured,
-        subjectKind: design.design_kind,
-        subjectId: design.bounded_context_id,
-        displayTitle: design.display_title,
-        humanSummary: design.human_summary,
-        declaredStatus: design.presentation_status,
-        receiptRef: design.presentation_ref,
-        locale
-      });
-      if (presentation.input) presentationInputs.push(presentation.input);
       const contextRoot = path.posix.dirname(captured.relativePath);
       const language = parsed.find(({ captured: item, design: itemDesign }) =>
         path.posix.dirname(item.relativePath) === contextRoot && itemDesign.design_kind === "ubiquitous-language"
@@ -1649,7 +1637,34 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
       const examples = parsed.find(({ captured: item, design: itemDesign }) =>
         path.posix.dirname(item.relativePath) === contextRoot && itemDesign.design_kind === "domain-examples"
       );
+      const presentationEntry = [
+        { captured, design },
+        examples,
+        language
+      ].find((entry) => entry && (
+        entry.design.presentation_status
+        || entry.design.display_title
+        || entry.design.human_summary
+      )) ?? { captured, design };
+      const presentation = await inspectHumanPresentation({
+        repoRoot,
+        documentInput: presentationEntry.captured,
+        subjectKind: presentationEntry.design.design_kind,
+        subjectId: design.bounded_context_id,
+        displayTitle: presentationEntry.design.display_title,
+        humanSummary: presentationEntry.design.human_summary,
+        declaredStatus: presentationEntry.design.presentation_status,
+        receiptRef: presentationEntry.design.presentation_ref,
+        locale
+      });
+      if (presentation.input) presentationInputs.push(presentation.input);
       const humanReview = markdownSectionLabels(captured, "Human Review Summary");
+      const boundaries = markdownSectionBullets(captured, "Bounded Context Boundary");
+      const failureSemantics = markdownSectionBullets(captured, "Failure And Exception Semantics");
+      const openQuestions = markdownSectionBullets(captured, "Unknowns And Disputes");
+      const withoutPrefix = (value, prefix) => value?.startsWith(prefix)
+        ? value.slice(prefix.length).trim()
+        : value ?? null;
       contexts.push({
         id: design.bounded_context_id,
         name: design.bounded_context,
@@ -1662,19 +1677,21 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
         presentationReviewedBy: presentation.presentationReviewedBy,
         presentationReviewedAt: presentation.presentationReviewedAt,
         visibleOnBoard: presentation.visibleOnBoard,
-        responsibility: humanReview["이 영역의 책임"] ?? null,
-        outOfScope: humanReview["포함하지 않는 것"] ?? null,
-        userVisibleFailure: humanReview["사용자에게 보이는 실패"] ?? null,
-        pendingDecision: humanReview["아직 결정할 것"] ?? null,
+        responsibility: humanReview["이 영역의 책임"]
+          ?? withoutPrefix(boundaries.find((item) => item.startsWith("포함:")), "포함:"),
+        outOfScope: humanReview["포함하지 않는 것"]
+          ?? withoutPrefix(boundaries.find((item) => item.startsWith("제외:")), "제외:"),
+        userVisibleFailure: humanReview["사용자에게 보이는 실패"] ?? failureSemantics[0] ?? null,
+        pendingDecision: humanReview["아직 결정할 것"] ?? openQuestions[0] ?? null,
         purpose: markdownSectionNarrative(captured, "Domain Purpose And Customer Outcome"),
-        boundaries: markdownSectionBullets(captured, "Bounded Context Boundary"),
+        boundaries,
         terms: domainTerms(captured, language),
         businessRules: trackedSectionItems(captured, "Business Rules And Invariants", "BR"),
         scenarios: domainScenarios(captured, examples),
         counterexamples: examples ? markdownSectionBullets(examples.captured, "Counterexamples") : [],
         stateTransitions: domainStateTransitions(captured),
         integrations: markdownSectionBullets(captured, "Context Relationships And Integration"),
-        failureSemantics: markdownSectionBullets(captured, "Failure And Exception Semantics"),
+        failureSemantics,
         roleContracts: domainRoleContracts(captured),
         decisions: markdownSectionBullets(captured, "Decisions"),
         subdomainType: design.subdomain_type,
@@ -1688,7 +1705,7 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
         validationError: approval.error ?? null,
         domainExpertRoles: Array.isArray(design.domain_expert_roles) ? design.domain_expert_roles : [],
         roleViews: Array.isArray(design.role_views) ? design.role_views : [],
-        openQuestions: markdownSectionBullets(captured, "Unknowns And Disputes"),
+        openQuestions,
         counts: domainModelCounts(captured),
         modelRef: captured.relativePath,
         languageRef: language?.captured.relativePath ?? null,

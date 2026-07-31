@@ -85,6 +85,7 @@ Selected Tab Panel
 Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context model, ubiquitous language와 executable examples를 읽기 전용으로 투영합니다.
 
 - 정상 card는 `display_title`과 `human_summary`를 사용하며 technical `title`, bounded-context name, ID 또는 section 첫 줄을 사람용 설명의 fallback으로 사용하지 않습니다.
+- 승인된 bounded-context model의 bytes를 presentation-only 변경으로 무효화하면 안 되는 경우, 같은 context의 `domain-examples` 또는 `ubiquitous-language`에 명시된 검토용 presentation을 사용할 수 있습니다. 이때 Board는 model approval과 companion presentation 상태를 계속 분리합니다.
 - `presentation_status: missing` 또는 invalid인 context는 정상 목록에서 제외하고 `사람용 설명 필요` attention과 exact source ref로만 제공합니다. `review_requested`는 후보 badge와 함께, exact human receipt가 있는 `ready`는 정상 표시합니다.
 - domain meaning status, presentation status와 evidence freshness를 각각 표시하며 어느 하나로 다른 상태를 추론하지 않습니다.
 - bounded context별 core/supporting/generic 구분, owner와 domain expert를 표시합니다.

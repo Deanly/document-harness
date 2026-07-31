@@ -257,7 +257,7 @@ test("start, status, url, refresh, and stop preserve one repository identity", a
   const started = JSON.parse(startedResult.stdout);
   assert.equal(started.status, "started");
   assert.equal(started.repoId, "lifecycle-fixture");
-  assert.equal(started.runtimeVersion, "1.5.1");
+  assert.equal(started.runtimeVersion, "1.5.2");
   assert.equal(started.initiativeCount, 1);
   assert.ok(started.port > 0);
 

@@ -115,6 +115,7 @@ Overview | Domain | Policies | Guidelines | Initiatives | Review | Execution | E
 - canonical tab key와 순서는 정확히 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`입니다. 사용자에게 보이는 label은 `presentation.tabLabels`에서 읽고, reference 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 기존 `#policies` deep link는 policies tab을 계속 가리킵니다.
 - Domain tab은 `docs/design/`의 DDD landscape, context map과 bounded-context sets를 투영하고, role filter, exact-byte approval, presentation readiness와 freshness를 표시합니다. 이 projection은 model authority나 approval intent를 생성하지 않습니다.
 - Domain card는 wrapped paragraph와 bullet continuation을 보존하며 제목·첫 줄·count만으로 설명을 축약하지 않습니다. purpose와 human review summary 다음에 canonical term, business rule, scenario/counterexample, boundary/failure/state/decision/role contract를 단계적으로 제공합니다.
+- bounded-context model bytes가 이미 다른 approval/source fence에 고정된 경우 presentation-only 문구는 같은 context의 `domain-examples`, 그다음 `ubiquitous-language`에서 명시적으로 제공할 수 있습니다. 이 companion source는 model authority를 얻지 않으며 receipt는 실제 presentation document bytes와 design kind를 고정합니다.
 - domain table은 작은 화면에서 가로 스크롤할 수 있지만 cell을 잘라내거나 인접 column 위로 겹치지 않습니다. technical ID와 source path는 사람용 설명보다 낮은 위계의 추적 정보로 둡니다.
 - left sidebar, collapsible navigation rail, repository selector와 workspace switcher는 제공하지 않습니다.
 - 좁은 화면에서도 tab list를 horizontal scroll 또는 overflow control로 유지하며 sidebar로 변환하지 않습니다.

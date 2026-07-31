@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.5.1");
+  assert.equal(result.snapshot.runtimeVersion, "1.5.2");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -67,10 +67,6 @@ model_revision: 1
 type: design
 design_kind: bounded-context
 title: execution-domain-model
-display_title: 목표가 잠긴 실행
-human_summary: 승인된 목표와 현재 작업 상태를 연결해 실행 결과를 추적할 수 있게 합니다.
-presentation_status: review_requested
-presentation_ref:
 status: current
 bounded_context: execution
 bounded_context_id: BC-EXECUTION
@@ -148,6 +144,10 @@ bounded_context_id: BC-EXECUTION
 type: design
 design_kind: domain-examples
 title: execution-examples
+display_title: 목표가 잠긴 실행
+human_summary: 승인된 목표와 현재 작업 상태를 연결해 실행 결과를 추적할 수 있게 합니다.
+presentation_status: review_requested
+presentation_ref:
 status: review_requested
 bounded_context: execution
 bounded_context_id: BC-EXECUTION
@@ -191,6 +191,7 @@ bounded_context_id: BC-EXECUTION
   assert.equal(approved.snapshot.domain.contexts[0].presentationStatus, "review_requested");
   assert.equal(approved.snapshot.domain.contexts[0].visibleOnBoard, true);
   assert.equal(approved.snapshot.domain.contexts[0].displayTitle, "목표가 잠긴 실행");
+  assert.equal(approved.snapshot.domain.contexts[0].responsibility, "승인된 목표를 실행 가능한 작업과 결과로 연결합니다.");
   assert.equal(approved.snapshot.domain.contexts[0].purpose, "Keep goal-locked delivery traceable across the full lifecycle. The Board must preserve this wrapped explanation.");
   assert.equal(approved.snapshot.domain.contexts[0].openQuestions[0], "Risk tier remains a domain decision and the complete explanation must remain visible on the Board.");
   assert.equal(approved.snapshot.domain.contexts[0].terms[0].term, "Goal-locked Task");

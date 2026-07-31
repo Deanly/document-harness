@@ -112,6 +112,12 @@ Board와 validator는 다음 세 축을 합치지 않습니다.
 `ready` presentation은 domain model을 승인하지 않습니다. 반대로 exact-byte 승인된
 domain model도 사람용 설명이 `missing` 또는 invalid이면 정상 Board card에
 표시하지 않고 `사람용 설명 필요` attention과 exact source ref만 제공합니다.
+이미 승인되었거나 다른 authority의 source fence가 전체 model bytes를 고정한 경우,
+같은 bounded context의 `domain-examples`가 `review_requested` 사람용 제목·요약을
+소유할 수 있습니다. Board는 bounded-context model, `domain-examples`,
+`ubiquitous-language` 순서로 명시된 presentation을 찾으며, model의 업무 의미와
+approval bytes는 바꾸지 않습니다. `Human Review Summary`가 없는 legacy model은
+기존 경계·실패·미결정 section을 생략 없이 읽어 검토 요약으로 투영합니다.
 기존 repository upgrade는 문서를 자동 번역하거나 승인하지 않고 누락 상태를
 attention으로 드러냅니다.
 
