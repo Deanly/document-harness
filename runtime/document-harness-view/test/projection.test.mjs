@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.6.0");
+  assert.equal(result.snapshot.runtimeVersion, "1.7.0");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -23,10 +23,14 @@ test("projection keeps approval, migration fence, current repository, and source
   assert.equal(result.snapshot.policies[0].approvalState, "unreviewed");
   assert.equal(result.snapshot.summary.approvedCount, 0);
   assert.equal(result.snapshot.execution.status, "not_configured");
+  assert.equal(result.snapshot.domain.status, "not_configured");
+  assert.equal(result.snapshot.domain.sourceRoot, "docs/design");
+  assert.equal(result.snapshot.domain.sourceContract, "docs-design-only");
+  assert.ok(result.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-DESIGN-NOT-CONFIGURED"));
   assert.equal(result.snapshot.snapshot.capabilities.write, false);
 });
 
-test("domain projection keeps discovery-only documents under review when no bounded context exists", async (t) => {
+test("domain projection never promotes legacy discovery placeholders into a Board domain", async (t) => {
   const fixture = await createFixture();
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
   await mkdir(path.join(fixture.root, "docs", "design"), { recursive: true });
@@ -65,8 +69,30 @@ validation_status: unreviewed
 
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
   assert.equal(result.snapshot.domain.contexts.length, 0);
-  assert.equal(result.snapshot.domain.status, "review_requested");
+  assert.equal(result.snapshot.domain.configured, false);
+  assert.equal(result.snapshot.domain.status, "not_configured");
+  assert.equal(result.snapshot.domain.sourceContract, "docs-design-only");
+  assert.deepEqual(result.snapshot.domain.discoveryRefs, [
+    "docs/design/context-map.md",
+    "docs/design/domain-landscape.md"
+  ]);
+  const attention = result.snapshot.attention.find((item) => item.id === "ATTN-DOMAIN-DESIGN-NOT-CONFIGURED");
+  assert.ok(attention);
+  assert.deepEqual(attention.relatedRefs, result.snapshot.domain.discoveryRefs);
   assert.equal(result.snapshot.summary.domainApprovedCount, 0);
+});
+
+test("domain projection rejects a Board-specific domain source outside docs/design", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  const config = JSON.parse(await readFile(path.join(fixture.root, fixture.configPath), "utf8"));
+  config.domainDesignRoot = "docs/board-domain";
+  await writeFile(path.join(fixture.root, fixture.configPath), `${JSON.stringify(config, null, 2)}\n`, "utf8");
+
+  await assert.rejects(
+    buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
+    /config\.domainDesignRoot.*docs\/design/
+  );
 });
 
 test("domain projection fails closed when the AI Domain Expert selects an empty Board model level", async (t) => {

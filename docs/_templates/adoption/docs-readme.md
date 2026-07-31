@@ -26,6 +26,8 @@ source ref를 표시하며 authority/meaning, presentation readiness와 freshnes
 
 The View is a rebuildable projection, not an authority store. Human policy approval and required gate results must remain source-fenced receipts.
 
+Board operation must not create or modify `docs/design/`. Initialization installs DDD templates and validators but no concrete landscape, context map, or `BC-DISCOVERY` model. Missing domain truth remains `not_configured` until a separate source-backed DDD authoring task creates it.
+
 ## Authoring Quick Start
 
 ```bash

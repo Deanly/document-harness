@@ -306,7 +306,7 @@ for (const fixedRuntimeKey of ["stateDir", "runtimeProbes", "executionCheckpoint
 
 const release = readJson(releaseFile);
 assert.equal(release.releaseId, "document-harness-public-v1");
-assert.equal(release.version, "1.6.0");
+assert.equal(release.version, "1.7.0");
 assert.deepEqual(release.profileDependencies, {
   core: [],
   governance: ["core"],

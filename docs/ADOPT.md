@@ -63,6 +63,8 @@ protect live system and capture rollback fence
 
 `plan`과 `apply`는 정책이나 추진안 문구를 발명하지 않습니다. `governance` profile은 nested migration fence, 정책 추출 gap, 그리고 `ATTN-INITIATIVE-EXTRACTION`/`GAP-INITIATIVE-EXTRACTION`을 함께 설치합니다. 이후 repository-local skill이 exact source를 직접 읽어 정책·지침 후보를 먼저 정리하고, 기존 프로젝트·설계·로드맵에서 outcome portfolio 근거를 찾습니다. 근거가 충분하면 승인되지 않은 `INIT-*` migration candidate를 `docs/_indexes/initiative-register.json`에 작성하고, 충분하지 않으면 initiative gap/attention을 유지해 빈 추진안 화면을 완료처럼 보이지 않게 합니다. 인간 결정 receipt와 gate evidence가 완성된 뒤에만 verify가 migration을 완료로 판정합니다.
 
+초기화는 `docs/design/domain-landscape.md`나 `docs/design/context-map.md`를 만들지 않습니다. release는 source-backed 모델을 작성할 때 참고할 template과 validator만 설치합니다. Board operation must not create or modify `docs/design/`. 실제 도메인 원문이 없거나 이전 설치의 `BC-DISCOVERY` placeholder만 남아 있으면 View는 이를 정상 모델로 승격하지 않고 `not_configured` attention으로 표시합니다. 기존 project-owned placeholder는 upgrade에서 삭제하지 않으며, 별도 DDD 모델링 작업이 실제 근거를 확인해 교체할 때까지 source ref로만 남깁니다.
+
 ### Mature Repository Governance Bootstrap
 
 정책·지침 후보 정리 뒤에는 반드시 다음 두 결과 중 하나를 남깁니다.
@@ -97,7 +99,7 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다. 그래�
 
 지원 profile은 `core`, `governance`, `view`입니다. `core`는 adoption/Execute entrypoint뿐 아니라 reusable initiative/project/task/design/guide/report/QA template, terminology surface, `new-doc.sh`, execution/closeout validator와 `close-doc.sh`를 함께 설치합니다. `governance`는 `core`를, `view`는 `core`와 `governance`를 자동으로 포함합니다. plan은 사용자가 고른 `requestedProfiles`와 dependency를 해석한 실제 설치 집합 `profiles`를 별도로 기록합니다. 따라서 `--profile view`는 읽을 수 있는 단독 View에 필요한 세 profile 전체를 설치합니다.
 
-부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.3.0`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
+부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.7.0`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
 
 ### Status Contract
 

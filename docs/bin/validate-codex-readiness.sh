@@ -153,6 +153,9 @@ require_contains "$AGENTS_FILE" './docs/bin/validate-domain-design.sh --all'
 require_contains "$AGENTS_TEMPLATE" './docs/bin/validate-domain-design.sh --all'
 require_contains "$AGENTS_FILE" 'docs/design/` is reserved for DDD domain-model truth'
 require_contains "$AGENTS_TEMPLATE" 'docs/design/` is reserved for DDD domain-model truth'
+for board_contract in "$AGENTS_FILE" "$AGENTS_TEMPLATE" "$DOCS_DIR/_templates/adoption/agents.md" "$CODEX_HARNESS_SKILL" "$DOCS_DIR/guide/human-control-view.md" "$HUMAN_VIEW_DESIGN"; do
+  require_contains "$board_contract" 'Board operation must not create or modify `docs/design/`.'
+done
 require_contains "$CLAUDE_FILE" '@AGENTS.md'
 require_contains "$CLAUDE_TEMPLATE" '@AGENTS.md'
 require_contains "$CLAUDE_FILE" 'docs/ADOPT.md'

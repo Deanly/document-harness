@@ -57,6 +57,7 @@ function assertInstalledReferenceClosure(target, manifest) {
   ]);
   const generatedLater = [
     /^docs\/checkpoints\//,
+    /^docs\/design\//,
     /^docs\/receipts\//,
     /^docs\/(?:initiatives|projects|tasks|reports|qa)\//,
   ];
@@ -120,6 +121,8 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   assert.equal(plan.status, "PLAN_READY");
   const applied = applyPlan({ planFile, expectedPlanHash: plan.planHash });
   assert.equal(applied.status, "INSTALLED_AWAITING_REVIEW");
+  assert.equal(existsSync(path.join(target, "docs/design/domain-landscape.md")), false);
+  assert.equal(existsSync(path.join(target, "docs/design/context-map.md")), false);
 
   const manifest = JSON.parse(readFileSync(path.join(target, "docs/releases/document-harness-v1.json"), "utf8"));
   for (const installedPath of [

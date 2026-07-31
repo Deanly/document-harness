@@ -14,6 +14,7 @@ This repository uses the repository-local document harness.
 - Preserve project-owned files and dirty tracked/untracked changes.
 - Never self-grant or widen domain authority, and never self-approve policy, exceptions, migration conflicts, risk acceptance, organizational ownership, strategic domain decisions, or weakened checks.
 - Treat `Board` as the configurable user-facing name of this repository's read-only View. Route “View start” to `runtime/document-harness-view/bin/human-view start` followed by `url`; keep exact loopback and an OS-assigned port.
+- Board operation must not create or modify `docs/design/`. Board commands only project canonical domain sources; missing or discovery-only models remain attention until an independent source-backed domain-modeling task writes them.
 - Treat `INSTALLED_NOT_VERIFIED` and `INSTALLED_AWAITING_REVIEW` as incomplete.
 
 Project-specific instructions may extend this file. They must not weaken human approval, source-fence, ownership, rollback, or verification boundaries.

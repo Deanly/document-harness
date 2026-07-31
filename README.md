@@ -120,7 +120,7 @@ full-profile adoption은 다음 reusable authoring command와 그 template/refer
 1. `docs/architecture/control-plane.md`와 `docs/architecture/harness-language.md`의 placeholder를 실제 프로젝트 기준으로 교체합니다.
 2. 정책과 지침을 정돈하고, AI proposal과 human approval을 분리해 첫 `I####` 추진안을 발급합니다.
 3. 승인된 추진안 아래에 bounded delivery `project`를 발급합니다.
-4. `docs/design/domain-landscape.md`와 `docs/design/context-map.md`에서 bounded context를 정하고, 각 context에 domain model·ubiquitous language·executable examples를 함께 작성합니다. AI Domain Expert는 routine 변경을 exact delegation 안에서 관리하고, 중요한 변경은 사람이 읽을 최소 충분 모델링 수준의 Board package로 `review_requested` 상태에 둡니다.
+4. 별도의 source-backed DDD 모델링 작업에서 `docs/design/domain-landscape.md`와 `docs/design/context-map.md`의 bounded context를 정하고, 각 context에 domain model·ubiquitous language·executable examples를 함께 작성합니다. Board operation은 `docs/design/`을 만들거나 수정하지 않고 이 원문만 투영합니다. AI Domain Expert는 routine 변경을 exact delegation 안에서 관리하고, 중요한 변경은 사람이 읽을 최소 충분 모델링 수준의 Board package로 `review_requested` 상태에 둡니다.
 5. source를 누적하는 프로젝트라면 원문을 불변으로 둘 `raw/` 또는 `sources/` 위치를 정하고, 생성 문서의 `source_refs` property로 연결합니다.
 6. 실제 실행 단위는 현재 project 아래 `task`로 수용하되, 번호 발급은 `main`에서 수행합니다.
 7. 별도 delivery boundary가 명확하고 사람이 승인할 때만 새 `project`를 발급하고, 왜 task가 아닌지 먼저 남깁니다.

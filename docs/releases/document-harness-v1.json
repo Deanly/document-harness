@@ -2,7 +2,7 @@
   "$schema": "../schemas/release-manifest.schema.json",
   "schemaVersion": 1,
   "releaseId": "document-harness-public-v1",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "profiles": [
     "core",
     "governance",
@@ -95,18 +95,6 @@
     {
       "sourcePath": "docs/_templates/adoption/ubiquitous-language.md",
       "targetPath": "docs/architecture/harness-language.md",
-      "profiles": ["core"],
-      "ownership": "project-owned"
-    },
-    {
-      "sourcePath": "docs/_templates/adoption/domain-landscape.md",
-      "targetPath": "docs/design/domain-landscape.md",
-      "profiles": ["core"],
-      "ownership": "project-owned"
-    },
-    {
-      "sourcePath": "docs/_templates/adoption/context-map.md",
-      "targetPath": "docs/design/context-map.md",
       "profiles": ["core"],
       "ownership": "project-owned"
     },
@@ -680,8 +668,6 @@
       "docs/architecture/execution-loop-plane.md",
       "docs/architecture/harness-adoption-plane.md",
       "docs/architecture/human-control-view-plane.md",
-      "docs/design/domain-landscape.md",
-      "docs/design/context-map.md",
       "docs/governance/initiative-governance.md",
       "docs/governance/policy-to-evidence.md",
       "docs/guide/ddd-domain-design.md",

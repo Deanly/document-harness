@@ -163,6 +163,7 @@
   - 중요한 변경은 AI Domain Expert가 `bounded-context`, `aggregate`, `entity`, `value-object`, `business-rule`, `state-transition`, `ubiquitous-language`, `scenario` 중 사람이 결정하기 위한 최소 충분 수준을 선택해 Board에 제시합니다.
   - `display_title`, `human_summary`, `presentation_status`, `presentation_ref`는 Board 가독성 상태이며 domain meaning approval와 별도입니다.
   - 사람용 설명이 `missing` 또는 invalid이면 technical title/ID를 정상 Board card로 대체하지 않습니다.
+  - Board operation must not create or modify `docs/design/`. View는 고정된 `docs/design/` 원문만 투영하며 원문 없음이나 legacy `BC-DISCOVERY`는 `not_configured` attention으로 처리합니다.
   - 자세한 계약은 `docs/guide/ddd-domain-design.md`를 따릅니다.
 
 ### Architecture

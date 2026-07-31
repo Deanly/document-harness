@@ -75,6 +75,8 @@ AI Domain Expert는 특정 LLM 제품명이 아니라 Codex와 Claude를 포함�
 
 Board의 Domain 영역은 technical metadata 목록이나 모든 DDD 요소의 dump가 아닙니다. AI Domain Expert가 근거·충돌·역할 영향·반례를 종합하고, 사람이 실제로 승인하거나 수정할 수 있도록 선택한 도메인 모델링 결과물입니다.
 
+Board operation must not create or modify `docs/design/`. Board의 시작·상태·새로고침·필터·검토 요청은 현재 `docs/design/`의 exact source를 읽는 projection-only 동작입니다. 원문이 없거나 legacy `BC-DISCOVERY` placeholder뿐이면 AI Domain Expert 종합안을 새로 만들지 않고 `not_configured` attention을 반환합니다. 도메인 모델 작성·수정은 별도의 source-backed DDD 요청으로 이 guide의 authoring·authority 절차를 다시 시작해야 합니다.
+
 `bounded-context` model은 다음 필드를 가집니다.
 
 | Field | Meaning |
@@ -191,10 +193,11 @@ presentation receipt가 current document bytes와 일치해야 합니다. `revie
 
 ## Migration
 
-기존 `docs/design`의 architecture/governance 문서는 target repository ownership을 보존하며 점진적으로 재분류합니다. adoption은 old project-owned file을 삭제하거나 덮어쓰지 않고 새 DDD surface와 explicit migration attention을 추가합니다.
+기존 `docs/design`의 architecture/governance 문서는 target repository ownership을 보존하며 점진적으로 재분류합니다. adoption은 old project-owned file을 삭제하거나 덮어쓰지 않으며 concrete domain truth도 생성하지 않습니다. template·validator·projection contract만 설치하고, 기존 discovery placeholder나 미분류 source는 별도 source-backed 모델링 전까지 explicit attention으로 남깁니다.
 
 ## Change Log
 
 - 2026-07-29: DDD-only design surface, expert approval, role loading, traceability와 migration 계약을 추가했다.
 - 2026-07-30: 사람용 제목·요약, presentation review receipt, 세 상태 분리와 Board 차단 계약을 추가했다.
 - 2026-07-31: AI Domain Expert의 위임 권위, 최소 충분 모델링 수준 선택과 Board domain review package 계약을 추가했다.
+- 2026-08-01: Board operation의 projection-only 경계와 adoption의 concrete domain 비생성 계약을 추가했다.

@@ -63,9 +63,11 @@ Treat the configured `presentation.displayName` (default `Board`) as the user-fa
 
 Keep `<displayName> / <repository>` visible as the fixed top-left identity. Expect configured `tabLabels` in the canonical key order `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`. The Domain tab projects the AI Domain Expert's recommendation, chosen minimum-sufficient modeling level, selection reason, exact selected model, human decision, protected outcome, counter-condition, validation/freshness, and source evidence first. It does not dump every entity or technical ID onto the first screen and does not grant model authority. Treat domain, policy, guideline, and initiative as independent first-class surfaces. Initiative directly links policy WHY and selected guideline HOW, while projects own `related_initiative` and the View reverse-indexes their status/path without inventing progress.
 
+Board operation must not create or modify `docs/design/`. Starting, inspecting, refreshing, filtering, or reviewing the Board is projection-only. If `docs/design/` has no real source-backed model or contains only the legacy `BC-DISCOVERY` placeholder, keep the Domain surface `not_configured`, emit exact-source attention, and stop; authoring domain truth requires a separate domain-modeling request and the DDD workflow.
+
 Normal Board cards use only verified human-facing presentation fields. A missing or invalid presentation remains available through review attention and exact source evidence, but technical IDs or Markdown section fallbacks must not become the visible title or summary.
 
-Do not interpret these phrases as authority to choose another repository, bind remotely, claim a fixed port, kill a foreign process, mutate governance, approve a candidate, or execute project work.
+Do not interpret these phrases as authority to choose another repository, bind remotely, claim a fixed port, kill a foreign process, mutate governance or domain truth, approve a candidate, or execute project work.
 
 The exact phrases `View start` and `View screen` route to the View. Phrases such as `target board`, hardware board selection, or board-porting context continue to mean a physical/target board and must not start the View.
 

@@ -498,7 +498,7 @@ function renderDomain(snapshot) {
       ? "표시된 모든 bounded-context model은 exact human-confirmed 또는 delegated-AI receipt와 현재 bytes가 일치합니다."
       : domain.status === "review_requested"
         ? "AI Domain Expert가 중요한 의미를 사람이 읽을 최소 충분 모델링 수준으로 종합했습니다. 선택된 실제 모델과 영향·반례를 읽고 필요한 결정만 내려 주세요."
-        : "이 repository에 DDD domain landscape와 bounded-context model을 먼저 작성해야 합니다.");
+        : "Board는 도메인 모델을 만들지 않습니다. 별도의 source-backed 도메인 모델링 작업에서 docs/design에 실제 업무 모델을 작성하면 Board가 그 원문만 다시 읽어 표시합니다.");
   const authorityLinks = $("#domain-authority-links");
   clear(authorityLinks);
   if (domain.landscape?.source) authorityLinks.append(domainReference(domain.landscape.source, "Domain landscape"));

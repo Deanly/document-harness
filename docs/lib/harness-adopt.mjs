@@ -1813,8 +1813,12 @@ function auditInstallationInventory(lock, release) {
       findings.push({ code: "INSTALLATION_INVENTORY_GENERATOR", path: filePath, expected: releaseEntry.generator, actual: entry.generator });
     }
   }
-  for (const filePath of installed.keys()) {
-    if (!expected.has(filePath)) findings.push({ code: "INSTALLATION_INVENTORY_UNEXPECTED", path: filePath });
+  for (const [filePath, entry] of installed) {
+    const legacyProjectOwnedDomainPlaceholder = entry.ownership === "project-owned"
+      && ["docs/design/domain-landscape.md", "docs/design/context-map.md"].includes(filePath);
+    if (!expected.has(filePath) && !legacyProjectOwnedDomainPlaceholder) {
+      findings.push({ code: "INSTALLATION_INVENTORY_UNEXPECTED", path: filePath });
+    }
   }
   return findings;
 }

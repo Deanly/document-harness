@@ -1677,6 +1677,8 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
           configured: false,
           status: "not_configured",
           sourceRoot: domainRoot,
+          sourceContract: "docs-design-only",
+          discoveryRefs: [],
           landscape: null,
           contextMap: null,
           relationships: [],
@@ -1693,6 +1695,8 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
         configured: true,
         status: "degraded",
         sourceRoot: domainRoot,
+        sourceContract: "docs-design-only",
+        discoveryRefs: [],
         error: `domain design root must be a non-symlink directory: ${domainRoot}`,
         landscape: null,
         contextMap: null,
@@ -1765,6 +1769,31 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
     const landscapeEntry = parsed.find(({ design }) => design.design_kind === "domain-landscape") ?? null;
     const contextMapEntry = parsed.find(({ design }) => design.design_kind === "context-map") ?? null;
     const modelEntries = parsed.filter(({ design }) => design.design_kind === "bounded-context");
+    const discoveryOnly = modelEntries.length === 0 && parsed.some(({ captured, design }) => (
+      design.bounded_context_id === "DOMAIN-REPOSITORY"
+      || design.bounded_context_id === "CONTEXT-MAP-REPOSITORY"
+      || captured.bytes.toString("utf8").includes("BC-DISCOVERY")
+    ));
+    if (capturedDocs.length === 0 || discoveryOnly) {
+      return {
+        domain: {
+          configured: false,
+          status: "not_configured",
+          sourceRoot: domainRoot,
+          sourceContract: "docs-design-only",
+          discoveryRefs: capturedDocs.map((captured) => captured.relativePath),
+          landscape: null,
+          contextMap: null,
+          relationships: [],
+          contexts: []
+        },
+        inputs: capturedDocs.map((captured) => ({
+          label: "domain design discovery placeholder",
+          relativePath: captured.relativePath,
+          fence: captured.fence
+        }))
+      };
+    }
     const approvalInputs = [];
     const presentationInputs = [];
     const contexts = [];
@@ -1963,6 +1992,8 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
         configured: true,
         status: invalidCount > 0 ? "degraded" : reviewCount > 0 ? "review_requested" : "current",
         sourceRoot: domainRoot,
+        sourceContract: "docs-design-only",
+        discoveryRefs: [],
         landscape: landscapeEntry ? {
           title: landscapeEntry.design.title,
           displayTitle: landscapePresentation.displayTitle,
@@ -2008,6 +2039,8 @@ async function readDomainDesign(repoRoot, domainRoot, locale) {
         configured: true,
         status: "degraded",
         sourceRoot: domainRoot,
+        sourceContract: "docs-design-only",
+        discoveryRefs: [],
         error: error.message,
         landscape: null,
         contextMap: null,
@@ -2504,6 +2537,14 @@ function createGeneratedAttention(register, policies, guidelines, initiatives, o
       relatedRefs: domain.contexts
         .filter((item) => item.validationStatus === "invalid" || item.boardReviewStatus === "invalid")
         .map((item) => item.modelRef)
+    });
+  } else if (!domain.configured) {
+    attention.unshift({
+      id: "ATTN-DOMAIN-DESIGN-NOT-CONFIGURED",
+      severity: "warning",
+      title: "근거가 있는 DDD 도메인 모델이 필요합니다",
+      humanSummary: "Board는 도메인 모델을 만들거나 수정하지 않습니다. 별도의 도메인 모델링 작업에서 실제 업무 근거를 바탕으로 docs/design의 landscape, context map과 bounded-context model을 작성한 뒤 Board가 다시 읽어야 합니다.",
+      relatedRefs: domain.discoveryRefs ?? []
     });
   } else if (domain.configured) {
     const reviewContexts = domain.contexts.filter((item) => !["approved_current", "ai_current"].includes(item.validationStatus));

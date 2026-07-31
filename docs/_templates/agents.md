@@ -47,6 +47,7 @@
 - AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.
 - Keep extraction confidence, source authority, human approval, and implementation enforcement separate. Never treat code/config observation or retrieval metadata as human approval.
 - Treat `Board` as the configurable user-facing name of the repo-local View. Route “View start” to `human-view start` followed by `url`, use exact loopback + OS-assigned port, and never kill a foreign process or bind remotely without separate human authority.
+- Board operation must not create or modify `docs/design/`. Board commands only project the canonical source; missing or discovery-only models remain attention until an independent source-backed domain-modeling task writes them.
 - After meaningful action, validation, checkpoint, or attention changes, refresh sanitized View probes and wait for a new snapshot sequence; browser polling alone is not freshness evidence.
 - Update the current checkpoint after meaningful action, evidence, attention, or stop/resume transitions; keep task `Status` as append-only milestone history.
 - Do not issue a new `initiative` or `project` document without explicit human approval. Initiative issuance additionally requires an exact human issuance-approval ref.

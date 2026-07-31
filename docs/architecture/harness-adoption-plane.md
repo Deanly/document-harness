@@ -68,6 +68,8 @@ installation lock은 file path, ownership, upstream baseline hash, installed has
 
 baseline이 없는 same-name file은 modified 여부를 추측할 수 없으므로 `project-owned` 또는 `CONFLICT`로 처리합니다.
 
+신규 설치는 concrete `docs/design/domain-landscape.md`, `docs/design/context-map.md` 또는 `BC-DISCOVERY` 모델을 생성하지 않습니다. 설치 책임은 DDD template·validator·projection contract 제공까지이며, domain truth authoring은 별도의 source-backed DDD workflow 책임입니다. 이전 release lock에만 존재하는 project-owned discovery placeholder는 upgrade inventory에서 허용하되 삭제하거나 현재 모델로 간주하지 않습니다.
+
 `project-owned` 보존은 현재 authoring 계약의 검증 면제가 아닙니다. upgrade 뒤 verify는 `new-doc.sh`, Project/Task template, closeout validator가 Initiative 발급 승인과 Policy/Guideline → Initiative → Project → Task lineage를 의미적으로 구현하는지 검사합니다. exact upstream byte가 아니라 stable field, placeholder, validator/call token을 검사하며, 구형 umbrella-only 계약이면 `LEGACY_GOVERNANCE_AUTHORING_CONTRACT`와 빠진 capability를 반환해 수동 병합 전에는 완료 상태로 올라가지 못하게 합니다.
 
 ## Plan And Apply Contract

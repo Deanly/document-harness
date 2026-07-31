@@ -116,6 +116,7 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   }
   const manifest = JSON.parse(readFileSync(path.join(ROOT, "docs/releases/document-harness-v1.json"), "utf8"));
   assert.equal(manifest.releaseId, "document-harness-public-v1");
+  assert.equal(manifest.version, "1.7.0");
   assert.deepEqual(manifest.profileDependencies, {
     core: [],
     governance: ["core"],
@@ -127,6 +128,8 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   for (const requiredPath of manifest.verification.requiredInstalledPaths) {
     assert.equal(releaseTargets.has(requiredPath), true, `verification path is release-managed: ${requiredPath}`);
   }
+  assert.equal(releaseTargets.has("docs/design/domain-landscape.md"), false);
+  assert.equal(releaseTargets.has("docs/design/context-map.md"), false);
   const viewRoot = path.join(ROOT, "runtime/document-harness-view");
   const declaredViewSources = new Set(
     manifest.files
@@ -1399,7 +1402,7 @@ test("verification is fail-closed until matching evidence and human review exist
   const catalog = JSON.parse(readFileSync(catalogFile, "utf8"));
   catalog.migration.status = "reviewed";
   catalog.migration.receiptRef = "docs/receipts/human-policy-decision.json";
-  const effectivePolicyRef = "docs/design/fixture-effective-policy.md";
+  const effectivePolicyRef = "docs/governance/fixture-effective-policy.md";
   const effectivePolicyBytes = "# Fixture effective policy\n";
   const candidateSourceRef = "docs/ADOPT.md";
   const candidateSourceBytes = readFileSync(path.join(target, candidateSourceRef));

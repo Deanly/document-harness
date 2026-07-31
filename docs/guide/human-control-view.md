@@ -99,6 +99,7 @@ Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context mode
 - 업무 경계, failure semantics, state transition, 결정 사항과 역할별 판단 기준은 접을 수 있는 상세 영역에서 원문 의미를 보존합니다.
 - aggregate, business rule, scenario, command, event count는 탐색용 요약이며 실제 본문을 대신하지 않습니다.
 - Board의 표시나 필터 조작은 모델 승인, 변경 또는 delivery 실행 권한을 만들지 않습니다. 중요한 판단은 별도 broker가 exact model/review bytes를 묶은 receipt로 기록한 후 projection이 다시 읽습니다.
+- Board operation must not create or modify `docs/design/`. 시작·상태·새로고침·필터·검토는 이미 존재하는 `docs/design/` 원문을 읽는 동작일 뿐입니다. 원문이 없거나 legacy `BC-DISCOVERY`뿐이면 `not_configured` attention으로 표시하고, 별도 source-backed 도메인 모델링 작업 전에는 정상 모델이나 검토안을 합성하지 않습니다.
 
 상단 bar의 `connected` 표시는 freshness를 의미하지 않습니다. `fresh`, `updating`, `direct`, `degraded`, `unknown`을 별도 badge로 표시합니다.
 

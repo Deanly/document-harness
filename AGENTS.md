@@ -45,6 +45,7 @@
 - AI may draft policy/standard/exception proposals but must not self-approve them. Pause on conflicts, stale approval fences, or missing human risk decisions.
 - Keep extraction confidence, source authority, human approval, and implementation enforcement as separate fields. Code/config observations and retrieval metadata are not human policy approval.
 - Repo-local View servers default to exact loopback binding and OS-assigned ports. Never kill an existing process to obtain a port, and never expose the View remotely without a separate human decision.
+- Board operation must not create or modify `docs/design/`. Start, status, refresh, filtering, and review are projection-only operations; missing or discovery-only domain sources become explicit attention, and an independent source-backed domain-modeling task must author the canonical model.
 - After a meaningful action, validation, checkpoint, or attention change, refresh sanitized View probes and wait for a new snapshot sequence. Browser polling alone is not freshness evidence.
 - Update the current checkpoint after a meaningful action, validation result, attention request, or stop/resume transition; keep task `Status` as append-only milestone history.
 - When changing document rules, update the template, the guide that explains the rule, and the validator in the same change when applicable.
