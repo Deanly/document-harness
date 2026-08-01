@@ -51,22 +51,23 @@
 - 하지만 사람의 명시적 요청 또는 승인 없이 새 `project` 문서를 발급하거나 기존 work를 새 `project`로 승격하지 않습니다.
 - 승인 전 기본값은 현재 `project` 아래의 새 `task`이며, 아직 경계가 흐리면 `guide` 또는 `design`으로 남깁니다.
 
-## Main-Issued Numbered Document Rule
+## Baseline-Separated Numbered Document Rule
 
-번호가 붙는 `initiative`, `project`, `task` 문서는 항상 `main`의 문서 집합을 기준으로 발급합니다. feature branch에서 직접 번호를 계산하면 branch별 문서 집합이 달라져 같은 번호가 서로 다른 문서를 가리킬 수 있습니다. Initiative는 추가로 exact human issuance-approval ref가 필요합니다.
+번호가 붙는 `initiative`, `project`, `task`, `qa` 문서는 최신 `origin/main`의 문서 집합을 기준으로 직렬 발급합니다. 다만 문서 번호·권위의 기준과 제품 코드의 작업 기준은 분리합니다. feature branch에서 직접 번호를 계산하면 같은 번호가 서로 다른 문서를 가리킬 수 있고, 반대로 문서를 받기 위해 `main` 전체를 merge하면 미배포 제품 코드가 hotfix로 역류할 수 있습니다. Initiative는 추가로 exact human issuance-approval ref가 필요합니다.
 
 기본 흐름:
 
-1. 현재 work branch가 dirty하면 `git stash push -u`로 untracked 파일까지 보관합니다.
-2. `main`으로 전환하고 remote tracking branch가 있으면 `git pull --ff-only`로 최신화합니다.
-3. clean `main`에서 해당 명령을 실행합니다. Initiative는 `./docs/bin/new-doc.sh initiative <slug> <issuance-approval-ref>`, project는 `./docs/bin/new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]`, task는 `./docs/bin/new-doc.sh task <slug> <project-id>`를 사용합니다. Project의 상위 `I####`는 active/approved여야 하고 Task의 `P####`는 그 active/approved Initiative로 해소되어야 하며 기본 상위를 추론하지 않습니다. 명시적인 legacy lineage 세 field를 모두 가진 기존 Project만 migration 동안 예외적으로 Task parent가 될 수 있습니다.
-4. `new-doc.sh`가 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다. 공유 remote가 있으면 push 또는 공유까지 끝냅니다.
-5. 원래 work branch로 돌아가 `main`을 merge해서 새 문서와 그 사이 `main`에 들어온 배포본을 함께 가져옵니다.
-6. stash를 썼다면 merge 후 `git stash pop`하고 충돌을 해결합니다.
+1. `main` issuer, feature, hotfix를 각각 별도 `git worktree`로 유지합니다.
+2. issuer worktree에서 `git fetch origin main` 후 clean `main`이 최신 `origin/main`과 정확히 같은지 확인합니다.
+3. feature는 작업의 immutable baseline SHA, hotfix는 실제 최근 배포 tag가 가리키는 immutable SHA를 선택합니다. branch 이름은 진실값이 아닙니다.
+4. `./docs/bin/issue-doc-bridge.sh --baseline-ref <ref> --delivery-branch <branch> --workstream-kind <feature|hotfix> -- <type> ...`를 실행합니다. Project의 상위 `I####`와 Task의 `P####` authority gate는 기존과 동일합니다.
+5. 발급기는 baseline을 부모로 하면서 제품 코드는 baseline과 동일하고, 최신 main의 document control plane과 새 draft만 포함하는 bridge commit `D`를 만듭니다.
+6. Git commit은 자기 SHA를 자기 내용에 기록할 수 없으므로, 다음 docs-only finalization commit `R`이 `D`의 SHA를 문서와 issuance receipt에 확정합니다.
+7. 같은 `D`와 `R`을 cherry-pick하지 않고 `main`과 delivery branch 양쪽에 merge하고 push합니다. `R`이 remote 양쪽의 공통 조상인지 validator로 확인한 뒤 번호를 확정합니다.
 
-이 흐름에서 `draft` commit은 문서 번호 reservation입니다. 아직 active truth가 아니므로 폴더 README의 active 목록에는 올리지 않습니다. 이후 work branch에서 해당 초안을 채우고, 필요한 경우 같은 branch에서 active 전환과 README 갱신을 수행합니다.
+이 흐름에서 `D`는 문서 번호 reservation 후보이고 `R`은 그 provenance를 확정합니다. 둘 다 remote `main`과 delivery branch에 공유되기 전에는 번호가 확정되지 않습니다. 아직 active truth가 아니므로 draft를 폴더 README의 active 목록에 올리지 않습니다.
 
-개발 도중 `main`에 이미 배포된 버전을 work branch로 가져오는 것은 허용됩니다. 이는 문서 번호 정합성을 유지하면서 배포된 baseline 위에서 계속 개발하게 만드는 정상적인 refresh입니다.
+`main`이 실제 배포 기준과 같을 때 제품 코드 refresh는 별도 판단으로 허용할 수 있습니다. 그러나 문서 발급 자체는 그 코드 merge를 요구하지 않습니다. 여러 feature는 병렬 실행하고 번호 할당만 직렬화합니다.
 
 ## Concurrent Feature And Hotfix Operating Recommendation
 

@@ -51,7 +51,7 @@
 - After meaningful action, validation, checkpoint, or attention changes, refresh sanitized View probes and wait for a new snapshot sequence; browser polling alone is not freshness evidence.
 - Update the current checkpoint after meaningful action, evidence, attention, or stop/resume transitions; keep task `Status` as append-only milestone history.
 - Do not issue a new `initiative` or `project` document without explicit human approval. Initiative issuance additionally requires an exact human issuance-approval ref.
-- Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
+- Issue numbered `initiative`/`project`/`task`/`qa` docs from a clean issuer worktree whose `main` exactly matches latest `origin/main`. Use `docs/bin/issue-doc-bridge.sh` with an immutable code baseline; merge the same docs-only bridge/finalization commits into `main` and the delivery branch without cherry-picking. Never merge unreleased `main` product code merely to receive a document.
 - Pass Initiative issuance a safe exact human approval ref. Issue Project only under an active/approved Initiative, and issue Task only under a Project whose modern Initiative lineage resolves active/approved; never infer default `I0001`/`P0001`. Complete explicit legacy Project lineage is the migration-only Task-parent exception.
 
 ## Documentation Rules

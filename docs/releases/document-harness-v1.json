@@ -312,6 +312,18 @@
       "mode": "0755"
     },
     {
+      "sourcePath": "docs/bin/issue-doc-bridge.sh",
+      "targetPath": "docs/bin/issue-doc-bridge.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
+      "sourcePath": "docs/bin/validate-document-bridge.sh",
+      "targetPath": "docs/bin/validate-document-bridge.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
       "sourcePath": "docs/bin/validate-closeout.sh",
       "targetPath": "docs/bin/validate-closeout.sh",
       "profiles": ["core"],
@@ -694,6 +706,8 @@
       "docs/_templates/adoption/human-policy-decision-receipt.json",
       "docs/bin/harness-adopt",
       "docs/bin/new-doc.sh",
+      "docs/bin/issue-doc-bridge.sh",
+      "docs/bin/validate-document-bridge.sh",
       "docs/bin/validate-closeout.sh",
       "docs/bin/close-doc.sh",
       "docs/bin/validate-execution-loop.sh",

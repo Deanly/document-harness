@@ -10,6 +10,12 @@ presentation_ref:
 status: draft
 approval_status: unreviewed
 issuance_approval_ref: {{ISSUANCE_APPROVAL_REF}}
+workstream_kind: {{WORKSTREAM_KIND}}
+code_baseline_ref: {{CODE_BASELINE_REF}}
+document_issuance_ref: {{DOCUMENT_ISSUANCE_REF}}
+document_bridge_ref: {{DOCUMENT_BRIDGE_REF}}
+document_issuance_receipt: {{DOCUMENT_ISSUANCE_RECEIPT}}
+delivery_branch: {{DELIVERY_BRANCH}}
 approval_ref:
 owner:
 sponsor:
@@ -42,6 +48,12 @@ tags:
 - 사람용 설명 상태 / 검토 근거: missing /
 - Approval Status: unreviewed
 - Issuance Approval Ref: {{ISSUANCE_APPROVAL_REF}}
+- Workstream Kind: {{WORKSTREAM_KIND}}
+- Code Baseline Ref: {{CODE_BASELINE_REF}}
+- Document Issuance Ref: {{DOCUMENT_ISSUANCE_REF}}
+- Document Bridge Ref: {{DOCUMENT_BRIDGE_REF}}
+- Document Issuance Receipt: {{DOCUMENT_ISSUANCE_RECEIPT}}
+- Delivery Branch: {{DELIVERY_BRANCH}}
 - Approval Ref:
 - Guideline Disposition: needs_review
 - Guideline Disposition Reason:

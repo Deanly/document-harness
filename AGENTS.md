@@ -51,7 +51,7 @@
 - Update the current checkpoint after a meaningful action, validation result, attention request, or stop/resume transition; keep task `Status` as append-only milestone history.
 - When changing document rules, update the template, the guide that explains the rule, and the validator in the same change when applicable.
 - Do not issue a new `initiative` or `project` document unless the user explicitly asks for it or approves it. Initiative issuance also requires an exact human issuance-approval ref; suggest the need and rationale instead of inferring authority.
-- Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`; commit the draft on `main` immediately, then merge `main` back into the work branch. If the work branch is dirty, stash before switching.
+- Issue numbered `initiative`/`project`/`task`/`qa` docs from a clean issuer worktree whose `main` exactly matches latest `origin/main`. Use `docs/bin/issue-doc-bridge.sh` with an immutable code baseline; merge the same docs-only bridge/finalization commits into `main` and the delivery branch without cherry-picking. Never merge unreleased `main` product code merely to receive a document.
 - Pass Initiative issuance a safe exact human approval ref. Issue Project only under an active/approved Initiative whose repository-relative JSON activation receipt and current source/effective bytes pass `docs/lib/initiative-authority.mjs`, and issue Task only under a Project whose modern Initiative lineage passes the same gate; active/approved prose alone grants no authority. Never infer default `I0001`/`P0001`. Complete explicit legacy Project lineage is the migration-only Task-parent exception.
 
 ## Documentation Rules

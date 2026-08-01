@@ -148,7 +148,9 @@ document-harness.yaml                            # generated repository profile
 .agents/skills/operate-document-harness/        # canonical repository-local agent skill
 .claude/skills/operate-document-harness/         # thin Claude project adapter
 docs/_templates/{project,task,design,guide,report,qa}.md
-docs/bin/new-doc.sh                               # clean-main numbered and unnumbered draft issuance
+docs/bin/new-doc.sh                               # low-level draft renderer
+docs/bin/issue-doc-bridge.sh                      # baseline-separated numbered issuance
+docs/bin/validate-document-bridge.sh              # docs-only provenance and ancestry gate
 docs/bin/validate-execution-loop.sh               # task/checkpoint loop contract
 docs/bin/validate-closeout.sh                     # project/task/QA completion contract
 docs/bin/close-doc.sh                             # validation-gated project/task closeout

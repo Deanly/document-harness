@@ -25,13 +25,13 @@ Types:
   qa        -> docs/qa/QA0001-slug.md
 
 Notes:
-  initiative/task/project/qa issuance must run from a clean, up-to-date main branch.
+  Numbered issuance is orchestrated by issue-doc-bridge.sh from a clean issuer main worktree.
   Initiative issuance requires an exact human issuance-approval ref.
   Project issuance requires a canonical parent Initiative with a current source-fenced human activation receipt.
   Task issuance requires a Project whose modern Initiative lineage passes the same activation authority gate;
   complete explicit legacy Project lineage is accepted only as a migration grandfathering case.
   No default I0001/P0001 is inferred.
-  The generated initiative/task/project/qa draft is committed on main automatically.
+  In bridge mode this low-level renderer creates the draft without committing it.
 EOF
 }
 
@@ -97,36 +97,25 @@ next_number() {
 }
 
 require_numbered_doc_issue_context() {
-  if ! git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "error: initiative/task/project/qa docs require a git worktree so main-based issuance can be verified" >&2
-    exit 1
+  if [[ "${HARNESS_DOCUMENT_BRIDGE_MODE:-}" == "1" ]]; then
+    local required_name
+    for required_name in \
+      HARNESS_WORKSTREAM_KIND \
+      HARNESS_CODE_BASELINE_REF \
+      HARNESS_DOCUMENT_ISSUANCE_REF \
+      HARNESS_DELIVERY_BRANCH
+    do
+      if [[ -z "${!required_name:-}" ]]; then
+        echo "error: bridge issuance requires $required_name" >&2
+        exit 1
+      fi
+    done
+    return
   fi
 
-  local branch
-  branch="$(git -C "$ROOT_DIR" symbolic-ref --quiet --short HEAD || true)"
-  if [[ "$branch" != "main" ]]; then
-    echo "error: initiative/task/project/qa docs must be issued from main, not '${branch:-detached HEAD}'" >&2
-    echo "hint: stash dirty branch work, switch to main, update it, issue and commit the draft, then merge main back into the work branch" >&2
-    exit 1
-  fi
-
-  if [[ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]]; then
-    echo "error: initiative/task/project/qa docs must be issued from a clean main worktree" >&2
-    echo "hint: commit or stash local changes before issuing the numbered draft" >&2
-    exit 1
-  fi
-
-  local upstream
-  upstream="$(git -C "$ROOT_DIR" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
-  if [[ -n "$upstream" ]]; then
-    local behind
-    behind="$(git -C "$ROOT_DIR" rev-list --count "HEAD..$upstream" 2>/dev/null || printf '0')"
-    if [[ "${behind:-0}" != "0" ]]; then
-      echo "error: main is behind $upstream; update main before issuing an initiative/task/project/qa doc" >&2
-      echo "hint: git pull --ff-only" >&2
-      exit 1
-    fi
-  fi
+  echo "error: numbered documents must be issued through docs/bin/issue-doc-bridge.sh" >&2
+  echo "hint: provide --baseline-ref, --delivery-branch, and --workstream-kind from a clean issuer main worktree" >&2
+  exit 1
 }
 
 render_template() {
@@ -150,6 +139,12 @@ render_template() {
   RELATED_PROJECT_VALUE="$related_project" \
   DESIGN_KIND_VALUE="$design_kind" \
   BOUNDED_CONTEXT_VALUE="$bounded_context" \
+  WORKSTREAM_KIND_VALUE="${HARNESS_WORKSTREAM_KIND:-}" \
+  CODE_BASELINE_REF_VALUE="${HARNESS_CODE_BASELINE_REF:-}" \
+  DOCUMENT_ISSUANCE_REF_VALUE="${HARNESS_DOCUMENT_ISSUANCE_REF:-}" \
+  DOCUMENT_BRIDGE_REF_VALUE="${HARNESS_DOCUMENT_BRIDGE_REF:-pending}" \
+  DOCUMENT_ISSUANCE_RECEIPT_VALUE="${HARNESS_DOCUMENT_ISSUANCE_RECEIPT:-pending}" \
+  DELIVERY_BRANCH_VALUE="${HARNESS_DELIVERY_BRANCH:-}" \
     perl -pe '
       s/\{\{DOC_ID\}\}/$ENV{DOC_ID_VALUE}/g;
       s/\{\{TITLE\}\}/$ENV{TITLE_VALUE}/g;
@@ -160,6 +155,12 @@ render_template() {
       s/\{\{RELATED_PROJECT\}\}/$ENV{RELATED_PROJECT_VALUE}/g;
       s/\{\{DESIGN_KIND\}\}/$ENV{DESIGN_KIND_VALUE}/g;
       s/\{\{BOUNDED_CONTEXT\}\}/$ENV{BOUNDED_CONTEXT_VALUE}/g;
+      s/\{\{WORKSTREAM_KIND\}\}/$ENV{WORKSTREAM_KIND_VALUE}/g;
+      s/\{\{CODE_BASELINE_REF\}\}/$ENV{CODE_BASELINE_REF_VALUE}/g;
+      s/\{\{DOCUMENT_ISSUANCE_REF\}\}/$ENV{DOCUMENT_ISSUANCE_REF_VALUE}/g;
+      s/\{\{DOCUMENT_BRIDGE_REF\}\}/$ENV{DOCUMENT_BRIDGE_REF_VALUE}/g;
+      s/\{\{DOCUMENT_ISSUANCE_RECEIPT\}\}/$ENV{DOCUMENT_ISSUANCE_RECEIPT_VALUE}/g;
+      s/\{\{DELIVERY_BRANCH\}\}/$ENV{DELIVERY_BRANCH_VALUE}/g;
     ' "$template" > "$output"
 }
 
@@ -297,15 +298,6 @@ require_task_parent_lineage() {
     echo "error: task parent project has unsupported legacy project_role: ${project_role}" >&2
     exit 1
   fi
-}
-
-commit_numbered_doc_draft() {
-  local output="$1"
-  local doc_id="$2"
-  local slug="$3"
-
-  git -C "$ROOT_DIR" add -- "$output"
-  git -C "$ROOT_DIR" commit -m "docs: issue ${doc_id} ${slug}"
 }
 
 if [[ $# -lt 2 || $# -gt 4 ]]; then
@@ -482,7 +474,10 @@ fi
 
 render_template "$TEMPLATE" "$OUTPUT" "$DOC_ID" "$TITLE" "$ISSUANCE_APPROVAL_REF" "$RELATED_INITIATIVE" "$INITIATIVE_RELATION" "$RELATED_PROJECT" "$DESIGN_KIND" "$BOUNDED_CONTEXT"
 if [[ "$NUMBERED_DOC" == "true" ]]; then
-  commit_numbered_doc_draft "$OUTPUT" "$DOC_ID" "$SLUG"
-  echo "hint: draft committed on main; push/share if needed, then merge main back into the work branch" >&2
+  if [[ "${HARNESS_DOCUMENT_BRIDGE_MODE:-}" != "1" ]]; then
+    echo "error: numbered document renderer escaped bridge mode" >&2
+    exit 1
+  fi
+  echo "hint: draft rendered for docs-only bridge; the bridge orchestrator will commit and finalize its receipt" >&2
 fi
 echo "$OUTPUT"

@@ -3,7 +3,8 @@
 - `ADOPT.md`: deterministic `plan → apply → verify → rollback` lifecycle.
 - `EXECUTE.md`: loop execution, checkpoint, attention, and evidence entrypoint.
 - `_templates/`: reusable initiative, project, task, design, guide, report, QA, and execution-checkpoint shapes.
-- `bin/new-doc.sh`: creates document drafts; numbered initiative/project/task/QA drafts require a clean `main` and are committed automatically. Initiative needs a safe exact human issuance ref; Project and Task require lineage whose activation is proven by a repository-relative JSON receipt checked against current source/effective bytes.
+- `bin/new-doc.sh`: low-level draft renderer. Numbered initiative/project/task/QA issuance uses `bin/issue-doc-bridge.sh` from a clean issuer `main == origin/main`, with an immutable code baseline and the same bridge/finalization commits shared by `main` and the delivery branch. Initiative needs a safe exact human issuance ref; Project and Task require lineage whose activation is proven by a repository-relative JSON receipt checked against current source/effective bytes.
+- `bin/validate-document-bridge.sh`: verifies immutable issuance provenance, docs-only isolation and remote common ancestry.
 - `bin/validate-execution-loop.sh`: validates opt-in execution tasks and checkpoints.
 - `bin/validate-domain-supervision.sh`: validates exact-byte AI Domain Expert supervision and blocks unresolved model/implementation decisions.
 - `bin/validate-closeout.sh`: validates project/task/QA completion contracts, including domain supervision.
@@ -32,12 +33,12 @@ Board operation must not create or modify `docs/design/`. Initialization install
 ## Authoring Quick Start
 
 ```bash
-./docs/bin/new-doc.sh initiative service-resilience DECISION-EXAMPLE
+./docs/bin/issue-doc-bridge.sh --baseline-ref <sha-or-tag> --delivery-branch feature/service-resilience --workstream-kind feature -- initiative service-resilience DECISION-EXAMPLE
 # Complete human activation review; project issuance requires I0001 to be active and approved.
-./docs/bin/new-doc.sh project umbrella-project I0001
+./docs/bin/issue-doc-bridge.sh --baseline-ref <sha-or-tag> --delivery-branch feature/service-resilience --workstream-kind feature -- project umbrella-project I0001
 # Task issuance verifies P0001 resolves to an active, approved initiative.
-./docs/bin/new-doc.sh task first-task P0001
-./docs/bin/new-doc.sh qa first-test-strategy
+./docs/bin/issue-doc-bridge.sh --baseline-ref <sha-or-tag> --delivery-branch feature/service-resilience --workstream-kind feature -- task first-task P0001
+./docs/bin/issue-doc-bridge.sh --baseline-ref <sha-or-tag> --delivery-branch feature/service-resilience --workstream-kind feature -- qa first-test-strategy
 # Fill required QA fields and commit numbered drafts before creating unnumbered drafts.
 ./docs/bin/new-doc.sh design bounded-context service domain-model
 ./docs/bin/new-doc.sh design ubiquitous-language service ubiquitous-language

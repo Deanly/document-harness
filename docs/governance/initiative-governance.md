@@ -113,7 +113,7 @@ tags:
 
 - 새 추진안 번호 발급은 사람이 정확한 추진안 초안 또는 발급 요청을 명시적으로 승인한 뒤에만 수행합니다.
 - AI는 추진안 후보를 unnumbered proposal report로 준비하고 필요한 정책·지침·프로젝트 관계를 제안할 수 있습니다.
-- `./docs/bin/new-doc.sh initiative <slug> <issuance-approval-ref>`는 clean, up-to-date `main`에서만 실행하며 생성된 `I####` draft를 즉시 commit합니다.
+- `./docs/bin/issue-doc-bridge.sh --baseline-ref <ref> --delivery-branch <branch> --workstream-kind <feature|hotfix> -- initiative <slug> <issuance-approval-ref>`를 clean issuer `main == origin/main`에서 실행합니다. 생성된 draft는 제품 코드와 분리된 bridge/finalization commit으로 `main`과 delivery branch가 동일 SHA를 공유합니다.
 - `issuance_approval_ref`는 번호 발급을 허용한 human decision을 가리킵니다. 이것은 추진안 내용의 activation approval과 분리하며 YAML/Markdown을 깨지 않는 안전한 token, repository-relative path 또는 `http(s)` URL 문자 집합으로만 렌더링합니다.
 - `status: active` 전환에는 `approval_status: approved`와 exact `approval_ref`가 필요합니다. `approval_ref`는 임의 문자열이나 대화 링크가 아니라 repository-relative JSON activation receipt여야 합니다.
 - activation receipt는 `docs/schemas/initiative-activation-receipt.schema.json` 계약을 따라 human actor, `decision: approved`, `candidateId: I####`, canonical initiative `effectiveRef`, 현재 문서 bytes의 `effectiveSha256`, register의 `sourceRevision`과 모든 `sourceRefs[].capturedSha256`을 고정합니다. issuance approval은 draft 번호 발급만 허용하므로 이 activation receipt와 계속 분리합니다.

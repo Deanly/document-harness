@@ -29,7 +29,7 @@ require_contains() {
   local path="$1"
   local pattern="$2"
 
-  if ! grep -Fq "$pattern" "$path"; then
+  if ! grep -Fq -- "$pattern" "$path"; then
     echo "error: missing expected text '$pattern' in $path" >&2
     return 1
   fi
@@ -55,6 +55,8 @@ CLAUDE_FILE="$REPO_ROOT/CLAUDE.md"
 CLAUDE_TEMPLATE="$DOCS_DIR/_templates/claude.md"
 CODEX_GUIDE="$DOCS_DIR/guide/codex-agent-guidance.md"
 NEW_DOC_SCRIPT="$DOCS_DIR/bin/new-doc.sh"
+ISSUE_DOC_BRIDGE="$DOCS_DIR/bin/issue-doc-bridge.sh"
+DOCUMENT_BRIDGE_VALIDATOR="$DOCS_DIR/bin/validate-document-bridge.sh"
 EXECUTION_ENTRY="$DOCS_DIR/EXECUTE.md"
 EXECUTION_LOOP="$DOCS_DIR/architecture/execution-loop-plane.md"
 HUMAN_VIEW_DESIGN="$DOCS_DIR/architecture/human-control-view-plane.md"
@@ -80,6 +82,8 @@ require_file "$CLAUDE_FILE"
 require_file "$CLAUDE_TEMPLATE"
 require_file "$CODEX_GUIDE"
 require_file "$NEW_DOC_SCRIPT"
+require_file "$ISSUE_DOC_BRIDGE"
+require_file "$DOCUMENT_BRIDGE_VALIDATOR"
 require_file "$EXECUTION_ENTRY"
 require_file "$EXECUTION_LOOP"
 require_file "$HUMAN_VIEW_DESIGN"
@@ -131,8 +135,8 @@ do
   require_section "$CODEX_GUIDE" "$header"
 done
 
-require_contains "$AGENTS_FILE" 'Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`'
-require_contains "$AGENTS_TEMPLATE" 'Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$AGENTS_FILE" 'Use `docs/bin/issue-doc-bridge.sh` with an immutable code baseline'
+require_contains "$AGENTS_TEMPLATE" 'Use `docs/bin/issue-doc-bridge.sh` with an immutable code baseline'
 require_contains "$AGENTS_FILE" 'Issue Project only under an active/approved Initiative'
 require_contains "$AGENTS_TEMPLATE" 'Issue Project only under an active/approved Initiative'
 require_contains "$AGENTS_FILE" 'If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.'
@@ -171,10 +175,12 @@ require_contains "$CODEX_HARNESS_SKILL" 'repository-local router'
 require_contains "$CODEX_HARNESS_SKILL_METADATA" 'Use $operate-document-harness'
 require_contains "$CLAUDE_HARNESS_SKILL" '../../../.agents/skills/operate-document-harness/SKILL.md'
 require_contains "$NEW_DOC_SCRIPT" "require_numbered_doc_issue_context"
-require_contains "$NEW_DOC_SCRIPT" "commit_numbered_doc_draft"
 require_contains "$NEW_DOC_SCRIPT" "validate_issuance_approval_ref"
 require_contains "$NEW_DOC_SCRIPT" "require_active_approved_initiative"
 require_contains "$NEW_DOC_SCRIPT" "require_task_parent_lineage"
+require_contains "$ISSUE_DOC_BRIDGE" '--baseline-ref'
+require_contains "$ISSUE_DOC_BRIDGE" 'HARNESS_DOCUMENT_BRIDGE_MODE=1'
+require_contains "$DOCUMENT_BRIDGE_VALIDATOR" 'bridge changes product path'
 
 for template in \
   "$DOCS_DIR/_templates/design.md" \
@@ -199,6 +205,8 @@ require_contains "$DOMAIN_DESIGN_GUIDE" '## AI Domain Expert Contract'
 require_contains "$DOMAIN_DESIGN_GUIDE" '## Board Review Contract'
 require_contains "$DOCS_DIR/_templates/report.md" 'proposal_status:'
 require_contains "$DOCS_DIR/_templates/task.md" 'execution_contract: v1'
+require_contains "$DOCS_DIR/_templates/task.md" 'code_baseline_ref: {{CODE_BASELINE_REF}}'
+require_contains "$EXECUTION_CHECKPOINT_TEMPLATE" 'document_bridge_ref:'
 require_contains "$DOCS_DIR/_templates/task.md" 'loop_state: ready'
 require_contains "$DOCS_DIR/_templates/task.md" 'domain_contract: v2'
 require_contains "$DOCS_DIR/_templates/project.md" 'domain_contract: v2'

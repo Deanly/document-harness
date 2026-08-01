@@ -23,6 +23,12 @@ owner:
 created: {{DATE}}
 updated: {{DATE}}
 current_focus:
+workstream_kind: {{WORKSTREAM_KIND}}
+code_baseline_ref: {{CODE_BASELINE_REF}}
+document_issuance_ref: {{DOCUMENT_ISSUANCE_REF}}
+document_bridge_ref: {{DOCUMENT_BRIDGE_REF}}
+document_issuance_receipt: {{DOCUMENT_ISSUANCE_RECEIPT}}
+delivery_branch: {{DELIVERY_BRANCH}}
 related_control_plane: docs/architecture/control-plane.md
 related_design: []
 source_refs: []
@@ -56,6 +62,12 @@ tags:
 - Created: {{DATE}}
 - Updated: {{DATE}}
 - Current Focus:
+- Workstream Kind: {{WORKSTREAM_KIND}}
+- Code Baseline Ref: {{CODE_BASELINE_REF}}
+- Document Issuance Ref: {{DOCUMENT_ISSUANCE_REF}}
+- Document Bridge Ref: {{DOCUMENT_BRIDGE_REF}}
+- Document Issuance Receipt: {{DOCUMENT_ISSUANCE_RECEIPT}}
+- Delivery Branch: {{DELIVERY_BRANCH}}
 - Related Control Plane: docs/architecture/control-plane.md
 - Related Design:
 
@@ -80,7 +92,7 @@ tags:
 ## Project Issuance Check
 
 - 이 문서는 bounded delivery boundary를 잠그는 surface이므로 사람의 명시적 요청 또는 승인 아래 발급합니다.
-- 이 문서 번호가 clean, up-to-date `main`에서 main-issued draft로 발급되고 즉시 commit되었는지 확인합니다.
+- 이 문서 번호가 최신 `origin/main` 문서 집합에서 직렬 발급되고, 코드 baseline에는 docs-only issuance bridge로 전달되었는지 확인합니다.
 - 에이전트가 초안을 준비했다면 어떤 human 요청 또는 승인으로 발급했는지 적습니다.
 - 이 문서가 승인된 추진안 안의 새 `project`여야 하는 이유를 적습니다.
 - 왜 기존 project의 `task`로는 닫을 수 없는 별도 delivery boundary인지 적습니다.

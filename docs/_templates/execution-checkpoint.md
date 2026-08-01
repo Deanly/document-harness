@@ -5,6 +5,12 @@ checkpoint_id: "{{TASK_ID}}:A{{ATTEMPT_SEQ}}:C{{CHECKPOINT_SEQ}}"
 checkpoint_seq: 1
 task_id: {{TASK_ID}}
 task_contract_revision: 1
+workstream_kind:
+code_baseline_ref:
+document_issuance_ref:
+document_bridge_ref:
+document_issuance_receipt:
+delivery_branch:
 attempt_seq: 1
 loop_state: ready
 stop_reason:
@@ -53,6 +59,12 @@ tags:
 
 - Task: `{{TASK_ID}}`
 - Task Contract Revision: `1`
+- Workstream Kind:
+- Code Baseline Ref:
+- Document Issuance Ref:
+- Document Bridge Ref:
+- Document Issuance Receipt:
+- Delivery Branch:
 - Source Revision: `working-tree`
 - Source Hash: `{{SOURCE_HASH}}`
 

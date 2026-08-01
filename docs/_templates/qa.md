@@ -19,6 +19,12 @@ covered_scenario_ids: []
 source_documents: []
 related_design: []
 related_project:
+workstream_kind: {{WORKSTREAM_KIND}}
+code_baseline_ref: {{CODE_BASELINE_REF}}
+document_issuance_ref: {{DOCUMENT_ISSUANCE_REF}}
+document_bridge_ref: {{DOCUMENT_BRIDGE_REF}}
+document_issuance_receipt: {{DOCUMENT_ISSUANCE_RECEIPT}}
+delivery_branch: {{DELIVERY_BRANCH}}
 actor_roles:
   - qa
 owner:
@@ -47,6 +53,12 @@ tags:
 - Covered Rule IDs:
 - Covered Scenario IDs:
 - Related Project:
+- Workstream Kind: {{WORKSTREAM_KIND}}
+- Code Baseline Ref: {{CODE_BASELINE_REF}}
+- Document Issuance Ref: {{DOCUMENT_ISSUANCE_REF}}
+- Document Bridge Ref: {{DOCUMENT_BRIDGE_REF}}
+- Document Issuance Receipt: {{DOCUMENT_ISSUANCE_RECEIPT}}
+- Delivery Branch: {{DELIVERY_BRANCH}}
 - Actor Roles: qa
 - Document ID: {{DOC_ID}}
 - QA Type:

@@ -28,7 +28,7 @@ require_contains() {
   local path="$1"
   local pattern="$2"
 
-  if ! grep -Fq "$pattern" "$path"; then
+  if ! grep -Fq -- "$pattern" "$path"; then
     echo "error: missing expected text '$pattern' in $path" >&2
     return 1
   fi
@@ -60,6 +60,8 @@ DOCUMENT_LIFECYCLE="$ROOT_DIR/guide/document-lifecycle-and-active-reading.md"
 AGENTS_FILE="$REPO_ROOT/AGENTS.md"
 AGENTS_TEMPLATE="$ROOT_DIR/_templates/agents.md"
 NEW_DOC_SCRIPT="$ROOT_DIR/bin/new-doc.sh"
+ISSUE_DOC_BRIDGE="$ROOT_DIR/bin/issue-doc-bridge.sh"
+DOCUMENT_BRIDGE_VALIDATOR="$ROOT_DIR/bin/validate-document-bridge.sh"
 CODEX_READINESS="$ROOT_DIR/bin/validate-codex-readiness.sh"
 DOC_RETRIEVAL="$ROOT_DIR/bin/validate-doc-retrieval.sh"
 RETRIEVAL_POLICY="$ROOT_DIR/_indexes/retrieval-policy.yaml"
@@ -80,6 +82,8 @@ require_file "$DOCS_README"
 require_file "$EXECUTION_ENTRY"
 require_file "$AGENTS_FILE"
 require_file "$AGENTS_TEMPLATE"
+require_file "$ISSUE_DOC_BRIDGE"
+require_file "$DOCUMENT_BRIDGE_VALIDATOR"
 require_file "$DOMAIN_SUPERVISION_VALIDATOR"
 require_file "$CONTROL_PLANE"
 require_file "$QUALITY_AXES"
@@ -348,11 +352,11 @@ do
   require_section "$CODEX_AGENT_GUIDANCE" "$header"
 done
 
-require_section "$PROJECT_CUTTING" "## Main-Issued Numbered Document Rule"
+require_section "$PROJECT_CUTTING" "## Baseline-Separated Numbered Document Rule"
 require_section "$DOCUMENT_LIFECYCLE" "## Lifecycle Rules"
-require_contains "$DOCS_README" '`initiative`, `task`, `project`, `qa` 번호 발급 기준 브랜치는 항상 `main`입니다.'
-require_contains "$AGENTS_FILE" 'Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`'
-require_contains "$AGENTS_TEMPLATE" 'Issue numbered `initiative`/`project`/`task`/`qa` docs only from clean, up-to-date `main`'
+require_contains "$DOCS_README" '`initiative`, `task`, `project`, `qa` 번호와 문서 권위는 최신 `origin/main` 문서 집합을 기준으로 직렬 발급합니다.'
+require_contains "$AGENTS_FILE" 'Use `docs/bin/issue-doc-bridge.sh` with an immutable code baseline'
+require_contains "$AGENTS_TEMPLATE" 'Use `docs/bin/issue-doc-bridge.sh` with an immutable code baseline'
 require_contains "$AGENTS_FILE" 'Issue Project only under an active/approved Initiative'
 require_contains "$AGENTS_TEMPLATE" 'Issue Project only under an active/approved Initiative'
 require_contains "$RETRIEVAL_POLICY" 'source_of_truth: filesystem'
@@ -387,10 +391,14 @@ require_contains "$ROOT_DIR/_templates/design.md" '## AI Domain Expert Board Rev
 require_contains "$DOMAIN_DESIGN_GUIDE" '## AI Domain Expert Contract'
 require_contains "$DOMAIN_DESIGN_GUIDE" '## Board Review Contract'
 require_contains "$NEW_DOC_SCRIPT" "require_numbered_doc_issue_context"
-require_contains "$NEW_DOC_SCRIPT" "commit_numbered_doc_draft"
 require_contains "$NEW_DOC_SCRIPT" "validate_issuance_approval_ref"
 require_contains "$NEW_DOC_SCRIPT" "require_active_approved_initiative"
 require_contains "$NEW_DOC_SCRIPT" "require_task_parent_lineage"
+require_contains "$ISSUE_DOC_BRIDGE" '--baseline-ref'
+require_contains "$ISSUE_DOC_BRIDGE" 'HARNESS_DOCUMENT_BRIDGE_MODE=1'
+require_contains "$DOCUMENT_BRIDGE_VALIDATOR" 'bridge changes product path'
+require_contains "$TASK_TEMPLATE" 'code_baseline_ref: {{CODE_BASELINE_REF}}'
+require_contains "$EXECUTION_CHECKPOINT_TEMPLATE" 'document_bridge_ref:'
 require_contains "$NEW_DOC_SCRIPT" 'initiative)'
 require_contains "$NEW_DOC_SCRIPT" 'initiative issuance requires an exact human approval ref'
 require_contains "$DOCS_README" './docs/bin/new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]'

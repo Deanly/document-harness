@@ -274,17 +274,19 @@
 
 - `initiative`, `task`, `project`, `qa`는 각각 독립된 번호 시퀀스를 가집니다.
 - 번호는 중앙 카운터 파일 없이 기존 파일을 스캔해 계산합니다.
-- `initiative`, `task`, `project`, `qa` 번호 발급 기준 브랜치는 항상 `main`입니다.
-- numbered document 발급 전에는 local `main`을 remote tracking branch 기준으로 최신화합니다.
-- `./docs/bin/new-doc.sh initiative|task|project|qa ...`는 clean, up-to-date `main`에서만 실행하며, 생성된 `draft` 파일만 즉시 `main`에 별도 commit으로 남깁니다.
+- `initiative`, `task`, `project`, `qa` 번호와 문서 권위는 최신 `origin/main` 문서 집합을 기준으로 직렬 발급합니다.
+- 코드 작업 기준은 문서 발급 기준과 분리합니다. feature는 그 작업의 immutable baseline SHA를, hotfix는 실제 배포 tag가 가리키는 immutable SHA를 `code_baseline_ref`로 사용합니다.
+- numbered document는 clean issuer worktree의 `main == origin/main` 상태에서 `./docs/bin/issue-doc-bridge.sh --baseline-ref <ref> --delivery-branch <branch> --workstream-kind <feature|hotfix> -- ...`로 발급합니다.
+- 발급기는 코드 baseline을 부모로 하고 제품 코드는 baseline과 byte-identical한 docs-only bridge commit `D`를 만든 뒤, `D`의 SHA를 문서와 receipt에 확정하는 docs-only finalization commit `R`을 만듭니다.
 - initiative는 `./docs/bin/new-doc.sh initiative <slug> <issuance-approval-ref>` 형식으로만 발급하며 exact human approval ref가 없으면 생성하지 않습니다.
 - `<issuance-approval-ref>`는 안전한 ASCII token, repository-relative path 또는 `http(s)` URL만 허용합니다. YAML/Markdown 구조를 바꿀 수 있는 공백, quote, bracket, backtick, pipe, backslash와 control character는 거부합니다.
 - project는 `./docs/bin/new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]` 형식으로 발급하며 canonical `I####`를 반드시 지정합니다. `status: active`, `approval_status: approved` 문자열만으로 충분하지 않으며 `approval_ref`가 repository-relative JSON activation receipt이고 human actor·approved decision·candidate ID·source revision/hashes·canonical initiative bytes를 정확히 고정해야 합니다. 관계 기본값은 `delivers`입니다.
 - task는 `./docs/bin/new-doc.sh task <slug> <project-id>` 형식으로 발급하며 존재하는 canonical `P####`를 반드시 지정합니다. modern Project의 `related_initiative`는 위 activation receipt와 current effective/approved policy, required guideline까지 검증된 active `I####`로 해소되어야 합니다. 추진안 도입 전 legacy Project는 `project_role`, `umbrella_initiative`, `parent_umbrella_project` 세 field가 모두 명시된 경우에만 grandfathered parent로 허용합니다.
-- 발급된 `draft` commit은 번호 reservation입니다. 공유 remote가 있으면 work branch로 돌아가기 전에 push 또는 공유까지 끝냅니다.
-- 발급 후 기존 work branch는 `main`을 merge해서 새 문서와 그 사이 `main`에 들어온 배포본을 함께 가져온 뒤 작업을 이어갑니다.
-- work branch가 dirty해서 바로 `main`으로 전환할 수 없으면 untracked 파일을 포함해 stash하고, `main` 병합 후 stash를 되돌리며 충돌을 해결합니다.
-- 개발 도중 `main`에 이미 배포된 버전을 가져오는 것은 정상적인 baseline refresh로 허용합니다.
+- `D`와 `R`은 cherry-pick으로 복제하지 않고 동일 commit SHA를 `main`과 대상 delivery branch 양쪽에 merge합니다. `R`이 remote 양쪽에서 관찰된 뒤에만 번호 reservation을 확정합니다.
+- 발급 경쟁 중 다른 문서가 먼저 `origin/main`에 반영되면 새 `origin/main`에서 번호를 다시 계산하고 bridge를 다시 만듭니다.
+- `main`이 실제 배포 기준과 동일한 경우에도 같은 bridge 흐름을 사용하면 발급 provenance가 일관됩니다. `main`에 미배포 코드가 존재할 수 있다면 문서를 받기 위해 `main` 전체를 hotfix/feature에 merge해서는 안 됩니다.
+- 각 issuer, feature, hotfix는 별도 `git worktree`로 유지하고, 문서 번호 할당만 직렬화합니다.
+- Task와 실행 checkpoint에는 `workstream_kind`, `code_baseline_ref`, `document_issuance_ref`, `document_bridge_ref`, `document_issuance_receipt`, `delivery_branch`를 함께 고정합니다.
 - 여러 feature와 배포 기준 hotfix가 동시에 존재할 때의 worktree 구성, baseline 분리와 선택적 docs-only bridge는 mandatory issuance rule이 아니라 이 repository의 운영 권장안입니다. `docs/guide/concurrent-feature-hotfix-operation.md`를 참고합니다.
 - 번호는 4자리 고정입니다.
 - slug는 공백 대신 hyphen을 사용하는 kebab-case를 기본으로 하며, 한글을 포함한 유니코드 문자도 허용합니다.
@@ -323,6 +325,7 @@
 - 후속 `task`나 `project`를 새로 발급해도 기존 항목의 완료 기준을 더 작은 하위 조각으로 축소하지 않습니다.
 - 남은 핵심 목표를 후속 문서로 넘겼다면 현재 문서는 `done`이 아니라 계속 `active` 또는 `blocked`로 두거나, 범위 재발급 근거와 함께 `superseded` 또는 `cancelled`로 닫습니다.
 - `done` 또는 `closed` 전환 전에는 `./docs/bin/validate-closeout.sh`를 통과해야 합니다.
+- numbered document의 branch provenance는 `./docs/bin/validate-document-bridge.sh --remote <receipt>`로 확인합니다.
 - whole-system control surface의 기본 구조는 `./docs/bin/validate-harness-foundation.sh`를 통과해야 합니다.
 - Codex-facing surface의 기본 구조는 `./docs/bin/validate-codex-readiness.sh`를 통과해야 합니다.
 - retrieval-plane surface의 기본 구조는 `./docs/bin/validate-doc-retrieval.sh`를 통과해야 합니다.

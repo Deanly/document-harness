@@ -80,15 +80,15 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다.
 
 ## Installed Authoring Workflow
 
-`core`와 이를 포함하는 full profile은 reusable template, `new-doc.sh`, execution/closeout validators와 `close-doc.sh`를 함께 설치합니다. numbered initiative/project/task/QA draft는 clean `main`에서 먼저 발급합니다.
+`core`와 이를 포함하는 full profile은 reusable template, `new-doc.sh`, docs-only issuance bridge, execution/closeout validators와 `close-doc.sh`를 함께 설치합니다. numbered initiative/project/task/QA draft는 clean issuer `main == origin/main`에서 immutable code baseline을 지정해 발급합니다.
 
 ```bash
-./docs/bin/new-doc.sh initiative service-resilience DECISION-EXAMPLE
+./docs/bin/issue-doc-bridge.sh --baseline-ref <sha-or-tag> --delivery-branch feature/service-resilience --workstream-kind feature -- initiative service-resilience DECISION-EXAMPLE
 # Complete human activation review; project issuance requires I0001 to be active and approved.
-./docs/bin/new-doc.sh project umbrella-project I0001
+./docs/bin/issue-doc-bridge.sh --baseline-ref <sha-or-tag> --delivery-branch feature/service-resilience --workstream-kind feature -- project umbrella-project I0001
 # Task issuance verifies P0001 resolves to an active, approved initiative.
-./docs/bin/new-doc.sh task first-task P0001
-./docs/bin/new-doc.sh qa first-test-strategy
+./docs/bin/issue-doc-bridge.sh --baseline-ref <sha-or-tag> --delivery-branch feature/service-resilience --workstream-kind feature -- task first-task P0001
+./docs/bin/issue-doc-bridge.sh --baseline-ref <sha-or-tag> --delivery-branch feature/service-resilience --workstream-kind feature -- qa first-test-strategy
 # Fill the generated QA type/owner fields and commit the numbered drafts before continuing.
 ./docs/bin/new-doc.sh design bounded-context service domain-model
 ./docs/bin/new-doc.sh design ubiquitous-language service ubiquitous-language

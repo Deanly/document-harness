@@ -49,6 +49,7 @@ Read `docs/guide/governance-authoring-assistance.md` completely before turning a
 4. Keep policy as WHY/non-waivable boundary, guideline as HOW/applicability/verification, and initiative as outcome/portfolio. Do not move implementation detail into policy or project/task state into initiative.
 5. Show provenance, applicability, verification, affected delivery, unknowns, risks, and the exact human decision needed. Keep proposal, approval, effective authority, enforcement, and freshness separate.
 6. Use unnumbered candidates until the relevant human gate is satisfied. Initiative issuance and activation remain separate approvals; no AI wording or View state grants either one.
+7. For numbered issuance, use a clean dedicated issuer worktree at exact latest `origin/main` and `docs/bin/issue-doc-bridge.sh` with an immutable delivery baseline. Explicitly report when the skill separates document issuance from product code, and never cherry-pick or merge unreleased `main` code merely to deliver the draft.
 
 ## Operate Board
 

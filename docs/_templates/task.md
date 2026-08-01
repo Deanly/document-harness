@@ -15,6 +15,12 @@ task_contract_revision: 1
 loop_state: ready
 risk_tier: low
 checkpoint_ref:
+workstream_kind: {{WORKSTREAM_KIND}}
+code_baseline_ref: {{CODE_BASELINE_REF}}
+document_issuance_ref: {{DOCUMENT_ISSUANCE_REF}}
+document_bridge_ref: {{DOCUMENT_BRIDGE_REF}}
+document_issuance_receipt: {{DOCUMENT_ISSUANCE_RECEIPT}}
+delivery_branch: {{DELIVERY_BRANCH}}
 policy_refs: []
 normative_refs: []
 exception_refs: []
@@ -50,6 +56,12 @@ tags:
 - Task Contract Revision: 1
 - Loop State: ready
 - Risk Tier: low
+- Workstream Kind: {{WORKSTREAM_KIND}}
+- Code Baseline Ref: {{CODE_BASELINE_REF}}
+- Document Issuance Ref: {{DOCUMENT_ISSUANCE_REF}}
+- Document Bridge Ref: {{DOCUMENT_BRIDGE_REF}}
+- Document Issuance Receipt: {{DOCUMENT_ISSUANCE_RECEIPT}}
+- Delivery Branch: {{DELIVERY_BRANCH}}
 - Domain Contract: v2
 - Domain Impact: required
 - Domain Impact Reason:
@@ -75,7 +87,8 @@ tags:
 
 ## Task Placement Check
 
-- 이 문서 번호가 clean, up-to-date `main`에서 main-issued draft로 발급되고 즉시 commit되었는지 확인합니다.
+- 이 문서 번호가 최신 `origin/main` 문서 집합에서 직렬 발급되고, 코드 baseline에는 docs-only issuance bridge로 전달되었는지 확인합니다.
+- `code_baseline_ref`, `document_issuance_ref`, `document_bridge_ref`, `delivery_branch`와 발급 receipt가 실제 Git 계보와 일치하는지 확인합니다.
 - 왜 이 작업이 연결 project 아래의 `task`여야 하는지 적습니다.
 - 왜 별도 `project`를 발급하지 않아도 되는지 적습니다.
 
