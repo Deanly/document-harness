@@ -8,6 +8,7 @@ BASELINE_INPUT=""
 DELIVERY_BRANCH=""
 WORKSTREAM_KIND=""
 BRIDGE_WORKTREE=""
+CONTROL_PATHS=(AGENTS.md CLAUDE.md .agents .claude docs)
 
 usage() {
   cat <<'EOF'
@@ -118,13 +119,14 @@ BRIDGE_WORKTREE="$(mktemp -d "${TMPDIR:-/tmp}/document-issuance-bridge.XXXXXX")"
 rmdir "$BRIDGE_WORKTREE"
 git -C "$REPO_ROOT" worktree add --detach "$BRIDGE_WORKTREE" "$BASELINE_REF" >/dev/null
 BRIDGE_WORKTREE="$(cd "$BRIDGE_WORKTREE" && pwd -P)"
+if git -C "$REPO_ROOT" cat-file -e "${DOCUMENT_ISSUANCE_REF}:runtime/document-harness-view" 2>/dev/null; then
+  CONTROL_PATHS+=(runtime/document-harness-view)
+fi
 
 # Replace only the document control plane. Product code remains byte-identical
 # to the selected baseline, including when main contains unreleased features.
-git -C "$BRIDGE_WORKTREE" rm -r --ignore-unmatch -- \
-  AGENTS.md CLAUDE.md .agents .claude docs >/dev/null
-git -C "$BRIDGE_WORKTREE" checkout "$DOCUMENT_ISSUANCE_REF" -- \
-  AGENTS.md CLAUDE.md .agents .claude docs
+git -C "$BRIDGE_WORKTREE" rm -r --ignore-unmatch -- "${CONTROL_PATHS[@]}" >/dev/null
+git -C "$BRIDGE_WORKTREE" checkout "$DOCUMENT_ISSUANCE_REF" -- "${CONTROL_PATHS[@]}"
 
 DOC_ABS="$({
   HARNESS_DOCUMENT_BRIDGE_MODE=1 \
@@ -142,10 +144,10 @@ if [[ "$DOC_PATH" == "$DOC_ABS" || "$DOC_PATH" != docs/* || ! -f "$BRIDGE_WORKTR
   exit 1
 fi
 
-git -C "$BRIDGE_WORKTREE" add -- AGENTS.md CLAUDE.md .agents .claude docs
+git -C "$BRIDGE_WORKTREE" add -- "${CONTROL_PATHS[@]}"
 while IFS= read -r changed_path; do
   case "$changed_path" in
-    AGENTS.md|CLAUDE.md|.agents/*|.claude/*|docs/*) ;;
+    AGENTS.md|CLAUDE.md|.agents/*|.claude/*|docs/*|runtime/document-harness-view/*) ;;
     *)
       echo "error: bridge would change product path: $changed_path" >&2
       exit 1
@@ -177,6 +179,7 @@ RECORDED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 cat > "$BRIDGE_WORKTREE/$RECEIPT_PATH" <<EOF
 {
   "schemaVersion": 1,
+  "receiptKind": "numbered-issuance",
   "receiptId": "DIR-${DOC_ID}-${DOCUMENT_BRIDGE_REF:0:12}",
   "documentId": "$DOC_ID",
   "documentPath": "$DOC_PATH",
