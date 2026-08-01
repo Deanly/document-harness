@@ -24,6 +24,7 @@
 - `docs/guide/harness-philosophy.md`: 원본 문서군에서 추출한 문서 철학
 - `docs/guide/codex-agent-guidance.md`: Codex 친화적 AGENTS.md, prompt shape, validator 운영 규칙
 - `docs/guide/project-cutting-and-execution.md`: 프로젝트 분할과 실행 게이트 규칙
+- `docs/guide/concurrent-feature-hotfix-operation.md`: 병렬 feature와 배포 기준 hotfix를 별도 worktree로 보존하면서 main-issued 문서를 다루는 권장 운영 방식
 - `docs/design/`: DDD 전용 domain landscape, context map, bounded-context model, ubiquitous language, executable examples
 - `docs/guide/ddd-domain-design.md`: AI Domain Expert가 역할 AI의 의미를 통제하고 위임된 routine 변경을 관리하며 중요한 모델만 Board에 제시하는 계약
 - `docs/governance/initiative-governance.md`: 정책·지침 → 추진안 → project/task 계층과 approval/legacy bridge 계약

@@ -2,7 +2,7 @@
 
 - Type: guide
 - Created: 2026-04-10
-- Updated: 2026-07-18
+- Updated: 2026-08-02
 
 ## Purpose
 
@@ -67,6 +67,14 @@
 이 흐름에서 `draft` commit은 문서 번호 reservation입니다. 아직 active truth가 아니므로 폴더 README의 active 목록에는 올리지 않습니다. 이후 work branch에서 해당 초안을 채우고, 필요한 경우 같은 branch에서 active 전환과 README 갱신을 수행합니다.
 
 개발 도중 `main`에 이미 배포된 버전을 work branch로 가져오는 것은 허용됩니다. 이는 문서 번호 정합성을 유지하면서 배포된 baseline 위에서 계속 개발하게 만드는 정상적인 refresh입니다.
+
+## Concurrent Feature And Hotfix Operating Recommendation
+
+여러 feature가 동시에 진행되는 중 최근 배포 revision에서 hotfix를 준비해야 한다면, branch 전환과 stash 반복보다 작업별 worktree를 유지하는 편이 좋습니다. hotfix는 실제 배포 tag/SHA를 code baseline으로 삼고, 문서 번호는 기존 계약대로 `main`에서 예약합니다.
+
+현재 `main`에 hotfix가 받아서는 안 되는 미배포 코드가 있으면 문서를 받기 위해 `main` 전체를 병합하는 흐름을 자동 선택하지 않는 편이 좋습니다. 이 경우의 worktree 구성, revision 분리, 선택적 docs-only bridge와 여러 feature의 문서 reservation 운영은 `docs/guide/concurrent-feature-hotfix-operation.md`를 참고합니다.
+
+이 내용은 repository 운영 권장안이며 새 branch policy, `new-doc.sh` 동작 또는 validator gate를 만들지 않습니다.
 
 ## Initiative And Project Default
 
@@ -242,3 +250,4 @@ Status와 완료 판단에는 가능하면 아래를 남깁니다.
 - 2026-05-01: project human issuance 규칙 추가.
 - 2026-06-14: `project`/`task` 번호 발급을 clean, up-to-date `main`에서만 수행하고 draft를 즉시 commit하는 규칙 추가.
 - 2026-07-18: strategy owner를 별도 `I####` 추진안으로 분리하고 project/task cutting을 initiative→project→task hierarchy에 정렬.
+- 2026-08-02: 병렬 feature와 배포 기준 hotfix의 worktree·문서 전달 운영 권장안을 별도 guide로 연결.

@@ -285,6 +285,7 @@
 - 발급 후 기존 work branch는 `main`을 merge해서 새 문서와 그 사이 `main`에 들어온 배포본을 함께 가져온 뒤 작업을 이어갑니다.
 - work branch가 dirty해서 바로 `main`으로 전환할 수 없으면 untracked 파일을 포함해 stash하고, `main` 병합 후 stash를 되돌리며 충돌을 해결합니다.
 - 개발 도중 `main`에 이미 배포된 버전을 가져오는 것은 정상적인 baseline refresh로 허용합니다.
+- 여러 feature와 배포 기준 hotfix가 동시에 존재할 때의 worktree 구성, baseline 분리와 선택적 docs-only bridge는 mandatory issuance rule이 아니라 이 repository의 운영 권장안입니다. `docs/guide/concurrent-feature-hotfix-operation.md`를 참고합니다.
 - 번호는 4자리 고정입니다.
 - slug는 공백 대신 hyphen을 사용하는 kebab-case를 기본으로 하며, 한글을 포함한 유니코드 문자도 허용합니다.
 - 기존 문서를 삭제하지 않는 한 번호는 재사용하지 않습니다.
