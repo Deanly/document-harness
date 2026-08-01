@@ -5,7 +5,7 @@ status: current
 domain: execution
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-08-01
 retrieval_class:
   - domain-current
 context:
@@ -36,7 +36,7 @@ tags:
 - Domain: execution
 - Owner: Codex
 - Created: 2026-07-15
-- Updated: 2026-07-15
+- Updated: 2026-08-01
 - Referenced By:
   - `docs/EXECUTE.md`
   - `docs/guide/execution-loop-operations.md`
@@ -75,6 +75,7 @@ tags:
 - evidence와 decision/approval receipt는 actor, scope, source revision, 생성 시각, 관련 goal 또는 checkpoint를 추적할 수 있어야 합니다.
 - approval은 action, scope, checkpoint/source/diff revision, expiry에 묶이며 더 넓은 권한으로 암묵 승격되지 않습니다.
 - policy-to-task trace는 explicit source reference로만 authoritative해지며 추론된 edge는 candidate로 표시합니다.
+- domain 영향을 갖는 active/current delivery는 AI Domain Expert의 exact-byte supervision 없이 `succeeded` 또는 lifecycle closeout으로 갈 수 없습니다. 사람은 material/strategic 선택과 위험 수용의 최종 권위자이고, AI Domain Expert는 unresolved 의미 불일치를 중단시키는 최고 감독 권한자입니다.
 
 ## Artifact And Trace Model
 
@@ -223,6 +224,9 @@ attention:
   - AR-T0042-0002
 receipts:
   - RCPT-T0042-0008
+domain_supervision_refs:
+  - docs/receipts/domain-supervision/DSR-T0042-0003.json
+domain_decision_refs: []
 budget:
   iterations_used: 5
   iterations_max: 8
@@ -237,6 +241,7 @@ recorded_at: "2026-07-15T15:00:00+09:00"
 - `attempt_seq`는 동일 task contract에서 수행한 bounded attempt 순서를 식별합니다.
 - `last_action`은 무엇을 했는지, `evidence`는 그 행동으로 새로 확인된 근거가 무엇인지 분리합니다.
 - `risks`, `attention`, `receipts`는 embedded copy가 아니라 stable reference 목록을 기본으로 합니다.
+- `domain_supervision_refs`는 current task·model·implementation bytes를 고정한 AI Domain Expert review이며, `domain_decision_refs`는 사람이 선택하거나 위험을 수용한 exact receipt입니다. review가 stale하거나 `decision-required|blocked-conflict`이면 checkpoint는 `succeeded`가 될 수 없습니다.
 - `policy_refs`와 `directive_refs`는 trace projection의 explicit edge source입니다.
 - `source_hash`는 linked task의 현재 bytes SHA-256이며 `source_revision`은 `working-tree` 또는 같은 task blob을 resolve하는 full Git commit입니다. checkpoint가 다른 task generation을 mirror한 채 current로 보이지 않게 둘을 함께 검증합니다.
 - `succeeded`의 evidence와 receipt ref는 저장소 안의 non-empty regular file로 resolve되어야 하며 private/credential 경로나 symlink를 통과할 수 없습니다. receipt는 canonical identity, task/checkpoint, actor/time, statement/scope, evidence refs와 linked-task source revision/hash를 가져야 하며 checkpoint evidence를 명시적으로 연결합니다. 문자열이나 임의 파일만 채운 ref는 evidence barrier가 아닙니다.
@@ -272,6 +277,16 @@ approval_fence: null
 - approval receipt는 exact action과 fence를 승인하며 일반 신뢰나 후속 action까지 승인하지 않습니다.
 - handoff receipt는 next actor/consumer, residual risk와 resume condition을 기록합니다.
 - receipt가 current truth를 바꾸면 해당 `design` 또는 policy source도 같은 변경 흐름에서 갱신합니다.
+
+### Domain Supervision Receipt
+
+AI Domain Expert supervision은 일반 review receipt보다 강한 delivery gate입니다. `domain-supervision-review`는 subject SHA-256, repository revision, affected authoritative model bytes, implementation evidence bytes, 문제·영향·선택지·AI 권고·confidence·사람 결정 질문을 함께 고정합니다.
+
+- `aligned`: unresolved 의미 불일치가 없으며 사람 결정이 필요하지 않습니다.
+- `decision-required`: AI는 결정하지 않고 Board에 대안과 권고를 제시하며 실행/closeout을 멈춥니다.
+- `blocked-conflict`: source, model 또는 ownership 충돌로 안전한 선택지를 확정할 수 없으며 해소 전 진행하지 않습니다.
+
+사람이 `change-implementation` 또는 `change-domain-model`을 선택하면 그 선택 receipt만으로 성공하지 않습니다. 후속 변경과 새 `aligned` review가 필요합니다. `temporary-deviation`은 사람이 위험과 만료를 명시적으로 수용한 경우에만 closeout할 수 있고, model/implementation bytes 변경 또는 만료 시 stale입니다.
 
 ## Human View Projection Handoff
 

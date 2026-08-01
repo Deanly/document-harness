@@ -5,7 +5,8 @@
 - `_templates/`: reusable initiative, project, task, design, guide, report, QA, and execution-checkpoint shapes.
 - `bin/new-doc.sh`: creates document drafts; numbered initiative/project/task/QA drafts require a clean `main` and are committed automatically. Initiative needs a safe exact human issuance ref; Project and Task require lineage whose activation is proven by a repository-relative JSON receipt checked against current source/effective bytes.
 - `bin/validate-execution-loop.sh`: validates opt-in execution tasks and checkpoints.
-- `bin/validate-closeout.sh`: validates project/task/QA completion contracts.
+- `bin/validate-domain-supervision.sh`: validates exact-byte AI Domain Expert supervision and blocks unresolved model/implementation decisions.
+- `bin/validate-closeout.sh`: validates project/task/QA completion contracts, including domain supervision.
 - `bin/close-doc.sh`: closes a project or task only after the closeout validator passes.
 
 Initiative terminal transitions are intentionally not automated by `close-doc.sh`. A human must update the canonical Initiative document, `docs/_indexes/initiative-register.json`, and the exact terminal decision receipt in one change set, then run `validate-closeout.sh` for the Initiative and for `--all`.
@@ -17,7 +18,7 @@ Initiative terminal transitions are intentionally not automated by `close-doc.sh
 - `receipts/`: apply, rollback, human-decision, gate, and migration evidence.
 - `../runtime/document-harness-view/`: repository-local read-only Human Control View, 사용자명 `presentation.displayName` (기본값 `Board`).
 
-View는 top bar에 `<displayName> / <repository>`로 표시하고 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`의 여덟 canonical tab key를 사용합니다. 사용자 label은 `presentation.tabLabels`에서 읽습니다. Domain은 AI Domain Expert가 선택한 최소 충분 모델링 수준의 사람용 결과와 exact-byte authority/freshness를 투영하고, 정책/지침은 각각 독립 surface이며, 추진안은 정책·지침을 연결 프로젝트의 방향으로 전환합니다.
+View는 top bar에 `<displayName> / <repository>`로 표시하고 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`의 여덟 canonical tab key를 사용합니다. 사용자 label은 `presentation.tabLabels`에서 읽습니다. Domain은 AI Domain Expert가 발견한 model/implementation 문제, 선택지, engineering 권고와 정확한 사람 결정 질문을 먼저 보여주고, 최소 충분 모델링 수준과 exact-byte authority/freshness를 이어서 투영합니다. 정책/지침은 각각 독립 surface이며, 추진안은 정책·지침을 연결 프로젝트의 방향으로 전환합니다.
 
 정책·지침·추진안·도메인의 사람용 제목과 설명이 없거나 invalid이면 Board의 정상
 목록에 기술 원문을 대신 올리지 않습니다. `사람용 설명 필요` 검토 항목과 exact
@@ -44,6 +45,7 @@ Board operation must not create or modify `docs/design/`. Initialization install
 ./docs/bin/new-doc.sh guide operating-rule
 ./docs/bin/new-doc.sh report investigation
 ./docs/bin/validate-execution-loop.sh --all
+./docs/bin/validate-domain-supervision.sh --all
 ./docs/bin/validate-closeout.sh --all
 ```
 

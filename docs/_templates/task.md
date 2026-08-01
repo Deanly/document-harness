@@ -4,7 +4,7 @@ doc_id: {{DOC_ID}}
 title: {{TITLE}}
 status: draft
 lineage_contract: v2
-domain_contract: v1
+domain_contract: v2
 owner:
 created: {{DATE}}
 updated: {{DATE}}
@@ -21,6 +21,9 @@ exception_refs: []
 domain_impact: required
 domain_impact_reason:
 domain_review_ref:
+domain_supervision_state: pending
+domain_supervision_ref:
+domain_decision_ref:
 domain_contexts: []
 domain_model_refs: []
 actor_roles:
@@ -47,10 +50,13 @@ tags:
 - Task Contract Revision: 1
 - Loop State: ready
 - Risk Tier: low
-- Domain Contract: v1
+- Domain Contract: v2
 - Domain Impact: required
 - Domain Impact Reason:
 - Domain Review Ref:
+- Domain Supervision State: pending
+- Domain Supervision Ref:
+- Domain Decision Ref:
 - Domain Contexts:
 - Domain Model Refs:
 - Actor Roles: developer
@@ -79,6 +85,9 @@ tags:
 - 기능·업무 의미·용어·상태·API/event를 다루면 exact authoritative/current `domain_model_refs`와 적용 `BR-*`, `CMD-*`, `EVT-*`, `SCN-*`를 Goal Inventory/References에 연결합니다.
 - domain 영향이 없으면 `domain_impact: none`과 구체적인 이유를 적습니다.
 - code/config 관찰만으로 domain rule을 만들지 않고 model gap은 attention으로 전환합니다.
+- 구현 전 AI Domain Expert가 target model과 기대 책임을 확인하고, 의미 있는 코드·DB·API·event·test 변경 뒤에는 exact implementation bytes를 다시 감독합니다.
+- `active` 이후에는 `domain_supervision_state`와 `domain_supervision_ref`가 필요합니다. `decision-required` 또는 `blocked-conflict`는 구현·모델·임시 편차 중 사용자가 선택해야 할 문제를 Board에 표시하고, 해결 전 closeout을 막습니다.
+- 사용자가 코드 변경 또는 모델 변경을 선택하면 그 작업을 수행한 뒤 새 `aligned` review를 발행합니다. 임시 편차만 exact human decision receipt, 위험 수용과 만료 시각으로 제한적으로 closeout할 수 있습니다.
 
 ## Whole-System Anchor
 

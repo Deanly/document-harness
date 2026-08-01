@@ -1,0 +1,73 @@
+{
+  "$schema": "../schemas/domain-supervision-review.schema.json",
+  "schemaVersion": 1,
+  "kind": "domain-supervision-review",
+  "reviewId": "DSR-{{SUBJECT_ID}}-{{REVIEW_SEQUENCE}}",
+  "reviewStatus": "decision-required",
+  "subject": {
+    "kind": "{{SUBJECT_KIND}}",
+    "documentRef": "docs/{{SUBJECT_FOLDER}}/{{SUBJECT_FILE}}.md",
+    "documentSha256": "{{SUBJECT_SHA256}}"
+  },
+  "repositoryRevision": "working-tree",
+  "affectedModels": [
+    {
+      "boundedContext": "{{BOUNDED_CONTEXT}}",
+      "documentRef": "docs/design/contexts/{{BOUNDED_CONTEXT}}/domain-model.md",
+      "documentSha256": "{{MODEL_SHA256}}",
+      "modelRevision": 1
+    }
+  ],
+  "implementationEvidence": [
+    {
+      "ref": "{{IMPLEMENTATION_REF}}",
+      "sha256": "{{IMPLEMENTATION_SHA256}}",
+      "role": "code"
+    }
+  ],
+  "problem": "{{HUMAN_READABLE_PROBLEM}}",
+  "modelExpectation": "{{MODEL_EXPECTATION}}",
+  "implementationReality": "{{IMPLEMENTATION_REALITY}}",
+  "businessImpact": "{{BUSINESS_IMPACT}}",
+  "engineeringImpact": "{{ENGINEERING_IMPACT}}",
+  "recommendation": {
+    "optionId": "change-implementation",
+    "summary": "{{RECOMMENDED_DIRECTION}}",
+    "rationale": "{{RECOMMENDATION_RATIONALE}}"
+  },
+  "confidence": "high",
+  "options": [
+    {
+      "id": "change-implementation",
+      "title": "구현을 도메인 모델에 맞춘다",
+      "disposition": "change-implementation",
+      "action": "{{IMPLEMENTATION_CHANGE}}",
+      "benefits": "{{IMPLEMENTATION_CHANGE_BENEFIT}}",
+      "costs": "{{IMPLEMENTATION_CHANGE_COST}}",
+      "risks": "{{IMPLEMENTATION_CHANGE_RISK}}",
+      "reversible": true
+    },
+    {
+      "id": "change-domain-model",
+      "title": "업무 의미를 다시 결정하고 모델을 바꾼다",
+      "disposition": "change-domain-model",
+      "action": "{{MODEL_CHANGE}}",
+      "benefits": "{{MODEL_CHANGE_BENEFIT}}",
+      "costs": "{{MODEL_CHANGE_COST}}",
+      "risks": "{{MODEL_CHANGE_RISK}}",
+      "reversible": false
+    }
+  ],
+  "decisionRequest": {
+    "required": true,
+    "question": "{{EXACT_HUMAN_DECISION_QUESTION}}",
+    "decisionOwner": "human",
+    "decideBefore": "implementation"
+  },
+  "evidenceRefs": ["{{EVIDENCE_REF}}"],
+  "reviewedBy": {
+    "actorKind": "ai-agent",
+    "identifier": "ai-domain-expert"
+  },
+  "reviewedAt": "{{RFC3339_TIMESTAMP}}"
+}

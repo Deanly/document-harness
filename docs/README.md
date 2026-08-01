@@ -36,7 +36,7 @@
 
 - boundary-first: 구현보다 먼저 책임 경계와 비범위를 고정합니다.
 - domain-model authority: `design`은 DDD 도메인 모델만 담고, exact delegated-AI 또는 human-confirmed receipt가 있는 bytes만 current authority가 됩니다.
-- AI domain expertise: `ai-domain-expert`가 역할 AI 사이의 domain modeling과 ubiquitous language를 통제하고, routine 변경 비용은 AI가 감당하며 중요한 의미 결정만 Board로 올립니다.
+- AI domain expertise: `ai-domain-expert`는 사람 바로 아래의 최고 감독 권한자로서 역할 AI 사이의 domain modeling, ubiquitous language와 implementation alignment를 통제합니다. routine 변경 비용은 AI가 감당하지만 material/strategic 결정과 위험 수용은 Board에서 사람이 담당합니다.
 - whole-system control: 기술 목표, pipeline, runtime invariant, handoff는 `architecture` control surface가 붙잡습니다.
 - strategy-to-delivery lineage: `initiative`는 정책·지침을 portfolio outcome으로, `project`는 bounded delivery로, `task`는 실행 slice로 연결합니다.
 - focused execution: `project`와 `task`는 승인된 추진안의 방향을 잃지 않은 채 delivery와 실행에 집중하게 만드는 focus surface여야 합니다.
@@ -300,7 +300,7 @@
 - `initiative`, `task`, `project`의 `Status` 섹션은 append-only로 운영합니다.
 - 새 이력은 문서 하단에 계속 추가합니다.
 - WBS와 진행률은 현재 상태를 반영하도록 갱신합니다.
-- `task`와 `project`는 `domain_impact`, affected bounded context, actor role, authoritative/current domain model ref를 명시합니다. `domain_impact: none`도 사유와 AI Domain Expert review ref 없이는 허용하지 않습니다.
+- 새 `task`·`project`·`qa`는 `domain_contract: v2`, `domain_impact`, affected bounded context, actor role, authoritative/current domain model ref와 exact AI Domain Expert supervision state/ref를 명시합니다. active/current v1은 migration 대상이며 사람 결정 또는 구현 변경을 숨긴 채 통과하지 않습니다.
 - QA는 source model뿐 아니라 covered business rule ID와 scenario ID를 명시합니다.
 - `task`와 `project`는 `Related Control Plane`을 통해 whole-system 기준 문서를 명시적으로 참조합니다.
 - human-facing strategy/portfolio owner는 별도 `initiative`로 유지하고 project는 bounded delivery만 소유합니다.
@@ -327,6 +327,7 @@
 - retrieval-plane surface의 기본 구조는 `./docs/bin/validate-doc-retrieval.sh`를 통과해야 합니다.
 - DDD structure, Board review package와 exact-byte authority/freshness는 `./docs/bin/validate-domain-design.sh --all`을 통과해야 합니다.
 - project/task/QA domain traceability는 `./docs/bin/validate-domain-lineage.sh --all`을 통과해야 합니다.
+- project/task/QA의 current model-implementation supervision은 `./docs/bin/validate-domain-supervision.sh --all`을 통과해야 하며 closeout에서는 unresolved decision/conflict를 거부합니다.
 - hybrid runtime을 쓰더라도 filesystem source가 authoritative하며, 현재 작업에서 바뀐 파일이나 freshness가 불확실한 결과는 source를 직접 읽습니다.
 - retrieval runtime은 `docs/_indexes/retrieval-policy.yaml`의 revision, tombstone, direct-read fallback 계약을 따릅니다.
 - lifecycle `status`와 execution `loop_state`를 분리하고, active execution은 current checkpoint를 연결합니다.
@@ -432,6 +433,7 @@
 ./docs/bin/validate-doc-retrieval.sh
 ./docs/bin/validate-domain-design.sh --all
 ./docs/bin/validate-domain-lineage.sh --all
+./docs/bin/validate-domain-supervision.sh --all
 ./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/close-doc.sh docs/tasks/T0001-bootstrap-ingest.md "issued goals and evidence verified"

@@ -20,6 +20,8 @@ evidence: []
 risks: []
 attention: []
 receipts: []
+domain_supervision_refs: []
+domain_decision_refs: []
 budget:
   iterations_used: 0
   iterations_max: 10
@@ -95,6 +97,13 @@ task 입력과 필요한 authority가 준비되어 있어야 합니다.
 ## Receipts
 
 - 없음
+
+## Domain Supervision
+
+- AI Domain Expert Review: 없음
+- Human Domain Decision: 없음
+
+의미 있는 코드·DB·API·event·test 변경 뒤에는 current task와 implementation bytes에 고정된 supervision review를 연결합니다. `decision-required` 또는 `blocked-conflict`는 사람이 Board의 대안·권고·위험을 읽고 결정하거나 충돌이 해소될 때까지 `succeeded`로 전환할 수 없습니다.
 
 ## Budget
 

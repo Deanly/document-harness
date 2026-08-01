@@ -106,6 +106,8 @@ function inventoryGate(adoptionTests, viewTests) {
     "docs/releases/document-harness-v1.json",
     "docs/schemas/adoption-plan.schema.json",
     "docs/schemas/apply-receipt.schema.json",
+    "docs/schemas/domain-supervision-decision-receipt.schema.json",
+    "docs/schemas/domain-supervision-review.schema.json",
     "docs/schemas/governance-catalog.schema.json",
     "docs/schemas/harness-installation-lock.schema.json",
     "docs/schemas/human-policy-decision-receipt.schema.json",

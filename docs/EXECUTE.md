@@ -4,7 +4,7 @@ title: execute
 status: current
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-18
+updated: 2026-08-01
 related_design:
   - docs/architecture/control-plane.md
   - docs/governance/policy-to-evidence.md
@@ -27,7 +27,7 @@ tags:
 - Status: current
 - Owner: Codex
 - Created: 2026-07-15
-- Updated: 2026-07-18
+- Updated: 2026-08-01
 - Related Design: docs/architecture/control-plane.md; docs/governance/policy-to-evidence.md; docs/governance/initiative-governance.md; docs/architecture/execution-loop-plane.md; docs/architecture/human-control-view-plane.md
 
 ## Purpose
@@ -46,8 +46,9 @@ tags:
 6. current task 전체와 `task_contract_revision`
 7. current `checkpoint_ref`; `ready` draft의 첫 실행이면 checkpoint template
 8. 추진안과 task/checkpoint가 exact ref로 고정한 effective policy, required guideline/normative standard, exception, human/repository directive
-9. task가 직접 참조하는 design, guide, QA와 relevant validator
-10. 필요한 approval/decision receipt와 evidence source
+9. affected bounded context의 authoritative/current DDD model, role packet와 latest AI Domain Expert supervision review
+10. task가 직접 참조하는 design, guide, QA와 relevant validator
+11. 필요한 approval/decision receipt와 evidence source
 
 proposal report, search hit, browser snapshot, chat history는 effective authority를 대체하지 않습니다. 방금 바뀐 source는 index/RAG가 아니라 직접 읽습니다.
 
@@ -77,6 +78,7 @@ proposal report, search hit, browser snapshot, chat history는 effective authori
 - 허용된 변경 surface, forbidden action, risk tier는 무엇인가?
 - iteration/time budget과 stop condition은 무엇인가?
 - user approval, external result, secret, production access가 필요한가?
+- 영향을 받는 bounded context와 exact model bytes는 무엇이며, AI Domain Expert가 delivery boundary·업무 의미·예상 구현을 감독한 current review가 있는가?
 
 하나라도 작업 결과를 바꿀 정도로 비어 있으면 구현하지 않고 정확한 attention을 만듭니다.
 
@@ -87,9 +89,11 @@ proposal report, search hit, browser snapshot, chat history는 effective authori
 3. 한 번에 하나의 hypothesis만 둡니다.
 4. 작고 가역적인 bounded action 하나를 수행합니다.
 5. 가장 관련성 높은 fast check를 실행합니다.
-6. last action, evidence delta, risk, next actor/action, resume condition을 checkpoint에 반영합니다.
-7. durable command/test/review/decision receipt를 연결합니다.
-8. 진전이 있으면 다음 bounded loop로 이어가고, 없으면 hypothesis를 재검토하거나 stop rule을 적용합니다.
+6. 의미 있는 코드·DB·API·event·test 변경이면 AI Domain Expert가 current model과 exact implementation bytes를 대조합니다.
+7. `aligned`이면 supervision review를 연결합니다. 불일치면 코드 변경, 모델 변경, 임시 편차, 중단 선택지와 engineering 권고를 Board decision package로 만들고 `decision-required` 또는 `blocked-conflict`로 전환합니다.
+8. last action, evidence delta, risk, next actor/action, resume condition과 domain supervision ref를 checkpoint에 반영합니다.
+9. durable command/test/review/decision receipt를 연결합니다.
+10. 진전이 있으면 다음 bounded loop로 이어가고, 없으면 hypothesis를 재검토하거나 stop rule을 적용합니다.
 
 checkpoint는 current resume snapshot이고 task `Status`는 append-only milestone history입니다. tool call마다 기록하지 않고 attention, session handoff, validation result, stop/resume, completion barrier처럼 복구 가치가 있는 경계에서 갱신합니다.
 
@@ -116,6 +120,7 @@ authority 또는 policy 충돌로 현재 attempt를 실행할 수 없으면 `sto
 - unresolved attention 없음
 - goal별 verification evidence
 - scope drift, validator weakening, test 삭제·완화가 없음
+- current task·model·implementation exact bytes에 고정된 AI Domain Expert supervision review가 `aligned`, 또는 사람이 명시적으로 위험·만료를 수용한 temporary deviation
 
 AI가 `done`, `approved`, `passed`라고 쓴 문자열은 receipt나 human authority가 아닙니다. 정적 validator는 schema와 ref를 검사할 뿐 실제 command 실행과 승인 주체를 증명하지 않습니다.
 
@@ -140,7 +145,8 @@ AI가 `done`, `approved`, `passed`라고 쓴 문자열은 receipt나 human autho
 3. 각 goal evidence가 resolvable receipt/artifact를 가리키는지 확인합니다.
 4. WBS, residual risk, outputs/handoff를 정리합니다.
 5. relevant project-specific check와 adopted-target validator를 실행합니다.
-6. 검증을 통과한 source만 `done`으로 전환합니다.
+6. `validate-domain-supervision.sh --closeout`으로 미해결 의미 충돌·사람 결정·stale implementation fence가 없는지 확인합니다.
+7. 검증을 통과한 source만 `done`으로 전환합니다.
 
 ## Verification
 
@@ -162,6 +168,7 @@ git diff --check
 ./docs/bin/validate-codex-readiness.sh
 ./docs/bin/validate-harness-foundation.sh
 ./docs/bin/validate-doc-retrieval.sh
+./docs/bin/validate-domain-supervision.sh --all
 ./docs/bin/validate-closeout.sh --all
 ```
 

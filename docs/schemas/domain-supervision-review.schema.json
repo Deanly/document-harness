@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.local/schemas/domain-supervision-review.schema.json",
+  "title": "AI Domain Expert Supervision Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "reviewId",
+    "reviewStatus",
+    "subject",
+    "repositoryRevision",
+    "affectedModels",
+    "implementationEvidence",
+    "problem",
+    "modelExpectation",
+    "implementationReality",
+    "businessImpact",
+    "engineeringImpact",
+    "recommendation",
+    "confidence",
+    "options",
+    "decisionRequest",
+    "evidenceRefs",
+    "reviewedBy",
+    "reviewedAt"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "domain-supervision-review" },
+    "reviewId": { "type": "string", "pattern": "^DSR-[A-Z0-9-]+$" },
+    "reviewStatus": { "enum": ["aligned", "decision-required", "blocked-conflict"] },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "documentRef", "documentSha256"],
+      "properties": {
+        "kind": { "enum": ["project", "task", "qa"] },
+        "documentRef": { "type": "string", "pattern": "^docs\/(projects|tasks|qa)\/.+\\.md$" },
+        "documentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "repositoryRevision": {
+      "type": "string",
+      "pattern": "^(working-tree|git:[a-f0-9]{40,64})$"
+    },
+    "affectedModels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["boundedContext", "documentRef", "documentSha256", "modelRevision"],
+        "properties": {
+          "boundedContext": { "type": "string", "minLength": 1 },
+          "documentRef": { "type": "string", "pattern": "^docs\/design\/contexts\/[^/]+\/domain-model\\.md$" },
+          "documentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "modelRevision": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "implementationEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "sha256", "role"],
+        "properties": {
+          "ref": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "role": { "enum": ["code", "schema", "api", "event", "test", "configuration", "delivery-document", "runtime-evidence"] }
+        }
+      }
+    },
+    "problem": { "type": "string", "minLength": 1 },
+    "modelExpectation": { "type": "string", "minLength": 1 },
+    "implementationReality": { "type": "string", "minLength": 1 },
+    "businessImpact": { "type": "string", "minLength": 1 },
+    "engineeringImpact": { "type": "string", "minLength": 1 },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["optionId", "summary", "rationale"],
+      "properties": {
+        "optionId": { "type": ["string", "null"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 }
+      }
+    },
+    "confidence": { "enum": ["high", "medium", "low"] },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "disposition", "action", "benefits", "costs", "risks", "reversible"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "disposition": { "enum": ["change-implementation", "change-domain-model", "temporary-deviation", "stop-delivery"] },
+          "action": { "type": "string", "minLength": 1 },
+          "benefits": { "type": "string", "minLength": 1 },
+          "costs": { "type": "string", "minLength": 1 },
+          "risks": { "type": "string", "minLength": 1 },
+          "reversible": { "type": "boolean" }
+        }
+      }
+    },
+    "decisionRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "question", "decisionOwner", "decideBefore"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "question": { "type": ["string", "null"] },
+        "decisionOwner": { "const": "human" },
+        "decideBefore": { "enum": ["implementation", "closeout", "release", null] }
+      }
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "reviewedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorKind", "identifier"],
+      "properties": {
+        "actorKind": { "const": "ai-agent" },
+        "identifier": { "const": "ai-domain-expert" }
+      }
+    },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  }
+}

@@ -5,7 +5,7 @@ status: current
 domain: control-plane
 owner:
 created: 2026-04-14
-updated: 2026-07-18
+updated: 2026-08-01
 retrieval_class:
   - core-start
 context:
@@ -29,7 +29,7 @@ tags:
 - Domain: control-plane
 - Owner:
 - Created: 2026-04-14
-- Updated: 2026-07-18
+- Updated: 2026-08-01
 - Referenced By:
   - `docs/README.md`
 
@@ -84,6 +84,9 @@ tags:
 - `./docs/bin/validate-harness-foundation.sh`
 - `./docs/bin/validate-harness-adoption.sh`
 - `./docs/bin/validate-doc-retrieval.sh`
+- `./docs/bin/validate-domain-design.sh --all`
+- `./docs/bin/validate-domain-lineage.sh --all`
+- `./docs/bin/validate-domain-supervision.sh --all`
 - `./docs/bin/validate-execution-loop.sh --all`
 - `./docs/bin/validate-closeout.sh`
 
@@ -116,6 +119,7 @@ tags:
 | `docs/architecture/human-control-view-plane.md` | projector, snapshot API/SSE, freshness, read-only security/runtime | Active | human view runtime 설계에서 선택 |
 | `docs/architecture/harness-adoption-plane.md` | executable ownership-aware initialize/migrate/upgrade/verify/rollback, policy extraction, versioned repo-local View/quality handoff | Active | public v1 CLI/schema/release/status contract; existing repository adoption에서 선택 |
 | `docs/architecture/harness-language.md` | canonical term 정렬 | Active | |
+| `docs/guide/ddd-domain-design.md` | AI Domain Expert 최고 감독 권한, exact model/implementation review, Board decision package | Active | domain boundary 정의, 구현 정렬, 사용자 판단과 closeout에서 선택 |
 | `docs/design/<domain>.md` | 현재 시스템 경계와 계약 | Add | 필요한 도메인 설계를 추가합니다. |
 
 ## Initiative Portfolio Policy
@@ -184,6 +188,7 @@ tags:
 | Scalable retrieval | corpus 규모, 의미 검색 miss, freshness 병목이 반복될 때 | source registry, hybrid projection, revision receipt, reconciliation | source-authoritative query와 visibility SLO가 검증됨 |
 | Project issue | 승인된 추진안 안에 별도 bounded delivery가 필요할 때 | `related_initiative`가 있는 main-issued `project` draft commit | initiative alignment / scope / out-of-scope / WBS / whole-system anchor 고정 |
 | Task issue | project 아래에서 실제로 닫을 수 있는 execution slice가 생길 때 | `related_project`를 통해 추진안 계보를 따르는 main-issued `task` draft commit | goal inventory / task placement / handoff / quality axes 고정 |
+| Domain supervision | delivery boundary를 정하거나 의미 있는 code/DB/API/event/test bytes가 바뀔 때 | AI Domain Expert exact review, Board 선택지·engineering 권고, 필요한 human decision receipt | `aligned` 또는 만료가 있는 human-accepted temporary deviation; 코드/모델 변경 선택은 후속 `aligned` review 필요 |
 | Execute | 구현, 검증, 운영 정렬이 진행될 때 | current checkpoint, attention/decision/verification receipt, evidence delta, append-only milestone | execution barrier와 closeout gate 통과 |
 | Wiki lint | 큰 ingest 후 또는 주기적으로 stale/drift를 점검할 때 | property 정리, missing cross-reference, stale claim 수정 제안 | active index, properties, current truth가 다시 맞음 |
 | Closeout | 문서를 닫을 수 있을 때 | `done` 상태와 append-only closeout evidence | goal verification 전부 `Done` |
@@ -199,6 +204,9 @@ tags:
 - `./docs/bin/validate-harness-adoption.sh`
 - `./docs/bin/validate-codex-readiness.sh`
 - `./docs/bin/validate-doc-retrieval.sh`
+- `./docs/bin/validate-domain-design.sh --all`
+- `./docs/bin/validate-domain-lineage.sh --all`
+- `./docs/bin/validate-domain-supervision.sh --all`
 - `./docs/bin/validate-execution-loop.sh --all`
 - `./docs/bin/validate-closeout.sh --all`
 - 필요하면 프로젝트별 build / test / smoke validator를 추가합니다.
@@ -210,6 +218,7 @@ tags:
 - task/QA는 proposal이 아니라 exact effective rule version을 참조하며 exception은 scope/expiry/risk acceptor를 별도로 보존합니다.
 - `AGENTS.md`는 Codex가 즉시 읽는 instruction surface이고, 상세 규칙은 `docs/guide`로 넘깁니다.
 - `operate-document-harness`는 repository-local router이며 user-global skill, human authority 또는 deterministic validator를 대체하지 않습니다.
+- AI Domain Expert는 사람 바로 아래의 최고 감독 권한으로 모든 delivery 역할을 challenge하고 unresolved domain meaning을 중단시킬 수 있지만 material/strategic 결정이나 위험 수용을 대신하지 않습니다.
 - raw source는 불변 입력으로 두고, 생성 문서는 `source_refs`와 본문 참조로 연결합니다.
 - `initiative`는 policy/guideline 방향과 portfolio outcome을 잠그고, `project`는 bounded delivery를, `task`는 실행을 통제합니다.
 - View의 initiative→project 연결은 project source의 `related_initiative`를 reverse-index한 projection이며 별도 truth를 만들지 않습니다.
@@ -236,3 +245,4 @@ tags:
 - 2026-07-16: repository-local `operate-document-harness` canonical skill과 thin Claude adapter를 Codex/adoption control surface에 추가.
 - 2026-07-16: executable adoption v1 lifecycle, machine-readable schemas/release manifest, fail-closed statuses와 versioned reference View를 active control surface에 정렬.
 - 2026-07-18: 별도 추진안 계층, policy/guideline direct relation, initiative→project→task hierarchy와 legacy umbrella bridge를 active control surface에 정렬.
+- 2026-08-01: AI Domain Expert를 사람 바로 아래의 최고 감독 권한으로 두고 exact model·implementation review, Board decision package와 closeout blocker를 active control surface에 정렬.

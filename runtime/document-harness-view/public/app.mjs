@@ -167,6 +167,14 @@ const labels = {
   core: "핵심 도메인",
   supporting: "지원 도메인",
   generic: "일반 도메인",
+  aligned: "모델·구현 정렬",
+  "decision-required": "사용자 결정 필요",
+  "alignment-pending": "후속 정렬 필요",
+  "blocked-conflict": "의미 충돌로 중단",
+  "temporary-deviation": "임시 편차",
+  "change-implementation": "구현 변경",
+  "change-domain-model": "도메인 모델 변경",
+  "stop-delivery": "delivery 중단",
   customer: "고객 / 도메인 전문가",
   planner: "기획자",
   architect: "설계자",
@@ -231,9 +239,9 @@ function number(value) {
 }
 
 function toneFor(value) {
-  if (["effective", "approved", "approved_current", "ai_current", "active", "completed", "enforced", "fresh", "current", "clean", "UP", "confirmed", "not_required"].includes(value)) return "success";
-  if (["not_implemented", "stale", "degraded", "rejected", "missing", "invalid", "changed", "DOWN", "critical"].includes(value)) return "danger";
-  if (["partially_enforced", "review_requested", "proposed", "advisory", "dirty", "warning", "unverified", "last_known_unverified"].includes(value)) return "warning";
+  if (["effective", "approved", "approved_current", "ai_current", "active", "completed", "enforced", "fresh", "current", "clean", "UP", "confirmed", "not_required", "aligned"].includes(value)) return "success";
+  if (["not_implemented", "stale", "degraded", "rejected", "missing", "invalid", "changed", "DOWN", "critical", "blocked", "blocked-conflict"].includes(value)) return "danger";
+  if (["partially_enforced", "review_requested", "proposed", "advisory", "dirty", "warning", "unverified", "last_known_unverified", "decision-required", "alignment-pending", "temporary-deviation"].includes(value)) return "warning";
   if (["decision"].includes(value)) return "info";
   return "neutral";
 }
@@ -470,6 +478,7 @@ function renderDomain(snapshot) {
     relationships: []
   };
   const contexts = domain.contexts ?? [];
+  const supervision = snapshot.supervision ?? { configured: false, status: "not_configured", reviews: [], counts: {} };
   const visibleContexts = contexts.filter((context) => context.visibleOnBoard !== false);
   const presentationMissing = contexts.length - visibleContexts.length;
   const totalRules = visibleContexts.reduce((sum, context) => sum + Number(context.counts?.rules ?? 0), 0);
@@ -481,6 +490,9 @@ function renderDomain(snapshot) {
     ["핵심 도메인", number(visibleContexts.filter((context) => context.subdomainType === "core").length)],
     ["현재 권위 모델", number(visibleContexts.filter(currentAuthority).length)],
     ["Board 결정 필요", number(visibleContexts.filter((context) => context.boardReviewStatus === "review_requested").length)],
+    ["감독 결정 필요", number(supervision.counts?.decisionRequired ?? 0)],
+    ["후속 정렬 필요", number(supervision.counts?.alignmentPending ?? 0)],
+    ["임시 편차", number(supervision.counts?.temporaryDeviation ?? 0)],
     ["Rule / Scenario", `${number(totalRules)} / ${number(totalScenarios)}`]
   ], "compact-metric");
 
@@ -505,6 +517,86 @@ function renderDomain(snapshot) {
   if (domain.contextMap?.source) authorityLinks.append(domainReference(domain.contextMap.source, "Context map"));
   if (!domain.landscape?.source && !domain.contextMap?.source) {
     authorityLinks.append(element("span", { className: "muted", text: domain.sourceRoot ?? "docs/design" }));
+  }
+
+  const supervisionState = $("#domain-supervision-state");
+  supervisionState.className = `status-label ${toneFor(supervision.status)}`;
+  supervisionState.textContent = supervision.status === "current"
+    ? "감독 근거 current"
+    : supervision.status === "decision-required"
+      ? "사용자 결정 필요"
+      : supervision.status === "alignment-pending"
+        ? "후속 정렬 필요"
+        : supervision.status === "blocked"
+          ? "의미 충돌로 중단"
+          : supervision.status === "degraded"
+            ? "감독 근거 무효"
+            : "감독 대상 없음";
+  $("#domain-supervision-message").textContent = supervision.configured
+    ? "AI Domain Expert는 최종 위험을 대신 결정하지 않습니다. 모델과 구현의 차이, 선택지와 engineering 권고를 제시하고 사용자의 결정 또는 재정렬 전까지 delivery를 감독·중단합니다."
+    : "review가 연결된 draft 또는 active/current domain_contract v2 delivery가 생기면 exact model·implementation supervision이 여기에 표시됩니다.";
+  const supervisionList = $("#domain-supervision-list");
+  clear(supervisionList);
+  for (const review of supervision.reviews ?? []) {
+    const card = element("article", { className: `domain-supervision-card ${toneFor(review.reviewStatus)}` });
+    card.append(element("div", { className: "domain-context-head" }, [
+      element("div", {}, [
+        element("p", { className: "item-id", text: `${review.subjectId ?? "delivery"} · ${review.reviewId}` }),
+        element("h3", { text: review.subjectTitle ?? review.subjectRef }),
+        element("p", { className: "page-description", text: review.problem })
+      ]),
+      statusLabel(review.reviewStatus, toneFor(review.reviewStatus), localized(review.reviewStatus))
+    ]));
+    if (review.error) {
+      card.append(element("p", { className: "inline-notice danger", text: review.error }));
+    } else {
+      const facts = element("dl", { className: "domain-facts domain-human-facts" });
+      for (const [label, value] of [
+        ["도메인 모델의 기대", review.modelExpectation],
+        ["현재 구현의 현실", review.implementationReality],
+        ["업무 영향", review.businessImpact],
+        ["Engineering 영향", review.engineeringImpact],
+        ["AI Domain Expert 권고", review.recommendation?.summary],
+        ["권고 이유", review.recommendation?.rationale],
+        ["판단 confidence", localized(review.confidence, review.confidence)]
+      ]) {
+        if (value) facts.append(element("dt", { text: label }), element("dd", { text: value }));
+      }
+      card.append(facts);
+      if ((review.options ?? []).length > 0) {
+        card.append(element("h4", { text: "사용자가 선택할 수 있는 방향" }));
+        card.append(domainDataTable(
+          ["선택", "해야 할 일", "얻는 것", "비용", "위험", "가역성"],
+          review.options.map((option) => [
+            option.title,
+            option.action,
+            option.benefits,
+            option.costs,
+            option.risks,
+            option.reversible ? "가역" : "비가역 또는 재승인 필요"
+          ])
+        ));
+      }
+      if (review.decisionRequest?.required) {
+        card.append(element("div", { className: "domain-decision-question" }, [
+          element("p", { className: "eyebrow", text: "사용자가 결정할 질문" }),
+          element("strong", { text: review.decisionRequest.question })
+        ]));
+      }
+      if (review.decision) {
+        card.append(element("div", { className: "domain-decision-result" }, [
+          element("p", { className: "eyebrow", text: "기록된 사용자 결정" }),
+          element("strong", { text: `${review.decision.selectedOptionId ?? review.decision.decision} · ${review.decision.decidedBy}` }),
+          element("p", { text: review.decision.rationale }),
+          review.decision.expiresAt ? element("p", { text: `임시 편차 만료: ${formatTime(review.decision.expiresAt, true)}` }) : null
+        ]));
+      }
+      const refs = element("div", { className: "reference-list" });
+      if (review.reviewRef) refs.append(domainReference(review.reviewRef, "AI Domain Expert review"));
+      if (review.decision?.decisionRef) refs.append(domainReference(review.decision.decisionRef, "Human decision"));
+      card.append(refs);
+    }
+    supervisionList.append(card);
   }
 
   const filtered = filterDomainContexts({

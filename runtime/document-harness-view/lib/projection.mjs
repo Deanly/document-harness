@@ -6,6 +6,7 @@ import {
   assessHumanPresentation,
   validateHumanPresentationReceipt
 } from "../../../docs/lib/human-presentation-authority.mjs";
+import { validateDomainSupervision } from "../../../docs/lib/domain-supervision-authority.mjs";
 import { REFERENCE_VIEW_VERSION } from "../version.mjs";
 
 export const VIEW_RUNTIME_CONTRACT = Object.freeze({
@@ -2417,7 +2418,123 @@ async function readExecutionCheckpoint(repoRoot, checkpointRoot) {
   }
 }
 
-function createGeneratedAttention(register, policies, guidelines, initiatives, orphanedProjects, migrationFence, execution, domain) {
+const DOMAIN_SUPERVISION_SUBJECT_STATUSES = new Set(["draft", "active", "blocked", "done", "closed", "current"]);
+
+async function readDomainSupervision(repoRoot) {
+  const reviews = [];
+  const inputs = [];
+  const roots = ["docs/projects", "docs/tasks", "docs/qa"];
+  for (const subjectRoot of roots) {
+    let resolved;
+    try {
+      resolved = await resolveInsideRoot(repoRoot, subjectRoot);
+      const lexical = await lstat(resolved);
+      if (!lexical.isDirectory() || lexical.isSymbolicLink()) throw new Error(`${subjectRoot}는 안전한 directory여야 합니다.`);
+    } catch (error) {
+      if (error.code === "ENOENT") continue;
+      throw error;
+    }
+    const entries = (await readdir(resolved, { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md") && entry.name !== "README.md")
+      .sort((left, right) => left.name.localeCompare(right.name, "en"));
+    for (const entry of entries) {
+      const subjectRef = `${subjectRoot}/${entry.name}`;
+      const subjectInput = await captureRepositoryFile(repoRoot, subjectRef, "domain supervision subject");
+      if (subjectInput.state !== "file") continue;
+      const subject = parseMarkdownFrontmatter(subjectInput, "domain supervision subject");
+      if (!["project", "task", "qa"].includes(subject.type)
+        || subject.domain_contract !== "v2"
+        || !DOMAIN_SUPERVISION_SUBJECT_STATUSES.has(subject.status)) continue;
+      inputs.push({ label: "domain supervision subject", relativePath: subjectRef, fence: subjectInput.fence });
+      const reviewRef = subject.domain_supervision_ref;
+      const decisionRef = subject.domain_decision_ref ?? null;
+      if (typeof reviewRef !== "string" || reviewRef.trim() === "") {
+        if (subject.status === "draft") continue;
+        reviews.push({
+          reviewId: `DSR-MISSING-${subject.doc_id ?? entry.name}`,
+          reviewStatus: "invalid",
+          subjectKind: subject.type,
+          subjectId: subject.doc_id ?? entry.name,
+          subjectTitle: subject.title ?? entry.name,
+          subjectRef,
+          problem: "AI Domain Expert supervision review가 연결되지 않았습니다.",
+          error: "active/current domain_contract v2 subject requires domain_supervision_ref"
+        });
+        continue;
+      }
+      try {
+        const reviewed = await validateDomainSupervision({
+          root: repoRoot,
+          subjectPath: subjectRef,
+          reviewPath: reviewRef,
+          decisionPath: decisionRef || null,
+          closeout: false
+        });
+        reviews.push(reviewed);
+        for (const relativePath of reviewed.inputRefs) {
+          const input = await captureRepositoryFile(repoRoot, relativePath, "domain supervision input");
+          inputs.push({ label: "domain supervision input", relativePath, fence: input.fence });
+        }
+      } catch (error) {
+        reviews.push({
+          reviewId: `DSR-INVALID-${subject.doc_id ?? entry.name}`,
+          reviewStatus: "invalid",
+          subjectKind: subject.type,
+          subjectId: subject.doc_id ?? entry.name,
+          subjectTitle: subject.title ?? entry.name,
+          subjectRef,
+          reviewRef,
+          problem: "AI Domain Expert supervision 근거를 신뢰할 수 없습니다.",
+          error: error.message
+        });
+        const reviewInput = await captureRepositoryFile(repoRoot, reviewRef, "domain supervision review");
+        inputs.push({ label: "domain supervision review", relativePath: reviewRef, fence: reviewInput.fence });
+        if (decisionRef) {
+          const decisionInput = await captureRepositoryFile(repoRoot, decisionRef, "domain supervision decision");
+          inputs.push({ label: "domain supervision decision", relativePath: decisionRef, fence: decisionInput.fence });
+        }
+      }
+    }
+  }
+  reviews.sort((left, right) => (
+    String(right.reviewedAt ?? "").localeCompare(String(left.reviewedAt ?? ""), "en")
+    || String(left.reviewId).localeCompare(String(right.reviewId), "en")
+  ));
+  const invalidCount = reviews.filter((item) => item.reviewStatus === "invalid").length;
+  const blockedCount = reviews.filter((item) => item.reviewStatus === "blocked-conflict").length;
+  const decisionCount = reviews.filter((item) => item.reviewStatus === "decision-required" && !item.decision).length;
+  const realignmentCount = reviews.filter((item) => item.reviewStatus === "decision-required"
+    && item.decision
+    && item.decision.selectedDisposition !== "temporary-deviation").length;
+  const deviationCount = reviews.filter((item) => item.decision?.selectedDisposition === "temporary-deviation").length;
+  return {
+    supervision: {
+      configured: reviews.length > 0,
+      status: invalidCount > 0
+        ? "degraded"
+        : blockedCount > 0
+          ? "blocked"
+          : decisionCount > 0
+            ? "decision-required"
+            : realignmentCount > 0
+              ? "alignment-pending"
+              : "current",
+      reviews,
+      counts: {
+        total: reviews.length,
+        aligned: reviews.filter((item) => item.reviewStatus === "aligned").length,
+        decisionRequired: decisionCount,
+        alignmentPending: realignmentCount,
+        blocked: blockedCount,
+        invalid: invalidCount,
+        temporaryDeviation: deviationCount
+      }
+    },
+    inputs
+  };
+}
+
+function createGeneratedAttention(register, policies, guidelines, initiatives, orphanedProjects, migrationFence, execution, domain, supervision) {
   const attention = [...(register.attention ?? [])];
   const staleItems = [...policies, ...guidelines, ...initiatives].filter((item) => item.evidenceState !== "current");
   const initiativeReviews = initiatives.filter((item) => ["unreviewed", "review_requested"].includes(item.approvalState));
@@ -2568,6 +2685,59 @@ function createGeneratedAttention(register, policies, guidelines, initiatives, o
     }
   }
 
+  const invalidSupervision = supervision.reviews.filter((item) => item.reviewStatus === "invalid");
+  const blockedSupervision = supervision.reviews.filter((item) => item.reviewStatus === "blocked-conflict");
+  const decisionSupervision = supervision.reviews.filter((item) => item.reviewStatus === "decision-required" && !item.decision);
+  const realignmentSupervision = supervision.reviews.filter((item) => item.reviewStatus === "decision-required"
+    && item.decision
+    && item.decision.selectedDisposition !== "temporary-deviation");
+  const temporaryDeviations = supervision.reviews.filter((item) => item.decision?.selectedDisposition === "temporary-deviation");
+  if (invalidSupervision.length > 0) {
+    attention.unshift({
+      id: "ATTN-DOMAIN-SUPERVISION-INVALID",
+      severity: "critical",
+      title: "도메인 감독 근거를 다시 확인해야 합니다",
+      humanSummary: `${invalidSupervision.length}개 delivery의 AI Domain Expert review가 없거나 current task/model/implementation bytes와 일치하지 않습니다. closeout 전에 exact review를 다시 발행해야 합니다.`,
+      relatedRefs: invalidSupervision.flatMap((item) => [item.subjectRef, item.reviewRef]).filter(Boolean)
+    });
+  }
+  if (blockedSupervision.length > 0) {
+    attention.unshift({
+      id: "ATTN-DOMAIN-SUPERVISION-BLOCKED",
+      severity: "critical",
+      title: "도메인 의미 충돌로 delivery가 중단되었습니다",
+      humanSummary: `${blockedSupervision.length}개 delivery에서 AI Domain Expert가 안전한 정렬 방향을 확정할 수 없습니다. source·ownership·모델 충돌을 해결해야 합니다.`,
+      relatedRefs: blockedSupervision.map((item) => item.reviewId)
+    });
+  }
+  if (decisionSupervision.length > 0) {
+    attention.unshift({
+      id: "ATTN-DOMAIN-SUPERVISION-DECISION",
+      severity: "decision",
+      title: "모델과 구현 사이의 방향을 결정해 주세요",
+      humanSummary: `${decisionSupervision.length}개 delivery에서 AI Domain Expert가 문제·대안·engineering 권고를 준비했습니다. 사용자가 선택하기 전에는 구현 또는 closeout이 진행되지 않습니다.`,
+      relatedRefs: decisionSupervision.map((item) => item.reviewId)
+    });
+  }
+  if (realignmentSupervision.length > 0) {
+    attention.unshift({
+      id: "ATTN-DOMAIN-SUPERVISION-REALIGNMENT",
+      severity: "warning",
+      title: "선택한 방향으로 모델과 구현을 다시 맞춰야 합니다",
+      humanSummary: `${realignmentSupervision.length}개 delivery는 사용자의 결정이 기록되었지만 후속 구현·모델 변경과 새 aligned review가 아직 완료되지 않았습니다. 선택 자체를 완료로 간주하지 않습니다.`,
+      relatedRefs: realignmentSupervision.map((item) => item.reviewId)
+    });
+  }
+  if (temporaryDeviations.length > 0) {
+    attention.unshift({
+      id: "ATTN-DOMAIN-TEMPORARY-DEVIATION",
+      severity: "warning",
+      title: "사람이 수용한 임시 도메인 편차가 있습니다",
+      humanSummary: `${temporaryDeviations.length}개 delivery가 model/code 정렬 대신 만료 조건이 있는 임시 편차로 운영됩니다. 만료 전에 재정렬해야 합니다.`,
+      relatedRefs: temporaryDeviations.map((item) => item.reviewId)
+    });
+  }
+
   return attention;
 }
 
@@ -2654,6 +2824,8 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
   const execution = executionInspection.execution;
   const domainInspection = await readDomainDesign(config.resolvedRoot, config.domainDesignRoot, config.presentation.locale);
   const domain = domainInspection.domain;
+  const supervisionInspection = await readDomainSupervision(config.resolvedRoot);
+  const supervision = supervisionInspection.supervision;
   const attention = createGeneratedAttention(
     register,
     policies,
@@ -2662,7 +2834,8 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     initiativeInspection.orphanedProjects,
     migrationFence,
     execution,
-    domain
+    domain,
+    supervision
   );
   const allRefs = [...policies, ...guidelines, ...initiatives].flatMap((item) => item.sourceRefs);
   const sourceEvidenceState = allRefs.length === 0
@@ -2672,7 +2845,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
       : allRefs.some((ref) => ref.state === "changed")
         ? "stale"
         : "fresh";
-  const projectionState = migrationFence.state !== "valid" || execution.status === "degraded" || domain.status === "degraded"
+  const projectionState = migrationFence.state !== "valid" || execution.status === "degraded" || domain.status === "degraded" || supervision.status === "degraded"
     ? "degraded"
     : sourceEvidenceState;
   const semantic = {
@@ -2683,6 +2856,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     guidelines,
     initiatives,
     domain,
+    supervision,
     attention,
     runtime,
     migrationFence,
@@ -2734,6 +2908,10 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
       domainApprovedCount: domain.contexts.filter((item) => ["approved_current", "ai_current"].includes(item.validationStatus)).length,
       domainReviewCount: domain.contexts.filter((item) => !["approved_current", "ai_current"].includes(item.validationStatus)).length,
       domainPresentationMissingCount: domain.contexts.filter((item) => !item.visibleOnBoard).length,
+      domainSupervisionCount: supervision.counts.total,
+      domainSupervisionDecisionCount: supervision.counts.decisionRequired,
+      domainSupervisionBlockedCount: supervision.counts.blocked,
+      domainTemporaryDeviationCount: supervision.counts.temporaryDeviation,
       linkedProjectCount: new Set(initiatives.flatMap((item) => item.projects.map((project) => project.id))).size,
       approvedCount: [...policies, ...guidelines].filter((item) => item.approvalState === "approved").length,
       reviewCount: [...policies, ...guidelines].filter((item) => item.approvalState === "unreviewed" || item.approvalState === "review_requested").length,
@@ -2745,6 +2923,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     guidelines,
     initiatives,
     domain,
+    supervision,
     attention,
     runtime,
     execution,
@@ -2782,6 +2961,7 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     ...initiativeInspection.approvalInputs,
     ...initiativeInspection.stableInputs,
     ...domainInspection.inputs,
+    ...supervisionInspection.inputs,
     ...(migrationFence.receiptInput ? [migrationFence.receiptInput] : []),
     ...executionInspection.inputs
   ]);

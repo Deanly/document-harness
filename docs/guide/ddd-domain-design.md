@@ -4,7 +4,7 @@ title: ddd-domain-design
 status: current
 owner: document-harness
 created: 2026-07-29
-updated: 2026-07-31
+updated: 2026-08-01
 related_project: []
 related_task: []
 related_design:
@@ -54,7 +54,7 @@ tags:
 4. 먼저 language·scenario·business rule을 작성하고 aggregate를 solution-first로 발명하지 않습니다.
 5. command, domain event, invariant, state transition과 consistency boundary를 연결합니다.
 6. 역할별 consumer contract와 downstream project/task/QA trace를 기록합니다.
-7. AI Domain Expert는 semantic diff, 근거, 반례, confidence와 영향도를 검토하고 `aligned`, `model_updated`, `board_attention`, `blocked_conflict` 중 하나를 반환합니다.
+7. AI Domain Expert는 semantic diff, 근거, 반례, confidence와 영향도를 검토하고 `aligned`, `implementation_change_required`, `model_change_required`, `human_decision_required`, `blocked_conflict` 중 하나를 반환합니다.
 8. routine·가역 변경은 유효한 delegated-AI receipt로 current가 될 수 있습니다. 중요한 변경은 아래 Board Review Contract에 따라 사람이 읽을 모델링 수준을 선택하고 `review_requested`로 넘깁니다.
 9. 사람의 결정 또는 유효한 delegated-AI receipt가 current document SHA-256, model revision과 authority mode를 고정한 뒤에만 `current`로 승격합니다.
 
@@ -71,11 +71,45 @@ AI Domain Expert는 특정 LLM 제품명이 아니라 Codex와 Claude를 포함�
 
 모델 작성 AI와 AI Domain Expert 검토 단계는 논리적으로 분리합니다. 같은 실행 환경을 사용하더라도 작성 결과, challenge 결과, source fence와 최종 판단을 receipt에서 구분하여 조용한 self-rubber-stamp를 막습니다.
 
+### Supervisory Authority
+
+AI Domain Expert는 최고 **의사결정** 권한자가 아니라 사람 바로 아래의 최고 **감독** 권한자입니다. planner·architect·developer·QA보다 넓은 read/challenge 권한을 가지며 다음을 수행할 수 있습니다.
+
+- 관련 업무 source, current model, code, DB schema, API/event, test, runtime evidence와 변경 이력을 요구하고 직접 대조합니다.
+- 모델과 구현이 어긋나면 구현 재작업, 모델 재검토, 임시 편차 또는 delivery 중단을 요구합니다.
+- 자신의 권고와 다른 선택지도 비용·위험·가역성·고객 영향과 함께 제시합니다.
+- unresolved 의미 충돌, stale review, 근거 없는 `domain_impact: none` 또는 사람 결정 대기를 task/project/QA closeout blocker로 선언합니다.
+- 사용자의 결정이나 후속 구현이 끝난 뒤 새 exact-byte review로 정렬 여부를 다시 판정합니다.
+
+AI Domain Expert는 material/strategic 의미를 대신 결정하거나 residual risk를 수용하지 않습니다. 사람이 최종 선택을 하지만, 사람이 판단할 수 있도록 문제를 정의하고 engineering 관점의 권고를 제시하며, 결정 전 delivery를 멈출 권한은 AI Domain Expert에 있습니다. 사용자가 구현 제약을 받아들이더라도 업무 truth 자체가 바뀐 것이 아니라면 domain model을 구현에 맞춰 조용히 낮추지 않고, 만료·위험·해소 조건이 있는 temporary deviation으로 기록합니다.
+
+### Persistent Supervision Contract
+
+AI Domain Expert가 “계속 살아 있다”는 것은 장기 실행 daemon을 뜻하지 않습니다. repository source에서 이전 판정과 open conflict를 복구하고 다음 네 경계에서 의무적으로 재호출되는 durable role을 뜻합니다.
+
+1. project/task의 domain boundary를 정할 때
+2. 의미 있는 코드·DB·API·event·test 변경 직후
+3. checkpoint가 review/success 상태로 전환될 때
+4. project/task/QA closeout과 release 직전
+
+`domain_contract: v2` delivery는 `domain_supervision_state`, exact `domain_supervision_ref`와 필요한 `domain_decision_ref`를 가집니다. supervision review는 subject bytes, repository revision, authoritative model bytes와 실제 implementation evidence bytes를 함께 고정합니다. `aligned`가 아니면 Board에 문제, model expectation, implementation reality, business/engineering impact, 선택지, AI 권고, confidence와 사람이 답할 정확한 질문을 보여줍니다. 아직 `draft`여도 review가 연결되면 Board가 표시하므로 경계나 구현 방향을 확정하기 전에 사용자가 판단할 수 있습니다.
+
+사람이 코드 변경 또는 모델 변경을 선택한 사실만으로 closeout하지 않습니다. Board는 이를 `후속 정렬 필요`로 유지하고, 실제 변경 후 새 `aligned` review가 있어야 성공·closeout할 수 있습니다. `temporary-deviation`만 사람이 위험과 만료 시각을 명시적으로 수용한 exact decision receipt로 제한적으로 통과할 수 있으며, 만료되거나 implementation/model bytes가 바뀌면 즉시 stale입니다.
+
 ## Board Review Contract
 
-Board의 Domain 영역은 technical metadata 목록이나 모든 DDD 요소의 dump가 아닙니다. AI Domain Expert가 근거·충돌·역할 영향·반례를 종합하고, 사람이 실제로 승인하거나 수정할 수 있도록 선택한 도메인 모델링 결과물입니다.
+Board의 Domain 영역은 technical metadata 목록이나 모든 DDD 요소의 dump가 아닙니다. AI Domain Expert가 근거·충돌·역할 영향·반례를 종합하고, 사람이 실제로 승인하거나 수정할 수 있도록 선택한 도메인 모델링 결과물과 현재 모델-구현 감독 결과를 함께 보여주는 의사결정 창구입니다.
 
 Board operation must not create or modify `docs/design/`. Board의 시작·상태·새로고침·필터·검토 요청은 현재 `docs/design/`의 exact source를 읽는 projection-only 동작입니다. 원문이 없거나 legacy `BC-DISCOVERY` placeholder뿐이면 AI Domain Expert 종합안을 새로 만들지 않고 `not_configured` attention을 반환합니다. 도메인 모델 작성·수정은 별도의 source-backed DDD 요청으로 이 guide의 authoring·authority 절차를 다시 시작해야 합니다.
+
+Board는 domain truth는 오직 `docs/design/`에서 읽고, 감독 상태는 delivery source가 연결한 exact `domain-supervision-review`와 human decision receipt에서 읽습니다. Board 자체는 어느 source도 작성·변경·승인하지 않습니다. 정상 supervision card는 다음 순서를 지킵니다.
+
+1. 무엇이 모델과 구현 사이에서 어긋났는가
+2. 사용자·업무 결과와 engineering에 어떤 영향이 있는가
+3. 코드 변경, 모델 변경, 임시 편차, 중단 선택지는 각각 무엇을 의미하는가
+4. AI Domain Expert가 무엇을 권고하며 왜 그런가
+5. 사용자가 지금 결정할 정확한 질문은 무엇인가
+6. 결정 뒤 무엇을 다시 구현·모델링·검증해야 하는가
 
 `bounded-context` model은 다음 필드를 가집니다.
 
@@ -177,11 +211,13 @@ attention으로 드러냅니다.
 - term, context boundary, aggregate, rule, command, event, state transition 변경은 `Change Impact`에 역할·delivery·QA·published contract 영향을 적습니다.
 - functional `project`와 `task`는 exact current `domain_model_refs`를 사용합니다. domain 영향이 정말 없으면 `domain_impact: none`과 검토 가능한 이유를 적습니다.
 - QA는 모든 적용 `BR-*`와 `SCN-*`를 check로 추적합니다. section 존재만으로 coverage를 주장하지 않습니다.
+- active/current `domain_contract: v2` project/task/QA는 exact-byte supervision review 없이는 유효하지 않습니다. 의미 있는 implementation bytes가 바뀌면 기존 review와 human decision은 stale입니다.
 
 ## Validation
 
 ```bash
 ./docs/bin/validate-domain-design.sh --all
+./docs/bin/validate-domain-supervision.sh --all
 ```
 
 validator는 허용된 design kind, metadata, 필수 section, placeholder, stable ID,
@@ -201,3 +237,4 @@ presentation receipt가 current document bytes와 일치해야 합니다. `revie
 - 2026-07-30: 사람용 제목·요약, presentation review receipt, 세 상태 분리와 Board 차단 계약을 추가했다.
 - 2026-07-31: AI Domain Expert의 위임 권위, 최소 충분 모델링 수준 선택과 Board domain review package 계약을 추가했다.
 - 2026-08-01: Board operation의 projection-only 경계와 adoption의 concrete domain 비생성 계약을 추가했다.
+- 2026-08-01: AI Domain Expert의 최고 감독 권한, model-implementation exact review, 사용자 선택지·engineering 권고와 재정렬 closeout gate를 추가했다.

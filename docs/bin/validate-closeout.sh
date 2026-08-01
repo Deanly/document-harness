@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXECUTION_VALIDATOR="$ROOT_DIR/bin/validate-execution-loop.sh"
 DOMAIN_LINEAGE_VALIDATOR="$ROOT_DIR/bin/validate-domain-lineage.sh"
+DOMAIN_SUPERVISION_VALIDATOR="$ROOT_DIR/bin/validate-domain-supervision.sh"
 INITIATIVE_AUTHORITY_VALIDATOR="$ROOT_DIR/lib/initiative-authority.mjs"
 
 usage() {
@@ -25,7 +26,8 @@ Rules:
   - If Status is done/closed, every goal must be Done with non-empty evidence.
   - If Status is done/closed, WBS cannot contain Todo/In Progress/Pending/Blocked items.
   - execution_contract v1 tasks must also satisfy checkpoint, loop_state, attention, and receipt barriers.
-  - Active/terminal delivery and current QA must pin authoritative/current DDD models or carry an explicit AI Domain Expert no-domain-impact review.
+  - Active/current domain contract v2 work must carry an exact-byte AI Domain Expert supervision review.
+  - Closeout refuses unresolved domain decisions/conflicts; only aligned delivery or a human-accepted expiring temporary deviation may pass.
 EOF
 }
 
@@ -1067,5 +1069,6 @@ if [[ ${#EXECUTION_TARGETS[@]} -gt 0 ]]; then
   "$EXECUTION_VALIDATOR" "${EXECUTION_TARGETS[@]}"
 fi
 "$DOMAIN_LINEAGE_VALIDATOR" "${TARGETS[@]}"
+"$DOMAIN_SUPERVISION_VALIDATOR" --closeout "${TARGETS[@]}"
 
 echo "Validated ${#TARGETS[@]} doc(s)."

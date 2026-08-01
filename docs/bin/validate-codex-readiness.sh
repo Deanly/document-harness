@@ -69,6 +69,7 @@ ADOPTION_VALIDATOR="$DOCS_DIR/bin/validate-harness-adoption.sh"
 DOMAIN_DESIGN_GUIDE="$DOCS_DIR/guide/ddd-domain-design.md"
 DOMAIN_DESIGN_VALIDATOR="$DOCS_DIR/bin/validate-domain-design.sh"
 DOMAIN_LINEAGE_VALIDATOR="$DOCS_DIR/bin/validate-domain-lineage.sh"
+DOMAIN_SUPERVISION_VALIDATOR="$DOCS_DIR/bin/validate-domain-supervision.sh"
 CODEX_HARNESS_SKILL="$REPO_ROOT/.agents/skills/operate-document-harness/SKILL.md"
 CODEX_HARNESS_SKILL_METADATA="$REPO_ROOT/.agents/skills/operate-document-harness/agents/openai.yaml"
 CLAUDE_HARNESS_SKILL="$REPO_ROOT/.claude/skills/operate-document-harness/SKILL.md"
@@ -83,6 +84,7 @@ require_file "$EXECUTION_ENTRY"
 require_file "$EXECUTION_LOOP"
 require_file "$HUMAN_VIEW_DESIGN"
 require_file "$POLICY_GOVERNANCE"
+require_file "$DOMAIN_SUPERVISION_VALIDATOR"
 require_file "$EXECUTION_POLICY"
 require_file "$EXECUTION_CHECKPOINT_TEMPLATE"
 require_file "$EXECUTION_VALIDATOR"
@@ -198,8 +200,10 @@ require_contains "$DOMAIN_DESIGN_GUIDE" '## Board Review Contract'
 require_contains "$DOCS_DIR/_templates/report.md" 'proposal_status:'
 require_contains "$DOCS_DIR/_templates/task.md" 'execution_contract: v1'
 require_contains "$DOCS_DIR/_templates/task.md" 'loop_state: ready'
-require_contains "$DOCS_DIR/_templates/task.md" 'domain_contract: v1'
-require_contains "$DOCS_DIR/_templates/project.md" 'domain_contract: v1'
+require_contains "$DOCS_DIR/_templates/task.md" 'domain_contract: v2'
+require_contains "$DOCS_DIR/_templates/project.md" 'domain_contract: v2'
+require_contains "$DOCS_DIR/_templates/task.md" 'domain_supervision_state: pending'
+require_contains "$DOMAIN_DESIGN_GUIDE" '### Supervisory Authority'
 require_contains "$DOCS_DIR/_templates/qa.md" '| Rule ID | Scenario ID |'
 
 for header in \

@@ -2,7 +2,7 @@
   "$schema": "../schemas/release-manifest.schema.json",
   "schemaVersion": 1,
   "releaseId": "document-harness-public-v1",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "profiles": [
     "core",
     "governance",
@@ -176,6 +176,18 @@
       "artifactType": "template"
     },
     {
+      "sourcePath": "docs/_templates/domain-supervision-review.json",
+      "targetPath": "docs/_templates/domain-supervision-review.json",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
+      "sourcePath": "docs/_templates/domain-supervision-decision-receipt.json",
+      "targetPath": "docs/_templates/domain-supervision-decision-receipt.json",
+      "profiles": ["core"],
+      "artifactType": "template"
+    },
+    {
       "sourcePath": "docs/_templates/domain-authority-delegation-receipt.json",
       "targetPath": "docs/_templates/domain-authority-delegation-receipt.json",
       "profiles": ["core"],
@@ -330,6 +342,12 @@
       "mode": "0755"
     },
     {
+      "sourcePath": "docs/bin/validate-domain-supervision.sh",
+      "targetPath": "docs/bin/validate-domain-supervision.sh",
+      "profiles": ["core"],
+      "mode": "0755"
+    },
+    {
       "sourcePath": "docs/architecture/execution-loop-plane.md",
       "targetPath": "docs/architecture/execution-loop-plane.md",
       "profiles": ["core"]
@@ -441,6 +459,11 @@
       "profiles": ["core"]
     },
     {
+      "sourcePath": "docs/lib/domain-supervision-authority.mjs",
+      "targetPath": "docs/lib/domain-supervision-authority.mjs",
+      "profiles": ["core"]
+    },
+    {
       "sourcePath": "docs/lib/human-presentation-authority.mjs",
       "targetPath": "docs/lib/human-presentation-authority.mjs",
       "profiles": ["core"]
@@ -483,6 +506,16 @@
     {
       "sourcePath": "docs/schemas/domain-authority-delegation-receipt.schema.json",
       "targetPath": "docs/schemas/domain-authority-delegation-receipt.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/domain-supervision-review.schema.json",
+      "targetPath": "docs/schemas/domain-supervision-review.schema.json",
+      "profiles": ["core"]
+    },
+    {
+      "sourcePath": "docs/schemas/domain-supervision-decision-receipt.schema.json",
+      "targetPath": "docs/schemas/domain-supervision-decision-receipt.schema.json",
       "profiles": ["core"]
     },
     {
@@ -650,6 +683,8 @@
       "docs/_templates/design-examples.md",
       "docs/_templates/domain-design-approval-receipt.json",
       "docs/_templates/ai-domain-modeling-receipt.json",
+      "docs/_templates/domain-supervision-review.json",
+      "docs/_templates/domain-supervision-decision-receipt.json",
       "docs/_templates/domain-authority-delegation-receipt.json",
       "docs/_templates/human-presentation-review-receipt.json",
       "docs/_templates/guide.md",
@@ -664,6 +699,7 @@
       "docs/bin/validate-execution-loop.sh",
       "docs/bin/validate-domain-design.sh",
       "docs/bin/validate-domain-lineage.sh",
+      "docs/bin/validate-domain-supervision.sh",
       "docs/architecture/harness-language.md",
       "docs/architecture/execution-loop-plane.md",
       "docs/architecture/harness-adoption-plane.md",
@@ -685,9 +721,12 @@
       "docs/initiatives/README.md",
       "docs/lib/initiative-authority.mjs",
       "docs/lib/domain-design-authority.mjs",
+      "docs/lib/domain-supervision-authority.mjs",
       "docs/lib/human-presentation-authority.mjs",
       "docs/schemas/domain-design-approval-receipt.schema.json",
       "docs/schemas/domain-authority-delegation-receipt.schema.json",
+      "docs/schemas/domain-supervision-review.schema.json",
+      "docs/schemas/domain-supervision-decision-receipt.schema.json",
       "docs/schemas/human-presentation-review-receipt.schema.json",
       "docs/schemas/initiative-activation-receipt.schema.json",
       "docs/schemas/initiative-register.schema.json",

@@ -1,0 +1,21 @@
+{
+  "$schema": "../schemas/domain-supervision-decision-receipt.schema.json",
+  "schemaVersion": 1,
+  "kind": "domain-supervision-decision",
+  "receiptId": "DSD-{{SUBJECT_ID}}-{{DECISION_SEQUENCE}}",
+  "reviewRef": "docs/receipts/domain-supervision/{{REVIEW_FILE}}.json",
+  "reviewSha256": "{{REVIEW_SHA256}}",
+  "reviewId": "DSR-{{SUBJECT_ID}}-{{REVIEW_SEQUENCE}}",
+  "subjectRef": "docs/{{SUBJECT_FOLDER}}/{{SUBJECT_FILE}}.md",
+  "subjectSha256": "{{SUBJECT_SHA256}}",
+  "decision": "approved-option",
+  "selectedOptionId": "{{SELECTED_OPTION_ID}}",
+  "rationale": "{{HUMAN_DECISION_RATIONALE}}",
+  "riskAcceptance": "{{EXPLICIT_RISK_ACCEPTANCE_OR_NONE}}",
+  "expiresAt": null,
+  "decidedBy": {
+    "actorKind": "human",
+    "identifier": "{{DECISION_OWNER_IDENTIFIER}}"
+  },
+  "decidedAt": "{{RFC3339_TIMESTAMP}}"
+}

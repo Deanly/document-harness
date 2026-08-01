@@ -2,7 +2,7 @@
 
 This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. Its configurable user-facing name is `Board`; the technical executable remains `human-view` for compatibility. It is copied as a unit; an adopter does not regenerate its design.
 
-Reference View distribution version: `1.7.0`. The public release manifest pins the byte hashes for this complete tree.
+Reference View distribution version: `1.8.0`. The public release manifest pins the byte hashes for this complete tree.
 
 ## Installed surfaces
 
@@ -73,7 +73,7 @@ The governance catalog records the historical capture independently from current
 - one independent server and static repository identity
 - fixed top-left identity `<displayName> / <repository>`, visible across every tab and scroll position; `displayName` is repository-configurable
 - exact horizontal tab keys: `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence` (labels come from `presentation.tabLabels`, defaulting to English)
-- `domain` projects the AI Domain Expert's recommendation, minimum-sufficient modeling level, selected actual model slice, human decision question, protected outcome, counter-condition, role views, open questions, and exact-byte human-confirmed/delegated-AI authority/freshness without granting model authority
+- `domain` first projects exact delivery-linked AI Domain Expert supervision: model/implementation conflict, business/engineering impact, options, recommendation/confidence, precise human decision, and any expiring temporary deviation; it then shows the minimum-sufficient model slice and exact-byte authority/freshness without granting model or risk-acceptance authority
 - Board operations are projection-only: the runtime reads domain truth only from the fixed `docs/design/` root, never creates it, and reports missing or legacy discovery-only input as `not_configured`
 - policy, guideline, initiative, and domain records without a valid human title and complete summary are hidden from normal Board content and appear only as `사람용 설명 필요` review attention; technical IDs and paths never replace missing narrative
 - domain authority mode, Board review, human presentation review, and source freshness remain independent states; a presentation review cannot approve domain meaning

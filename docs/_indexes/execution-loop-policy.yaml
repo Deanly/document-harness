@@ -2,7 +2,7 @@
 # Human-owned policy and normative standards remain design artifacts; this file
 # defines runtime state, stop, checkpoint, and evidence mechanics only.
 version: 1
-updated: 2026-07-17
+updated: 2026-08-01
 contract: v1
 
 opt_in:
@@ -19,6 +19,9 @@ authority:
   ai_self_approval: forbidden
   task_goal_weakening: supersede_or_reissue
   unresolved_conflict: stop_with_conflict
+  domain_supervision_authority: highest_below_human_decision_owner
+  unresolved_domain_meaning: stop_before_success_closeout_or_release
+  domain_risk_acceptance: human_only
   policy_refs_required: true
   directive_refs_required: true
 
@@ -178,6 +181,8 @@ checkpoint:
     - risks
     - attention
     - receipts
+    - domain_supervision_refs
+    - domain_decision_refs
     - budget
     - source_revision
     - source_hash

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://document-harness.local/schemas/domain-supervision-decision-receipt.schema.json",
+  "title": "Human Domain Supervision Decision Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "receiptId",
+    "reviewRef",
+    "reviewSha256",
+    "reviewId",
+    "subjectRef",
+    "subjectSha256",
+    "decision",
+    "selectedOptionId",
+    "rationale",
+    "riskAcceptance",
+    "decidedBy",
+    "decidedAt"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "domain-supervision-decision" },
+    "receiptId": { "type": "string", "pattern": "^DSD-[A-Z0-9-]+$" },
+    "reviewRef": { "type": "string", "pattern": "^docs\/receipts\/.+\\.json$" },
+    "reviewSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reviewId": { "type": "string", "pattern": "^DSR-[A-Z0-9-]+$" },
+    "subjectRef": { "type": "string", "pattern": "^docs\/(projects|tasks|qa)\/.+\\.md$" },
+    "subjectSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "decision": { "enum": ["approved-option", "rejected", "deferred"] },
+    "selectedOptionId": { "type": ["string", "null"] },
+    "rationale": { "type": "string", "minLength": 1 },
+    "riskAcceptance": { "type": "string", "minLength": 1 },
+    "expiresAt": { "type": ["string", "null"], "format": "date-time" },
+    "decidedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorKind", "identifier"],
+      "properties": {
+        "actorKind": { "const": "human" },
+        "identifier": { "type": "string", "minLength": 1 }
+      }
+    },
+    "decidedAt": { "type": "string", "format": "date-time" }
+  }
+}

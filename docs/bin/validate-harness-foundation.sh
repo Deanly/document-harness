@@ -68,6 +68,7 @@ EXECUTION_CHECKPOINT_TEMPLATE="$ROOT_DIR/_templates/execution-checkpoint.md"
 EXECUTION_VALIDATOR="$ROOT_DIR/bin/validate-execution-loop.sh"
 DOMAIN_DESIGN_VALIDATOR="$ROOT_DIR/bin/validate-domain-design.sh"
 DOMAIN_LINEAGE_VALIDATOR="$ROOT_DIR/bin/validate-domain-lineage.sh"
+DOMAIN_SUPERVISION_VALIDATOR="$ROOT_DIR/bin/validate-domain-supervision.sh"
 TASK_TEMPLATE="$ROOT_DIR/_templates/task.md"
 PROJECT_TEMPLATE="$ROOT_DIR/_templates/project.md"
 INITIATIVE_TEMPLATE="$ROOT_DIR/_templates/initiative.md"
@@ -79,6 +80,7 @@ require_file "$DOCS_README"
 require_file "$EXECUTION_ENTRY"
 require_file "$AGENTS_FILE"
 require_file "$AGENTS_TEMPLATE"
+require_file "$DOMAIN_SUPERVISION_VALIDATOR"
 require_file "$CONTROL_PLANE"
 require_file "$QUALITY_AXES"
 require_file "$ARTIFACT_CONTRACTS"
@@ -373,9 +375,12 @@ require_contains "$INITIATIVE_TEMPLATE" '## Guideline Disposition'
 require_contains "$INITIATIVE_TEMPLATE" '## Success Signals'
 require_contains "$REPORT_TEMPLATE" 'proposal_status:'
 require_contains "$QA_TEMPLATE" '| Rule ID | Scenario ID |'
-require_contains "$PROJECT_TEMPLATE" 'domain_contract: v1'
-require_contains "$TASK_TEMPLATE" 'domain_contract: v1'
-require_contains "$QA_TEMPLATE" 'domain_contract: v1'
+require_contains "$PROJECT_TEMPLATE" 'domain_contract: v2'
+require_contains "$TASK_TEMPLATE" 'domain_contract: v2'
+require_contains "$QA_TEMPLATE" 'domain_contract: v2'
+require_contains "$TASK_TEMPLATE" 'domain_supervision_state: pending'
+require_contains "$DOMAIN_DESIGN_GUIDE" '### Supervisory Authority'
+require_contains "$DOMAIN_DESIGN_GUIDE" '### Persistent Supervision Contract'
 require_contains "$ROOT_DIR/_templates/design.md" 'domain_expert_agent: ai-domain-expert'
 require_contains "$ROOT_DIR/_templates/design.md" 'board_review_level:'
 require_contains "$ROOT_DIR/_templates/design.md" '## AI Domain Expert Board Review'
@@ -394,6 +399,7 @@ require_contains "$DOCS_README" './docs/bin/new-doc.sh task <slug> <project-id>'
 "$DOC_RETRIEVAL"
 "$DOMAIN_DESIGN_VALIDATOR" --all
 "$DOMAIN_LINEAGE_VALIDATOR" --all
+"$DOMAIN_SUPERVISION_VALIDATOR" --all
 "$EXECUTION_VALIDATOR" --all
 
 echo "Validated harness foundation."

@@ -70,7 +70,7 @@ Policy Clause → Standard Rule → Task / Goal → Check → Evidence → Excep
 
 문서 체계의 실패 모드는 부패다. 세 장치로 막는다:
 
-1. **Validator 강제**: `validate-domain-design.sh`, `validate-domain-lineage.sh`, `validate-closeout.sh`가 authoritative/current model, rule/scenario coverage와 qa 문서의 타입·필수 섹션을 기계 검증한다. `--all`에 포함된다.
+1. **Validator 강제**: `validate-domain-design.sh`, `validate-domain-lineage.sh`, `validate-domain-supervision.sh`, `validate-closeout.sh`가 authoritative/current model, rule/scenario coverage, exact implementation evidence와 AI Domain Expert supervision을 기계 검증한다. `--all`에 포함된다.
 2. **갱신 트리거 명문화**: 각 qa 문서의 `Maintenance Rules`가 "언제 갱신해야 하는가"를 선언한다. 최소 규칙 — Source Documents의 design이 바뀌면 같은 변경에서 갱신, 관련 task가 닫히면 같은 커밋에서 케이스의 자동화/증거 컬럼 갱신, 갭 구현 시 백로그에서 본표로 승격.
 3. **중복 금지**: 이미 진실인 실행 자산(시나리오 manifest, 체크리스트 등)은 참조만 한다. 같은 정보가 두 곳이면 한쪽은 반드시 썩는다.
 

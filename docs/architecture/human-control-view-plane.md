@@ -5,7 +5,7 @@ status: current
 domain: human-view
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-31
+updated: 2026-08-01
 retrieval_class:
   - domain-current
 context:
@@ -39,7 +39,7 @@ tags:
 - Domain: human-view
 - Owner: Codex
 - Created: 2026-07-15
-- Updated: 2026-07-17
+- Updated: 2026-08-01
 - Referenced By:
   - `docs/guide/human-control-view.md`
 - Related Design: `docs/architecture/execution-loop-plane.md`; `docs/governance/policy-to-evidence.md`
@@ -115,7 +115,7 @@ Overview | Domain | Policies | Guidelines | Initiatives | Review | Execution | E
 - canonical tab key와 순서는 정확히 `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`입니다. 사용자에게 보이는 label은 `presentation.tabLabels`에서 읽고, reference 기본값은 `Overview`, `Domain`, `Policies`, `Guidelines`, `Initiatives`, `Review`, `Execution`, `Evidence`입니다. 기존 `#policies` deep link는 policies tab을 계속 가리킵니다.
 - Domain tab은 `docs/design/`의 DDD landscape, context map과 bounded-context sets를 투영하고, role filter, exact-byte human-confirmed/delegated-AI authority, presentation readiness와 freshness를 표시합니다. 이 projection은 model authority나 approval intent를 생성하지 않습니다.
 - Board operation must not create or modify `docs/design/`. `domainDesignRoot`는 versioned runtime contract의 정확한 `docs/design`으로 고정하며 project config가 다른 source나 Board 전용 저장소로 바꿀 수 없습니다. source가 없거나 legacy `BC-DISCOVERY`만 있으면 정상 domain card 대신 `not_configured` attention을 투영합니다.
-- Domain card는 AI Domain Expert의 권고, 최소 충분 모델링 수준, 선택 이유, 사람 결정, 보호 결과, 수정 조건과 선택된 실제 model slice를 첫 화면에 제공합니다. wrapped paragraph와 bullet continuation을 보존하며 제목·첫 줄·count·approval metadata만으로 모델링 결과를 대체하지 않습니다. 나머지 canonical term, business rule, scenario/counterexample, boundary/failure/state/decision/role contract는 단계적 근거로 제공합니다.
+- Domain surface는 먼저 AI Domain Expert의 current supervision card를 제공합니다. card는 model/implementation 불일치, business/engineering impact, 실행 가능한 선택지, AI 권고와 confidence, 사람이 답할 정확한 질문, 결정 이후의 재검증 조건을 보여줍니다. 이어서 최소 충분 모델링 수준, 선택 이유, 보호 결과, 수정 조건과 선택된 실제 model slice를 제공합니다. wrapped paragraph와 bullet continuation을 보존하며 제목·첫 줄·count·approval metadata만으로 판단 결과를 대체하지 않습니다.
 - bounded-context model bytes가 이미 다른 approval/source fence에 고정된 경우 presentation-only 문구는 같은 context의 `domain-examples`, 그다음 `ubiquitous-language`에서 명시적으로 제공할 수 있습니다. 이 companion source는 model authority를 얻지 않으며 receipt는 실제 presentation document bytes와 design kind를 고정합니다.
 - domain table은 작은 화면에서 가로 스크롤할 수 있지만 cell을 잘라내거나 인접 column 위로 겹치지 않습니다. technical ID와 source path는 사람용 설명보다 낮은 위계의 추적 정보로 둡니다.
 - left sidebar, collapsible navigation rail, repository selector와 workspace switcher는 제공하지 않습니다.
@@ -356,7 +356,7 @@ alert는 현재 발생 중이고 사용자가 완화할 수 있는 증상에 한
 | HV-12 | source scope security | traversal, symlink escape, secret, permissive CORS 차단 |
 | HV-13 | repository presentation | static identity가 보이고 repository selector와 left sidebar가 없음 |
 | HV-14 | canonical tabs | `overview`, `domain`, `policies`, `guidelines`, `initiatives`, `review`, `execution`, `evidence`가 순서대로 있고 configured label과 keyboard navigation 가능 |
-| HV-15 | DDD Domain projection | AI Domain Expert가 선택한 최소 충분 모델링 수준의 실제 model slice, 권고·결정 질문·근거와 landscape/context map/context sets, model revision, role views, open questions, exact-byte authority/freshness가 source-derived read-only 상태로 보임 |
+| HV-15 | DDD Domain projection | AI Domain Expert의 exact delivery supervision 문제·영향·대안·권고·confidence·사람 결정 질문과 선택된 최소 충분 model slice, landscape/context map/context sets, model revision, role views, open questions, exact-byte authority/freshness가 source-derived read-only 상태로 보임 |
 | HV-15 | cross-tab consistency | 모든 tab이 같은 snapshot/read fence를 사용하고 mixed generation이 없음 |
 | HV-16 | refresh continuity | polling/manual refresh 후 tab, filter, search, expansion과 focus가 유지됨 |
 | HV-17 | local asset boundary | external CDN/font/script request가 0이고 local-only/read-only가 유지됨 |

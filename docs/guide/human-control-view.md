@@ -4,7 +4,7 @@ title: human-control-view
 status: current
 owner: Codex
 created: 2026-07-15
-updated: 2026-07-31
+updated: 2026-08-01
 related_project: []
 related_task: []
 related_design:
@@ -33,7 +33,7 @@ tags:
 - Status: current
 - Owner: Codex
 - Created: 2026-07-15
-- Updated: 2026-07-17
+- Updated: 2026-08-01
 - Related Project:
 - Related Task:
 - Related Design: docs/architecture/control-plane.md; docs/architecture/execution-loop-plane.md; docs/architecture/human-control-view-plane.md; docs/governance/policy-to-evidence.md
@@ -82,7 +82,12 @@ Selected Tab Panel
 
 ### Domain Tab
 
-Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context model, ubiquitous language와 executable examples를 읽기 전용으로 투영합니다. 첫 화면의 주인공은 문서 목록이나 승인 metadata가 아니라 AI Domain Expert가 종합한 사람용 도메인 모델링 결과입니다.
+Domain 탭은 `docs/design/`의 DDD landscape, context map, bounded-context model, ubiquitous language와 executable examples를 읽기 전용으로 투영하고, delivery source가 연결한 exact AI Domain Expert supervision/decision receipt를 함께 읽습니다. 첫 화면의 주인공은 문서 목록이나 승인 metadata가 아니라 AI Domain Expert가 발견한 현재 모델-구현 문제와 사람이 결정할 수 있도록 종합한 대안·권고입니다.
+
+- AI Domain Expert는 사람 바로 아래의 최고 감독 권한자로서 모든 delivery 역할의 모델/구현 정렬을 challenge하고 unresolved 문제를 closeout blocker로 만듭니다.
+- supervision card는 문제, model expectation, implementation reality, business/engineering impact, 코드 변경·모델 변경·임시 편차·중단 선택지, AI 권고/confidence와 정확한 사람 결정 질문을 순서대로 표시합니다.
+- 사용자는 material/strategic 의미와 위험 수용을 최종 결정합니다. Board는 결정을 만들거나 승인하지 않고 exact receipt가 기록된 뒤 그 결과만 다시 투영합니다.
+- 코드 또는 모델 변경을 선택했다면 새 `aligned` review까지 완료되지 않은 상태를 해결됨으로 표시하지 않습니다. temporary deviation은 human receipt의 위험·만료 조건을 함께 표시합니다.
 
 - 정상 card는 `display_title`과 `human_summary`를 사용하며 technical `title`, bounded-context name, ID 또는 section 첫 줄을 사람용 설명의 fallback으로 사용하지 않습니다.
 - AI Domain Expert는 `bounded-context`, `aggregate`, `entity`, `value-object`, `business-rule`, `state-transition`, `ubiquitous-language`, `scenario` 중 이번 사람 결정에 필요한 최소 충분 수준을 하나 선택합니다. 서로 독립된 판단은 `mixed`로 숨기지 않고 별도 review package로 분리합니다.
@@ -526,7 +531,9 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 - [ ] 사용자용 chrome과 synthesized governance/project wording이 configured `presentation.locale`이고 기술 ID·enum·path·hash·command·source heading은 원형을 유지한다.
 - [ ] 사람용 설명이 missing/invalid인 정책·지침·추진안·도메인은 정상 목록에서 제외되고 `사람용 설명 필요` attention과 exact source ref만 표시된다.
 - [ ] domain/governance approval, presentation readiness와 evidence freshness가 독립 상태로 표시된다.
-- [ ] Domain card 첫 화면에 AI Domain Expert의 권고, 선택 수준과 이유, 사람 결정 질문, 보호 결과, 수정 조건과 그 수준의 실제 model slice가 표시된다.
+- [ ] Domain 첫 화면에 AI Domain Expert supervision의 문제·model expectation·implementation reality·business/engineering impact·선택지·권고/confidence·정확한 사람 결정 질문이 먼저 표시된다.
+- [ ] 코드/모델 변경 선택은 새 aligned review 전까지 해결됨으로 표시되지 않고, temporary deviation은 human risk acceptance와 expiry를 표시한다.
+- [ ] Domain model card에 AI Domain Expert의 권고, 선택 수준과 이유, 보호 결과, 수정 조건과 그 수준의 실제 model slice가 표시된다.
 - [ ] 긴 ID와 source ref가 자기 cell/card 안에서 줄바꿈되며 인접 content와 겹치지 않는다.
 - [ ] migration fence, current repository와 source evidence freshness가 독립 상태다.
 - [ ] View runtime/controller byte set이 release manifest와 installation lock에 pin되어 있다.

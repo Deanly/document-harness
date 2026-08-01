@@ -55,6 +55,7 @@
 - `docs/bin/validate-harness-foundation.sh`: control-plane, quality axes, artifact contract 기본 구조를 검증하는 스크립트
 - `docs/bin/validate-domain-design.sh`: DDD 문서 구조, stable ID, 역할 관점, 승인·freshness 경계를 검증하는 스크립트
 - `docs/bin/validate-domain-lineage.sh`: project/task/QA가 영향받는 bounded context와 승인된 model·rule·scenario를 추적하는지 검증하는 스크립트
+- `docs/bin/validate-domain-supervision.sh`: AI Domain Expert review가 current delivery·model·implementation exact bytes를 감독하고 unresolved 사람 결정·충돌을 closeout에서 막는지 검증하는 스크립트
 - `docs/bin/validate-closeout.sh`: `done` 전환 전 목표 달성 여부를 검증하는 스크립트
 - `docs/bin/close-doc.sh`: 검증을 통과한 Project/Task만 `done`으로 닫고, coordinated document/register/receipt workflow 전에는 Initiative 종료를 거부하는 스크립트
 
@@ -81,6 +82,7 @@
 ./docs/bin/validate-doc-retrieval.sh
 ./docs/bin/validate-domain-design.sh --all
 ./docs/bin/validate-domain-lineage.sh --all
+./docs/bin/validate-domain-supervision.sh --all
 ./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 ```
@@ -110,6 +112,7 @@ full-profile adoption은 다음 reusable authoring command와 그 template/refer
 ./docs/bin/new-doc.sh design domain-examples core examples
 ./docs/bin/validate-domain-design.sh --all
 ./docs/bin/validate-domain-lineage.sh --all
+./docs/bin/validate-domain-supervision.sh --all
 ./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/harness-adopt verify --target .
@@ -130,7 +133,7 @@ full-profile adoption은 다음 reusable authoring command와 그 template/refer
 11. 새 문서는 YAML frontmatter properties와 첫 화면 bullet metadata를 함께 유지합니다.
 12. Codex가 바로 읽어야 하는 프로젝트라면 루트 `AGENTS.md`를 실제 repo 기준으로 조정하고 `.agents/skills/operate-document-harness/`를 project-local로 유지합니다. Claude Code도 운영한다면 `.claude/skills/operate-document-harness/`와 `docs/_templates/claude.md`의 thin adapters로 같은 canonical 규칙을 위임합니다.
 13. 현재 session 중 skill이 처음 설치됐다면 canonical `SKILL.md`를 직접 읽어 계속하고, 자동 discovery에 의존하기 전 새 session 또는 repository reload를 수행합니다.
-14. `./docs/bin/validate-domain-design.sh --all`, `./docs/bin/validate-domain-lineage.sh --all`, `./docs/bin/validate-execution-loop.sh --all`, `./docs/bin/harness-adopt verify --target .`로 installed domain/execution/release surface를 확인합니다.
+14. `./docs/bin/validate-domain-design.sh --all`, `./docs/bin/validate-domain-lineage.sh --all`, `./docs/bin/validate-domain-supervision.sh --all`, `./docs/bin/validate-execution-loop.sh --all`, `./docs/bin/harness-adopt verify --target .`로 installed domain/execution/release surface를 확인합니다.
 15. `done` 전환 전에는 `./docs/bin/validate-closeout.sh --all`을 통과시키고, Project/Task는 가능하면 `./docs/bin/close-doc.sh`로 닫습니다. Initiative는 canonical 문서·register·exact terminal human decision receipt를 같은 변경 셋으로 갱신하고 validator를 다시 실행합니다.
 
 ## Closeout Gate
@@ -144,6 +147,7 @@ full-profile adoption은 다음 reusable authoring command와 그 template/refer
 ./docs/bin/validate-doc-retrieval.sh
 ./docs/bin/validate-domain-design.sh --all
 ./docs/bin/validate-domain-lineage.sh --all
+./docs/bin/validate-domain-supervision.sh --all
 ./docs/bin/validate-execution-loop.sh --all
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/close-doc.sh docs/tasks/T0001-first-task.md "issued goals and evidence verified"

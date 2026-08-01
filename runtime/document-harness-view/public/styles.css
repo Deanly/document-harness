@@ -1305,6 +1305,45 @@ footer p {
   border-left: 4px solid var(--pf-t--global--color--brand--default);
 }
 
+.domain-supervision-panel {
+  margin-bottom: 16px;
+  border-left: 4px solid var(--pf-t--global--color--status--warning--default);
+}
+
+.domain-supervision-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.domain-supervision-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--pf-t--global--border--color--default);
+  border-top: 4px solid var(--pf-t--global--color--status--warning--default);
+  border-radius: 8px;
+}
+
+.domain-supervision-card.success {
+  border-top-color: var(--pf-t--global--color--status--success--default);
+}
+
+.domain-supervision-card.danger {
+  border-top-color: var(--pf-t--global--color--status--danger--default);
+}
+
+.domain-decision-question,
+.domain-decision-result {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--pf-t--global--color--status--warning--subtle);
+}
+
+.domain-decision-result {
+  background: var(--pf-t--global--color--status--success--subtle);
+}
+
 .domain-authority-links,
 .reference-list,
 .domain-role-list,

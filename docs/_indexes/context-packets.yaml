@@ -115,9 +115,12 @@ packets:
       - semantic_diff_counterexamples_and_challenge
       - current_delegation_or_board_decision_receipt
       - affected_project_task_qa_and_published_contracts
+      - exact_implementation_evidence_and_previous_supervision
+      - open_domain_decisions_deviations_and_expiry
     avoid_by_default:
       - code_behavior_as_business_truth
       - self_granted_authority
+      - silent_model_compromise_to_match_incomplete_code
       - unrelated_contexts
     section_only:
       - ai_domain_expert_board_review

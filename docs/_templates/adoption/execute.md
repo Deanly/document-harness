@@ -33,7 +33,8 @@ tags:
 5. active이고 승인된 추진안의 outcome/scope, policy relation, guideline disposition과 exact refs
 6. current task와 `task_contract_revision`
 7. current `checkpoint_ref`; 첫 실행이면 `docs/_templates/execution-checkpoint.md`
-8. 추진안과 task/checkpoint가 고정한 effective policy, required guideline/normative standard, exception, design과 receipt
+8. affected bounded context의 authoritative/current DDD model과 latest AI Domain Expert supervision review
+9. 추진안과 task/checkpoint가 고정한 effective policy, required guideline/normative standard, exception, design과 receipt
 
 검색 결과나 View snapshot은 current source를 대체하지 않습니다.
 
@@ -50,6 +51,7 @@ required governance가 missing, stale, unapproved이거나 서로 충돌하면 �
 - 적용 policy/directive와 human authority revision을 확인합니다.
 - baseline, 가장 싼 관련 검사, full check와 stop condition을 정합니다.
 - secret, production, external write 또는 비가역 action이 필요하면 먼저 attention을 만듭니다.
+- AI Domain Expert가 delivery boundary와 current model을 확인하고 구현 변경을 감독할 수 있어야 합니다.
 
 ## Execute Loop
 
@@ -57,8 +59,10 @@ required governance가 missing, stale, unapproved이거나 서로 충돌하면 �
 2. baseline 또는 reproduce check를 먼저 실행합니다.
 3. hypothesis 하나와 작고 가역적인 action 하나를 수행합니다.
 4. 가장 관련성 높은 fast check를 실행합니다.
-5. checkpoint의 last action, evidence, risk, next actor/action과 resume condition을 갱신합니다.
-6. required receipt를 연결하고 계속, review, stop 또는 success를 결정합니다.
+5. 의미 있는 코드·DB·API·event·test 변경이면 AI Domain Expert가 exact model/implementation bytes를 다시 감독합니다.
+6. 불일치면 코드 변경, 모델 변경, 임시 편차, 중단 대안과 engineering 권고를 Board에 제시하고 `decision-required` 또는 `blocked-conflict`로 멈춥니다.
+7. checkpoint의 last action, evidence, risk, next actor/action, resume condition과 domain supervision ref를 갱신합니다.
+8. required receipt를 연결하고 계속, review, stop 또는 success를 결정합니다.
 
 ## State Routing
 
@@ -76,7 +80,7 @@ authority 또는 policy 충돌은 `stopped / CONFLICT`와 human attention으로 
 
 ## Evidence Barrier
 
-`succeeded` 전에 current task/source revision과 governance preflight에 연결된 fast/full check, 필요한 review receipt, goal별 evidence, scope check와 unresolved-attention 0건이 필요합니다. AI가 작성한 `passed` 문자열은 receipt가 아닙니다.
+`succeeded` 전에 current task/source revision과 governance preflight에 연결된 fast/full check, 필요한 review receipt, goal별 evidence, scope check, unresolved-attention 0건과 exact-byte AI Domain Expert supervision이 필요합니다. 미해결 domain decision/conflict는 성공이 아니며, AI가 작성한 `passed` 문자열은 receipt가 아닙니다.
 
 ## Stop And Ask
 
@@ -87,7 +91,8 @@ goal, authority, policy/guideline/initiative, approval/freshness fence가 불명
 1. terminal checkpoint의 `loop_state: succeeded`를 확인합니다.
 2. Goal Inventory와 Goal Verification을 1:1로 맞춥니다.
 3. evidence/receipt ref와 residual risk를 확인합니다.
-4. installed validator를 통과한 뒤에만 source를 `done`으로 전환합니다.
+4. `validate-domain-supervision.sh --closeout`이 aligned 상태 또는 exact human-accepted expiring temporary deviation을 확인해야 합니다.
+5. installed validator를 통과한 뒤에만 source를 `done`으로 전환합니다.
 
 ## Verification
 
@@ -95,6 +100,7 @@ adopted repository에 실제 설치된 command만 실행합니다. `view` profil
 
 ```bash
 ./docs/bin/validate-execution-loop.sh --all
+./docs/bin/validate-domain-supervision.sh --all
 ./docs/bin/validate-closeout.sh --all
 ./docs/bin/harness-adopt verify --target .
 git diff --check

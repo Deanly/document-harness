@@ -146,7 +146,14 @@ validate_file() {
     fi
     return
   fi
-  [[ "$contract" == "v1" ]] || { error "$relative must declare domain_contract: v1 or explicit terminal legacy-v0"; return; }
+  if [[ "$contract" == "v1" ]]; then
+    if [[ "$status" != "done" && "$status" != "closed" && "$status" != "retired" ]]; then
+      error "$relative domain_contract v1 is transitional and allowed only for terminal historical documents; active/current work requires v2 supervision"
+    fi
+  elif [[ "$contract" != "v2" ]]; then
+    error "$relative must declare domain_contract: v2 or an explicit terminal historical contract"
+    return
+  fi
   case "$impact" in required|none) ;; *) error "$relative domain_impact must be required|none";; esac
   if [[ "$(frontmatter_list "$file" actor_roles | wc -l | tr -d ' ')" -eq 0 ]]; then
     error "$relative requires actor_roles"
@@ -155,7 +162,9 @@ validate_file() {
 
   if [[ "$impact" == "none" ]]; then
     meaningful "$(frontmatter_scalar "$file" domain_impact_reason)" || error "$relative domain_impact none requires domain_impact_reason"
-    meaningful "$(frontmatter_scalar "$file" domain_review_ref)" || error "$relative domain_impact none requires an AI Domain Expert review ref"
+    if [[ "$contract" == "v1" ]]; then
+      meaningful "$(frontmatter_scalar "$file" domain_review_ref)" || error "$relative transitional v1 domain_impact none requires an AI Domain Expert review ref"
+    fi
     return
   fi
 

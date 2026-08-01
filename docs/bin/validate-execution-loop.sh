@@ -15,6 +15,7 @@ CHECKPOINT_TEMPLATE="$DOCS_DIR/_templates/execution-checkpoint.md"
 EXECUTION_POLICY="$DOCS_DIR/_indexes/execution-loop-policy.yaml"
 INSTALLATION_LOCK="$DOCS_DIR/_indexes/harness-installation.yaml"
 INITIATIVE_AUTHORITY_VALIDATOR="$DOCS_DIR/lib/initiative-authority.mjs"
+DOMAIN_SUPERVISION_VALIDATOR="$DOCS_DIR/bin/validate-domain-supervision.sh"
 
 error_count=0
 
@@ -601,7 +602,7 @@ validate_public_surfaces() {
       type execution_contract checkpoint_id checkpoint_seq task_id \
       task_contract_revision attempt_seq loop_state stop_reason next_actor \
       current_hypothesis last_action next_action resume_when policy_refs \
-      directive_refs evidence risks attention receipts budget source_revision \
+      directive_refs evidence risks attention receipts domain_supervision_refs domain_decision_refs budget source_revision \
       source_hash recorded_at
     do
       if ! frontmatter_has_key "$CHECKPOINT_TEMPLATE" "$field"; then
@@ -611,7 +612,7 @@ validate_public_surfaces() {
     for section in \
       Purpose 'Human Snapshot' 'Task Contract Fence' 'Policy And Directive Refs' \
       'Current Hypothesis' 'Last Action' 'Next Actor And Action' \
-      'Resume Condition' Evidence Risks Attention Receipts Budget 'Transition Note'
+      'Resume Condition' Evidence Risks Attention Receipts 'Domain Supervision' Budget 'Transition Note'
     do
       require_section "$CHECKPOINT_TEMPLATE" "$section"
     done
@@ -642,7 +643,7 @@ validate_public_surfaces() {
       checkpoint_id checkpoint_seq task_id task_contract_revision attempt_seq \
       loop_state stop_reason next_actor current_hypothesis last_action next_action \
       resume_when policy_refs directive_refs evidence risks attention receipts \
-      budget source_revision source_hash recorded_at
+      domain_supervision_refs domain_decision_refs budget source_revision source_hash recorded_at
     do
       require_contains "$EXECUTION_POLICY" "    - $field"
     done
@@ -706,7 +707,7 @@ validate_checkpoint() {
     type execution_contract checkpoint_id checkpoint_seq task_id \
     task_contract_revision attempt_seq loop_state stop_reason next_actor \
     current_hypothesis last_action next_action resume_when policy_refs \
-    directive_refs evidence risks attention receipts budget source_revision \
+    directive_refs evidence risks attention receipts domain_supervision_refs domain_decision_refs budget source_revision \
     source_hash recorded_at
   do
     if ! frontmatter_has_key "$file" "$key"; then
@@ -815,6 +816,19 @@ validate_checkpoint() {
       ;;
   esac
 
+  if [[ -n "${task_file:-}" && "$(frontmatter_scalar "$task_file" domain_contract)" == "v2" && "$state" == "running" ]]; then
+    task_supervision_state="$(frontmatter_scalar "$task_file" domain_supervision_state)"
+    task_decision_ref="$(frontmatter_scalar "$task_file" domain_decision_ref)"
+    if [[ "$task_supervision_state" == "blocked-conflict" ]]; then
+      error "running checkpoint cannot bypass blocked AI Domain Expert supervision in ${file#$REPO_ROOT/}"
+    elif [[ "$task_supervision_state" == "decision-required" && -z "$task_decision_ref" ]]; then
+      error "running checkpoint requires the exact human domain decision requested by AI Domain Expert in ${file#$REPO_ROOT/}"
+    fi
+    if ! "$DOMAIN_SUPERVISION_VALIDATOR" "$task_file" >/dev/null; then
+      error "running checkpoint requires current task/model/implementation supervision bytes in ${file#$REPO_ROOT/}"
+    fi
+  fi
+
   if ! frontmatter_has_key "$file" policy_refs || [[ "$(frontmatter_list_count "$file" policy_refs)" == "0" ]]; then
     error "checkpoint requires at least one policy_refs entry: ${file#$REPO_ROOT/}"
   fi
@@ -828,7 +842,7 @@ validate_checkpoint() {
   while IFS= read -r value; do
     validate_local_ref "$value" "${file#$REPO_ROOT/} directive_refs"
   done < <(frontmatter_list_items "$file" directive_refs)
-  for key in evidence attention receipts; do
+  for key in evidence attention receipts domain_supervision_refs domain_decision_refs; do
     while IFS= read -r value; do
       validate_local_ref "$value" "${file#$REPO_ROOT/} $key"
     done < <(frontmatter_list_items "$file" "$key")
@@ -896,6 +910,21 @@ validate_checkpoint() {
       error "succeeded checkpoint requires receipt refs in ${file#$REPO_ROOT/}"
     [[ "$(frontmatter_list_count "$file" attention)" == "0" ]] || \
       error "succeeded checkpoint cannot retain unresolved attention in ${file#$REPO_ROOT/}"
+    if [[ -n "${task_file:-}" && "$(frontmatter_scalar "$task_file" domain_contract)" == "v2" ]]; then
+      task_supervision_state="$(frontmatter_scalar "$task_file" domain_supervision_state)"
+      task_decision_ref="$(frontmatter_scalar "$task_file" domain_decision_ref)"
+      [[ "$(frontmatter_list_count "$file" domain_supervision_refs)" != "0" ]] || \
+        error "succeeded domain_contract v2 checkpoint requires domain_supervision_refs in ${file#$REPO_ROOT/}"
+      [[ "$(frontmatter_list_items "$file" domain_supervision_refs | head -n 1)" == "$(frontmatter_scalar "$task_file" domain_supervision_ref)" ]] || \
+        error "checkpoint domain_supervision_refs must mirror current task review in ${file#$REPO_ROOT/}"
+      if [[ -n "$task_decision_ref" ]]; then
+        [[ "$(frontmatter_list_items "$file" domain_decision_refs | head -n 1)" == "$task_decision_ref" ]] || \
+          error "checkpoint domain_decision_refs must mirror current task decision in ${file#$REPO_ROOT/}"
+      fi
+      if ! "$DOMAIN_SUPERVISION_VALIDATOR" --closeout "$task_file" >/dev/null; then
+        error "succeeded checkpoint requires aligned domain supervision or a current human-accepted temporary deviation in ${file#$REPO_ROOT/}"
+      fi
+    fi
     for key in evidence receipts; do
       while IFS= read -r value; do
         validate_durable_ref "$value" "${file#$REPO_ROOT/} $key"
@@ -906,7 +935,7 @@ validate_checkpoint() {
   for key in \
     Purpose 'Human Snapshot' 'Task Contract Fence' 'Policy And Directive Refs' \
     'Current Hypothesis' 'Last Action' 'Next Actor And Action' \
-    'Resume Condition' Evidence Risks Attention Receipts Budget 'Transition Note'
+    'Resume Condition' Evidence Risks Attention Receipts 'Domain Supervision' Budget 'Transition Note'
   do
     if ! frontmatter_section_exists "$file" "$key"; then
       error "checkpoint missing section '## $key': ${file#$REPO_ROOT/}"

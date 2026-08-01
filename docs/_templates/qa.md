@@ -5,10 +5,13 @@ title: {{TITLE}}
 qa_type:
 status: draft
 governance_role: verification
-domain_contract: v1
+domain_contract: v2
 domain_impact: required
 domain_impact_reason:
 domain_review_ref:
+domain_supervision_state: pending
+domain_supervision_ref:
+domain_decision_ref:
 domain_contexts: []
 domain_model_refs: []
 covered_rule_ids: []
@@ -32,10 +35,13 @@ tags:
 
 - Type: qa
 - Governance Role: verification
-- Domain Contract: v1
+- Domain Contract: v2
 - Domain Impact: required
 - Domain Impact Reason:
 - Domain Review Ref:
+- Domain Supervision State: pending
+- Domain Supervision Ref:
+- Domain Decision Ref:
 - Domain Contexts:
 - Domain Model Refs:
 - Covered Rule IDs:
@@ -76,6 +82,8 @@ qa_type에 따라 작성합니다: `strategy`는 테스트 레벨 정의, `plan`
 | BR-... | SCN-... | | | | |
 
 모든 적용 `BR-*`와 `SCN-*`는 frontmatter `covered_rule_ids`, `covered_scenario_ids`와 이 표에 함께 나타나야 합니다.
+
+AI Domain Expert는 QA가 모델 ID를 단순히 언급했는지가 아니라 실제 구현의 허용·거절·예외 행동을 검증하는지 감독하고 exact supervision review를 남깁니다.
 
 ## Traceability
 

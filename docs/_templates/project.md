@@ -4,12 +4,15 @@ doc_id: {{DOC_ID}}
 title: {{TITLE}}
 status: draft
 lineage_contract: v2
-domain_contract: v1
+domain_contract: v2
 related_initiative: {{RELATED_INITIATIVE}}
 initiative_relation: {{INITIATIVE_RELATION}}
 domain_impact: required
 domain_impact_reason:
 domain_review_ref:
+domain_supervision_state: pending
+domain_supervision_ref:
+domain_decision_ref:
 domain_contexts: []
 domain_model_refs: []
 actor_roles:
@@ -38,10 +41,13 @@ tags:
 - Status: draft
 - Related Initiative: {{RELATED_INITIATIVE}}
 - Initiative Relation: {{INITIATIVE_RELATION}}
-- Domain Contract: v1
+- Domain Contract: v2
 - Domain Impact: required
 - Domain Impact Reason:
 - Domain Review Ref:
+- Domain Supervision State: pending
+- Domain Supervision Ref:
+- Domain Decision Ref:
 - Domain Contexts:
 - Domain Model Refs:
 - Actor Roles: planner, architect
@@ -69,6 +75,7 @@ tags:
 - 기능·업무 의미·용어·상태·API/event가 바뀌면 `domain_impact: required`와 exact authoritative/current `domain_model_refs`를 채웁니다.
 - domain 영향이 정말 없으면 `domain_impact: none`과 사람이 검토할 수 있는 이유를 적습니다.
 - project가 domain model을 약화하거나 새로운 업무 rule을 독자적으로 만들지 않습니다.
+- `active` 전 AI Domain Expert가 delivery boundary와 현재 모델을 감독하고 exact review를 남깁니다. 구현 현실과 모델이 충돌하면 AI가 대안·비용·위험·권고를 Board에 제시하며 사용자가 선택하기 전에는 경계 변경을 확정하지 않습니다.
 
 ## Project Issuance Check
 

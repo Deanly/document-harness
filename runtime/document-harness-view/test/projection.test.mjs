@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.7.0");
+  assert.equal(result.snapshot.runtimeVersion, "1.8.0");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -80,6 +80,200 @@ validation_status: unreviewed
   assert.ok(attention);
   assert.deepEqual(attention.relatedRefs, result.snapshot.domain.discoveryRefs);
   assert.equal(result.snapshot.summary.domainApprovedCount, 0);
+});
+
+test("Board projects AI Domain Expert supervision as a human decision package without changing docs/design", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  await mkdir(path.join(fixture.root, "docs", "design", "contexts", "access"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "design", "receipts"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "tasks"), { recursive: true });
+  await mkdir(path.join(fixture.root, "docs", "receipts", "domain-supervision"), { recursive: true });
+  await mkdir(path.join(fixture.root, "src"), { recursive: true });
+  await writeFile(path.join(fixture.root, "docs", "design", "domain-landscape.md"), `---
+type: design
+design_kind: domain-landscape
+title: access-landscape
+status: review_requested
+model_revision: 1
+---
+
+# Access landscape
+`, "utf8");
+  await writeFile(path.join(fixture.root, "docs", "design", "context-map.md"), `---
+type: design
+design_kind: context-map
+title: access-map
+status: review_requested
+model_revision: 1
+---
+
+# Access map
+`, "utf8");
+  const modelRef = "docs/design/contexts/access/domain-model.md";
+  const approvalRef = "docs/design/receipts/access.json";
+  const model = `---
+type: design
+design_kind: bounded-context
+title: access-model
+display_title: 사용 자격과 로그인 경계
+human_summary: 로그인과 사용 자격 생성을 분리해 사용자의 권리가 조용히 바뀌지 않게 합니다.
+presentation_status: review_requested
+status: current
+bounded_context: access
+bounded_context_id: BC-ACCESS
+subdomain_type: core
+model_revision: 1
+validation_status: approved
+validation_ref: ${approvalRef}
+domain_expert_agent: ai-domain-expert
+authority_mode: human-confirmed
+decision_tier: material
+board_review_level: business-rule
+board_review_status: confirmed
+domain_expert_roles:
+  - product-owner
+role_views:
+  - customer
+  - planner
+  - architect
+  - developer
+  - qa
+owner: product-owner
+---
+
+# Access
+
+## Human Review Summary
+
+- 이 영역의 책임: 사용 자격과 로그인 책임을 분리합니다.
+- 포함하지 않는 것: provider capacity를 만들지 않습니다.
+- 사용자에게 보이는 실패: 로그인만으로 허용되지 않은 자격이 생깁니다.
+- 아직 결정할 것: 현재 구현을 고칠지 임시 편차를 둘지 결정해야 합니다.
+
+## AI Domain Expert Board Review
+
+- 권고 결정: 로그인은 기존 사용 자격만 확인하도록 유지합니다.
+- 선택한 모델링 수준: business-rule
+- 이 수준을 선택한 이유: 사용 자격을 만드는 조건이 핵심 판단입니다.
+- 사람이 확인할 핵심: 로그인과 자격 생성이 분리되어야 하는지 확인합니다.
+- 승인하면 보호되는 결과: 인증 성공이 권리 생성을 뜻하지 않습니다.
+- 반대하거나 수정해야 하는 조건: 제품 정책이 로그인 시 자격 부여로 바뀌면 모델을 수정합니다.
+
+## Business Rules And Invariants
+
+| Rule ID | Rule |
+| --- | --- |
+| BR-ACCESS-001 | 로그인은 사용 자격을 생성하지 않습니다. |
+`;
+  await writeFile(path.join(fixture.root, modelRef), model, "utf8");
+  await writeFile(path.join(fixture.root, approvalRef), JSON.stringify({
+    schemaVersion: 2,
+    kind: "domain-design-approval",
+    receiptId: "DDD-ACCESS-1",
+    decision: "approved",
+    documentRef: modelRef,
+    documentSha256: sha256(model),
+    modelRevision: 1,
+    boundedContext: "access",
+    authorityMode: "human-confirmed",
+    decisionTier: "material",
+    modelingLevel: "business-rule",
+    decidedBy: { actorKind: "human", identifier: "product-owner" },
+    decidedAt: "2026-08-01T00:00:00.000Z",
+    reason: "Confirmed access semantics.",
+    evidenceRefs: [modelRef],
+    challengeSummary: "Login and entitlement lifecycle were challenged."
+  }), "utf8");
+  const taskRef = "docs/tasks/T0001-access.md";
+  const reviewRef = "docs/receipts/domain-supervision/DSR-T0001-1.json";
+  const task = `---
+type: task
+doc_id: T0001
+title: 로그인 구현 정렬
+status: draft
+domain_contract: v2
+domain_impact: required
+domain_supervision_state: decision-required
+domain_supervision_ref: ${reviewRef}
+domain_decision_ref:
+domain_contexts:
+  - access
+domain_model_refs:
+  - ${modelRef}
+---
+
+# 로그인 구현 정렬
+`;
+  await writeFile(path.join(fixture.root, taskRef), task, "utf8");
+  const codeRef = "src/access.mjs";
+  const code = "export const loginCreatesEntitlement = true;\n";
+  await writeFile(path.join(fixture.root, codeRef), code, "utf8");
+  const review = {
+    schemaVersion: 1,
+    kind: "domain-supervision-review",
+    reviewId: "DSR-T0001-1",
+    reviewStatus: "decision-required",
+    subject: { kind: "task", documentRef: taskRef, documentSha256: sha256(task) },
+    repositoryRevision: "working-tree",
+    affectedModels: [{ boundedContext: "access", documentRef: modelRef, documentSha256: sha256(model), modelRevision: 1 }],
+    implementationEvidence: [{ ref: codeRef, sha256: sha256(code), role: "code" }],
+    problem: "로그인이 사용 자격을 자동 생성해 승인된 모델과 충돌합니다.",
+    modelExpectation: "로그인은 기존 사용 자격만 확인합니다.",
+    implementationReality: "현재 코드는 로그인 성공 시 사용 자격을 생성합니다.",
+    businessImpact: "인증 성공만으로 사용 권리가 생길 수 있습니다.",
+    engineeringImpact: "인증과 entitlement lifecycle이 한 서비스 흐름에 결합됩니다.",
+    recommendation: { optionId: "fix-code", summary: "구현을 모델에 맞춥니다.", rationale: "권리 생성과 인증을 분리하는 편이 경계와 확장성에 맞습니다." },
+    confidence: "high",
+    options: [
+      { id: "fix-code", title: "구현 변경", disposition: "change-implementation", action: "자동 생성을 제거합니다.", benefits: "책임 경계를 복구합니다.", costs: "기존 흐름을 migration합니다.", risks: "기존 사용자 onboarding을 별도 처리해야 합니다.", reversible: true },
+      { id: "change-model", title: "모델 변경", disposition: "change-domain-model", action: "로그인이 자격을 부여한다는 정책을 명시적으로 승인합니다.", benefits: "현재 구현을 유지합니다.", costs: "사용자 권리 의미가 바뀝니다.", risks: "권한 확대와 감사 문제가 생깁니다.", reversible: false }
+    ],
+    decisionRequest: { required: true, question: "구현을 승인된 모델에 맞출까요, 사용자 권리 정책을 바꿀까요?", decisionOwner: "human", decideBefore: "implementation" },
+    evidenceRefs: [codeRef],
+    reviewedBy: { actorKind: "ai-agent", identifier: "ai-domain-expert" },
+    reviewedAt: "2026-08-01T01:00:00.000Z"
+  };
+  await writeFile(path.join(fixture.root, reviewRef), JSON.stringify(review), "utf8");
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.supervision.status, "decision-required");
+  assert.equal(result.snapshot.supervision.reviews[0].recommendation.optionId, "fix-code");
+  assert.equal(result.snapshot.supervision.reviews[0].decisionRequest.decisionOwner, "human");
+  assert.ok(result.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-SUPERVISION-DECISION"));
+  assert.equal(result.snapshot.domain.contexts[0].modelRef, modelRef);
+
+  const decisionRef = "docs/receipts/domain-supervision/DSD-T0001-1.json";
+  const decidedTask = task.replace("domain_decision_ref:\n", `domain_decision_ref: ${decisionRef}\n`);
+  await writeFile(path.join(fixture.root, taskRef), decidedTask, "utf8");
+  const decidedReview = {
+    ...review,
+    subject: { ...review.subject, documentSha256: sha256(decidedTask) }
+  };
+  const decidedReviewBytes = JSON.stringify(decidedReview);
+  await writeFile(path.join(fixture.root, reviewRef), decidedReviewBytes, "utf8");
+  await writeFile(path.join(fixture.root, decisionRef), JSON.stringify({
+    schemaVersion: 1,
+    kind: "domain-supervision-decision",
+    receiptId: "DSD-T0001-1",
+    reviewRef,
+    reviewSha256: sha256(decidedReviewBytes),
+    reviewId: decidedReview.reviewId,
+    subjectRef: taskRef,
+    subjectSha256: sha256(decidedTask),
+    decision: "approved-option",
+    selectedOptionId: "fix-code",
+    rationale: "승인된 사용 자격 경계를 유지하고 구현을 수정합니다.",
+    riskAcceptance: "구현과 새 aligned review 전에는 완료하지 않습니다.",
+    expiresAt: null,
+    decidedBy: { actorKind: "human", identifier: "product-owner" },
+    decidedAt: "2026-08-01T02:00:00.000Z"
+  }), "utf8");
+
+  const decided = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 2 });
+  assert.equal(decided.snapshot.supervision.status, "alignment-pending");
+  assert.equal(decided.snapshot.supervision.counts.alignmentPending, 1);
+  assert.ok(decided.snapshot.attention.some((item) => item.id === "ATTN-DOMAIN-SUPERVISION-REALIGNMENT"));
 });
 
 test("domain projection rejects a Board-specific domain source outside docs/design", async (t) => {
