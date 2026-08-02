@@ -97,7 +97,7 @@ validate_receipt() {
   fi
   while IFS= read -r changed_path; do
     case "$changed_path" in
-      AGENTS.md|CLAUDE.md|.agents/*|.claude/*|docs/*|runtime/document-harness-view/*) ;;
+      AGENTS.md|CLAUDE.md|document-harness.yaml|.agents/*|.claude/*|docs/*|runtime/document-harness-view/*) ;;
       *) error "$receipt_rel bridge changes product path: $changed_path" ;;
     esac
   done < <(git -C "$REPO_ROOT" diff --name-only "$baseline" "$bridge")
@@ -105,7 +105,7 @@ validate_receipt() {
   while IFS= read -r changed_path; do
     [[ "$changed_path" == "$document_path" ]] || \
       error "$receipt_rel bridge does not exactly project issuance docs; unexpected delta: $changed_path"
-  done < <(git -C "$REPO_ROOT" diff --name-only "$issuance" "$bridge" -- AGENTS.md CLAUDE.md .agents .claude docs runtime/document-harness-view)
+  done < <(git -C "$REPO_ROOT" diff --name-only "$issuance" "$bridge" -- AGENTS.md CLAUDE.md document-harness.yaml .agents .claude docs runtime/document-harness-view)
 
   finalization="$(git -C "$REPO_ROOT" log --diff-filter=A --format=%H -1 -- "$receipt_rel")"
   if [[ -z "$finalization" ]]; then

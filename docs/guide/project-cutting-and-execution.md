@@ -61,7 +61,7 @@
 2. issuer worktree에서 `git fetch origin main` 후 clean `main`이 최신 `origin/main`과 정확히 같은지 확인합니다.
 3. feature는 작업의 immutable baseline SHA, hotfix는 실제 최근 배포 tag가 가리키는 immutable SHA를 선택합니다. branch 이름은 진실값이 아닙니다.
 4. `./docs/bin/issue-doc-bridge.sh --baseline-ref <ref> --delivery-branch <branch> --workstream-kind <feature|hotfix> -- <type> ...`를 실행합니다. Project의 상위 `I####`와 Task의 `P####` authority gate는 기존과 동일합니다.
-5. 발급기는 baseline을 부모로 하면서 제품 코드는 baseline과 동일하고, 최신 main의 document control plane과 새 draft만 포함하는 bridge commit `D`를 만듭니다.
+5. 발급기는 baseline을 부모로 하면서 제품 코드는 baseline과 동일하고, 최신 main의 document control plane(`AGENTS.md`, tool adapter, `docs/`, `document-harness.yaml`, 설치된 Board runtime)과 새 draft만 포함하는 bridge commit `D`를 만듭니다.
 6. Git commit은 자기 SHA를 자기 내용에 기록할 수 없으므로, 다음 docs-only finalization commit `R`이 `D`의 SHA를 문서와 issuance receipt에 확정합니다.
 7. 같은 `D`와 `R`을 cherry-pick하지 않고 `main`과 delivery branch 양쪽에 merge하고 push합니다. `R`이 remote 양쪽의 공통 조상인지 validator로 확인한 뒤 번호를 확정합니다.
 

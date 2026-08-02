@@ -122,6 +122,9 @@ BRIDGE_WORKTREE="$(cd "$BRIDGE_WORKTREE" && pwd -P)"
 if git -C "$REPO_ROOT" cat-file -e "${DOCUMENT_ISSUANCE_REF}:runtime/document-harness-view" 2>/dev/null; then
   CONTROL_PATHS+=(runtime/document-harness-view)
 fi
+if git -C "$REPO_ROOT" cat-file -e "${DOCUMENT_ISSUANCE_REF}:document-harness.yaml" 2>/dev/null; then
+  CONTROL_PATHS+=(document-harness.yaml)
+fi
 
 # Replace only the document control plane. Product code remains byte-identical
 # to the selected baseline, including when main contains unreleased features.
@@ -147,7 +150,7 @@ fi
 git -C "$BRIDGE_WORKTREE" add -- "${CONTROL_PATHS[@]}"
 while IFS= read -r changed_path; do
   case "$changed_path" in
-    AGENTS.md|CLAUDE.md|.agents/*|.claude/*|docs/*|runtime/document-harness-view/*) ;;
+    AGENTS.md|CLAUDE.md|document-harness.yaml|.agents/*|.claude/*|docs/*|runtime/document-harness-view/*) ;;
     *)
       echo "error: bridge would change product path: $changed_path" >&2
       exit 1
