@@ -76,7 +76,7 @@ checkpoint_ref:
 - `draft + ready` task는 아직 실행을 시작하지 않았으므로 빈 `checkpoint_ref`를 허용합니다.
 - task가 active이거나 `loop_state`가 `ready`가 아니면 `docs/checkpoints/` 아래 checkpoint가 필요합니다.
 - checkpoint의 task id, task contract revision, loop state는 task mirror와 같아야 합니다.
-- checkpoint는 numbered document가 아니며 `new-doc.sh`의 main-issued auto-commit 흐름을 사용하지 않습니다.
+- checkpoint는 numbered document가 아니므로 새 번호를 발급하지 않습니다. 현재 delivery branch에서 linked Task의 bridge provenance를 그대로 mirror하며 append-only 실행 상태를 갱신합니다.
 
 ## Directive And Policy Resolution
 

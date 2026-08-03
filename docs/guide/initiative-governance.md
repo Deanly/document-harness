@@ -45,10 +45,10 @@ AI는 먼저 unnumbered proposal report로 아래를 준비할 수 있습니다.
 새 `I####`는 사람이 발급을 명시적으로 승인한 뒤에만 생성합니다.
 
 ```bash
-./docs/bin/new-doc.sh initiative <slug> <issuance-approval-ref>
+./docs/bin/issue-doc-bridge.sh --baseline-ref <ref> --delivery-branch <branch> --workstream-kind <feature|hotfix> -- initiative <slug> <issuance-approval-ref>
 ```
 
-- 명령은 clean, up-to-date `main`에서 실행합니다.
+- 명령은 clean issuer `main == origin/main`에서 실행하고, 같은 bridge/finalization commit을 `main`과 delivery branch가 공유합니다.
 - `<issuance-approval-ref>`는 exact human decision receipt, approved issue/comment 또는 repository가 정한 durable decision ref입니다.
 - ref는 안전한 ASCII token, repository-relative path 또는 `http(s)` URL로 전달합니다. 공백, quote, bracket, backtick, pipe, backslash 또는 control character가 필요한 설명문은 ref에 넣지 말고 별도 decision artifact에 기록합니다.
 - 대화 맥락을 임의로 승인으로 해석하지 않습니다.
@@ -89,8 +89,8 @@ activation과 종료 변경은 canonical 문서, register의 `lifecycleState`/`a
 
 ## Project And Task Issuance
 
-- 새 project는 `./docs/bin/new-doc.sh project <slug> <initiative-id> [delivers|supports|explores]`로 발급합니다. 스크립트는 상위 추진안의 active/approved 문자열뿐 아니라 canonical document, register/catalog mirror, source-fenced human activation receipt와 current policy/required guideline authority를 검증하고 Project의 `related_initiative`에 기록합니다.
-- 새 task는 `./docs/bin/new-doc.sh task <slug> <project-id>`로 발급합니다. 스크립트는 Project가 존재하고 modern `related_initiative`가 active/approved 추진안으로 해소되는지 확인합니다. 추진안 ID를 Task에 중복 저장하지 않습니다.
+- 새 project는 bridge 명령의 `<type> ...` 자리에 `project <slug> <initiative-id> [delivers|supports|explores]`를 전달합니다. 스크립트는 상위 추진안의 active/approved 문자열뿐 아니라 canonical document, register/catalog mirror, source-fenced human activation receipt와 current policy/required guideline authority를 검증하고 Project의 `related_initiative`에 기록합니다.
+- 새 task는 같은 방식으로 `task <slug> <project-id>`를 전달합니다. 스크립트는 Project가 존재하고 modern `related_initiative`가 active/approved 추진안으로 해소되는지 확인합니다. 추진안 ID를 Task에 중복 저장하지 않습니다.
 - 추진안 도입 전 legacy Project는 `project_role`, `umbrella_initiative`, `parent_umbrella_project`가 모두 명시된 경우에만 Task parent로 grandfathering합니다. `lineage_contract: v2`이거나 `related_initiative`가 존재하면 modern gate를 우회할 수 없습니다.
 - project/task는 추진안의 outcome을 임의로 축소하거나 정책·지침 관계를 재해석하지 않습니다.
 - task의 실행 단계에서는 추진안 summary만으로 충분하지 않으며 exact policy/normative/exception refs를 계속 읽습니다.
