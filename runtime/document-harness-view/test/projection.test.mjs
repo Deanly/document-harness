@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.8.1");
+  assert.equal(result.snapshot.runtimeVersion, "1.8.2");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -961,6 +961,45 @@ test("approved governance may use a newer source revision than the migration cap
   assert.equal(result.snapshot.policies[0].sourceRefs[0].capturedRepositoryRevision, revisedCommit);
   assert.equal(result.snapshot.policies[0].evidenceState, "current");
   assert.equal(result.snapshot.policies[0].approvalState, "approved");
+});
+
+test("approved initiatives pass their evidence state to the shared approval verifier", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  const initiative = fixture.initiativeRegister.initiatives[0];
+  initiative.approvalState = "approved";
+  initiative.effectiveRef = initiative.documentRef;
+  initiative.decisionReceiptRef = "docs/receipts/I0001-approved.json";
+  await writeFile(
+    path.join(fixture.root, "docs", "governance", "initiatives.json"),
+    `${JSON.stringify(fixture.initiativeRegister, null, 2)}\n`,
+    "utf8"
+  );
+  const effectivePath = path.join(fixture.root, initiative.effectiveRef);
+  const effectiveBytes = (await readFile(effectivePath, "utf8"))
+    .replace("approval_status: review_requested", "approval_status: approved")
+    .replace("approval_ref:\n", `approval_ref: ${initiative.decisionReceiptRef}\n`);
+  await writeFile(effectivePath, effectiveBytes, "utf8");
+  await mkdir(path.join(fixture.root, "docs", "receipts"), { recursive: true });
+  await writeFile(path.join(fixture.root, initiative.decisionReceiptRef), JSON.stringify({
+    schemaVersion: 1,
+    decisionId: "DEC-I0001-APPROVED",
+    candidateId: initiative.id,
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-08-03T00:00:00.000Z",
+    sourceFence: {
+      repositoryRevision: initiative.sourceRevision,
+      sourceHashes: initiative.sourceRefs.map(({ capturedSha256 }) => capturedSha256)
+    },
+    effectiveRef: initiative.effectiveRef,
+    effectiveSha256: sha256(effectiveBytes),
+    reason: "fixture initiative approval"
+  }), "utf8");
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.initiatives[0].evidenceState, "current");
+  assert.equal(result.snapshot.initiatives[0].approvalState, "approved");
 });
 
 test("projection retries torn catalog/source reads and never publishes mixed input hashes", async (t) => {

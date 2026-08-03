@@ -1019,7 +1019,7 @@ async function inspectInitiatives(repoRoot, initiatives, policies, guidelines, p
       if (sourceRef.capturedRepositoryRevision !== initiative.sourceRevision) {
         throw new Error(`${initiative.id}.sourceRefs의 revision이 sourceRevision과 일치하지 않습니다.`);
       }
-      return inspectSourceRef(repoRoot, sourceRef, initiative.sourceRevision);
+      return inspectSourceRef(repoRoot, sourceRef);
     }));
     const evidenceState = sourceRefs.some((ref) => ref.state === "missing" || ref.state === "invalid")
       ? "missing"
@@ -1031,7 +1031,6 @@ async function inspectInitiatives(repoRoot, initiatives, policies, guidelines, p
       approvalInputs.push(...await verifyApprovedItemEvidence(
         repoRoot,
         initiative,
-        initiative.sourceRevision,
         evidenceState
       ));
     }

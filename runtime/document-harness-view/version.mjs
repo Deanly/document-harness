@@ -1,1 +1,1 @@
-export const REFERENCE_VIEW_VERSION = "1.8.1";
+export const REFERENCE_VIEW_VERSION = "1.8.2";
