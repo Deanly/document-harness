@@ -2,7 +2,7 @@
   "$schema": "../schemas/release-manifest.schema.json",
   "schemaVersion": 1,
   "releaseId": "document-harness-public-v1",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "profiles": [
     "core",
     "governance",

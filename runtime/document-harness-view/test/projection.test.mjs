@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { buildProjection, sha256 } from "../lib/projection.mjs";
-import { advanceHead, createFixture } from "./helpers.mjs";
+import { advanceHead, createFixture, git } from "./helpers.mjs";
 
 test("projection keeps approval, migration fence, current repository, and source evidence separate", async (t) => {
   const fixture = await createFixture();
@@ -12,7 +12,7 @@ test("projection keeps approval, migration fence, current repository, and source
   const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath, snapshotSeq: 7 });
 
   assert.equal(result.snapshot.snapshot.seq, 7);
-  assert.equal(result.snapshot.runtimeVersion, "1.8.0");
+  assert.equal(result.snapshot.runtimeVersion, "1.8.1");
   assert.equal(result.snapshot.snapshot.freshness, "fresh");
   assert.equal(result.snapshot.migrationFence.state, "valid");
   assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
@@ -771,7 +771,7 @@ test("later HEAD movement does not stale unchanged source evidence", async (t) =
 test("changed and escaped evidence are stale or degraded independently of migration validity", async (t) => {
   const fixture = await createFixture();
   t.after(() => rm(fixture.root, { recursive: true, force: true }));
-  fixture.catalog.policies[0].sourceRefs[0].capturedSha256 = sha256("old");
+  await writeFile(path.join(fixture.root, "source.md"), "# Changed current policy\n", "utf8");
   await writeFile(path.join(fixture.root, "docs", "governance", "catalog.json"), JSON.stringify(fixture.catalog), "utf8");
   const stale = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
   assert.equal(stale.snapshot.migrationFence.state, "valid");
@@ -916,6 +916,51 @@ test("approved policy projection requires complete source fences and real matchi
     buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath }),
     /effective ref bytes를 승인하지 않습니다/
   );
+});
+
+test("approved governance may use a newer source revision than the migration capture base", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => rm(fixture.root, { recursive: true, force: true }));
+  const revisedSource = "# Revised current policy\n";
+  await writeFile(path.join(fixture.root, "source.md"), revisedSource, "utf8");
+  git(fixture.root, ["add", "source.md"]);
+  git(fixture.root, ["commit", "--quiet", "-m", "revise policy source"]);
+  const revisedCommit = git(fixture.root, ["rev-parse", "HEAD"]);
+
+  const policy = fixture.catalog.policies[0];
+  policy.authorityState = "effective";
+  policy.approvalState = "approved";
+  policy.effectiveRef = "docs/governance/catalog.json";
+  policy.decisionReceiptRef = "docs/receipts/POL-1-revised.json";
+  policy.sourceRefs = [{
+    ...policy.sourceRefs[0],
+    capturedSha256: sha256(revisedSource),
+    capturedRepositoryRevision: revisedCommit
+  }];
+  const catalogBytes = `${JSON.stringify(fixture.catalog, null, 2)}\n`;
+  await writeFile(path.join(fixture.root, policy.effectiveRef), catalogBytes, "utf8");
+  await mkdir(path.join(fixture.root, "docs", "receipts"), { recursive: true });
+  await writeFile(path.join(fixture.root, policy.decisionReceiptRef), JSON.stringify({
+    schemaVersion: 1,
+    decisionId: "DEC-POL-1-REVISED",
+    candidateId: policy.id,
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-08-03T00:00:00.000Z",
+    sourceFence: {
+      repositoryRevision: revisedCommit,
+      sourceHashes: [sha256(revisedSource)]
+    },
+    effectiveRef: policy.effectiveRef,
+    effectiveSha256: sha256(catalogBytes),
+    reason: "fixture reapproval after the migration capture"
+  }), "utf8");
+
+  const result = await buildProjection({ repoRoot: fixture.root, configPath: fixture.configPath });
+  assert.equal(result.snapshot.migrationFence.resolvedBaseCommit, fixture.seedCommit);
+  assert.equal(result.snapshot.policies[0].sourceRefs[0].capturedRepositoryRevision, revisedCommit);
+  assert.equal(result.snapshot.policies[0].evidenceState, "current");
+  assert.equal(result.snapshot.policies[0].approvalState, "approved");
 });
 
 test("projection retries torn catalog/source reads and never publishes mixed input hashes", async (t) => {

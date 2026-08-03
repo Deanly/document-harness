@@ -157,6 +157,13 @@ Conflicts become attention, not arbitrary winner selection.
 
 Use `docs/schemas/governance-catalog.schema.json`. The top-level migration fence is nested and separate from each candidate's file evidence:
 
+최초 이관 뒤 사람이 정책이나 지침의 새 원문 bytes를 승인하면 해당 item의
+`sourceRefs[].capturedRepositoryRevision`과 decision receipt는 그 새 revision을
+사용합니다. `migration.capturedRepository.baseCommit`은 최초 이관 기준점으로 유지하며
+item별 재승인 revision과 같게 덮어쓰지 않습니다. 승인된 한 item의 source refs는
+하나의 revision을 공유해야 하고, View는 그 commit의 파일 bytes와 captured hash를
+직접 대조합니다.
+
 ```json
 {
   "schemaVersion": 1,

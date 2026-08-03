@@ -35,6 +35,7 @@ export async function createFixture(options = {}) {
   git(root, ["commit", "--quiet", "-m", "seed source"]);
   const seedCommit = git(root, ["rev-parse", "HEAD"]);
   const capturedBase = options.capturedBase ?? seedCommit;
+  const sourceRevision = options.sourceRevision ?? seedCommit;
 
   const config = {
     schemaVersion: 1,
@@ -53,7 +54,7 @@ export async function createFixture(options = {}) {
     lineEnd: 1,
     evidenceKind: "current_design",
     capturedSha256: sha256("# Current policy\n"),
-    capturedRepositoryRevision: capturedBase
+    capturedRepositoryRevision: sourceRevision
   };
   const migration = {
     status: "awaiting_human_review",
@@ -139,7 +140,7 @@ export async function createFixture(options = {}) {
       documentRef: "docs/initiatives/I0001-fixture.md",
       effectiveRef: null,
       decisionReceiptRef: null,
-      sourceRevision: capturedBase,
+      sourceRevision,
       sourceRefs: [sourceRef]
     }]
   };

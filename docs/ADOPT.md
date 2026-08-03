@@ -99,7 +99,7 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다. 그래�
 
 지원 profile은 `core`, `governance`, `view`입니다. `core`는 adoption/Execute entrypoint뿐 아니라 reusable initiative/project/task/design/guide/report/QA template, terminology surface, `new-doc.sh`, execution/closeout validator와 `close-doc.sh`를 함께 설치합니다. `governance`는 `core`를, `view`는 `core`와 `governance`를 자동으로 포함합니다. plan은 사용자가 고른 `requestedProfiles`와 dependency를 해석한 실제 설치 집합 `profiles`를 별도로 기록합니다. 따라서 `--profile view`는 읽을 수 있는 단독 View에 필요한 세 profile 전체를 설치합니다.
 
-부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.8.0`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, AI Domain Expert supervision gate와 versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
+부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.8.1`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, AI Domain Expert supervision gate와 versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
 
 ### Status Contract
 

@@ -372,7 +372,7 @@ async function inspectHumanPresentation({
   }
 }
 
-function validateItem(item, kind, index, capturedRepositoryRevision) {
+function validateItem(item, kind, index) {
   const prefix = `${kind}[${index}]`;
   requireString(item.id, `${prefix}.id`);
   requireString(item.title, `${prefix}.title`);
@@ -404,9 +404,6 @@ function validateItem(item, kind, index, capturedRepositoryRevision) {
     }
     if (!/^[a-f0-9]{40}$/.test(sourceRef.capturedRepositoryRevision ?? "")) {
       throw new Error(`${prefix}.sourceRefs[${sourceIndex}].capturedRepositoryRevision이 Git commit 형식이 아닙니다.`);
-    }
-    if (sourceRef.capturedRepositoryRevision !== capturedRepositoryRevision) {
-      throw new Error(`${prefix}.sourceRefs[${sourceIndex}].capturedRepositoryRevision이 migration base와 일치하지 않습니다.`);
     }
     for (const field of ["lineStart", "lineEnd"]) {
       if (!Number.isInteger(sourceRef[field]) || sourceRef[field] < 1) {
@@ -559,7 +556,7 @@ async function resolveInsideRoot(repoRoot, relativePath) {
   return resolved;
 }
 
-async function inspectSourceRef(repoRoot, sourceRef, capturedRepositoryRevision) {
+async function inspectSourceRef(repoRoot, sourceRef) {
   const result = {
     path: sourceRef.path,
     heading: sourceRef.heading ?? null,
@@ -582,6 +579,23 @@ async function inspectSourceRef(repoRoot, sourceRef, capturedRepositoryRevision)
       result.error = captured.reason === "outside_repository"
         ? `source ref symlink가 저장소 경계를 벗어납니다: ${sourceRef.path}`
         : `source ref가 파일이 아닙니다: ${sourceRef.path}`;
+      return result;
+    }
+    const revision = gitResult(repoRoot, ["rev-parse", "--verify", `${sourceRef.capturedRepositoryRevision}^{commit}`]);
+    if (revision.status !== 0) {
+      result.state = "invalid";
+      result.error = `source ref revision을 확인할 수 없습니다: ${sourceRef.capturedRepositoryRevision}`;
+      return result;
+    }
+    const committed = gitResult(repoRoot, ["show", `${sourceRef.capturedRepositoryRevision}:${sourceRef.path}`]);
+    if (committed.status !== 0) {
+      result.state = "invalid";
+      result.error = `source ref를 captured revision에서 읽을 수 없습니다: ${sourceRef.path}`;
+      return result;
+    }
+    if (sha256(committed.stdout) !== sourceRef.capturedSha256) {
+      result.state = "invalid";
+      result.error = `source ref hash가 captured revision bytes와 일치하지 않습니다: ${sourceRef.path}`;
       return result;
     }
     result.currentSha256 = captured.digest;
@@ -630,7 +644,7 @@ function assertHumanDecisionReceipt(decision, item, capturedRepositoryRevision, 
   }
 }
 
-async function verifyApprovedItemEvidence(repoRoot, item, capturedRepositoryRevision, evidenceState) {
+async function verifyApprovedItemEvidence(repoRoot, item, evidenceState) {
   if (evidenceState !== "current") {
     throw new Error(`${item.id} approved/effective 상태에는 current source fence가 필요합니다.`);
   }
@@ -647,8 +661,13 @@ async function verifyApprovedItemEvidence(repoRoot, item, capturedRepositoryRevi
   if (decisionReceipt.state !== "file") {
     throw new Error(`${item.id}.decisionReceiptRef가 안전한 repository regular file이 아닙니다: ${item.decisionReceiptRef}`);
   }
+  const sourceRevisions = new Set(item.sourceRefs.map(({ capturedRepositoryRevision }) => capturedRepositoryRevision));
+  if (sourceRevisions.size !== 1) {
+    throw new Error(`${item.id} approved/effective source refs는 하나의 repository revision을 공유해야 합니다.`);
+  }
+  const [sourceRevision] = sourceRevisions;
   const decision = parseCapturedJson(decisionReceipt, `${item.id} human decision receipt`);
-  assertHumanDecisionReceipt(decision, item, capturedRepositoryRevision, effective.digest);
+  assertHumanDecisionReceipt(decision, item, sourceRevision, effective.digest);
   return [
     { label: "effective governance ref", relativePath: item.effectiveRef, fence: effective.fence },
     { label: "human decision receipt", relativePath: item.decisionReceiptRef, fence: decisionReceipt.fence }
@@ -666,13 +685,13 @@ async function verifyStableInputs(repoRoot, inputs) {
   }
 }
 
-async function inspectItems(repoRoot, items, kind, capturedRepositoryRevision, documentInput, locale) {
+async function inspectItems(repoRoot, items, kind, documentInput, locale) {
   const approvalInputs = [];
   const presentationInputs = [];
   const inspected = await Promise.all(items.map(async (item, index) => {
-    validateItem(item, kind, index, capturedRepositoryRevision);
+    validateItem(item, kind, index);
     const sourceRefs = await Promise.all(item.sourceRefs.map((sourceRef) =>
-      inspectSourceRef(repoRoot, sourceRef, capturedRepositoryRevision)
+      inspectSourceRef(repoRoot, sourceRef)
     ));
     const evidenceState = sourceRefs.some((ref) => ref.state === "missing" || ref.state === "invalid")
       ? "missing"
@@ -683,7 +702,6 @@ async function inspectItems(repoRoot, items, kind, capturedRepositoryRevision, d
       approvalInputs.push(...await verifyApprovedItemEvidence(
         repoRoot,
         item,
-        capturedRepositoryRevision,
         evidenceState
       ));
     }
@@ -2790,12 +2808,10 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
 
   const currentRepository = inspectCurrentRepository(config.resolvedRoot, config.stateDir ?? ".document-harness/runtime/view");
   const migrationFence = await inspectMigrationFence(config.resolvedRoot, register.migration, currentRepository, registerInput);
-  const capturedRepositoryRevision = register.migration?.capturedRepository?.baseCommit ?? null;
   const policyInspection = await inspectItems(
     config.resolvedRoot,
     register.policies,
     "policies",
-    capturedRepositoryRevision,
     registerInput,
     config.presentation.locale
   );
@@ -2803,7 +2819,6 @@ async function buildProjectionAttempt({ repoRoot, configPath, snapshotSeq = 1, a
     config.resolvedRoot,
     register.guidelines,
     "guidelines",
-    capturedRepositoryRevision,
     registerInput,
     config.presentation.locale
   );
