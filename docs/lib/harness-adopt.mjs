@@ -2260,9 +2260,7 @@ function auditGovernanceCatalog(root) {
       typeof candidate.effectiveRef !== "string" || candidate.effectiveRef.length === 0 ||
       typeof candidate.decisionReceiptRef !== "string" || candidate.decisionReceiptRef.length === 0
     )) findings.push({ code: "APPROVED_CANDIDATE_WITHOUT_DECISION", path: candidatePath });
-    if (candidate.conflicts.length > 0 && candidate.approvalState === "approved") {
-      findings.push({ code: "CONFLICTING_CANDIDATE_AUTO_RESOLVED", path: candidatePath });
-    }
+    const sourceRevisions = new Set();
     for (const source of candidate.sourceRefs) {
       let sourceFile;
       try {
@@ -2272,15 +2270,45 @@ function auditGovernanceCatalog(root) {
           !Number.isInteger(source?.lineStart) || !Number.isInteger(source?.lineEnd) ||
           source.lineStart < 1 || source.lineEnd < source.lineStart ||
           !/^[a-f0-9]{64}$/.test(source?.capturedSha256 ?? "") ||
-          source?.capturedRepositoryRevision !== baseCommit
+          !/^[a-f0-9]{40}$/.test(source?.capturedRepositoryRevision ?? "")
         ) throw new Error("invalid source fence");
+        sourceRevisions.add(source.capturedRepositoryRevision);
+        execFileSync("git", ["-C", root, "cat-file", "-e", `${source.capturedRepositoryRevision}^{commit}`], { stdio: "ignore" });
         sourceFile = safeAbsolute(root, normalizeRelativePath(source.path, "governance source ref"));
         if (!existsSync(sourceFile) || !lstatSync(sourceFile).isFile() || lstatSync(sourceFile).isSymbolicLink()) throw new Error("unsafe source file");
         const sourceBytes = readFileSync(sourceFile);
         const lineCount = sourceBytes.toString("utf8").split(/\r?\n/).length;
         if (sha256(sourceBytes) !== source.capturedSha256 || source.lineEnd > lineCount) throw new Error("stale source fence");
+        const committedBytes = execFileSync("git", ["-C", root, "show", `${source.capturedRepositoryRevision}:${source.path}`], {
+          encoding: null,
+          maxBuffer: 32 * 1024 * 1024,
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+        if (sha256(committedBytes) !== source.capturedSha256) {
+          throw new Error("source fence does not match captured revision bytes");
+        }
       } catch (error) {
         findings.push({ code: SECRET_SOURCE_PATH.test(source?.path ?? "") ? "PRIVATE_SOURCE_EXCLUDED" : "STALE_OR_INVALID_SOURCE_REF", path: candidatePath, source: source?.path ?? null, message: error.message });
+      }
+    }
+    if (["approved", "rejected"].includes(candidate.approvalState) && sourceRevisions.size !== 1) {
+      findings.push({ code: "INVALID_GOVERNANCE_DECISION_SOURCE_REVISION", path: candidatePath });
+    }
+    if (candidate.conflicts.length > 0 && candidate.approvalState === "approved") {
+      const [sourceRevision] = sourceRevisions;
+      const decision = sourceRevisions.size === 1
+        ? readHumanDecision(root, candidate.decisionReceiptRef, sourceRevision)
+        : null;
+      const sourceHashes = candidate.sourceRefs.map(({ capturedSha256 }) => capturedSha256);
+      const humanResolved = Boolean(
+        decision &&
+        decision.candidateId === candidate.id &&
+        ["approved", "exception_accepted"].includes(decision.decision) &&
+        sourceHashes.every((digest) => decision.sourceFence.sourceHashes.includes(digest)) &&
+        decisionEffectiveArtifactMatches(root, decision, candidate.effectiveRef)
+      );
+      if (!humanResolved) {
+        findings.push({ code: "CONFLICTING_CANDIDATE_AUTO_RESOLVED", path: candidatePath });
       }
     }
   }

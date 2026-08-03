@@ -118,7 +118,7 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   }
   const manifest = JSON.parse(readFileSync(path.join(ROOT, "docs/releases/document-harness-v1.json"), "utf8"));
   assert.equal(manifest.releaseId, "document-harness-public-v1");
-  assert.equal(manifest.version, "1.8.0");
+  assert.equal(manifest.version, "1.8.3");
   assert.deepEqual(manifest.profileDependencies, {
     core: [],
     governance: ["core"],
@@ -1393,11 +1393,19 @@ For harness adoption or migration, read \`docs/ADOPT.md\` and the repository-loc
 
 test("verification is fail-closed until matching evidence and human review exist", (t) => {
   const { target, planFile } = fixture(t);
+  writeFileSync(path.join(target, "source.md"), "# Fixture governance source\n", "utf8");
+  git(target, "add", "source.md");
+  git(
+    target,
+    "-c", "user.name=Harness Fixture",
+    "-c", "user.email=harness-fixture@example.invalid",
+    "commit", "-qm", "commit governance source",
+  );
   const plan = createPlan({ target, profiles: ["core", "governance", "view"], output: planFile });
   const applied = applyPlan({ planFile, expectedPlanHash: plan.planHash });
   assert.equal(applied.status, "INSTALLED_AWAITING_REVIEW");
   const awaiting = verifyTarget({ target });
-  assert.equal(awaiting.status, "INSTALLED_AWAITING_REVIEW");
+  assert.equal(awaiting.status, "INSTALLED_AWAITING_REVIEW", JSON.stringify(awaiting.findings));
   const lock = JSON.parse(readFileSync(path.join(target, INSTALLATION_LOCK_PATH), "utf8"));
   const evidenceDir = path.join(target, "docs/receipts");
   const catalogFile = path.join(target, "docs/_indexes/governance-catalog.json");
@@ -1406,7 +1414,7 @@ test("verification is fail-closed until matching evidence and human review exist
   catalog.migration.receiptRef = "docs/receipts/human-policy-decision.json";
   const effectivePolicyRef = "docs/governance/fixture-effective-policy.md";
   const effectivePolicyBytes = "# Fixture effective policy\n";
-  const candidateSourceRef = "docs/ADOPT.md";
+  const candidateSourceRef = "source.md";
   const candidateSourceBytes = readFileSync(path.join(target, candidateSourceRef));
   writeFileSync(path.join(target, effectivePolicyRef), effectivePolicyBytes);
   catalog.policies = [{
@@ -1423,7 +1431,7 @@ test("verification is fail-closed until matching evidence and human review exist
     decisionReceiptRef: "docs/receipts/POL-EFFECTIVE-FIXTURE.json",
     sourceRefs: [{
       path: candidateSourceRef,
-      heading: "Document Harness Adoption",
+      heading: "Fixture governance source",
       lineStart: 1,
       lineEnd: 1,
       capturedSha256: sha256(candidateSourceBytes),
@@ -1649,4 +1657,76 @@ test("governance verification rejects promoted observations, private evidence, c
   assert.ok(codes.has("PRIVATE_SOURCE_EXCLUDED"));
   assert.ok(codes.has("STALE_OR_INVALID_SOURCE_REF"));
   assert.ok(codes.has("CONFLICTING_CANDIDATE_AUTO_RESOLVED"));
+});
+
+test("governance verification accepts a human-approved conflict with a newer committed source revision", (t) => {
+  const { base, target } = fixture(t, { mature: true });
+  git(target, "add", "AGENTS.md");
+  git(
+    target,
+    "-c", "user.name=Harness Fixture",
+    "-c", "user.email=harness-fixture@example.invalid",
+    "commit", "-qm", "commit project source",
+  );
+  const planFile = path.join(base, "governance-newer-source.json");
+  const plan = createPlan({ target, profiles: ["core", "governance"], output: planFile });
+  applyPlan({ planFile, expectedPlanHash: plan.planHash });
+  git(target, "add", "-A");
+  git(
+    target,
+    "-c", "user.name=Harness Fixture",
+    "-c", "user.email=harness-fixture@example.invalid",
+    "commit", "-qm", "commit installed harness",
+  );
+  const sourceRevision = git(target, "rev-parse", "HEAD").trim();
+  const sourceBytes = readFileSync(path.join(target, "AGENTS.md"));
+  const catalogFile = path.join(target, GOVERNANCE_CATALOG_PATH);
+  const catalog = JSON.parse(readFileSync(catalogFile, "utf8"));
+  const decisionReceiptRef = "docs/receipts/POL-NEWER-SOURCE.json";
+  catalog.policies = [{
+    id: "POL-NEWER-SOURCE",
+    kind: "policy",
+    title: "Keep later governance evidence committed",
+    humanSummary: "A later human decision may use a source revision newer than the migration base.",
+    authorityClass: "repository_instruction",
+    authorityState: "effective",
+    approvalState: "approved",
+    enforcement: "partially_enforced",
+    confidence: "high",
+    effectiveRef: GOVERNANCE_CATALOG_PATH,
+    decisionReceiptRef,
+    sourceRefs: [{
+      path: "AGENTS.md",
+      heading: "Existing project contract",
+      lineStart: 1,
+      lineEnd: 1,
+      capturedSha256: sha256(sourceBytes),
+      capturedRepositoryRevision: sourceRevision,
+    }],
+    conflicts: ["An earlier migration snapshot used an older revision."],
+  }];
+  catalog.guidelines = [];
+  const catalogBytes = `${JSON.stringify(catalog, null, 2)}\n`;
+  writeFileSync(catalogFile, catalogBytes, "utf8");
+  writeFileSync(path.join(target, decisionReceiptRef), `${JSON.stringify({
+    schemaVersion: 1,
+    decisionId: "DEC-POL-NEWER-SOURCE",
+    candidateId: "POL-NEWER-SOURCE",
+    decision: "approved",
+    decidedBy: { actorKind: "human", identifier: "fixture-human" },
+    decidedAt: "2026-08-03T00:00:00.000Z",
+    sourceFence: {
+      repositoryRevision: sourceRevision,
+      sourceHashes: [sha256(sourceBytes)],
+    },
+    effectiveRef: GOVERNANCE_CATALOG_PATH,
+    effectiveSha256: sha256(catalogBytes),
+    reason: "fixture approval for a later source revision",
+  }, null, 2)}\n`, "utf8");
+
+  const verification = verifyTarget({ target });
+  const codes = new Set(verification.findings.map(({ code }) => code));
+  assert.ok(!codes.has("STALE_OR_INVALID_SOURCE_REF"));
+  assert.ok(!codes.has("INVALID_GOVERNANCE_DECISION_SOURCE_REVISION"));
+  assert.ok(!codes.has("CONFLICTING_CANDIDATE_AUTO_RESOLVED"));
 });
