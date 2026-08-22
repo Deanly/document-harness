@@ -52,7 +52,7 @@ required governance가 missing, stale, unapproved이거나 서로 충돌하면 �
 - baseline, 가장 싼 관련 검사, full check와 stop condition을 정합니다.
 - secret, production, external write 또는 비가역 action이 필요하면 먼저 attention을 만듭니다.
 - AI Domain Expert가 delivery boundary와 current model을 확인하고 구현 변경을 감독할 수 있어야 합니다.
-- Fresh한 goal/directive/approval이 현재 action을 이미 허용하면 다시 승인받지 않습니다. Goal과 non-waivable boundary 안의 routine·가역·저위험 구현 세부사항은 agent가 판단하고, material delta 또는 human-only boundary가 있을 때만 새 승인을 요청합니다.
+- Fresh한 goal/directive/approval이 현재 action을 이미 허용하면 turn마다 다시 승인받지 않습니다. Goal과 non-waivable boundary 안의 routine·가역·저위험 구현 세부사항은 agent가 판단하고, material delta 또는 human-only boundary가 있을 때만 새 승인을 요청합니다.
 
 ## Execute Loop
 
