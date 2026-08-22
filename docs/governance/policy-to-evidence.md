@@ -6,7 +6,7 @@ domain: governance
 governance_role: governance-control
 owner:
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-08-19
 retrieval_class:
   - domain-current
 context:
@@ -158,6 +158,30 @@ AI는 proposal 작성과 review 보조는 할 수 있지만 normative approval �
 
 Markdown에 `approved_by` 문자열을 쓰는 것만으로는 승인 권한을 증명하지 않습니다. 실제 강제력은 trusted branch review, CODEOWNERS, protected branch 또는 downstream approval system이 담당하며 document harness validator는 구조와 reference 완전성을 검사합니다.
 
+### Decision Economy And Human Approval Request
+
+승인은 이미 정한 목표를 매 turn 다시 확인하는 의식이 아니라, 기존 authority로는 결정할 수 없는 material delta를 사람이 선택하는 경계입니다. 유효하고 fresh한 goal, task contract, policy, initiative, directive와 approval은 scope 안에서 계속 재사용합니다. agent는 그 경계를 바꾸지 않는 routine·가역·저위험 구현 세부사항을 스스로 판단하며, 단지 여러 방법이 가능하거나 기술적으로 새로운 선택을 했다는 이유만으로 재승인을 요청하지 않습니다.
+
+새 human approval은 최소한 다음 중 하나가 실제로 발생할 때만 요청합니다.
+
+- 승인된 goal, outcome, scope, acceptance 또는 completion contract의 material change
+- 기존 policy·initiative·directive가 답하지 않는 strategic/business meaning 결정
+- non-waivable boundary의 완화, exception 또는 residual risk acceptance
+- high/critical risk, 비가역 action, production/secret 접근 또는 외부 write
+- 현재 approval fence의 source/diff/scope가 바뀌어 기존 승인이 stale해짐
+- 충돌하는 authoritative source 중 무엇을 따를지 사람이 선택해야 함
+
+승인 요청은 configured `presentation.locale`의 평이한 사람 언어로 먼저 다음을 설명합니다.
+
+1. 현재 목표와 지금까지 완료·확인한 작업
+2. 왜 기존 결정과 agent 재량만으로는 다음 action을 정당화할 수 없는지
+3. 사람이 승인할 정확한 action과 보호하려는 경계
+4. 기존 결정에서 달라지는 material delta
+5. 추천안, 현실적인 대안과 각각의 영향
+6. 승인하면 무엇이 실행되고 승인하지 않으면 무엇이 멈추거나 계속 가능한지
+
+ID, hash, path, revision과 opaque token은 아래의 evidence/fence metadata로 제공하며 사람에게 의미 없는 문자열을 복사해 승인 의사로 발화하도록 요구하지 않습니다. 자연어 응답을 AI가 임의로 approval로 승격할 수는 없습니다. trusted UI, authenticated command 또는 downstream approval adapter가 사람이 본 decision package와 선택을 exact fence에 묶어 durable receipt로 기록해야 합니다.
+
 ## Versioning Contract
 
 - `content_revision`: exact commit/hash이며 어떤 수정에서도 바뀝니다.
@@ -221,6 +245,8 @@ view의 AI summary는 설명을 돕지만 approval state와 effective rule은 so
 - policy change는 기존 task goal을 조용히 약화하지 않습니다.
 - exception은 base rule과 분리되고 만료와 exit path가 있습니다.
 - 모든 effective rule은 task goal 또는 QA check까지 추적 가능해야 합니다.
+- fresh한 기존 결정은 scope 안에서 재사용하며, routine·가역·저위험 구현 세부사항 때문에 반복 승인을 만들지 않습니다.
+- human approval request는 작업 요약, 승인 이유, material delta, 선택 영향과 승인 결과를 사람이 읽는 언어로 먼저 설명하고 opaque copy/paste phrase를 요구하지 않습니다.
 
 ## Failure Boundaries
 
@@ -264,4 +290,5 @@ view의 AI summary는 설명을 돕지만 approval state와 effective rule은 so
 
 ## Change Log
 
+- 2026-08-19: 기존 결정 재사용, bounded agent discretion, material-delta approval trigger와 human-readable decision package를 추가하고 opaque 승인 문구 복사를 금지했다.
 - 2026-07-15: human policy, AI proposal, approval, standard, exception, policy-to-evidence traceability contract를 추가했다.

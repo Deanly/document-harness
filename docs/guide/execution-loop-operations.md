@@ -4,7 +4,7 @@ title: execution-loop-operations
 status: current
 owner:
 created: 2026-07-15
-updated: 2026-07-17
+updated: 2026-08-19
 related_project: []
 related_task: []
 related_design:
@@ -160,6 +160,10 @@ task lifecycle status와 loop state는 별도 vocabulary입니다.
 
 attention entry는 최소한 질문/판단 대상, 필요한 actor, 선택의 영향, resume condition을 식별해야 합니다. `awaiting_user`, `awaiting_external`, `needs_review`, `stopped` 상태에서 attention ref를 비워두지 않습니다.
 
+승인 attention을 만들기 전에는 current goal/directive/approval이 이미 action을 허용하는지 확인하고, 기존 결정에서 달라지는 `material_delta`를 식별합니다. material delta나 새 human-only boundary가 없으면 반복 승인을 요청하지 않고 agent가 routine·가역·저위험 세부 판단을 수행합니다.
+
+실제 승인이 필요하면 작업 목표, 지금까지 한 일, 승인 이유, material delta, 추천안과 대안, 승인·비승인 효과를 사람용 언어로 먼저 설명합니다. 기술 ID/hash/token은 근거로 내리고 특정 문자열 복사를 요구하지 않습니다. 차단은 승인이 필요한 최소 action에 한정하며, 다른 task/action은 dependency와 authority evidence로 독립성이 확인된 경우 계속합니다.
+
 ## Evidence And Receipt Contract
 
 Receipt는 다음 종류를 지원합니다.
@@ -193,6 +197,8 @@ Receipt는 다음 종류를 지원합니다.
 - `critical`: production mutation, 데이터 삭제, secret 변경, 롤백 곤란
 
 task contract 변경, scope 확대, 비가역 작업, production/secret 접근, high/critical risk, policy exception은 human directive 또는 approval receipt 없이는 실행하지 않습니다.
+
+반대로 위 경계가 없고 current goal·policy·initiative·directive가 action을 허용하면 구현 세부 선택을 매번 승인받지 않습니다. 여러 합리적 방법 중 하나를 고르는 것은 goal과 acceptance를 바꾸지 않는 한 기본적으로 agent의 bounded discretion입니다.
 
 ## Closeout
 
@@ -237,5 +243,6 @@ task contract 변경, scope 확대, 비가역 작업, production/secret 접근, 
 
 ## Change Log
 
+- 2026-08-19: 기존 결정 재사용, material-delta 기반 승인, 사람용 결정 패키지와 국소 차단 원칙을 추가했다.
 - 2026-07-15: opt-in execution loop, checkpoint, directive, attention, receipt, stop/resume 운영 계약 추가.
 - 2026-07-17: View execution projection을 별도 JSON mirror가 아닌 canonical `docs/checkpoints/*.md`와 deterministic selection에 연결했다.

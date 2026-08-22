@@ -106,6 +106,8 @@ task 입력과 필요한 authority가 준비되어 있어야 합니다.
 
 - 없음
 
+approval 또는 material decision이 필요하면 먼저 현재 목표, 지금까지 한 일, 결정이 필요한 이유, 기존 결정에서 달라지는 점, 추천안과 대안, 승인·비승인 효과, 차단되는 최소 범위와 계속 가능한 독립 작업을 사람용 언어로 기록합니다. ID, path, revision, hash와 token은 하위 fence metadata이며 사용자에게 정해진 문자열 복사를 요구하지 않습니다. material delta가 없고 기존 authority가 fresh하면 반복 approval attention을 만들지 않습니다.
+
 ## Receipts
 
 - 없음

@@ -2,7 +2,7 @@
 # Human-owned policy and normative standards remain design artifacts; this file
 # defines runtime state, stop, checkpoint, and evidence mechanics only.
 version: 1
-updated: 2026-08-01
+updated: 2026-08-19
 contract: v1
 
 opt_in:
@@ -24,6 +24,30 @@ authority:
   domain_risk_acceptance: human_only
   policy_refs_required: true
   directive_refs_required: true
+
+decision_economy:
+  reuse_fresh_in_scope_decisions: true
+  routine_reversible_low_risk_detail_actor: agent
+  approval_requires_material_delta_or_human_only_boundary: true
+  turn_boundary_requires_reapproval: false
+  opaque_copy_paste_as_approval: forbidden
+  blocked_scope: minimal_dependent_action
+  independent_work_requires_dependency_and_authority_evidence: true
+  approval_request_requires:
+    - goal_summary
+    - work_completed_summary
+    - decision_reason
+    - reused_authority_refs
+    - material_delta
+    - protected_boundary
+    - proposed_action
+    - recommendation_and_reason
+    - alternatives_and_impact
+    - approval_effect
+    - non_approval_effect
+    - blocked_scope
+    - unblocked_actions
+    - independence_evidence
 
 directive_precedence:
   - platform_safety_and_tool_constraints

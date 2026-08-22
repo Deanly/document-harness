@@ -43,6 +43,7 @@
 - human-issued initiative: `I####`는 exact human issuance approval 뒤에만 발급하고, activation approval과 lifecycle을 별도로 관리합니다.
 - human-approved project: `project`는 bounded delivery boundary를 잠그므로 사람의 명시적 요청 또는 승인 하에서 발급합니다.
 - human-governed policy: AI는 policy/standard/exception proposal을 작성할 수 있지만 human approval 없이 effective로 만들지 않습니다.
+- decision economy: fresh한 목표·지시·결정·승인은 적용 범위 안에서 재사용하고, routine·가역·저위험 구현 세부사항은 agent가 판단합니다. 새 승인은 material delta 또는 human-only authority/risk boundary에만 요청하며, 작업 요약과 승인 이유·선택 영향을 사람용 언어로 먼저 설명하고 opaque 문구 복사를 요구하지 않습니다.
 - observable execution: loop-enabled task는 current checkpoint, next actor/action, attention, evidence receipt, stop/resume 상태를 외부화합니다.
 - human-view projection: Markdown/Git은 authority로 유지하고 사용자를 위한 화면은 freshness가 보이는 rebuildable read-only projection으로 만듭니다.
 - human-readable Board gate: 정책·지침·추진안·도메인의 사람용 제목과 설명이 없으면 기술 원문을 정상 항목으로 대신 표시하지 않고 검토 attention으로 돌립니다.

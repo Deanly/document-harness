@@ -5,7 +5,7 @@ status: current
 governance_role: operational-guidance
 owner:
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-08-19
 related_project: []
 related_task: []
 related_design:
@@ -87,6 +87,8 @@ review 화면 또는 문서는 다음을 함께 보여야 합니다.
 - 필요한 approver role과 effective date
 
 사람이 방향만 채택하면 `accepted_for_promotion`입니다. approved normative design revision이 trusted branch에 반영되고 effective date가 도래해야 `effective`입니다.
+
+review 요청 전에 current authority와 기존 receipt를 확인해 같은 goal, rule, source/diff/scope에 대한 결정을 반복해서 묻지 않습니다. 새 승인은 material delta나 새 risk boundary가 있을 때만 요청합니다. 요청문은 먼저 목표, 지금까지의 작업, 승인 필요 이유, 달라지는 점, 추천안과 대안, 승인·비승인 효과를 사람용 언어로 설명합니다. ID/hash/token은 fence metadata로 내리고, 특정 opaque 문자열을 복사해 발화하는 것을 승인 조건으로 만들지 않습니다.
 
 ## Promotion Workflow
 
@@ -171,4 +173,5 @@ AI는 먼저 다음을 결정해 달라고 요청합니다.
 
 ## Change Log
 
+- 2026-08-19: material delta가 있을 때만 승인하고, 기존 결정을 재사용하며, 사람이 이해할 수 있는 decision package로 요청하도록 명시했다.
 - 2026-07-15: policy intake, AI proposal, human approval, promotion, exception, traceability workflow를 추가했다.

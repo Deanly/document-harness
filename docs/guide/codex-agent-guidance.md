@@ -4,7 +4,7 @@ title: codex-agent-guidance
 status: current
 owner:
 created: 2026-05-09
-updated: 2026-07-29
+updated: 2026-08-19
 related_project: []
 related_task: []
 related_design:
@@ -102,6 +102,8 @@ When a source file changed during the current task, or an index cannot prove it 
 
 Root guidance also states that AI-authored policy/standard/exception proposals cannot self-approve, lifecycle `status` remains separate from `loop_state`, and meaningful execution transitions update the current checkpoint. Detailed schema stays in the governance and execution guides rather than expanding `AGENTS.md` into a manual.
 
+Root guidance also preserves decision economy: fresh in-scope goals, directives, decisions, and approvals are reused rather than requested again each turn. Codex owns routine, reversible, low-risk implementation details that do not change the approved goal, acceptance, domain meaning, policy, or non-waivable boundary. A new approval requires a material delta or human-only authority/risk boundary and must be requested with a plain-language summary of the goal, work so far, decision reason, changed point, options/impact, and approval/non-approval effects before technical fence metadata. Opaque token or exact-phrase copy/paste is not the substance of human approval, and a blocker applies only to the minimum dependent action.
+
 It also states that a new `I####` requires explicit human issuance authority and an exact approval ref. AI may draft an unnumbered initiative proposal, but it must not infer issuance or activation approval from an existing umbrella project, code, or chat context.
 
 `docs/design/` is reserved for DDD domain-model truth. Root guidance requires the agent to identify affected bounded contexts, load the actor-specific packet, route semantic changes and implementation-alignment review through `ai-domain-expert`, and verify authoritative/current exact model bytes before delivery. AI Domain Expert is the highest supervisory authority below the human decision owner: it may inspect/challenge every delivery role, require code/model rework, and block success/closeout/release on unresolved meaning, but it cannot decide material/strategic meaning or accept residual risk. Architecture mechanics belong in `docs/architecture/`; governance authority mechanics belong in `docs/governance/`. Routine, reversible changes may become current only through an exact human-defined delegated-AI fence; important conflicts remain a Board decision package with model/implementation evidence, impacts, options, AI recommendation/confidence, and the precise human decision required.
@@ -174,6 +176,7 @@ Codex can run multiple threads, but two concurrent tasks should not modify the s
 
 ## Change Log
 
+- 2026-08-19: Codex decision economy, bounded implementation discretion, human-readable approval requests와 최소 범위 차단을 root guidance contract에 추가했다.
 - 2026-05-09: Codex-facing AGENTS.md, prompt shape, and readiness validator contract added.
 - 2026-06-14: Numbered `project`/`task` issuance rule added for main-based draft commits.
 - 2026-07-15: numbered `qa` alignment and source-authoritative freshness rule added.

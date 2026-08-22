@@ -4,7 +4,7 @@ title: execute
 status: current
 owner: Codex
 created: 2026-07-15
-updated: 2026-08-01
+updated: 2026-08-19
 related_design:
   - docs/architecture/control-plane.md
   - docs/governance/policy-to-evidence.md
@@ -82,6 +82,8 @@ proposal report, search hit, browser snapshot, chat history는 effective authori
 
 하나라도 작업 결과를 바꿀 정도로 비어 있으면 구현하지 않고 정확한 attention을 만듭니다.
 
+fresh한 goal, task contract, policy, initiative, directive와 approval이 현재 action을 이미 허용하면 turn마다 다시 승인받지 않습니다. goal과 non-waivable boundary를 바꾸지 않는 routine·가역·저위험 구현 세부사항은 agent가 판단합니다. 새 승인은 기존 결정에서 material delta가 생기거나 human-only risk/authority boundary를 넘을 때만 요청합니다.
+
 ## Execute Loop
 
 1. policy/guideline/initiative preflight 결과와 task contract의 exact authority refs를 pin합니다.
@@ -110,6 +112,8 @@ checkpoint는 current resume snapshot이고 task `Status`는 append-only milesto
 | `succeeded` | 아직 lifecycle `done`이 아니므로 Goal Verification과 closeout gate 실행 |
 
 authority 또는 policy 충돌로 현재 attempt를 실행할 수 없으면 `stopped / CONFLICT`와 human attention을 사용합니다. 단순히 독립 검토가 필요한 상태를 `CONFLICT`로 과장하지 않습니다.
+
+중단은 충돌하거나 승인에 의존하는 최소 task/action에 국소화합니다. 다른 작업을 계속하려면 blocked action과의 dependency가 없고 자체 governance/domain authority가 current임을 evidence로 확인합니다. “독립적이다”라는 설명만으로 우회하지 않습니다.
 
 ## Evidence Barrier
 
@@ -174,7 +178,7 @@ git diff --check
 
 ## Human Handoff
 
-handoff에는 최소한 goal, task/attempt/checkpoint revision, last valid evidence, next actor/action, exact requested response, alternatives/impact, residual risk, resume condition을 포함합니다. local human view가 있다면 같은 source revision과 freshness를 보여주되 view 자체를 authority로 취급하지 않습니다.
+handoff에는 최소한 goal, task/attempt/checkpoint revision, last valid evidence, next actor/action, alternatives/impact, residual risk, resume condition을 포함합니다. 승인이나 material decision이 필요하면 지금까지 한 일, 결정이 필요한 이유, 기존 결정에서 달라지는 material delta, 추천 action, 승인·비승인 효과와 계속 가능한 독립 작업을 configured `presentation.locale`로 먼저 설명합니다. exact requested response는 사람이 이해할 수 있는 선택이어야 하며 opaque ID/hash/token 복사를 요구하지 않습니다. 기술 fence는 별도 evidence metadata로 제공합니다. local human view가 있다면 같은 source revision과 freshness를 보여주되 view 자체를 authority로 취급하지 않습니다.
 
 ## References
 
@@ -189,5 +193,6 @@ handoff에는 최소한 goal, task/attempt/checkpoint revision, last valid evide
 
 ## Change Log
 
+- 2026-08-19: 이미 정한 authority의 반복 승인을 금지하고 bounded agent discretion, human-readable decision package와 최소 범위 차단을 추가했다.
 - 2026-07-18: policy/guideline/initiative를 project/task 실행 전 mandatory governance gate로 추가하고 freshness, approval, lineage와 conflict stop을 고정했다.
 - 2026-07-15: loop-enabled task의 load order, start gate, state routing, evidence barrier, closeout과 handoff를 단일 실행 진입점으로 정리했다.

@@ -5,7 +5,7 @@ status: current
 domain: execution
 owner: Codex
 created: 2026-07-15
-updated: 2026-08-01
+updated: 2026-08-19
 retrieval_class:
   - domain-current
 context:
@@ -74,6 +74,8 @@ tags:
 - checkpoint는 다음 actor가 대화 history 없이도 목표, 마지막 행동, evidence, risk, resume condition을 재구성할 수 있어야 합니다.
 - evidence와 decision/approval receipt는 actor, scope, source revision, 생성 시각, 관련 goal 또는 checkpoint를 추적할 수 있어야 합니다.
 - approval은 action, scope, checkpoint/source/diff revision, expiry에 묶이며 더 넓은 권한으로 암묵 승격되지 않습니다.
+- fresh한 기존 goal/directive/approval은 scope 안에서 계속 유효하며 turn이나 bounded action마다 재승인하지 않습니다. agent는 goal과 non-waivable boundary를 바꾸지 않는 routine·가역·저위험 세부 판단을 수행합니다.
+- approval은 material delta 또는 별도 human authority가 필요한 경계에만 요청하고, 영향을 받는 최소 action만 막습니다. 독립 작업은 dependency와 authority evidence를 확인한 뒤 계속할 수 있습니다.
 - policy-to-task trace는 explicit source reference로만 authoritative해지며 추론된 edge는 candidate로 표시합니다.
 - domain 영향을 갖는 active/current delivery는 AI Domain Expert의 exact-byte supervision 없이 `succeeded` 또는 lifecycle closeout으로 갈 수 없습니다. 사람은 material/strategic 선택과 위험 수용의 최종 권위자이고, AI Domain Expert는 unresolved 의미 불일치를 중단시키는 최고 감독 권한자입니다.
 
@@ -315,11 +317,35 @@ source_hash:
 approval_fence: null
 ```
 
+approval 또는 material decision attention은 machine field 외에 configured `presentation.locale`의 human-readable decision package를 함께 가집니다.
+
+```yaml
+decision_package:
+  goal_summary:
+  work_completed_summary:
+  decision_reason:
+  reused_authority_refs: []
+  material_delta:
+  protected_boundary:
+  proposed_action:
+  recommendation_and_reason:
+  alternatives_and_impact: []
+  approval_effect:
+  non_approval_effect:
+  blocked_scope:
+  unblocked_actions: []
+  independence_evidence: []
+```
+
+사람이 먼저 읽는 것은 위 설명이며 ID, path, revision, hash와 approval fence는 하위 근거입니다. opaque token 또는 정해진 문장을 복사해 발화하도록 요구하지 않습니다. natural-language response는 trusted approval mechanism이 사람이 본 package와 선택을 exact fence에 연결할 때만 receipt가 됩니다.
+
 - normal wait는 task lifecycle을 `blocked`로 바꾸지 않고 `status: active`와 `awaiting_user` 또는 `awaiting_external` loop state로 표시합니다.
 - lifecycle `blocked` task도 attention queue에서 사라지지 않습니다.
 - queue priority는 risk, irreversible/external impact, critical-path blocking, age를 사용하되 정렬 이유를 사용자에게 보여줍니다.
 - no-change heartbeat를 attention으로 만들지 않습니다.
 - 동일 `attention_id + checkpoint_seq` notification은 idempotent하게 취급합니다.
+- `material_delta`가 비어 있고 current authority가 fresh하면 approval attention을 만들지 않고 agent가 bounded discretion으로 진행합니다.
+- `blocked_scope`는 승인이 필요한 최소 action으로 제한합니다. `unblocked_actions`는 같은 goal을 약화하지 않고 독립적으로 진행 가능한 작업만 포함하며 dependency/authority evidence 없이 독립성을 추정하지 않습니다.
 
 ## Approval Fence
 
@@ -392,5 +418,6 @@ approval_fence:
 
 ## Change Log
 
+- 2026-08-19: decision economy, human-readable approval package, material-delta gate와 최소 action 범위 차단을 추가했다.
 - 2026-07-15: execution checkpoint, receipt provenance, derived local view, attention, approval fence, policy-to-task trace 계약을 생성했다.
 - 2026-07-15: projector, API/SSE, freshness, view security/runtime/observability 책임을 human-control-view-plane으로 분리했다.

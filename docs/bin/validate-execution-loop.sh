@@ -583,6 +583,8 @@ validate_public_surfaces() {
     done
     require_contains "$EXECUTION_ENTRY" 'stopped / CONFLICT'
     require_contains "$EXECUTION_ENTRY" 'Goal Verification'
+    require_contains "$EXECUTION_ENTRY" 'turn마다 다시 승인받지 않습니다'
+    require_contains "$EXECUTION_ENTRY" 'opaque ID/hash/token 복사를 요구하지 않습니다'
   fi
 
   for value in \
@@ -616,6 +618,7 @@ validate_public_surfaces() {
     do
       require_section "$CHECKPOINT_TEMPLATE" "$section"
     done
+    require_contains "$CHECKPOINT_TEMPLATE" 'material delta가 없고 기존 authority가 fresh하면 반복 approval attention을 만들지 않습니다'
   fi
 
   if [[ -f "$EXECUTION_POLICY" ]]; then
@@ -624,6 +627,12 @@ validate_public_surfaces() {
       'task_status_separate: true' 'ai_self_approval: forbidden' \
       'task_goal_weakening: supersede_or_reissue' \
       'unresolved_conflict: stop_with_conflict' \
+      'reuse_fresh_in_scope_decisions: true' \
+      'approval_requires_material_delta_or_human_only_boundary: true' \
+      'turn_boundary_requires_reapproval: false' \
+      'opaque_copy_paste_as_approval: forbidden' \
+      'blocked_scope: minimal_dependent_action' \
+      'independent_work_requires_dependency_and_authority_evidence: true' \
       'lifecycle_compatibility:' \
       'required_loop_state: succeeded' \
       'trusted_runtime_verification_separate_from_static_validation: true'
@@ -652,6 +661,21 @@ validate_public_surfaces() {
   if [[ -f "$EXECUTION_DESIGN" ]]; then
     require_contains "$EXECUTION_DESIGN" 'time_limit_minutes: 60'
     require_contains "$EXECUTION_DESIGN" 'receipt_kind: command | test | review | decision | approval | handoff'
+    require_contains "$EXECUTION_DESIGN" 'decision_package:'
+    require_contains "$EXECUTION_DESIGN" 'material_delta:'
+    require_contains "$EXECUTION_DESIGN" 'blocked_scope:'
+    require_contains "$EXECUTION_DESIGN" 'unblocked_actions:'
+    require_contains "$EXECUTION_DESIGN" 'opaque token 또는 정해진 문장을 복사해 발화하도록 요구하지 않습니다'
+  fi
+
+  if [[ -f "$EXECUTION_GUIDE" ]]; then
+    require_contains "$EXECUTION_GUIDE" 'material delta나 새 human-only boundary가 없으면 반복 승인을 요청하지 않고'
+    require_contains "$EXECUTION_GUIDE" '차단은 승인이 필요한 최소 action에 한정하며'
+  fi
+
+  if [[ -f "$HUMAN_VIEW_GUIDE" ]]; then
+    require_contains "$HUMAN_VIEW_GUIDE" '기존 결정에서 material delta 또는 human-only boundary가 없으면 새 approval card를 만들지 않습니다'
+    require_contains "$HUMAN_VIEW_GUIDE" '특정 opaque phrase 복사를 요구하지 않습니다'
   fi
 }
 

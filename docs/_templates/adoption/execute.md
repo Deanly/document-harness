@@ -52,6 +52,7 @@ required governance가 missing, stale, unapproved이거나 서로 충돌하면 �
 - baseline, 가장 싼 관련 검사, full check와 stop condition을 정합니다.
 - secret, production, external write 또는 비가역 action이 필요하면 먼저 attention을 만듭니다.
 - AI Domain Expert가 delivery boundary와 current model을 확인하고 구현 변경을 감독할 수 있어야 합니다.
+- Fresh한 goal/directive/approval이 현재 action을 이미 허용하면 다시 승인받지 않습니다. Goal과 non-waivable boundary 안의 routine·가역·저위험 구현 세부사항은 agent가 판단하고, material delta 또는 human-only boundary가 있을 때만 새 승인을 요청합니다.
 
 ## Execute Loop
 
@@ -77,6 +78,8 @@ required governance가 missing, stale, unapproved이거나 서로 충돌하면 �
 | `succeeded` | Goal Verification과 closeout gate로 이동 |
 
 authority 또는 policy 충돌은 `stopped / CONFLICT`와 human attention으로 반환합니다.
+
+중단은 승인이나 충돌에 의존하는 최소 task/action에 한정합니다. 다른 작업은 dependency가 없고 자체 governance/domain authority가 current라는 evidence가 있을 때만 계속합니다.
 
 ## Evidence Barrier
 
@@ -108,7 +111,7 @@ git diff --check
 
 ## Human Handoff
 
-handoff에는 goal, task/checkpoint revision, last valid evidence, next actor/action, exact requested response, alternatives/impact, residual risk와 resume condition을 포함합니다.
+handoff에는 goal, task/checkpoint revision, last valid evidence, next actor/action, alternatives/impact, residual risk와 resume condition을 포함합니다. 승인이나 material decision 요청은 지금까지 한 일, 필요한 이유, material delta, 추천안, 승인·비승인 효과와 계속 가능한 독립 작업을 사람용 언어로 먼저 설명합니다. Exact response는 이해 가능한 선택이어야 하며 opaque ID/hash/token 복사를 요구하지 않습니다.
 
 ## References
 
@@ -122,4 +125,5 @@ handoff에는 goal, task/checkpoint revision, last valid evidence, next actor/ac
 
 ## Change Log
 
+- document-harness adoption: 기존 결정 재사용, bounded agent discretion, human-readable approval package와 최소 범위 차단을 설치 계약에 추가했습니다.
 - document-harness adoption: installed command closure만 사용하는 repository-local execution entrypoint를 생성했습니다.

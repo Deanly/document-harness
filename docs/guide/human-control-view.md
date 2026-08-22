@@ -4,7 +4,7 @@ title: human-control-view
 status: current
 owner: Codex
 created: 2026-07-15
-updated: 2026-08-01
+updated: 2026-08-19
 related_project: []
 related_task: []
 related_design:
@@ -447,18 +447,23 @@ default local view는 `GET`, `HEAD`, `OPTIONS`만 사용합니다.
 
 ## Approval Workflow
 
-1. 사용자가 attention card에서 exact action과 risk를 확인합니다.
-2. UI 또는 handoff target이 current source와 snapshot을 refresh합니다.
-3. 별도 approval broker가 task contract revision, checkpoint, task source hash, diff hash, scope hash, expiry를 가진 preview를 만듭니다.
-4. 사용자는 하나의 scoped action을 승인하거나 거부합니다.
-5. broker는 실행 직전에 fence를 다시 검증합니다.
-6. stale/expired/mismatched fence면 실행을 거부하고 새 preview를 요구합니다.
-7. constrained executor가 승인된 source mutation만 수행합니다.
-8. required validator를 실행하고 result receipt를 남깁니다.
-9. projector가 source change를 관찰해 새 snapshot을 publish합니다.
+1. broker는 current goal/directive/approval을 확인하고 기존 결정에서 material delta 또는 human-only boundary가 없으면 새 approval card를 만들지 않습니다.
+2. 사용자는 attention card에서 현재 목표, 지금까지 한 일, 왜 지금 결정이 필요한지, 기존 결정에서 달라지는 점, 추천안과 대안, 승인·비승인 효과를 configured `presentation.locale`로 먼저 읽습니다.
+3. UI 또는 handoff target이 current source와 snapshot을 refresh합니다.
+4. 별도 approval broker가 task contract revision, checkpoint, task source hash, diff hash, scope hash, expiry를 가진 preview를 만듭니다.
+5. 사용자는 사람이 이해할 수 있는 선택으로 하나의 scoped action을 승인하거나 거부합니다. ID/hash/token은 하위 evidence이며 특정 opaque phrase 복사를 요구하지 않습니다.
+6. broker는 실행 직전에 fence를 다시 검증합니다.
+7. stale/expired/mismatched fence면 실행을 거부하고 새 preview를 요구합니다.
+8. constrained executor가 승인된 source mutation만 수행합니다.
+9. required validator를 실행하고 result receipt를 남깁니다.
+10. projector가 source change를 관찰해 새 snapshot을 publish합니다.
 
 확인 화면에는 다음을 반드시 보여줍니다.
 
+- current goal과 지금까지 완료·확인한 작업
+- approval이 필요한 이유와 기존 결정에서 달라지는 material delta
+- 추천안, 대안과 각각의 영향
+- 승인하면 실행되는 일, 승인하지 않을 때 멈추는 일과 계속 가능한 독립 작업
 - exact requested action
 - environment, file/service/recipient scope
 - diff 또는 immutable diff hash
@@ -480,6 +485,8 @@ default local view는 `GET`, `HEAD`, `OPTIONS`만 사용합니다.
 - [ ] mutation method는 405를 반환한다.
 - [ ] stale/degraded snapshot에서 approval control이 비활성화된다.
 - [ ] broker approval은 one-shot, exact scope, revision/diff fence를 사용한다.
+- [ ] fresh한 기존 결정을 반복 승인시키지 않고 material delta가 있을 때만 approval card를 만든다.
+- [ ] 사람용 설명이 technical fence보다 먼저 보이고 opaque phrase 복사를 요구하지 않는다.
 - [ ] `Approve all`과 wildcard scope가 없다.
 
 local-only는 authentication과 browser-origin threat를 생략할 근거가 아닙니다. remote access는 명시적 authentication, transport security, authorization을 요구하는 별도 profile입니다.
@@ -553,6 +560,7 @@ local-only는 authentication과 browser-origin threat를 생략할 근거가 아
 
 ## Change Log
 
+- 2026-08-19: material-delta approval gate, 사람용 decision package와 opaque phrase 비의존 승인 UX를 추가했다.
 - 2026-07-15: read-only local view, information architecture, attention, policy trace, freshness, SSE/polling, approval workflow, security 운영 기준을 생성했다.
 - 2026-07-16: repository 정적 identity, five top tabs, tab별 product plan, refresh-stable interaction과 PatternFly-inspired local semantic design 기준을 추가했다.
 - 2026-07-29: DDD landscape/context/model approval, role filter와 open question을 보여주는 read-only Domain 탭을 canonical navigation에 추가했다.

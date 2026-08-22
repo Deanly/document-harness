@@ -5,7 +5,7 @@ status: current
 governance_role: operational-guidance
 owner:
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-08-19
 related_design:
   - docs/architecture/control-plane.md
   - docs/governance/policy-to-evidence.md
@@ -171,6 +171,38 @@ initiative issuance/activation 또는 enforcement를 부여하지 않습니다.
 - editorial correction, normative change, exception/risk acceptance를 같은 승인으로 묶지 않습니다.
 - 승인 요청에는 exact source/diff revision, 선택지, 영향, 검증과 남는 위험을 함께 제시합니다.
 
+### 6. 이미 결정된 내용은 다시 승인받지 않습니다
+
+먼저 current goal, task contract, policy, initiative, directive와 기존 approval receipt가 지금 action을 이미 허용하는지 확인합니다. fresh하고 scope가 맞으면 그 결정을 재사용합니다. 구현 방법이 여러 개라는 사실, agent가 새 파일이나 테스트를 선택했다는 사실, turn이 바뀌었다는 사실만으로 새 승인을 만들지 않습니다.
+
+승인이 필요하지 않은 기본 범위는 다음과 같습니다.
+
+- 승인된 목표와 acceptance를 바꾸지 않는 routine implementation detail
+- local에서 되돌릴 수 있고 외부 write가 없는 low-risk action
+- 기존 architecture·domain·policy 경계 안의 테스트, refactor와 검증 방법 선택
+- 이미 승인된 action을 같은 source/diff/scope fence에서 계속 수행하는 것
+
+새 승인을 요청하기 전에는 `무엇이 기존 결정에서 실질적으로 달라졌는가?`를 한 문장으로 답해야 합니다. 답할 material delta가 없다면 승인 대신 agent가 판단하고, 관련 근거와 결과를 보고합니다.
+
+### 7. 승인 요청을 사람용 결정 패키지로 만듭니다
+
+승인 또는 중요한 결정을 요청할 때 기술 식별자를 먼저 내밀거나 정해진 문자열을 복사하라고 요구하지 않습니다. configured `presentation.locale`로 다음 순서를 지킵니다.
+
+```text
+현재 목표:
+지금까지 한 일과 확인된 결과:
+지금 결정이 필요한 이유:
+기존 결정에서 달라지는 점:
+추천하는 다음 행동과 이유:
+다른 선택지와 영향:
+승인하면 일어나는 일:
+승인하지 않아도 계속 가능한 일 / 멈추는 일:
+사용자에게 필요한 결정:
+근거와 fence metadata: ID, path, revision, hash
+```
+
+사용자는 평이한 언어로 선택할 수 있어야 합니다. 시스템에 필요한 token, hash, candidate ID와 exact phrase는 receipt 생성기가 처리할 metadata이며, 사용자에게 의미 없는 문자열을 그대로 발화하게 해서는 안 됩니다. 다만 AI가 애매한 동의를 승인으로 추정해서도 안 됩니다. 응답이 불명확하면 같은 decision package를 짧게 요약해 선택만 확인합니다.
+
 ## Review-Ready Quality Rubric
 
 각 항목을 `0 = 없음`, `1 = 보완 필요`, `2 = 검토 가능`으로 평가합니다. 0점 항목이 있으면 승인 요청 전에 보완하거나 missing decision으로 명시합니다. 점수가 높아도 human approval을 대체하지 않습니다.
@@ -197,6 +229,10 @@ initiative issuance/activation 또는 enforcement를 부여하지 않습니다.
 - 질문을 한꺼번에 쏟아 사용자가 알 수 없는 결정을 강요하기
 - AI 초안, 채팅 동의, View 표시만으로 `approved` 또는 `effective`라고 쓰기
 - policy/guideline/initiative 충돌을 project/task에서 임의로 해석해 우회하기
+- fresh한 목표·directive·approval이 있는데 turn마다 같은 결정을 다시 승인받기
+- material delta 없이 내부 절차를 만족시키기 위한 승인 요청을 만들기
+- 작업 맥락과 승인 이유를 설명하지 않고 ID·hash·token 또는 정해진 문구 복사만 요구하기
+- 자연어의 애매한 긍정을 AI가 독자적으로 approval receipt로 승격하기
 
 ## Handoff Shape
 
@@ -214,6 +250,8 @@ AI가 제안한 부분:
 검증과 남는 위험:
 필요한 사용자 결정:
 결정 후 다음 단계:
+이미 결정되어 재사용한 authority:
+기존 결정에서 달라지는 material delta:
 ```
 
 ## Related Procedures
@@ -233,5 +271,6 @@ AI가 제안한 부분:
 
 ## Change Log
 
+- 2026-08-19: 기존 결정을 재사용하는 decision economy, bounded agent discretion과 사람이 읽는 승인 결정 패키지를 추가했다.
 - 2026-07-18: 정책·지침·추진안의 역할 분리, 초보 사용자를 위한 질문·사용자 표시 언어 초안·품질 rubric·승인 handoff와 AI 실행 preflight를 정의했다.
 - 2026-07-30: Board 정상 표시를 위한 사람용 문구, presentation 상태·receipt와 기술 fallback 차단 규칙을 추가했다.

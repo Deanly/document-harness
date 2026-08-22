@@ -38,6 +38,7 @@ Read only the exact policy, design, guide, and validator refs selected by those 
 13. Run the repository's fast/full/continuous gates at their defined boundaries and record exact evidence. Treat unavailable checks as blocked or not-run, never passed.
 14. Refresh sanitized View inputs after meaningful state changes and wait for a newer snapshot sequence. Use exact loopback and an OS-assigned port by default; never kill a foreign process to obtain a port.
 15. Stop and request attention when a required human decision, authority, secret, destructive action, remote exposure, stale fence, unresolved conflict, or recovery guarantee is missing.
+16. Reuse fresh in-scope goals, directives, decisions, and approvals. Let the agent decide routine, reversible, low-risk implementation details that preserve the approved goal, acceptance, domain meaning, policy, and non-waivable boundaries. Ask for new approval only when a material delta or human-only authority/risk boundary exists; explain the goal, work so far, reason, changed point, options/impact, and approval/non-approval effects in the configured user-facing locale before technical fence metadata. Never require an opaque token or exact phrase as the substance of approval. Block only the minimum dependent action, and continue other work only with dependency and authority evidence.
 
 ## Assist Governance Authoring
 

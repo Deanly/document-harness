@@ -61,6 +61,7 @@ EXECUTION_ENTRY="$DOCS_DIR/EXECUTE.md"
 EXECUTION_LOOP="$DOCS_DIR/architecture/execution-loop-plane.md"
 HUMAN_VIEW_DESIGN="$DOCS_DIR/architecture/human-control-view-plane.md"
 POLICY_GOVERNANCE="$DOCS_DIR/governance/policy-to-evidence.md"
+DOCS_README="$DOCS_DIR/README.md"
 EXECUTION_POLICY="$DOCS_DIR/_indexes/execution-loop-policy.yaml"
 EXECUTION_CHECKPOINT_TEMPLATE="$DOCS_DIR/_templates/execution-checkpoint.md"
 EXECUTION_VALIDATOR="$DOCS_DIR/bin/validate-execution-loop.sh"
@@ -88,6 +89,7 @@ require_file "$EXECUTION_ENTRY"
 require_file "$EXECUTION_LOOP"
 require_file "$HUMAN_VIEW_DESIGN"
 require_file "$POLICY_GOVERNANCE"
+require_file "$DOCS_README"
 require_file "$DOMAIN_SUPERVISION_VALIDATOR"
 require_file "$EXECUTION_POLICY"
 require_file "$EXECUTION_CHECKPOINT_TEMPLATE"
@@ -143,6 +145,17 @@ require_contains "$AGENTS_FILE" 'If a file changed during the current task or re
 require_contains "$AGENTS_TEMPLATE" 'If a file changed during the current task or retrieval freshness is uncertain, read the source file directly; never treat an index hit as authoritative.'
 require_contains "$AGENTS_FILE" 'AI may draft policy/standard/exception proposals but must not self-approve them.'
 require_contains "$AGENTS_TEMPLATE" 'AI may draft policy/standard/exception proposals but must not self-approve them.'
+for decision_economy_contract in "$AGENTS_FILE" "$AGENTS_TEMPLATE" "$DOCS_DIR/_templates/adoption/agents.md" "$CODEX_HARNESS_SKILL"; do
+  require_contains "$decision_economy_contract" 'Reuse fresh in-scope goals, directives, decisions, and approvals'
+  require_contains "$decision_economy_contract" 'material delta'
+  require_contains "$decision_economy_contract" 'opaque token or exact phrase'
+done
+require_contains "$CODEX_GUIDE" 'Root guidance also preserves decision economy'
+require_contains "$POLICY_GOVERNANCE" '### Decision Economy And Human Approval Request'
+require_contains "$POLICY_GOVERNANCE" 'opaque copy/paste phrase를 요구하지 않습니다'
+require_contains "$DOCS_README" 'decision economy:'
+require_contains "$DOCS_DIR/guide/governance-authoring-assistance.md" '### 6. 이미 결정된 내용은 다시 승인받지 않습니다'
+require_contains "$DOCS_DIR/guide/governance-authoring-assistance.md" '### 7. 승인 요청을 사람용 결정 패키지로 만듭니다'
 require_contains "$AGENTS_FILE" 'docs/ADOPT.md'
 require_contains "$AGENTS_TEMPLATE" 'docs/ADOPT.md'
 require_contains "$AGENTS_FILE" 'docs/EXECUTE.md'
