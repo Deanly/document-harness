@@ -11,6 +11,7 @@ import { buildProjection, loadViewConfig, sha256 } from "./lib/projection.mjs";
 import { managedProcessIdentity } from "./lib/process-identity.mjs";
 import { ensureRuntimeStateDirectory } from "./lib/runtime-state.mjs";
 import { REFERENCE_VIEW_VERSION } from "./version.mjs";
+import { buildStaticBoard } from './lib/static-board.mjs';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_PATH = path.join(SCRIPT_DIR, "server.mjs");
@@ -468,7 +469,14 @@ async function main() {
     return;
   }
   const ctx = await context(options);
-  if (command === "doctor") await doctor(ctx, options);
+  if (['export', 'start', 'foreground'].includes(command)) {
+    const projection = await buildProjection({ repoRoot: ctx.config.resolvedRoot, configPath: options.config, snapshotSeq: 1 });
+    await ensureStateDir(ctx);
+    const output = path.join(ctx.stateDir, 'board.html');
+    await atomicWrite(output, await buildStaticBoard(projection.snapshot));
+    process.stdout.write(`${output}\n`);
+  }
+  else if (command === "doctor") await doctor(ctx, options);
   else if (command === "refresh") process.stdout.write(`${JSON.stringify(await refreshProbes(ctx), null, 2)}\n`);
   else if (command === "start") await start(ctx, options);
   else if (command === "foreground") await foreground(ctx, options);

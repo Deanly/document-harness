@@ -15,6 +15,18 @@
   },
   "files": [
     {
+      "sourcePath": "runtime/document-harness-view/test/static-board.test.mjs",
+      "targetPath": "runtime/document-harness-view/test/static-board.test.mjs",
+      "profiles": ["view"],
+      "artifactType": "runtime"
+    },
+    {
+      "sourcePath": "runtime/document-harness-view/lib/static-board.mjs",
+      "targetPath": "runtime/document-harness-view/lib/static-board.mjs",
+      "profiles": ["view"],
+      "artifactType": "runtime"
+    },
+    {
       "sourcePath": "docs/_templates/adoption/agents.md",
       "targetPath": "docs/_templates/adoption/agents.md",
       "profiles": ["core"],

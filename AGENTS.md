@@ -30,6 +30,10 @@
 
 ## Codex Workflow
 
+### Board HTML delivery — current contract
+
+로컬 서버 방식은 폐기합니다. 정책·지침·추진안·도메인·checkpoint·근거를 변경한 후와 사용자에게 전달하기 직전에 `./runtime/document-harness-view/bin/human-view export`를 실행합니다. 출력된 절대 경로의 `board.html`을 링크로 전달하고 브라우저에서 직접 엽니다. CSS·스크립트·검증된 스냅샷을 포함한 한 파일이며 서버·포트·네트워크 없이 탭·검색·상세 보기를 제공합니다. 생성 시각 이후의 변경은 재생성 후 브라우저에서 다시 읽어야 합니다. 실패 시 이전 파일을 최신이라고 전달하지 않습니다. 원본 문서와 승인 영수증의 권위는 유지합니다. 이 계약은 아래 및 이전 문서의 서버 시작·포트·SSE·폴링 규칙보다 우선합니다. Board open/start/refresh 요청은 모두 export로 처리하고 서버를 실행하지 않습니다. 기존 서버 종료에는 신원을 확인하는 `human-view stop`만 사용합니다.
+
 - Start by reading this file and `docs/README.md`. For existing-repository adoption or migration, read `docs/ADOPT.md`; for loop-enabled work, read `docs/EXECUTE.md`, then the current task/checkpoint and only their exact policy/design/guide refs.
 - Use the repository-local `operate-document-harness` skill for harness workflows. It routes to durable repository contracts and creates no authority; never install or update a user-global document-harness skill as part of this repository.
 - Treat mature-repository adoption as a no-write migration plan first. Preserve project-owned files and dirty tracked/untracked changes; never wholesale-copy public harness files over customized target files.

@@ -1,5 +1,7 @@
 # Board — Document Harness Reference View
 
+Board is now a standalone HTML document. Run `./runtime/document-harness-view/bin/human-view export` and open the returned `board.html` path directly. Regenerate after source changes and before handoff, then reload open files. Local-server delivery is retired; `start` and `foreground` also export HTML. Generation time bounds freshness; source documents and approval receipts retain authority.
+
 This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. Its configurable user-facing name is `Board`; the technical executable remains `human-view` for compatibility. It is copied as a unit; an adopter does not regenerate its design.
 
 Reference View distribution version: `1.8.3`. The public release manifest pins the byte hashes for this complete tree.

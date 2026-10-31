@@ -245,7 +245,7 @@ test("operator does not hide a foreign runtime-directory entry while creating th
   assert.equal(await readFile(path.join(stateDir, "custom-project-file.txt"), "utf8"), "must remain visible\n");
 });
 
-test("start, status, url, refresh, and stop preserve one repository identity", async (t) => {
+test("start exports a standalone HTML without a server lease", async (t) => {
   const fixture = await createFixture({ projectId: "lifecycle-fixture" });
   t.after(async () => {
     await runControl(["stop", "--root", fixture.root, "--config", fixture.configPath]);
@@ -254,23 +254,19 @@ test("start, status, url, refresh, and stop preserve one repository identity", a
 
   const startedResult = await runControl(["start", "--root", fixture.root, "--config", fixture.configPath]);
   assert.equal(startedResult.code, 0, startedResult.stderr);
-  const started = JSON.parse(startedResult.stdout);
-  assert.equal(started.status, "started");
-  assert.equal(started.repoId, "lifecycle-fixture");
-  assert.equal(started.runtimeVersion, "1.8.3");
-  assert.equal(started.initiativeCount, 1);
-  assert.ok(started.port > 0);
+  const output = startedResult.stdout.trim();
+  assert.equal(output, path.join(await realpath(fixture.root), '.document-harness/runtime/view/board.html'));
+  const html = await readFile(output, 'utf8');
+  assert.match(html, /board-snapshot/);
+  assert.match(html, /lifecycle-fixture/);
 
   const statusResult = await runControl(["status", "--root", fixture.root, "--config", fixture.configPath]);
   assert.equal(statusResult.code, 0, statusResult.stderr);
   const status = JSON.parse(statusResult.stdout);
-  assert.equal(status.status, "running");
-  assert.equal(status.identityMatches, true);
-  assert.equal(status.lease.instanceId, started.instanceId);
+  assert.equal(status.status, "stopped");
 
   const urlResult = await runControl(["url", "--root", fixture.root, "--config", fixture.configPath]);
-  assert.equal(urlResult.code, 0, urlResult.stderr);
-  assert.equal(urlResult.stdout.trim(), started.url);
+  assert.notEqual(urlResult.code, 0);
 
   const refreshResult = await runControl(["refresh", "--root", fixture.root, "--config", fixture.configPath]);
   assert.equal(refreshResult.code, 0, refreshResult.stderr);
@@ -278,7 +274,6 @@ test("start, status, url, refresh, and stop preserve one repository identity", a
 
   const stopResult = await runControl(["stop", "--root", fixture.root, "--config", fixture.configPath]);
   assert.equal(stopResult.code, 0, stopResult.stderr);
-  assert.match(stopResult.stdout, /안전하게 중지했습니다/);
   const stopped = JSON.parse((await runControl(["status", "--root", fixture.root, "--config", fixture.configPath])).stdout);
   assert.equal(stopped.status, "stopped");
 });

@@ -1,5 +1,7 @@
 # document-harness
 
+Board is now a standalone HTML document. Run `./runtime/document-harness-view/bin/human-view export` and open the returned `board.html` path directly. Regenerate after source changes and before handoff, then reload open files. Local-server delivery is retired; `start` and `foreground` also export HTML. Generation time bounds freshness; source documents and approval receipts retain authority.
+
 실전에서 검증된 문서 체계를 다른 프로젝트에서도 재사용할 수 있게 일반화한 하네스입니다.
 
 이 하네스의 목표는 문서를 "설계 기준", "실행 단위", "운영 판단", "요청성 보고"로 분리하고, 각 문서가 서로를 참조하면서 프로젝트의 현재 truth와 실행 이력을 함께 유지하게 만드는 것입니다.

@@ -19,6 +19,10 @@ tags:
 
 ## Purpose
 
+### Board HTML delivery — current contract
+
+로컬 서버 방식은 폐기합니다. 정책·지침·추진안·도메인·checkpoint·근거를 변경한 후와 사용자에게 전달하기 직전에 `./runtime/document-harness-view/bin/human-view export`를 실행합니다. 출력된 절대 경로의 `board.html`을 링크로 전달하고 브라우저에서 직접 엽니다. CSS·스크립트·검증된 스냅샷을 포함한 한 파일이며 서버·포트·네트워크 없이 탭·검색·상세 보기를 제공합니다. 생성 시각 이후의 변경은 재생성 후 브라우저에서 다시 읽어야 합니다. 실패 시 이전 파일을 최신이라고 전달하지 않습니다. 원본 문서와 승인 영수증의 권위는 유지합니다. 이 계약은 아래 및 이전 문서의 서버 시작·포트·SSE·폴링 규칙보다 우선합니다. Board open/start/refresh 요청은 모두 export로 처리하고 서버를 실행하지 않습니다. 기존 서버 종료에는 신원을 확인하는 `human-view stop`만 사용합니다.
+
 이 문서는 새 repository 또는 이미 자체 문서 하네스가 있는 mature repository에 document-harness를 안전하게 적용하기 위한 단일 reusable entrypoint입니다.
 
 기존 repository에서는 public 최신 파일을 복사하지 않습니다. 먼저 ownership, installed baseline, current revision과 dirty state를 inventory하고, write 없는 migration plan과 policy/guideline extraction을 만든 뒤 exact plan fence에 따라 적용합니다.

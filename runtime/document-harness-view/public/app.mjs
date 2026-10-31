@@ -1705,7 +1705,7 @@ function renderExecution(snapshot) {
   const capabilities = snapshot.snapshot.capabilities ?? {};
   grid.append(runtimeCard("화면 데이터 계약", snapshot.snapshot.freshness, [
     ["스냅샷", `${snapshot.snapshot.id} / 순번 ${snapshot.snapshot.seq}`],
-    ["새로고침", `${number(snapshot.client?.refreshIntervalMs ?? 2000)}ms ETag 폴링`],
+    ["새로고침", document.getElementById('board-snapshot') ? 'AI가 원본 변경 후 HTML 재생성' : `${number(snapshot.client?.refreshIntervalMs ?? 2000)}ms ETag 폴링`],
     ["쓰기", capabilities.write ? "허용" : "차단"],
     ["실행", capabilities.execution ? "허용" : "차단"],
     ["승인", capabilities.approvalIntents ? "허용" : "차단"]
@@ -1853,6 +1853,7 @@ function setConnection(connected, message) {
 }
 
 function schedulePolling(intervalMs = state.pollIntervalMs) {
+  if (document.getElementById('board-snapshot')) return;
   const resolved = Math.max(1000, Number(intervalMs) || 2000);
   if (state.pollTimer && state.pollIntervalMs === resolved) return;
   if (state.pollTimer) clearInterval(state.pollTimer);
@@ -1861,6 +1862,13 @@ function schedulePolling(intervalMs = state.pollIntervalMs) {
 }
 
 async function loadSnapshot(force = false) {
+  const embedded = document.getElementById('board-snapshot');
+  if (embedded) {
+    render(JSON.parse(embedded.textContent));
+    setConnection(true, 'HTML 문서 · 생성 시점 기준');
+    $('#refresh-button').textContent = '문서 다시 읽기';
+    return;
+  }
   const headers = { Accept: "application/json" };
   if (state.etag && !force) headers["If-None-Match"] = state.etag;
   try {
