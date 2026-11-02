@@ -88,6 +88,7 @@ public v1 command surface:
 - default action은 no-write입니다.
 - plan JSON 자체도 target 밖에 기록합니다. target 안의 output은 `PLAN_OUTPUT_IN_TARGET`과 `NEEDS_DECISION`으로 거부합니다.
 - target revision, dirty status, inventory hash, public harness revision과 selected profile을 pin합니다.
+- inventory는 Git ignore 규칙(`.gitignore`, `.git/info/exclude`, 사용자 Git exclude 설정)을 적용해 무시된 비추적 파일을 hash/read 대상에서 제외합니다. 무시된 디렉터리 안에 강제로 추적된 파일은 계속 포함하며, 일반 비추적 파일도 계속 fence에 포함합니다. release target 경로는 inventory 제외 여부와 무관하게 직접 lstat/hash하여 ownership과 conflict를 확인합니다.
 - `requestedProfiles`에는 사용자가 고른 profile만, `profiles`에는 dependency-expanded installation set을 기록합니다. `governance -> core`, `view -> core + governance`를 release manifest가 고정합니다.
 - partial bootstrap은 허용하지만 release `verification.requiredProfiles`와 `requiredInstalledPaths`가 완전하지 않으면 `MIGRATION_VERIFIED`로 승격하지 않습니다.
 - governance profile에서는 승인·효력 상태인 정책 또는 지침의 `effectiveRef`와 `sourceRefs[].path`를 현재 catalog에서 읽어 release action과 대조합니다. `ADD|UPDATE_UNMODIFIED`가 해당 path의 bytes를 실제로 바꾸면 `APPROVED_GOVERNANCE_SOURCE_MUTATION`으로 fail closed 하며, before/after SHA-256이 같은 mode-only repair는 허용합니다.

@@ -13,6 +13,7 @@ import {
   writeFileSync,
   mkdirSync,
   symlinkSync,
+  truncateSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -118,7 +119,7 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   }
   const manifest = JSON.parse(readFileSync(path.join(ROOT, "docs/releases/document-harness-v1.json"), "utf8"));
   assert.equal(manifest.releaseId, "document-harness-public-v1");
-  assert.equal(manifest.version, "1.8.4");
+  assert.equal(manifest.version, "1.8.5");
   assert.deepEqual(manifest.profileDependencies, {
     core: [],
     governance: ["core"],
@@ -181,6 +182,61 @@ test("plan is deterministic and does not change target bytes, index, runtime, or
   assert.deepEqual(indexAfter, indexBefore);
   assert.equal(git(target, "status", "--porcelain"), "");
   assert.equal(readFileSync(homeSentinel, "utf8"), "unchanged\n");
+});
+
+test("adoption inventory skips Git-ignored artifacts but fences tracked and unignored files", (t) => {
+  const { target, planFile } = fixture(t);
+  mkdirSync(path.join(target, "local", "vms"), { recursive: true });
+  mkdirSync(path.join(target, "data"));
+  writeFileSync(path.join(target, ".gitignore"), "local/\n");
+  writeFileSync(path.join(target, "data", ".gitignore"), "*.cache\n");
+  writeFileSync(path.join(target, "local", "vms", "tracked.vmdk"), "tracked disk metadata\n");
+  writeFileSync(path.join(target, "local", "vms", "private.vmdk"), "private VM bytes\n");
+  truncateSync(path.join(target, "local", "vms", "private.vmdk"), 2 * 1024 * 1024 * 1024 + 1);
+  writeFileSync(path.join(target, "data", "transient.cache"), "ignored cache\n");
+  writeFileSync(path.join(target, "data", "visible.txt"), "unignored bytes\n");
+  git(target, "add", ".gitignore", "data/.gitignore");
+  git(target, "add", "-f", "local/vms/tracked.vmdk");
+  git(target, "-c", "user.name=Harness Fixture", "-c", "user.email=harness-fixture@example.invalid", "commit", "-qm", "ignore fixture");
+
+  const first = inspectTarget(target);
+  const paths = first.inventory.map(({ path: filePath }) => filePath);
+  assert.equal(paths.includes("local/vms/private.vmdk"), false);
+  assert.equal(paths.includes("data/transient.cache"), false);
+  assert.equal(paths.includes("local/vms/tracked.vmdk"), true);
+  assert.equal(paths.includes("data/visible.txt"), true);
+  writeFileSync(path.join(target, "local", "vms", "private.vmdk"), "new private VM bytes\n");
+  writeFileSync(path.join(target, "data", "transient.cache"), "new ignored cache\n");
+  const afterIgnoredChanges = inspectTarget(target);
+  assert.equal(afterIgnoredChanges.inventorySha256, first.inventorySha256);
+  assert.equal(afterIgnoredChanges.dirtyFingerprint, first.dirtyFingerprint);
+
+  const plan = createPlan({ target, profiles: ["core"], output: planFile });
+  assert.equal(plan.status, "PLAN_READY");
+  writeFileSync(path.join(target, "local", "vms", "private.vmdk"), "another private VM version\n");
+  assert.equal(applyPlan({ planFile, expectedPlanHash: plan.planHash }).applyResult, "applied");
+
+  const afterApply = inspectTarget(target);
+  writeFileSync(path.join(target, "local", "vms", "tracked.vmdk"), "changed tracked metadata\n");
+  assert.notEqual(inspectTarget(target).inventorySha256, afterApply.inventorySha256);
+  writeFileSync(path.join(target, "local", "vms", "tracked.vmdk"), "tracked disk metadata\n");
+  writeFileSync(path.join(target, "data", "visible.txt"), "changed unignored bytes\n");
+  assert.notEqual(inspectTarget(target).dirtyFingerprint, afterApply.dirtyFingerprint);
+});
+
+test("Git ignore never hides a conflicting release target", (t) => {
+  const { target, planFile } = fixture(t);
+  mkdirSync(path.join(target, "docs"));
+  writeFileSync(path.join(target, ".gitignore"), "docs/ADOPT.md\n");
+  writeFileSync(path.join(target, "docs", "ADOPT.md"), "project-owned ignored bytes\n");
+  git(target, "add", ".gitignore");
+  git(target, "-c", "user.name=Harness Fixture", "-c", "user.email=harness-fixture@example.invalid", "commit", "-qm", "ignore release target");
+
+  assert.equal(inspectTarget(target).inventory.some(({ path: filePath }) => filePath === "docs/ADOPT.md"), false);
+  const plan = createPlan({ target, profiles: ["core"], output: planFile });
+  assert.equal(plan.status, "NEEDS_DECISION");
+  assert.equal(plan.actions.find(({ path: filePath }) => filePath === "docs/ADOPT.md").action, "CONFLICT");
+  assert.equal(readFileSync(path.join(target, "docs", "ADOPT.md"), "utf8"), "project-owned ignored bytes\n");
 });
 
 test("plan refuses an output inside the target repository", (t) => {

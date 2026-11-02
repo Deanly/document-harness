@@ -170,7 +170,7 @@ function resolveRepositoryRoot(input) {
   return root;
 }
 
-function walkInventory(root, current = "", rows = []) {
+function walkInventoryPaths(root, current = "", rows = []) {
   const directory = path.join(root, current);
   const names = readdirSync(directory).sort((a, b) => a.localeCompare(b, "en"));
   for (const name of names) {
@@ -179,14 +179,9 @@ function walkInventory(root, current = "", rows = []) {
     const absolute = path.join(root, ...relative.split("/"));
     const info = lstatSync(absolute);
     if (info.isDirectory()) {
-      walkInventory(root, relative, rows);
+      walkInventoryPaths(root, relative, rows);
     } else if (info.isFile()) {
-      rows.push({
-        path: relative,
-        type: "file",
-        mode: info.mode & 0o777,
-        sha256: sha256(readFileSync(absolute)),
-      });
+      rows.push({ path: relative, type: "file", mode: info.mode & 0o777 });
     } else if (info.isSymbolicLink()) {
       rows.push({ path: relative, type: "symlink", target: readlinkSync(absolute) });
     } else {
@@ -194,6 +189,37 @@ function walkInventory(root, current = "", rows = []) {
     }
   }
   return rows;
+}
+
+function gitIgnoredInventoryPaths(root, paths) {
+  if (paths.length === 0) return new Set();
+  let output;
+  try {
+    output = execFileSync("git", ["-C", root, "check-ignore", "-z", "--stdin"], {
+      input: Buffer.from(`${paths.join("\0")}\0`),
+      env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
+      stdio: ["pipe", "pipe", "pipe"],
+      maxBuffer: 64 * 1024 * 1024,
+    });
+  } catch (error) {
+    if (error.status === 1) return new Set();
+    throw new HarnessAdoptError("git check-ignore failed while fencing target inventory", {
+      status: "NEEDS_DECISION",
+      code: "GIT_INSPECTION_FAILED",
+      details: [error.stderr?.toString().trim()].filter(Boolean),
+    });
+  }
+  return new Set(output.toString("utf8").split("\0").filter(Boolean));
+}
+
+function walkInventory(root) {
+  const candidates = walkInventoryPaths(root);
+  const ignored = gitIgnoredInventoryPaths(root, candidates.map(({ path: filePath }) => filePath));
+  return candidates.filter(({ path: filePath }) => !ignored.has(filePath)).map((entry) => {
+    if (entry.type !== "file") return entry;
+    const absolute = path.join(root, ...entry.path.split("/"));
+    return { ...entry, sha256: sha256(readFileSync(absolute)) };
+  });
 }
 
 function currentRevision(root) {

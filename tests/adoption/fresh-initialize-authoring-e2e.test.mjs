@@ -27,6 +27,27 @@ function run(root, executable, args = []) {
   });
 }
 
+function publishFixtureMain(root) {
+  git(root, "push", "-q", "origin", "main:main", "main:fixture-delivery");
+}
+
+function issueFixtureNumbered(root, kind, args) {
+  const baseline = git(root, "rev-parse", "HEAD").trim();
+  const output = run(root, path.join(root, "docs/bin/issue-doc-bridge.sh"), [
+    "--baseline-ref", baseline,
+    "--delivery-branch", "fixture-delivery",
+    "--workstream-kind", "feature",
+    "--issuance-ref", "origin/main",
+    "--", kind, ...args,
+  ]);
+  const documentPath = output.match(/^document_path=(.+)$/m)?.[1];
+  const bridgeBranch = output.match(/^bridge_branch=(.+)$/m)?.[1];
+  assert.ok(documentPath && bridgeBranch, output);
+  git(root, "merge", "--ff-only", "-q", bridgeBranch);
+  publishFixtureMain(root);
+  return path.join(root, documentPath);
+}
+
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -109,6 +130,9 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   git(target, "config", "user.name", "Harness Fixture");
   git(target, "config", "user.email", "harness-fixture@example.invalid");
   git(target, "commit", "--allow-empty", "-qm", "fresh repository");
+  const origin = path.join(base, "origin.git");
+  execFileSync("git", ["init", "--bare", "-q", "-b", "main", origin]);
+  git(target, "remote", "add", "origin", origin);
   t.after(() => rmSync(base, { recursive: true, force: true }));
 
   const planFile = path.join(base, "full-plan.json");
@@ -161,6 +185,7 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   git(target, "add", "-A");
   git(target, "commit", "-qm", "install document harness");
   const newDoc = path.join(target, "docs/bin/new-doc.sh");
+  publishFixtureMain(target);
 
   for (const unsafeRef of [
     "DECISION-FIXTURE\nstatus: active",
@@ -186,11 +211,11 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   for (const [index, fixture] of initiativeCases.entries()) {
     const number = String(index + 1).padStart(4, "0");
     const docId = `I${number}`;
-    const initiativeOutput = run(target, newDoc, ["initiative", fixture.slug, fixture.ref]).trim();
+    const initiativeOutput = issueFixtureNumbered(target, "initiative", [fixture.slug, fixture.ref]);
     const initiativePath = path.join(target, `docs/initiatives/${docId}-${fixture.slug}.md`);
     assert.equal(path.basename(initiativeOutput), `${docId}-${fixture.slug}.md`);
     assert.match(readFileSync(initiativePath, "utf8"), new RegExp(`issuance_approval_ref: ${fixture.ref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
-    assert.match(git(target, "log", "-1", "--format=%s"), new RegExp(`^docs: issue ${docId} ${fixture.slug}$`, "m"));
+    assert.match(git(target, "log", "-1", "--format=%s"), new RegExp(`^docs: finalize ${docId} issuance receipt$`, "m"));
     assert.equal(git(target, "status", "--porcelain"), "");
 
     if (docId === "I0001") {
@@ -206,6 +231,7 @@ test("fresh full-profile initialize installs and runs the reusable document auth
     activateInitiative(initiativePath, `docs/receipts/${docId.toLowerCase()}-activation.json`);
     git(target, "add", initiativePath);
     git(target, "commit", "-qm", `docs: activate ${docId} fixture`);
+    publishFixtureMain(target);
   }
 
   const governanceSourceRef = "docs/architecture/control-plane.md";
@@ -322,6 +348,7 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   writeFileSync(path.join(target, "docs/_indexes/initiative-register.json"), `${JSON.stringify(initiativeRegister, null, 2)}\n`);
   git(target, "add", "docs/_indexes/governance-catalog.json", "docs/_indexes/initiative-register.json", "docs/receipts");
   git(target, "commit", "-qm", "test: add source-fenced activation authority fixtures");
+  publishFixtureMain(target);
 
   const missingInitiative = spawnSync(newDoc, ["project", "missing-parent", "I9999"], {
     cwd: target,
@@ -330,9 +357,9 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   assert.notEqual(missingInitiative.status, 0);
   assert.match(missingInitiative.stderr, /parent does not exist: I9999/);
 
-  const projectOutput = run(target, newDoc, ["project", "umbrella-project", "I0001"]).trim();
+  const projectOutput = issueFixtureNumbered(target, "project", ["umbrella-project", "I0001"]);
   assert.equal(path.basename(projectOutput), "P0001-umbrella-project.md");
-  assert.match(git(target, "log", "-1", "--format=%s"), /^docs: issue P0001 umbrella-project$/m);
+  assert.match(git(target, "log", "-1", "--format=%s"), /^docs: finalize P0001 issuance receipt$/m);
   assert.match(readFileSync(path.join(target, "docs/projects/P0001-umbrella-project.md"), "utf8"), /^related_initiative: I0001$/m);
   assert.match(readFileSync(path.join(target, "docs/projects/P0001-umbrella-project.md"), "utf8"), /^initiative_relation: delivers$/m);
   assert.equal(git(target, "status", "--porcelain"), "");
@@ -356,9 +383,9 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   writeFileSync(initiativePath, activeInitiative, "utf8");
   assert.equal(git(target, "status", "--porcelain"), "");
 
-  const taskOutput = run(target, newDoc, ["task", "first-task", "P0001"]).trim();
+  const taskOutput = issueFixtureNumbered(target, "task", ["first-task", "P0001"]);
   assert.equal(path.basename(taskOutput), "T0001-first-task.md");
-  assert.match(git(target, "log", "-1", "--format=%s"), /^docs: issue T0001 first-task$/m);
+  assert.match(git(target, "log", "-1", "--format=%s"), /^docs: finalize T0001 issuance receipt$/m);
   assert.match(readFileSync(path.join(target, "docs/tasks/T0001-first-task.md"), "utf8"), /^related_project: P0001$/m);
   assert.equal(git(target, "status", "--porcelain"), "");
 
@@ -387,7 +414,8 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   writeFileSync(legacyProjectPath, legacyHeader, "utf8");
   git(target, "add", legacyProjectPath);
   git(target, "commit", "-qm", "test: add explicit legacy parent fixture");
-  const legacyTaskOutput = run(target, newDoc, ["task", "legacy-child", "P0002"]).trim();
+  publishFixtureMain(target);
+  const legacyTaskOutput = issueFixtureNumbered(target, "task", ["legacy-child", "P0002"]);
   const legacyTaskPath = path.join(target, "docs/tasks/T0002-legacy-child.md");
   assert.equal(path.basename(legacyTaskOutput), "T0002-legacy-child.md");
   assert.match(readFileSync(legacyTaskPath, "utf8"), /^related_project: P0002$/m);
@@ -395,9 +423,10 @@ test("fresh full-profile initialize installs and runs the reusable document auth
   rmSync(legacyTaskPath);
   git(target, "add", "-A");
   git(target, "commit", "-qm", "test: remove legacy issuance fixtures");
+  publishFixtureMain(target);
   assert.equal(git(target, "status", "--porcelain"), "");
 
-  const qaOutput = run(target, newDoc, ["qa", "first-test-strategy"]).trim();
+  const qaOutput = issueFixtureNumbered(target, "qa", ["first-test-strategy"]);
   const qaPath = path.join(target, "docs/qa/QA0001-first-test-strategy.md");
   assert.equal(path.basename(qaOutput), "QA0001-first-test-strategy.md");
   let qa = readFileSync(qaPath, "utf8");

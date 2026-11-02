@@ -73,7 +73,7 @@
 
 여러 feature가 동시에 진행되는 중 최근 배포 revision에서 hotfix를 준비해야 한다면, branch 전환과 stash 반복보다 작업별 worktree를 유지하는 편이 좋습니다. hotfix는 실제 배포 tag/SHA를 code baseline으로 삼고, 문서 번호는 기존 계약대로 `main`에서 예약합니다.
 
-현재 `main`에 hotfix가 받아서는 안 되는 미배포 코드가 있으면 문서를 받기 위해 `main` 전체를 병합하는 흐름을 자동 선택하지 않는 편이 좋습니다. 이 경우의 worktree 구성, revision 분리, 선택적 docs-only bridge와 여러 feature의 문서 reservation 운영은 `docs/guide/concurrent-feature-hotfix-operation.md`를 참고합니다.
+현재 `main`에 hotfix가 받아서는 안 되는 미배포 코드가 있으면 문서를 받기 위해 `main` 전체를 병합하는 흐름을 자동 선택하지 않는 편이 좋습니다. feature와 hotfix의 worktree와 code revision을 분리하고, 필요한 문서만 docs-only bridge로 전달하며, 같은 문서 번호를 여러 작업이 예약하지 않도록 단일 발급 흐름을 유지합니다.
 
 이 내용은 repository 운영 권장안이며 새 branch policy, `new-doc.sh` 동작 또는 validator gate를 만들지 않습니다.
 
