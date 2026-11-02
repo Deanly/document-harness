@@ -36,6 +36,10 @@ Superpowers is a required execution-method dependency. Follow `docs/guide/superp
 
 이 문서는 loop-enabled task를 시작하거나 재개할 때 사용하는 **단일 orchestration index**입니다. schema와 상세 설명을 복제하지 않고, 무엇을 어떤 순서로 읽고 어떤 gate에서 진행·중단·handoff할지만 고정합니다.
 
+## Superpowers Method Gate
+
+실행 전 `docs/guide/superpowers-integration.md`의 **Intent To Completion** 순서를 현재 task에 적용합니다. Intent는 Purpose·Goal Inventory·완료 조건으로, Design은 승인 상태가 확인된 설계 ref로, Milestones는 계획 ref와 `W#` WBS로, Completion은 checkpoint evidence와 Goal Verification으로 연결합니다. 이미 유효한 결과는 재사용하고 빠진 단계부터 이어갑니다. 적용되는 설치 스킬을 실제로 읽고 수행한 근거와 조정 이유를 checkpoint에 남깁니다. 필요한 설계 결정·스킬·근거가 없으면 해당 실행 또는 완료 주장을 중단합니다.
+
 ## Load Order
 
 다음 순서만 기본으로 읽고, 관련 없는 문서 전체를 broad-load하지 않습니다.

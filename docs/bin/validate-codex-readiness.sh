@@ -111,9 +111,14 @@ require_file "$SUPERPOWERS_GUIDE"
 for surface in "$AGENTS_FILE" "$AGENTS_TEMPLATE" "$DOCS_DIR/_templates/adoption/agents.md" "$CLAUDE_FILE" "$CLAUDE_TEMPLATE" "$ADOPTION_ENTRY" "$EXECUTION_ENTRY" "$DOCS_DIR/_templates/adoption/adopt.md" "$DOCS_DIR/_templates/adoption/execute.md" "$CODEX_GUIDE"; do
   require_contains "$surface" "docs/guide/superpowers-integration.md"
 done
-for marker in 'superpowers:using-superpowers' 'SUPERPOWERS_UNAVAILABLE' '## Responsibility' '## Resume' '## Evidence' '## Skill Routing' '## Upgrade Recommendations'; do
+for marker in 'superpowers:using-superpowers' 'SUPERPOWERS_UNAVAILABLE' '## Responsibility' '## Intent To Completion' '| Intent |' '| Design |' '| Milestones |' '| Completion |' '## Resume' '## Evidence' '## Skill Routing' '## Upgrade Recommendations'; do
   require_contains "$SUPERPOWERS_GUIDE" "$marker"
 done
+for surface in "$EXECUTION_ENTRY" "$DOCS_DIR/_templates/adoption/execute.md"; do
+  require_contains "$surface" '## Superpowers Method Gate'
+done
+require_contains "$CODEX_HARNESS_SKILL" '## Superpowers Method'
+require_contains "$DOCS_DIR/_templates/execution-checkpoint.md" '## Superpowers Method Evidence'
 require_contains "$DOCS_DIR/releases/document-harness-v1.json" '"sourcePath": "docs/guide/superpowers-integration.md"'
 
 agents_bytes="$(wc -c < "$AGENTS_FILE" | tr -d '[:space:]')"

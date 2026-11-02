@@ -21,6 +21,10 @@ Treat this skill as a repository-local router, not a new authority source. Follo
 
 Read only the exact policy, design, guide, and validator refs selected by those entrypoints. Direct-read files changed in the current task or whose retrieval freshness is uncertain.
 
+## Superpowers Method
+
+For delivery work, read `docs/guide/superpowers-integration.md` and follow its **Intent To Completion** sequence with the applicable installed Superpowers skills. Connect the understood outcome to task goals, the design to an exact reference, the implementation plan to WBS milestones, and fresh verification to checkpoint evidence and Goal Verification. Resume from the last evidenced milestone. A skill name alone is not completion evidence, and this router grants no new approval or domain authority.
+
 ## Operate Safely
 
 1. Locate the repository root and read its `AGENTS.md` plus applicable nested instructions.

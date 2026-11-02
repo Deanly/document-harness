@@ -164,6 +164,8 @@ tags:
 
 ## WBS
 
+Superpowers 실행 계획이 필요하면 해당 계획 ref와 각 검증 가능한 단계의 산출물·검사를 아래 `W#` 마일스톤에 연결합니다. 현재 task/checkpoint가 의도 확인, 설계 결정, 계획 실행, 완료 검증 중 어디까지 근거로 닫혔는지 기록합니다.
+
 | ID | Work Item | Status | Progress | Notes |
 | --- | --- | --- | --- | --- |
 | W1 | Define work breakdown | Todo | 0% | |

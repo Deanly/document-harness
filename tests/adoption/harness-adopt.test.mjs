@@ -119,7 +119,7 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   }
   const manifest = JSON.parse(readFileSync(path.join(ROOT, "docs/releases/document-harness-v1.json"), "utf8"));
   assert.equal(manifest.releaseId, "document-harness-public-v1");
-  assert.equal(manifest.version, "1.8.5");
+  assert.equal(manifest.version, "1.8.6");
   assert.deepEqual(manifest.profileDependencies, {
     core: [],
     governance: ["core"],
@@ -148,6 +148,27 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   for (const name of readdirSync(path.join(ROOT, "docs/_templates/adoption")).filter((entry) => entry.endsWith(".json"))) {
     JSON.parse(readFileSync(path.join(ROOT, "docs/_templates/adoption", name), "utf8"));
   }
+});
+
+test("Superpowers method contract connects intent, design, milestones, and completion", () => {
+  const guide = readFileSync(path.join(ROOT, "docs/guide/superpowers-integration.md"), "utf8");
+  const execute = readFileSync(path.join(ROOT, "docs/EXECUTE.md"), "utf8");
+  const executeTemplate = readFileSync(path.join(ROOT, "docs/_templates/adoption/execute.md"), "utf8");
+  const skill = readFileSync(path.join(ROOT, ".agents/skills/operate-document-harness/SKILL.md"), "utf8");
+  const checkpoint = readFileSync(path.join(ROOT, "docs/_templates/execution-checkpoint.md"), "utf8");
+
+  assert.match(guide, /## Intent To Completion/);
+  for (const phase of ["Intent", "Design", "Milestones", "Completion"]) {
+    assert.match(guide, new RegExp(`\\| ${phase} \\|`));
+    assert.match(checkpoint, new RegExp(`- ${phase}:`));
+  }
+  for (const entry of [execute, executeTemplate]) {
+    assert.match(entry, /## Superpowers Method Gate/);
+  }
+  assert.match(skill, /## Superpowers Method/);
+  assert.match(guide, /superpowers:brainstorming/);
+  assert.match(guide, /superpowers:writing-plans/);
+  assert.match(guide, /superpowers:verification-before-completion/);
 });
 
 test("plan is deterministic and does not change target bytes, index, runtime, or home", (t) => {

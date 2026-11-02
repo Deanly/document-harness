@@ -4,7 +4,7 @@ Board is now a standalone HTML document. Run `./runtime/document-harness-view/bi
 
 This directory is the versioned, harness-managed reference distribution for one repository's Human Control View. Its configurable user-facing name is `Board`; the technical executable remains `human-view` for compatibility. It is copied as a unit; an adopter does not regenerate its design.
 
-Reference View distribution version: `1.8.5`. The public release manifest pins the byte hashes for this complete tree.
+Reference View distribution version: `1.8.6`. The public release manifest pins the byte hashes for this complete tree.
 
 ## Installed surfaces
 

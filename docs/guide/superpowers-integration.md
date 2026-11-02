@@ -45,6 +45,19 @@ document-harness가 설치된 프로젝트에서 Superpowers를 필수 작업 �
 
 필수 스킬이 없거나 읽을 수 없으면 `SUPERPOWERS_UNAVAILABLE`과 누락된 스킬, 수행하지 못한 단계, 설치/활성화 후 재개 위치를 현재 checkpoint 또는 작업 근거에 기록한다. 스킬에 의존하는 구현을 수행했다고 주장하거나 임의의 자체 절차로 통과 처리하지 않는다. 원인 확인·문서 읽기·인계 준비 같은 독립 작업은 계속할 수 있다. 현재 도구의 공식 플러그인 설치/활성화 방법을 안내하고, 사용자 전역 디렉터리에 임의 복사하거나 가짜 skill 경로를 만들지 않는다. Codex와 Claude는 각자 사용하는 환경에서 의존성이 이용 가능한지 확인한다.
 
+## Intent To Completion
+
+하네스의 delivery 작업은 다음 순서로 이어갑니다. 이미 존재하는 유효한 설계·계획·승인은 확인해 재사용하고, 빈 단계만 수행합니다. Superpowers의 해당 스킬 원문이 정하는 질문·설계 승인·테스트·리뷰 경계는 하네스가 생략하거나 대신 승인하지 않습니다.
+
+| Phase | Superpowers method | Harness record |
+| --- | --- | --- |
+| Intent | 요청의 목적, 영향을 받는 사람, 원하는 결과, 완료 조건과 비범위를 확인합니다. 새 기능·행동 변경·불명확한 요구에는 `superpowers:brainstorming`을 적용합니다. | 기존 task의 Purpose, Goal Inventory, Scope/Out Of Scope와 현재 checkpoint에 확인된 의도·미해결 질문을 연결합니다. |
+| Design | 적용되는 Superpowers 설계 절차로 접근과 tradeoff를 검토하고 필요한 사람의 설계 결정을 받습니다. 도메인 의미와 정책 권위는 별도 하네스 gate로 확인합니다. | 설계 문서 또는 유효한 기존 설계의 exact ref를 task References와 checkpoint evidence에 연결합니다. 미승인 설계를 승인된 truth로 표시하지 않습니다. |
+| Milestones | 여러 단계의 작업에는 `superpowers:writing-plans`로 검증 가능한 구현 단계를 만들고, 실행에는 해당 계획 실행 스킬을 사용합니다. | 계획 ref와 각 단계의 산출물·검사를 task WBS의 `W#` 항목 및 checkpoint next action에 연결합니다. WBS 진행률은 실제 완료 근거로만 갱신합니다. |
+| Completion | 계획을 실행하며 적용되는 TDD·디버깅·리뷰 스킬을 사용하고, 완료 주장 전에 `superpowers:verification-before-completion`으로 실제 검사를 다시 확인합니다. | checkpoint의 실행·검사·리뷰 evidence와 task Goal Verification을 Goal ID별로 대조합니다. 미완료 WBS, 미해결 attention 또는 필요한 승인·검사가 남으면 `succeeded`/`done`으로 닫지 않습니다. |
+
+새로운 병렬 상태 원장이나 스킬 사용만을 증명하는 빈 체크박스를 만들지 않습니다. 계획 파일과 Superpowers 진행 기록이 별도로 필요하면 기존 task/checkpoint에서 정확한 경로로 참조합니다. 설계나 계획의 선택지가 사람 결정을 요구하면 그 결정에 의존하는 행동만 멈추고, 독립된 근거 수집은 계속할 수 있습니다.
+
 ## Skill Routing
 
 | 작업 상황 | 필수로 검토·적용할 Superpowers 스킬 | 하네스 연결 |

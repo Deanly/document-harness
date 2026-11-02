@@ -98,6 +98,13 @@ task 입력과 필요한 authority가 준비되어 있어야 합니다.
 
 - 없음
 
+## Superpowers Method Evidence
+
+- Intent: task Purpose·Goal Inventory의 확인 상태와 남은 질문을 기록합니다.
+- Design: 승인 상태를 확인한 설계 ref 또는 아직 필요한 설계 결정을 기록합니다.
+- Milestones: 실행 계획 ref, 현재 `W#` 항목과 다음 검사를 기록합니다.
+- Completion: 실제 실행·테스트·리뷰 결과와 Goal Verification 대조 상태를 기록합니다. 준비 전에는 완료로 표시하지 않습니다.
+
 ## Risks
 
 - 없음
