@@ -2,6 +2,8 @@
 
 # Claude Code
 
+Superpowers is a required execution-method dependency. Follow `docs/guide/superpowers-integration.md`: read `superpowers:using-superpowers` and applicable installed skills before work; preserve document-harness goals, authority, approvals, checkpoints, and evidence as the continuity contract. Resume existing approved work instead of restarting it. Record missing skills as `SUPERPOWERS_UNAVAILABLE` and do not claim dependent execution is verified. The integration guide defines routing, recovery, adoption, and evidence requirements for both Codex and Claude.
+
 - For document-harness workflows, use the project skill at `.claude/skills/operate-document-harness/SKILL.md`; it delegates to the canonical `.agents` skill and adds no authority.
 - For repository initialization, migration, or upgrade, read `docs/ADOPT.md` before writing.
 - For loop-enabled task execution, read `docs/EXECUTE.md` and the current checkpoint before acting.

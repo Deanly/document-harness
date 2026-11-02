@@ -32,6 +32,8 @@ tags:
 
 ## Purpose
 
+Superpowers is a required execution-method dependency. Follow `docs/guide/superpowers-integration.md`: read `superpowers:using-superpowers` and applicable installed skills before work; preserve document-harness goals, authority, approvals, checkpoints, and evidence as the continuity contract. Resume existing approved work instead of restarting it. Record missing skills as `SUPERPOWERS_UNAVAILABLE` and do not claim dependent execution is verified. The integration guide defines routing, recovery, adoption, and evidence requirements for both Codex and Claude.
+
 이 문서는 loop-enabled task를 시작하거나 재개할 때 사용하는 **단일 orchestration index**입니다. schema와 상세 설명을 복제하지 않고, 무엇을 어떤 순서로 읽고 어떤 gate에서 진행·중단·handoff할지만 고정합니다.
 
 ## Load Order

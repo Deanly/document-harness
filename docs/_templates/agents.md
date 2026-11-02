@@ -37,6 +37,8 @@
 
 ## Codex Workflow
 
+Superpowers is a required execution-method dependency. Follow `docs/guide/superpowers-integration.md`: read `superpowers:using-superpowers` and applicable installed skills before work; preserve document-harness goals, authority, approvals, checkpoints, and evidence as the continuity contract. Resume existing approved work instead of restarting it. Record missing skills as `SUPERPOWERS_UNAVAILABLE` and do not claim dependent execution is verified. The integration guide defines routing, recovery, adoption, and evidence requirements for both Codex and Claude.
+
 - Start each task by identifying goal, context, constraints, and done criteria.
 - Read `docs/README.md` first. For existing-repository adoption, read `docs/ADOPT.md`; for loop-enabled work, read `docs/EXECUTE.md`, then the current task/checkpoint and only their exact policy/design/guide refs.
 - Use the repository-local `operate-document-harness` skill for harness workflows. It routes to durable repository contracts and creates no authority; never install or update a user-global document-harness skill as part of this repository.

@@ -34,6 +34,8 @@ tags:
 
 ## Purpose
 
+Superpowers is a required execution-method dependency. Follow `docs/guide/superpowers-integration.md`: read `superpowers:using-superpowers` and applicable installed skills before work; preserve document-harness goals, authority, approvals, checkpoints, and evidence as the continuity contract. Resume existing approved work instead of restarting it. Record missing skills as `SUPERPOWERS_UNAVAILABLE` and do not claim dependent execution is verified. The integration guide defines routing, recovery, adoption, and evidence requirements for both Codex and Claude.
+
 이 문서는 이 하네스를 Codex가 바로 읽고, 계획하고, 수정하고, 검증할 수 있게 만드는 agent-facing 운영 규칙을 고정합니다.
 
 Codex 공식 문서는 `AGENTS.md`를 자동으로 읽는 project guidance로 다루며, 좋은 작업 입력에는 goal, context, constraints, done criteria가 있어야 하고, 검증 가능한 명령이 있을수록 결과가 좋아진다고 설명합니다. 이 하네스는 그 기준을 문서 구조와 validator로 흡수합니다.

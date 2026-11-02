@@ -393,6 +393,8 @@
 
 ## Recommended Workflow
 
+Superpowers is required alongside this continuity harness. Before starting or resuming work, follow `docs/guide/superpowers-integration.md`; preserve existing task/checkpoint/approval state and apply installed skills to the next unfinished step.
+
 1. 새 repository인지 mature repository인지 먼저 판정합니다. 기존 AGENTS, design, template, validator 또는 numbered doc가 있다면 `docs/ADOPT.md`의 no-write migrate plan부터 사용하고 public 파일을 단순 복사하지 않습니다.
 2. 새 프로젝트 시작 시 `docs/architecture/control-plane.md`, `docs/design/domain-landscape.md`, `docs/design/context-map.md`를 먼저 채웁니다.
 3. source를 누적하는 프로젝트라면 원문을 둘 `raw/` 또는 `sources/` 위치와 불변 규칙을 정합니다.

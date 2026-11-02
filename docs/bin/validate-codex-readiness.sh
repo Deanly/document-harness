@@ -105,6 +105,17 @@ require_file "$CODEX_HARNESS_SKILL"
 require_file "$CODEX_HARNESS_SKILL_METADATA"
 require_file "$CLAUDE_HARNESS_SKILL"
 
+# Verify the distributed continuity/execution-method contract, not host plugin state.
+SUPERPOWERS_GUIDE="$DOCS_DIR/guide/superpowers-integration.md"
+require_file "$SUPERPOWERS_GUIDE"
+for surface in "$AGENTS_FILE" "$AGENTS_TEMPLATE" "$DOCS_DIR/_templates/adoption/agents.md" "$CLAUDE_FILE" "$CLAUDE_TEMPLATE" "$ADOPTION_ENTRY" "$EXECUTION_ENTRY" "$DOCS_DIR/_templates/adoption/adopt.md" "$DOCS_DIR/_templates/adoption/execute.md" "$CODEX_GUIDE"; do
+  require_contains "$surface" "docs/guide/superpowers-integration.md"
+done
+for marker in 'superpowers:using-superpowers' 'SUPERPOWERS_UNAVAILABLE' '## Responsibility' '## Resume' '## Evidence' '## Skill Routing' '## Upgrade Recommendations'; do
+  require_contains "$SUPERPOWERS_GUIDE" "$marker"
+done
+require_contains "$DOCS_DIR/releases/document-harness-v1.json" '"sourcePath": "docs/guide/superpowers-integration.md"'
+
 agents_bytes="$(wc -c < "$AGENTS_FILE" | tr -d '[:space:]')"
 if (( agents_bytes > MAX_AGENTS_BYTES )); then
   echo "error: AGENTS.md is ${agents_bytes} bytes, above ${MAX_AGENTS_BYTES}" >&2

@@ -1,5 +1,7 @@
 # document-harness
 
+Superpowers는 필수 작업 방법 의존성입니다. document-harness는 업무 목표·승인·상태·근거·인계를 유지하고, Superpowers는 설계·구현·문제 해결·리뷰·검증 방법을 담당합니다. Codex/Claude에서 설치된 `superpowers:using-superpowers`와 작업별 스킬을 읽어 적용하세요. 설치·재개·누락 처리 계약은 [Superpowers integration](docs/guide/superpowers-integration.md)을 따릅니다.
+
 Board is now a standalone HTML document. Run `./runtime/document-harness-view/bin/human-view export` and open the returned `board.html` path directly. Regenerate after source changes and before handoff, then reload open files. Local-server delivery is retired; `start` and `foreground` also export HTML. Generation time bounds freshness; source documents and approval receipts retain authority.
 
 실전에서 검증된 문서 체계를 다른 프로젝트에서도 재사용할 수 있게 일반화한 하네스입니다.
