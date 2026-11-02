@@ -107,7 +107,7 @@ plan output은 target 밖의 이미 존재하는 directory에 둡니다. 그래�
 
 지원 profile은 `core`, `governance`, `view`입니다. `core`는 adoption/Execute entrypoint뿐 아니라 reusable initiative/project/task/design/guide/report/QA template, terminology surface, `new-doc.sh`, execution/closeout validator와 `close-doc.sh`를 함께 설치합니다. `governance`는 `core`를, `view`는 `core`와 `governance`를 자동으로 포함합니다. plan은 사용자가 고른 `requestedProfiles`와 dependency를 해석한 실제 설치 집합 `profiles`를 별도로 기록합니다. 따라서 `--profile view`는 읽을 수 있는 단독 View에 필요한 세 profile 전체를 설치합니다.
 
-부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.8.3`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, AI Domain Expert supervision gate와 versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
+부분 profile은 단계적 bootstrap에는 사용할 수 있지만 `MIGRATION_VERIFIED` 완료 상태를 주장할 수 없습니다. release verification의 `requiredProfiles`와 `requiredInstalledPaths`가 모두 설치되고 검증된 경우에만 완료 판정을 허용합니다. release `document-harness-public-v1@1.8.4`은 이 dependency/verification closure와 schema, CLI/library, repository-local skill, reusable authoring core, AI Domain Expert supervision gate와 versioned reference View bytes를 `docs/releases/document-harness-v1.json`에서 pin합니다.
 
 ### Status Contract
 
@@ -128,6 +128,7 @@ post-apply file byte 또는 mode가 바뀌면 rollback은 강행하지 않고 `N
 - target repository의 dirty tracked/untracked change를 보존합니다.
 - project-owned AGENTS, control-plane, design, project, task, report, product code/config/ops를 자동 overwrite하지 않습니다.
 - 기존 numbered document를 일괄 재발급하거나 최신 schema로 자동 변환하지 않습니다.
+- 설치 전 기준 commit에 같은 경로·`doc_id`로 존재하던 문서는 `domain_contract`가 없더라도 기존 이력으로 검증합니다. 설치 뒤 새로 발급하거나 새 계약을 명시한 문서에는 최신 domain-lineage gate를 적용합니다.
 - 높은 extraction confidence를 human approval 또는 effective policy로 표시하지 않습니다.
 - code/config behavior는 observation 또는 enforcement evidence이며 policy authority가 아닙니다.
 - candidate는 인간 결정 전 `approvalState: unreviewed`, `effectiveRef: null`, `decisionReceiptRef: null`을 유지합니다. 승인 receipt는 exact `effectiveRef`와 현재 artifact bytes의 `effectiveSha256`을 함께 고정합니다.

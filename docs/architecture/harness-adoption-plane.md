@@ -149,6 +149,7 @@ ROLLED_BACK
 - existing project/task/report ID, status, append-only history를 보존합니다.
 - legacy vocabulary는 current truth를 깨지 않는 범위에서 grandfather warning으로 남깁니다.
 - 새 execution/governance schema는 새 task 또는 explicitly migrated active task부터 opt-in합니다.
+- `governance-catalog.json`의 최초 `migration.capturedRepository.baseCommit`과 설치 lock이 확인되면, 해당 commit에 같은 경로와 `doc_id`로 존재한 project/task/QA의 누락된 `domain_contract`만 기존 계약으로 취급합니다. 이 기준 commit은 후속 upgrade에서도 바뀌지 않습니다. 새 문서, 다른 `doc_id`로 교체된 문서, 명시적인 `domain_contract`는 최신 domain-lineage 검증을 받습니다.
 - target AGENTS/control-plane/template/validator에 public 최신본을 wholesale copy하지 않습니다.
 - project-specific verification fixture, threshold와 runner를 reusable harness default로 교체하지 않습니다.
 - application deploy/sync와 harness migration을 같은 apply action에 섞지 않습니다.

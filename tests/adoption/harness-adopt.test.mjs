@@ -118,7 +118,7 @@ test("all lifecycle schemas, release manifest, and adoption templates are valid 
   }
   const manifest = JSON.parse(readFileSync(path.join(ROOT, "docs/releases/document-harness-v1.json"), "utf8"));
   assert.equal(manifest.releaseId, "document-harness-public-v1");
-  assert.equal(manifest.version, "1.8.3");
+  assert.equal(manifest.version, "1.8.4");
   assert.deepEqual(manifest.profileDependencies, {
     core: [],
     governance: ["core"],

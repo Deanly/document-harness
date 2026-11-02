@@ -7,6 +7,25 @@ REPO_ROOT="$(dirname "$DOCS_DIR")"
 AUTHORITY_VALIDATOR="$DOCS_DIR/lib/domain-design-authority.mjs"
 error_count=0
 TARGETS=()
+LEGACY_BASE_COMMIT=""
+
+# A mature repository's pre-install delivery documents retain their original
+# contract until they explicitly opt in. The captured migration commit is
+# stable across later harness upgrades; targetSourceRevision is not.
+if [[ -f "$DOCS_DIR/_indexes/harness-installation.yaml" && -f "$DOCS_DIR/_indexes/governance-catalog.json" ]]; then
+  LEGACY_BASE_COMMIT="$(node -e '
+    const fs = require("node:fs");
+    try {
+      const lock = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      const catalog = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+      const base = catalog?.migration?.capturedRepository?.baseCommit;
+      if (lock?.release?.id === "document-harness-public-v1" && /^[a-f0-9]{40}$/.test(base)) process.stdout.write(base);
+    } catch {}
+  ' "$DOCS_DIR/_indexes/harness-installation.yaml" "$DOCS_DIR/_indexes/governance-catalog.json")"
+  if [[ -n "$LEGACY_BASE_COMMIT" ]] && ! git -C "$REPO_ROOT" merge-base --is-ancestor "$LEGACY_BASE_COMMIT" HEAD 2>/dev/null; then
+    LEGACY_BASE_COMMIT=""
+  fi
+fi
 
 error() {
   echo "error: $*" >&2
@@ -125,6 +144,7 @@ validate_file() {
   local status
   local contract
   local impact
+  local legacy_doc_id
   local context_count
   local ref_count
   local context
@@ -139,6 +159,16 @@ validate_file() {
   status="$(frontmatter_scalar "$file" status)"
   contract="$(frontmatter_scalar "$file" domain_contract)"
   impact="$(frontmatter_scalar "$file" domain_impact)"
+
+  if [[ -z "$contract" && -n "$LEGACY_BASE_COMMIT" ]] &&
+     git -C "$REPO_ROOT" cat-file -e "${LEGACY_BASE_COMMIT}:${relative}" 2>/dev/null; then
+    legacy_doc_id="$(git -C "$REPO_ROOT" show "${LEGACY_BASE_COMMIT}:${relative}" | awk -F: '
+      $1 == "doc_id" { sub(/^[[:space:]]+/, "", $2); sub(/[[:space:]]+$/, "", $2); print $2; exit }
+    ')"
+    if [[ -n "$legacy_doc_id" && "$legacy_doc_id" == "$(frontmatter_scalar "$file" doc_id)" ]]; then
+      return
+    fi
+  fi
 
   if [[ "$contract" == "legacy-v0" ]]; then
     if [[ "$status" != "done" && "$status" != "closed" && "$status" != "retired" ]]; then

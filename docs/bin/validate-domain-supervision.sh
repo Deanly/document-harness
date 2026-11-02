@@ -8,6 +8,22 @@ AUTHORITY_VALIDATOR="$DOCS_DIR/lib/domain-supervision-authority.mjs"
 MODE="inspect"
 TARGETS=()
 error_count=0
+LEGACY_BASE_COMMIT=""
+
+if [[ -f "$DOCS_DIR/_indexes/harness-installation.yaml" && -f "$DOCS_DIR/_indexes/governance-catalog.json" ]]; then
+  LEGACY_BASE_COMMIT="$(node -e '
+    const fs = require("node:fs");
+    try {
+      const lock = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      const catalog = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+      const base = catalog?.migration?.capturedRepository?.baseCommit;
+      if (lock?.release?.id === "document-harness-public-v1" && /^[a-f0-9]{40}$/.test(base)) process.stdout.write(base);
+    } catch {}
+  ' "$DOCS_DIR/_indexes/harness-installation.yaml" "$DOCS_DIR/_indexes/governance-catalog.json")"
+  if [[ -n "$LEGACY_BASE_COMMIT" ]] && ! git -C "$REPO_ROOT" merge-base --is-ancestor "$LEGACY_BASE_COMMIT" HEAD 2>/dev/null; then
+    LEGACY_BASE_COMMIT=""
+  fi
+fi
 
 usage() {
   cat <<'EOF'
@@ -102,6 +118,16 @@ for file in "${TARGETS[@]}"; do
   supervision_state="$(frontmatter_scalar "$file" domain_supervision_state)"
   review_ref="$(frontmatter_scalar "$file" domain_supervision_ref)"
   decision_ref="$(frontmatter_scalar "$file" domain_decision_ref)"
+
+  if [[ -z "$contract" && -n "$LEGACY_BASE_COMMIT" ]] &&
+     git -C "$REPO_ROOT" cat-file -e "${LEGACY_BASE_COMMIT}:${relative}" 2>/dev/null; then
+    legacy_doc_id="$(git -C "$REPO_ROOT" show "${LEGACY_BASE_COMMIT}:${relative}" | awk -F: '
+      $1 == "doc_id" { sub(/^[[:space:]]+/, "", $2); sub(/[[:space:]]+$/, "", $2); print $2; exit }
+    ')"
+    if [[ -n "$legacy_doc_id" && "$legacy_doc_id" == "$(frontmatter_scalar "$file" doc_id)" ]]; then
+      continue
+    fi
+  fi
 
   if [[ "$contract" == "legacy-v0" ]]; then
     continue
